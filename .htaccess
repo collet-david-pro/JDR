@@ -1,0 +1,45 @@
+# JDR — Apache configuration (2.2 and 2.4, also read by LiteSpeed).
+# Nginx: see docs/nginx.md. "php -S": index.php applies the same protections.
+
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+# --- Never compress the SSE stream (rewrite and query modes) -------------------
+<IfModule mod_setenvif.c>
+    SetEnvIf Request_URI "/api/v1/stream" no-gzip=1 no-brotli=1
+    SetEnvIf Query_String "(^|&)r=/api/v1/stream" no-gzip=1 no-brotli=1
+</IfModule>
+
+# --- Sensitive files, wherever they are -----------------------------------------
+<FilesMatch "^(\.|config\.php$|config\.example\.php$|projet\.md$|phpunit\.xml$|phpcs\.xml$|composer\.(json|lock)$|package(-lock)?\.json$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Installed in a sub-folder through an Alias: uncomment and adjust.
+    # RewriteBase /jdr/
+
+    # Private folders and hidden files (each private folder also has its own .htaccess and index.php).
+    RewriteRule ^(app|storage|migrations|i18n|dev|tests|frontend|docs|etapes|node_modules|dist|vendor)(/|$) - [F,L,NC]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Everything that is not an existing file or folder goes to the front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

@@ -1,0 +1,137 @@
+{
+  "app": {
+    "name": "JDR",
+    "tagline": "Cartographie et projection de maps pour le jeu de rôle",
+    "skip_to_content": "Aller au contenu",
+    "update_available": "Une nouvelle version est disponible.",
+    "boot_error": "Configuration de l'application invalide. Rechargez la page."
+  },
+  "common": {
+    "home": "Accueil",
+    "back": "Retour",
+    "loading": "Chargement…",
+    "retry": "Réessayer",
+    "reload": "Recharger",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "create": "Créer",
+    "search": "Rechercher",
+    "yes": "Oui",
+    "no": "Non",
+    "ok": "OK",
+    "error": "Erreur",
+    "version": "Version {version}"
+  },
+  "errors": {
+    "unauthenticated": "Vous devez être connecté.",
+    "forbidden": "Accès refusé.",
+    "not_found": "Ressource introuvable.",
+    "validation_failed": "Certaines informations sont invalides.",
+    "revision_conflict": "Ces données ont été modifiées entre-temps. Rechargez puis réessayez.",
+    "quota_exceeded": "Votre espace de stockage est plein.",
+    "file_too_large": "Le fichier est trop volumineux.",
+    "unsupported_type": "Ce type de contenu n'est pas accepté.",
+    "image_too_large": "Les dimensions de l'image sont trop grandes.",
+    "animation_too_long": "L'animation est trop longue ou comporte trop d'images.",
+    "session_code_invalid": "Ce code de séance n'est pas valide.",
+    "session_not_joinable": "Cette séance ne peut pas être rejointe.",
+    "session_paused": "La séance est en pause.",
+    "blocked_by_wall": "Déplacement impossible : un mur bloque le passage.",
+    "rate_limited": "Trop de tentatives. Patientez avant de réessayer.",
+    "maintenance": "Le site est en maintenance. Réessayez dans quelques minutes.",
+    "events_gone": "L'historique des événements n'est plus disponible : rechargement nécessaire.",
+    "payload_too_large": "La requête est trop volumineuse.",
+    "bad_request": "Requête invalide.",
+    "invalid_json": "Le corps de la requête n'est pas un JSON valide.",
+    "method_not_allowed": "Méthode non autorisée.",
+    "internal_error": "Une erreur interne est survenue.",
+    "not_installed": "Le site n'est pas encore installé.",
+    "network": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "timeout": "Le serveur met trop de temps à répondre.",
+    "unknown": "Une erreur inattendue est survenue."
+  },
+  "pages": {
+    "not_found": {
+      "title": "Page introuvable",
+      "text": "Cette page n'existe pas ou a été déplacée."
+    },
+    "forbidden": {
+      "title": "Accès refusé"
+    },
+    "error": {
+      "title": "Une erreur est survenue",
+      "request_id": "Identifiant de requête : {id}",
+      "load_text": "Impossible de charger cette page. Rechargez pour réessayer."
+    },
+    "maintenance": {
+      "title": "Maintenance en cours",
+      "hint": "La page se rechargera d'elle-même quand le site sera de nouveau disponible."
+    },
+    "no_build": {
+      "title": "Front-end non compilé",
+      "text": "L'interface n'a pas encore été générée (assets/vite-manifest.json est absent).",
+      "hint": "Lancez « {command} » (ou « npm run dev » pour le développement), puis rechargez la page."
+    },
+    "noscript": "Cette application nécessite JavaScript.",
+    "placeholder": {
+      "text": "Cette page sera disponible à l'étape {phase}."
+    },
+    "login": {
+      "title": "Connexion"
+    },
+    "register": {
+      "title": "Inscription"
+    },
+    "game": {
+      "title": "Partie"
+    },
+    "editor": {
+      "title": "Éditeur de map"
+    },
+    "session": {
+      "title": "Séance"
+    },
+    "join": {
+      "title": "Rejoindre une séance"
+    },
+    "display": {
+      "title": "Écran de projection"
+    },
+    "library": {
+      "title": "Bibliothèque"
+    },
+    "profile": {
+      "title": "Profil"
+    },
+    "admin": {
+      "title": "Administration"
+    }
+  },
+  "health": {
+    "title": "État du serveur",
+    "status_ok": "Serveur opérationnel",
+    "db_ok": "Base de données connectée",
+    "db_error": "Base de données indisponible",
+    "db_not_configured": "Base de données non configurée (installation requise)",
+    "db_version": "Version du schéma : {version}",
+    "unreachable": "Serveur injoignable"
+  },
+  "theme": {
+    "scheme": {
+      "label": "Apparence",
+      "light": "Clair",
+      "dark": "Sombre",
+      "auto": "Automatique"
+    },
+    "style": {
+      "label": "Style",
+      "modern": "Moderne",
+      "fantasy": "Fantasy",
+      "scifi": "Science-fiction"
+    }
+  }
+}
