@@ -1,0 +1,3 @@
+JDR-CANARY-3b7f9c2e
+This file must NEVER be reachable over HTTP. install.php and the admin diagnostic request it:
+a 200 answer means the private folder app/ is exposed (missing .htaccess / server rules).

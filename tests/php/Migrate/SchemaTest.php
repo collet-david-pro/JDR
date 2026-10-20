@@ -424,6 +424,9 @@ final class SchemaTest extends DbTestCase
 
         self::truncateTestTables($db);
         self::assertSame(0, $db->fetchValue('SELECT COUNT(*) FROM ' . $db->t('users')));
-        self::assertSame(1, $db->fetchValue('SELECT COUNT(*) FROM ' . $db->t('schema_migrations')));
+        self::assertSame(
+            count(\JDR\Migrate\MigrationFile::discover(self::migrationsDir())),
+            $db->fetchValue('SELECT COUNT(*) FROM ' . $db->t('schema_migrations'))
+        );
     }
 }

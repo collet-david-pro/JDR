@@ -84,11 +84,11 @@ final class AppTest extends TestCase
 
     public function testHealthInBothRoutingModes(): void
     {
-        $app = $this->app(self::config('query'), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config('query'), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         foreach (['/api/v1/health', '/index.php?r=/api/v1/health', '/index.php?r=%2Fapi%2Fv1%2Fhealth'] as $uri) {
             $response = $app->handle(Request::create('GET', $uri));
             self::assertSame(200, $response->status(), $uri);
-            self::assertSame(['status' => 'ok', 'db' => 'ok', 'db_version' => '0001'], $response->payload()['data']);
+            self::assertSame(['status' => 'ok', 'db' => 'ok', 'db_version' => \REQUIRED_DB_VERSION], $response->payload()['data']);
         }
     }
 
@@ -101,7 +101,7 @@ final class AppTest extends TestCase
 
     public function testHealthIsAvailableDuringMaintenance(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001', true));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION, true));
         self::assertSame(200, $app->handle(Request::create('GET', '/api/v1/health'))->status());
         self::assertSame(200, $app->handle(Request::create('GET', '/api/v1/version'))->status());
     }
@@ -118,7 +118,7 @@ final class AppTest extends TestCase
 
     public function testUnknownApiRouteIs404Envelope(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         foreach (['/api/v1/nope', '/api/v2/health', '/api'] as $uri) {
             $response = $app->handle(Request::create('GET', $uri));
             self::assertSame(404, $response->status(), $uri);
@@ -141,7 +141,7 @@ final class AppTest extends TestCase
 
     public function testMaintenanceReturns503WithRetryAfter(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001', true));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION, true));
         $page = $app->handle(Request::create('GET', '/games/12'));
         self::assertSame(503, $page->status());
         self::assertSame('120', $page->header('Retry-After'));
@@ -157,7 +157,7 @@ final class AppTest extends TestCase
 
     public function testSpaRouteWithoutBuildShowsNotBuiltPage(): void
     {
-        $response = $this->app(self::config(), SystemStatus::fixed('ok', '0001'))
+        $response = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION))
             ->handle(Request::create('GET', '/games/12'));
         self::assertSame(200, $response->status());
         self::assertStringContainsString('Front-end non compilé', $response->body());
@@ -177,7 +177,7 @@ final class AppTest extends TestCase
             ],
             '_shared-X1.js' => ['file' => 'assets/shared-X1.js', 'css' => ['assets/shared-Y2.css']],
         ]));
-        $app = $this->app(self::config('rewrite', 'https://example.org/jdr'), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config('rewrite', 'https://example.org/jdr'), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         $response = $app->handle(Request::create('GET', '/jdr/games/12', [], '', '/jdr', ['HTTPS' => 'on']));
         self::assertSame(200, $response->status());
         self::assertSame('text/html; charset=utf-8', $response->header('Content-Type'));
@@ -206,7 +206,7 @@ final class AppTest extends TestCase
     public function testQueryModeBootData(): void
     {
         file_put_contents($this->root . '/assets/vite-manifest.json', '{"src/main.ts":{"file":"assets/m.js"}}');
-        $response = $this->app(self::config('query'), SystemStatus::fixed('ok', '0001'))
+        $response = $this->app(self::config('query'), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION))
             ->handle(Request::create('GET', '/index.php'));
         preg_match('#<script id="jdr-boot" type="application/json">(.+?)</script>#', $response->body(), $boot);
         $data = json_decode($boot[1], true);
@@ -237,7 +237,7 @@ final class AppTest extends TestCase
 
     public function testPrivatePathsAreRefused(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         $uris = ['/app/bootstrap.php', '/storage/', '/config.php', '/migrations/', '/i18n/fr.json', '/index.php?r=/app/x'];
         foreach ($uris as $uri) {
             self::assertSame(403, $app->handle(Request::create('GET', $uri))->status(), $uri);
@@ -246,7 +246,7 @@ final class AppTest extends TestCase
 
     public function testMissingStaticFilesAre404NotShell(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         foreach (['/assets/missing.js', '/sw.js', '/favicon.ico'] as $uri) {
             $response = $app->handle(Request::create('GET', $uri));
             self::assertSame(404, $response->status(), $uri);
@@ -256,13 +256,13 @@ final class AppTest extends TestCase
 
     public function testNonGetPageIs405(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         self::assertSame(405, $app->handle(Request::create('POST', '/games/1'))->status());
     }
 
     public function testNonGetApiRequiresCsrfUntilP1(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         \Closure::bind(function (): void {
             $this->router->post('/echo', static fn (Request $r) => Response::ok($r->parsedBody()));
             $this->router->post('/open', static fn (Request $r) => Response::ok($r->parsedBody()), ['csrf' => false]);
@@ -290,7 +290,7 @@ final class AppTest extends TestCase
 
     public function testUnhandledExceptionIs500WithoutDetails(): void
     {
-        $app = $this->app(self::config(), SystemStatus::fixed('ok', '0001'));
+        $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION));
         \Closure::bind(function (): void {
             $this->router->get('/boom', static function (): Response {
                 throw new \LogicException('secret detail');

@@ -12,7 +12,7 @@ defined('JDR_BOOT') || exit;
 defined('JDR_ROOT') || define('JDR_ROOT', dirname(__DIR__));
 
 /** Last migration required by this code (compared with settings.db_version). */
-defined('REQUIRED_DB_VERSION') || define('REQUIRED_DB_VERSION', '0001');
+defined('REQUIRED_DB_VERSION') || define('REQUIRED_DB_VERSION', '0002');
 
 /** Incremented on every incompatible change of the API/events contract (X-Protocol-Version). */
 defined('PROTOCOL_VERSION') || define('PROTOCOL_VERSION', 1);

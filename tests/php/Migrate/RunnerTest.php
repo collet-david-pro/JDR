@@ -9,6 +9,7 @@ use JDR\Migrate\CallbackLogger;
 use JDR\Migrate\ChecksumMismatchException;
 use JDR\Migrate\Lock;
 use JDR\Migrate\MigrationFailedException;
+use JDR\Migrate\MigrationFile;
 use JDR\Migrate\MigrationLockedException;
 use JDR\Migrate\Runner;
 use JDR\Migrate\SqlSplitter;
@@ -56,6 +57,7 @@ final class RunnerTest extends DbTestCase
         self::assertSame('pending', $pending[0]['status']);
 
         $done = $runner->runAll();
+        self::assertCount(self::realMigrationCount(), $done);
         self::assertSame('0001', $done[0]['version']);
         self::assertSame('applied', $done[0]['status']);
 
@@ -63,8 +65,8 @@ final class RunnerTest extends DbTestCase
             self::assertTrue($this->db->tableExists($table), "Missing table $table");
         }
         self::assertSame([], $runner->pending());
-        self::assertSame('"0001"', $this->settingValue('db_version'));
-        self::assertSame('0001', $runner->currentVersion());
+        self::assertSame('"' . self::latestRealVersion() . '"', $this->settingValue('db_version'));
+        self::assertSame(self::latestRealVersion(), $runner->currentVersion());
 
         $status = $runner->status();
         self::assertSame('applied', $status[0]['status']);
@@ -80,13 +82,16 @@ final class RunnerTest extends DbTestCase
     public function testRunningTwiceIsHarmless(): void
     {
         $runner = new Runner($this->db, self::migrationsDir());
-        self::assertCount(1, $runner->runAll());
+        self::assertCount(self::realMigrationCount(), $runner->runAll());
 
         $again = new Runner(self::newDb(), self::migrationsDir());
         self::assertSame([], $again->runAll());
         self::assertNull($again->runNext());
         self::assertSame([], $again->pending());
-        self::assertSame(1, $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('schema_migrations')));
+        self::assertSame(
+            self::realMigrationCount(),
+            $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('schema_migrations'))
+        );
     }
 
     public function testInitialMigrationIsReplayableAfterPartialRun(): void
@@ -103,7 +108,7 @@ final class RunnerTest extends DbTestCase
 
         $log = new CallbackLogger();
         $runner = new Runner($this->db, self::migrationsDir(), $log);
-        self::assertCount(1, $runner->runAll());
+        self::assertCount(self::realMigrationCount(), $runner->runAll());
         foreach (self::SCHEMA_TABLES as $table) {
             self::assertTrue($this->db->tableExists($table), "Missing table $table");
         }
@@ -112,7 +117,19 @@ final class RunnerTest extends DbTestCase
 
         // Full replay of an already complete schema also succeeds.
         $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations'));
-        self::assertCount(1, (new Runner($this->db, self::migrationsDir()))->runAll());
+        self::assertCount(self::realMigrationCount(), (new Runner($this->db, self::migrationsDir()))->runAll());
+    }
+
+    private static function realMigrationCount(): int
+    {
+        return count(MigrationFile::discover(self::migrationsDir()));
+    }
+
+    private static function latestRealVersion(): string
+    {
+        $files = MigrationFile::discover(self::migrationsDir());
+
+        return $files[count($files) - 1]->version;
     }
 
     // ------------------------------------------------------------------
