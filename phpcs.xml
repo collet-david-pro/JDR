@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!-- PHP_CodeSniffer, dev only. Run "phpcs" at the repository root: this file is picked up automatically. -->
+<ruleset name="JDR">
+    <description>JDR coding standard: PSR-12.</description>
+
+    <!-- Scan the whole repository and exclude what is not checked (below), rather than listing
+         index.php, install.php, update.php, cron.php: phpcs aborts on a listed path that does
+         not exist yet. -->
+    <file>.</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="encoding" value="utf-8"/>
+    <arg name="colors"/>
+    <arg value="sp"/>
+
+    <!-- Only app/, the root scripts, migrations/*.php and tests/php are checked. -->
+    <exclude-pattern>^.*/(\.git|\.github|\.vscode|\.claude)/.*$</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern type="relative">^frontend/*</exclude-pattern>
+    <exclude-pattern type="relative">^assets/*</exclude-pattern>
+    <exclude-pattern type="relative">^storage/*</exclude-pattern>
+    <exclude-pattern type="relative">^i18n/*</exclude-pattern>
+    <exclude-pattern type="relative">^dev/*</exclude-pattern>
+    <exclude-pattern type="relative">^dist/*</exclude-pattern>
+    <exclude-pattern type="relative">^docs/*</exclude-pattern>
+    <exclude-pattern type="relative">^etapes/*</exclude-pattern>
+    <exclude-pattern type="relative">^tests/(?!php/).*</exclude-pattern>
+    <exclude-pattern type="relative">^app/Vendor/*</exclude-pattern>
+    <exclude-pattern type="relative">^config(\.example)?\.php$</exclude-pattern>
+
+    <rule ref="PSR12"/>
+
+    <!-- Private PHP files start with `defined('JDR_BOOT') || exit;` (direct-access guard,
+         see docs/architecture.md) and then declare a class: this is intended, not a mixed side effect. -->
+    <rule ref="PSR1.Files.SideEffects.FoundWithSymbols">
+        <exclude-pattern>*/app/*</exclude-pattern>
+        <exclude-pattern>*/migrations/*</exclude-pattern>
+        <exclude-pattern>*/tests/php/*</exclude-pattern>
+    </rule>
+</ruleset>

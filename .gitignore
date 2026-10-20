@@ -1,1 +1,26 @@
 projet.md
+etapes/
+
+# Generated at install / build
+/config.php
+/assets/
+/sw.js
+/manifest.json
+/dist/
+
+# Runtime storage (skeleton only is versioned)
+/storage/**
+!/storage/**/
+!/storage/.htaccess
+!/storage/index.php
+!/storage/**/.gitkeep
+
+# Tooling
+node_modules/
+/dev/bin/
+.phpunit.cache/
+.phpunit.result.cache
+test-results/
+playwright-report/
+.env
+.DS_Store

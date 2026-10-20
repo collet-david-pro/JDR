@@ -1,0 +1,69 @@
+# JDR — local environment, option B (projet §4.2): Apache + PHP + MariaDB, close to production.
+#
+#   docker compose -f dev/docker-compose.yml up -d --build          # web + db
+#   docker compose -f dev/docker-compose.yml --profile mail up -d   # + Mailpit
+#
+# Variants (environment variables, or a dev/.env file):
+#   PHP_VERSION=8.3                       test another PHP version (rebuild with --build)
+#   DB_IMAGE=mysql:8.0                    test MySQL instead of MariaDB 10.3
+#                                         (then remove the volume: docker compose ... down -v)
+# See dev/README.md.
+
+name: jdr
+
+services:
+  web:
+    build:
+      context: ./docker/php
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.1}
+    image: jdr-dev-web:php${PHP_VERSION:-8.1}
+    ports:
+      - "8080:80"
+    volumes:
+      # Repository root = web root (same layout as an FTP upload).
+      - ..:/var/www/html
+    environment:
+      # Read by a local config.php written as in dev/README.md (getenv fallbacks).
+      JDR_DB_HOST: db
+      JDR_DB_PORT: "3306"
+      JDR_BASE_URL: http://localhost:8080
+      JDR_SMTP_HOST: mail
+      JDR_SMTP_PORT: "1025"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: ${DB_IMAGE:-mariadb:10.3}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: jdr_dev
+      MYSQL_USER: jdr
+      MYSQL_PASSWORD: jdr
+    ports:
+      - "3307:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # mariadb-admin (MariaDB >= 10.4 images) or mysqladmin (MariaDB 10.3, MySQL).
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -proot --silent || mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  mail:
+    # Optional SMTP catcher: web UI on http://localhost:8025, SMTP on mail:1025.
+    image: axllent/mailpit:latest
+    profiles: ["mail"]
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  db-data:
