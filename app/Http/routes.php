@@ -14,4 +14,11 @@ use JDR\Http\Controllers\SystemController;
 return static function (Router $r): void {
     $r->get('/health', [SystemController::class, 'health'], ['maintenance_exempt' => true]);
     $r->get('/version', [SystemController::class, 'version'], ['maintenance_exempt' => true]);
+
+    // One file per domain (app/Http/routes/*.php), each returning static function (Router $r): void.
+    $files = glob(__DIR__ . '/routes/*.php') ?: [];
+    sort($files);
+    foreach ($files as $file) {
+        (require $file)($r);
+    }
 };
