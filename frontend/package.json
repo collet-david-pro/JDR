@@ -1,0 +1,38 @@
+{
+  "name": "jdr-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "JDR single-page application (Svelte 5 + TypeScript + Vite). Development only: the build output goes to ../assets and ../sw.js.",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node ../dev/release.mjs manifest",
+    "build:front": "vite build",
+    "release": "npm run build && node ../dev/release.mjs package",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && tsc -p tsconfig.test.json && tsc -p tsconfig.node.json && tsc -p tsconfig.sw.json",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && tsc -p tsconfig.test.json && tsc -p tsconfig.node.json && tsc -p tsconfig.sw.json",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/node": "20.19.43",
+    "eslint": "10.13.0",
+    "eslint-plugin-svelte": "3.23.1",
+    "prettier": "3.9.10",
+    "prettier-plugin-svelte": "4.1.1",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.4",
+    "vitest": "4.1.12"
+  }
+}

@@ -1,0 +1,204 @@
+/*
+ * Design tokens (projet.md Q8). Two independent axes, set on <html> by stores/prefs.svelte.ts:
+ *   data-scheme = light | dark          (preference light / dark / auto)
+ *   data-style  = modern | fantasy | scifi   (modern = default, neutral and light)
+ * Components only use these custom properties, never raw colours.
+ * Fonts: system fonts only (no external font, no CDN: projet.md section 22).
+ */
+
+:root {
+  /* Typography */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-heading: var(--font-sans);
+  --font-mono:
+    ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 650;
+  --line-height: 1.5;
+  --line-height-tight: 1.2;
+  --heading-letter-spacing: -0.01em;
+
+  /* Spacing (4 px scale) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Shapes */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --border-width: 1px;
+
+  /* Motion (zeroed when the user prefers reduced motion, see base.css) */
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --easing: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layers */
+  --z-banner: 50;
+  --z-overlay: 100;
+
+  /* Colours: modern / light (default) */
+  color-scheme: light;
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #eef0f3;
+  --color-border: #dde1e6;
+  --color-border-strong: #b8bfc8;
+  --color-text: #1b1f24;
+  --color-text-muted: #59626e;
+  --color-primary: #2f5bd3;
+  --color-primary-hover: #2449ae;
+  --color-on-primary: #ffffff;
+  --color-primary-soft: #e8eefc;
+  --color-focus: #2f5bd3;
+  --color-success: #1e7a46;
+  --color-success-soft: #e3f4ea;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fdf1d8;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.1);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.14);
+}
+
+/* Before the script sets data-scheme: follow the system to avoid a light flash. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-scheme]) {
+    color-scheme: dark;
+    --color-bg: #111418;
+    --color-text: #e8eaed;
+  }
+}
+
+/* modern / dark */
+:root[data-scheme='dark'] {
+  color-scheme: dark;
+  --color-bg: #111418;
+  --color-surface: #1a1e24;
+  --color-surface-raised: #222730;
+  --color-surface-sunken: #0c0f12;
+  --color-border: #2e343d;
+  --color-border-strong: #4a525e;
+  --color-text: #e8eaed;
+  --color-text-muted: #a3abb6;
+  --color-primary: #7ea4ff;
+  --color-primary-hover: #a3bfff;
+  --color-on-primary: #0b1020;
+  --color-primary-soft: #1d2a4a;
+  --color-focus: #7ea4ff;
+  --color-success: #5fd394;
+  --color-success-soft: #143323;
+  --color-warning: #f0c060;
+  --color-warning-soft: #3a2c0c;
+  --color-danger: #ff8a80;
+  --color-danger-soft: #3d1614;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.55);
+}
+
+/* fantasy: warm paper tones, serif headings (system serif fonts only) */
+:root[data-style='fantasy'] {
+  --font-heading: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --heading-letter-spacing: 0.01em;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
+
+:root[data-style='fantasy'][data-scheme='light'] {
+  --color-bg: #f5efe3;
+  --color-surface: #fffaf0;
+  --color-surface-raised: #fffdf7;
+  --color-surface-sunken: #ece3d2;
+  --color-border: #ddcfb6;
+  --color-border-strong: #b9a483;
+  --color-text: #2b2118;
+  --color-text-muted: #6b5a48;
+  --color-primary: #8a3b12;
+  --color-primary-hover: #6e2e0d;
+  --color-on-primary: #fffaf0;
+  --color-primary-soft: #f5e3d6;
+  --color-focus: #8a3b12;
+  --shadow-sm: 0 1px 2px rgb(60 40 20 / 0.1), 0 1px 3px rgb(60 40 20 / 0.08);
+  --shadow-md: 0 4px 12px rgb(60 40 20 / 0.14);
+  --shadow-lg: 0 12px 32px rgb(60 40 20 / 0.18);
+}
+
+:root[data-style='fantasy'][data-scheme='dark'] {
+  --color-bg: #17120d;
+  --color-surface: #211a13;
+  --color-surface-raised: #2b2219;
+  --color-surface-sunken: #110d09;
+  --color-border: #3d3226;
+  --color-border-strong: #5c4b38;
+  --color-text: #efe6d8;
+  --color-text-muted: #bba98f;
+  --color-primary: #e0a060;
+  --color-primary-hover: #ecba85;
+  --color-on-primary: #1a1108;
+  --color-primary-soft: #3a2614;
+  --color-focus: #e0a060;
+}
+
+/* scifi: cool tones, sharp corners, monospace headings, glow shadows */
+:root[data-style='scifi'] {
+  --font-heading: var(--font-mono);
+  --heading-letter-spacing: 0.04em;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+}
+
+:root[data-style='scifi'][data-scheme='light'] {
+  --color-bg: #eef3f7;
+  --color-surface: #fbfdff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #e2eaf1;
+  --color-border: #c4d3df;
+  --color-border-strong: #8ea5b8;
+  --color-text: #0f1a24;
+  --color-text-muted: #4d6070;
+  --color-primary: #00718a;
+  --color-primary-hover: #005a6e;
+  --color-on-primary: #ffffff;
+  --color-primary-soft: #dcf1f6;
+  --color-focus: #00718a;
+}
+
+:root[data-style='scifi'][data-scheme='dark'] {
+  --color-bg: #070b12;
+  --color-surface: #0d1520;
+  --color-surface-raised: #132030;
+  --color-surface-sunken: #04070c;
+  --color-border: #1f3446;
+  --color-border-strong: #33566f;
+  --color-text: #d8f1ff;
+  --color-text-muted: #8fb0c4;
+  --color-primary: #3ddcff;
+  --color-primary-hover: #7ae8ff;
+  --color-on-primary: #00141c;
+  --color-primary-soft: #0b2c38;
+  --color-focus: #3ddcff;
+  --shadow-sm: 0 0 0 1px rgb(61 220 255 / 0.08), 0 1px 3px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 0 12px rgb(61 220 255 / 0.12), 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 0 24px rgb(61 220 255 / 0.16), 0 12px 32px rgb(0 0 0 / 0.6);
+}
