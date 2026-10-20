@@ -17,7 +17,8 @@ use JDR\Core\SystemStatus;
 /**
  * 503 + Retry-After when the site is not installed, in maintenance, or its database is behind the code.
  * Routes with option maintenance_exempt (health, version) always pass.
- * TODO(P1): let a logged-in admin through (redirected to update.php by the front-end).
+ * When only the maintenance flag is set (schema up to date), the request continues with the
+ * attribute "maintenance_flag" and MaintenanceGate lets admins (and the login routes) through.
  */
 final class Maintenance implements Middleware
 {
@@ -39,7 +40,10 @@ final class Maintenance implements Middleware
             throw new MaintenanceException($this->i18n->t('errors.not_installed'));
         }
         if ($this->status->needsMaintenance($this->requiredDbVersion)) {
-            throw new MaintenanceException();
+            if (!$this->status->maintenanceFlagOnly($this->requiredDbVersion)) {
+                throw new MaintenanceException();
+            }
+            $request->setAttribute('maintenance_flag', true);
         }
 
         return $next($request);

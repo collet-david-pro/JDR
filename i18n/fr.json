@@ -24,7 +24,12 @@
     "no": "Non",
     "ok": "OK",
     "error": "Erreur",
-    "version": "Version {version}"
+    "version": "Version {version}",
+    "actions": "Actions",
+    "copy": "Copier",
+    "copied": "Copié dans le presse-papiers.",
+    "copy_failed": "Copie impossible : sélectionnez le texte et copiez-le manuellement.",
+    "load_more": "Charger plus"
   },
   "errors": {
     "unauthenticated": "Vous devez être connecté.",
@@ -52,7 +57,15 @@
     "not_installed": "Le site n'est pas encore installé.",
     "network": "Impossible de joindre le serveur. Vérifiez votre connexion.",
     "timeout": "Le serveur met trop de temps à répondre.",
-    "unknown": "Une erreur inattendue est survenue."
+    "unknown": "Une erreur inattendue est survenue.",
+    "invalid_credentials": "Identifiant ou mot de passe incorrect.",
+    "reset_link_invalid": "Ce lien de réinitialisation est invalide, expiré ou déjà utilisé.",
+    "csrf_invalid": "Votre session a expiré. Rechargez la page puis réessayez.",
+    "registration_closed": "Les inscriptions sont fermées. Contactez l'administrateur du site.",
+    "account_suspended": "Ce compte est suspendu. Contactez l'administrateur du site.",
+    "last_admin": "Impossible : c'est le dernier administrateur actif du site.",
+    "self_action": "Vous ne pouvez pas effectuer cette action sur votre propre compte.",
+    "rate_limited_for": "Trop de tentatives. Réessayez dans {duration}."
   },
   "pages": {
     "not_found": {
@@ -60,7 +73,8 @@
       "text": "Cette page n'existe pas ou a été déplacée."
     },
     "forbidden": {
-      "title": "Accès refusé"
+      "title": "Accès refusé",
+      "text": "Vous n'avez pas les droits nécessaires pour afficher cette page."
     },
     "error": {
       "title": "Une erreur est survenue",
@@ -109,6 +123,12 @@
     },
     "admin": {
       "title": "Administration"
+    },
+    "forgot": {
+      "title": "Mot de passe oublié"
+    },
+    "reset": {
+      "title": "Nouveau mot de passe"
     }
   },
   "health": {
@@ -132,6 +152,432 @@
       "modern": "Moderne",
       "fantasy": "Fantasy",
       "scifi": "Science-fiction"
+    }
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "invalid": "Valeur invalide.",
+    "too_short": "Valeur trop courte.",
+    "too_long": "Valeur trop longue.",
+    "too_common": "Ce mot de passe est trop courant : choisissez-en un autre.",
+    "taken": "Cette valeur est déjà utilisée.",
+    "mismatch": "Les deux valeurs ne correspondent pas.",
+    "wrong_password": "Mot de passe incorrect.",
+    "fields": {
+      "email": {
+        "invalid": "Adresse e-mail invalide.",
+        "taken": "Cette adresse e-mail est déjà utilisée.",
+        "mismatch": "Cette invitation est réservée à une autre adresse e-mail."
+      },
+      "username": {
+        "invalid": "Lettres, chiffres, espaces et « _ . - » uniquement.",
+        "too_short": "Au moins 3 caractères.",
+        "too_long": "40 caractères au maximum.",
+        "taken": "Ce pseudo est déjà pris."
+      },
+      "password": {
+        "too_short": "Au moins 10 caractères.",
+        "too_long": "256 caractères au maximum."
+      },
+      "password_confirmation": {
+        "mismatch": "Les mots de passe ne correspondent pas."
+      },
+      "invitation_code": {
+        "invalid": "Invitation invalide, expirée ou déjà utilisée."
+      },
+      "storage_quota_bytes": {
+        "invalid": "Indiquez un nombre de Mo (ou laissez vide)."
+      }
+    }
+  },
+  "mail": {
+    "reset": {
+      "subject": "{site} : réinitialisation du mot de passe",
+      "body": "Bonjour {username},\n\nPour choisir un nouveau mot de passe, ouvrez ce lien (valable 1 heure, utilisable une seule fois) :\n{url}\n\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.\n"
+    }
+  },
+  "audit": {
+    "actions": {
+      "user": {
+        "create": "Création de compte",
+        "update": "Modification de compte",
+        "suspend": "Suspension de compte",
+        "unsuspend": "Réactivation de compte",
+        "reset_link": "Lien de réinitialisation généré",
+        "delete": "Suppression de compte",
+        "delete_self": "Suppression de compte par son titulaire"
+      },
+      "quota": {
+        "change": "Modification de quota"
+      },
+      "settings": {
+        "update": "Modification des réglages"
+      },
+      "smtp": {
+        "test": "Test d'envoi d'e-mail"
+      },
+      "invitation": {
+        "create": "Création d'invitation",
+        "delete": "Suppression d'invitation"
+      }
+    }
+  },
+  "diagnostic": {
+    "status": {
+      "ok": "OK",
+      "warn": "Attention",
+      "error": "Erreur"
+    },
+    "checks": {
+      "php_version": "Version de PHP",
+      "mysql_version": "Version de MySQL / MariaDB",
+      "app_version": "Version de l'application",
+      "db_version": "Version du schéma de la base",
+      "ext_pdo_mysql": "Extension pdo_mysql",
+      "ext_mbstring": "Extension mbstring",
+      "ext_json": "Extension json",
+      "ext_fileinfo": "Extension fileinfo",
+      "ext_gd": "Extension gd",
+      "ext_zlib": "Extension zlib",
+      "ext_openssl": "Extension openssl",
+      "ext_ctype": "Extension ctype",
+      "ext_session": "Extension session",
+      "ext_imagick": "Extension imagick (optionnelle)",
+      "ext_apcu": "Extension apcu (optionnelle)",
+      "ext_zip": "Extension zip (optionnelle)",
+      "ext_sodium": "Extension sodium (optionnelle)",
+      "gd_formats": "Formats d'image gérés par GD",
+      "upload_max_filesize": "Taille maximale d'un fichier envoyé (upload_max_filesize)",
+      "post_max_size": "Taille maximale d'une requête (post_max_size)",
+      "memory_limit": "Mémoire disponible (memory_limit)",
+      "max_execution_time": "Durée maximale d'exécution",
+      "output_buffering": "Tampon de sortie (output_buffering)",
+      "zlib_output_compression": "Compression de sortie (zlib.output_compression)",
+      "session_save_path": "Stockage des sessions",
+      "routing_mode": "Mode de routage",
+      "https": "Connexion HTTPS",
+      "storage_writable": "Écriture dans storage/",
+      "private_dirs": "Protection des dossiers privés",
+      "clock_skew": "Décalage d'horloge PHP / base de données (s)",
+      "disk_free": "Espace disque libre",
+      "db_size": "Taille de la base",
+      "asset_files": "Nombre d'assets",
+      "integrity": "Intégrité des fichiers (manifest.json)",
+      "sse": "Flux temps réel (SSE)"
+    },
+    "hints": {
+      "php_version": "PHP 8.1 ou plus récent est requis : changez la version de PHP dans le panneau de l'hébergeur.",
+      "mysql_version": "MySQL 5.7+ ou MariaDB 10.3+ est requis.",
+      "db_version": "La base est en retard sur le code : lancez update.php.",
+      "ext_pdo_mysql": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_mbstring": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_json": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_fileinfo": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_gd": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_zlib": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_openssl": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_ctype": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_session": "Extension obligatoire : activez-la dans la configuration PHP de l'hébergeur.",
+      "ext_imagick": "Optionnelle : améliore la qualité des images et gère le WebP animé.",
+      "ext_apcu": "Optionnelle : accélère les signaux temps réel.",
+      "ext_zip": "Optionnelle : sinon les archives sont écrites en PHP pur (plus lent).",
+      "ext_sodium": "Optionnelle : sinon le chiffrement utilise OpenSSL.",
+      "gd_formats": "GD doit gérer PNG, JPEG, WebP et GIF.",
+      "upload_max_filesize": "Inférieur à la taille maximale d'import réglée : augmentez upload_max_filesize ou baissez la limite d'import.",
+      "post_max_size": "Inférieur à la taille maximale d'import réglée : augmentez post_max_size.",
+      "memory_limit": "128 Mo minimum conseillés (256 Mo idéal).",
+      "max_execution_time": "30 secondes minimum conseillées.",
+      "output_buffering": "Un tampon de sortie peut retarder le temps réel : désactivez output_buffering si possible.",
+      "zlib_output_compression": "La compression de sortie bloque le flux temps réel : désactivez-la si possible.",
+      "session_save_path": "Le dossier des sessions n'est pas inscriptible : activez les sessions en base dans les réglages.",
+      "https": "Sans HTTPS, mots de passe et cookies circulent en clair : activez un certificat (Let's Encrypt).",
+      "storage_writable": "Le dossier storage/ doit être inscriptible par PHP.",
+      "private_dirs": "Des fichiers privés sont accessibles depuis le web (ou le test n'a pas pu joindre le site) : vérifiez les .htaccess ou la configuration du serveur (voir docs/nginx.md).",
+      "clock_skew": "Les horloges de PHP et de la base diffèrent : prévenez l'hébergeur.",
+      "disk_free": "Espace disque faible : libérez de la place (sauvegardes, corbeille).",
+      "db_size": "Taille de la base indisponible.",
+      "asset_files": "Comptage des assets indisponible.",
+      "integrity": "Des fichiers diffèrent de la version livrée ou manquent : renvoyez l'archive de mise à jour par FTP.",
+      "sse": "Le flux temps réel est tamponné par le serveur : le site basculera automatiquement sur le long polling."
+    }
+  },
+  "nav": {
+    "label": "Navigation principale",
+    "dashboard": "Tableau de bord",
+    "library": "Bibliothèque",
+    "profile": "Profil",
+    "admin": "Administration",
+    "theme": "Thème",
+    "logout": "Déconnexion"
+  },
+  "auth": {
+    "back_to_login": "Retour à la connexion",
+    "fields": {
+      "identifier": "E-mail ou pseudo",
+      "email": "Adresse e-mail",
+      "username": "Pseudo",
+      "password": "Mot de passe",
+      "password_confirmation": "Confirmation du mot de passe",
+      "current_password": "Mot de passe actuel",
+      "new_password": "Nouveau mot de passe",
+      "invitation_code": "Code d'invitation"
+    },
+    "hints": {
+      "username": "3 à 40 caractères : lettres, chiffres, espaces, « _ », « . » et « - ».",
+      "password": "Au moins 10 caractères. Évitez les mots de passe courants."
+    },
+    "login": {
+      "required": "Connectez-vous pour accéder à cette page.",
+      "remember": "Se souvenir de moi",
+      "remember_hint": "Rester connecté sur cet appareil (à éviter sur un appareil partagé).",
+      "submit": "Se connecter",
+      "forgot": "Mot de passe oublié ?",
+      "register": "Créer un compte"
+    },
+    "register": {
+      "closed": "Les inscriptions sont fermées. Contactez l'administrateur du site pour obtenir un compte.",
+      "invite_only": "L'inscription se fait sur invitation : saisissez le code reçu.",
+      "checking": "Vérification de l'invitation…",
+      "submit": "Créer mon compte",
+      "have_account": "Déjà un compte ? Se connecter",
+      "welcome": "Bienvenue, {name} !"
+    },
+    "forgot": {
+      "intro": "Indiquez l'adresse e-mail de votre compte.",
+      "submit": "Envoyer",
+      "sent": "Si un compte correspond à cette adresse, un e-mail contenant un lien de réinitialisation vient d'être envoyé.",
+      "contact_admin": "L'envoi d'e-mails n'est pas configuré sur ce site : contactez l'administrateur pour qu'il vous fournisse un lien de réinitialisation."
+    },
+    "reset": {
+      "submit": "Changer le mot de passe",
+      "done": "Votre mot de passe a été changé. Vous pouvez vous connecter.",
+      "request_new": "Demander un nouveau lien"
+    }
+  },
+  "storage": {
+    "label": "Espace de stockage",
+    "used_of": "{used} utilisés sur {quota} ({percent} %)",
+    "used_unlimited": "{used} utilisés (sans limite)"
+  },
+  "dashboard": {
+    "title": "Bonjour {name}",
+    "gm_games": "Mes parties (MJ)",
+    "gm_games_empty": "Aucune partie pour l'instant. La création de parties arrive à l'étape P3.",
+    "player_games": "Parties où je joue",
+    "player_games_empty": "Vous ne participez à aucune partie pour l'instant.",
+    "join": {
+      "title": "Rejoindre une séance",
+      "label": "Code de séance",
+      "submit": "Rejoindre",
+      "unavailable": "Disponible à l'étape P6."
+    },
+    "storage": "Stockage",
+    "library_link": "Ouvrir la bibliothèque"
+  },
+  "profile": {
+    "info": {
+      "title": "Informations du compte",
+      "locale": "Langue",
+      "locales": {
+        "fr": "Français"
+      },
+      "password_needed": "Requis pour changer d'adresse e-mail.",
+      "saved": "Profil enregistré.",
+      "unchanged": "Aucune modification à enregistrer."
+    },
+    "theme": {
+      "title": "Apparence",
+      "hint": "Enregistrée sur votre compte et appliquée sur tous vos appareils."
+    },
+    "password": {
+      "title": "Mot de passe",
+      "submit": "Changer le mot de passe",
+      "other_devices": "Vos autres appareils seront déconnectés.",
+      "changed": "Mot de passe changé. Vos autres appareils ont été déconnectés."
+    },
+    "devices": {
+      "title": "Appareils connectés",
+      "hint": "Appareils sur lesquels vous êtes resté connecté. Révoquez ceux que vous ne reconnaissez pas.",
+      "empty": "Aucun autre appareil.",
+      "current": "Cet appareil",
+      "last_used": "Dernière activité : {date}",
+      "revoke": "Révoquer",
+      "revoked": "Appareil déconnecté."
+    },
+    "data": {
+      "title": "Mes données",
+      "export_hint": "Téléchargez une copie de vos données personnelles (fichier JSON).",
+      "export": "Exporter mes données",
+      "delete_title": "Supprimer mon compte",
+      "delete_hint": "Suppression définitive du compte et des données associées. Cette action est irréversible.",
+      "delete": "Supprimer mon compte",
+      "delete_confirm": "Votre compte et vos données seront supprimés définitivement. Saisissez votre mot de passe pour confirmer.",
+      "deleted": "Votre compte a été supprimé."
+    }
+  },
+  "admin": {
+    "tabs": {
+      "label": "Sections de l'administration",
+      "dashboard": "Tableau de bord",
+      "users": "Comptes",
+      "invitations": "Invitations",
+      "settings": "Réglages",
+      "diagnostic": "Diagnostic",
+      "audit": "Journal d'audit",
+      "migrations": "Migrations"
+    },
+    "stats": {
+      "users": "Comptes",
+      "active": "Comptes actifs",
+      "suspended": "Comptes suspendus",
+      "admins": "Administrateurs",
+      "games": "Parties",
+      "maps": "Maps",
+      "storage": "Stockage total",
+      "sessions": "Séances en cours"
+    },
+    "links": {
+      "once": "Ce lien n'est affiché qu'une seule fois : copiez-le maintenant.",
+      "url": "Lien",
+      "expires": "Expire le {date}"
+    },
+    "users": {
+      "create": "Créer un compte",
+      "created": "Compte créé.",
+      "saved": "Compte enregistré.",
+      "deleted": "Compte supprimé.",
+      "suspended": "Compte suspendu : ses sessions ont été fermées.",
+      "unsuspended": "Compte réactivé.",
+      "empty": "Aucun compte ne correspond.",
+      "status": "Statut",
+      "status_all": "Tous",
+      "status_active": "Actif",
+      "status_suspended": "Suspendu",
+      "role": "Rôle",
+      "role_user": "Utilisateur",
+      "role_admin": "Administrateur",
+      "storage": "Stockage",
+      "quota_default": "quota par défaut",
+      "quota_mb": "Quota de stockage (Mo)",
+      "quota_hint": "Laissez vide pour appliquer le quota par défaut du site.",
+      "last_login": "Dernière connexion",
+      "suspend": "Suspendre",
+      "unsuspend": "Réactiver",
+      "reset_link": "Lien de réinitialisation",
+      "reset_link_title": "Lien de réinitialisation du mot de passe",
+      "initial_password": "Mot de passe initial (facultatif)",
+      "initial_password_hint": "Laissez vide pour obtenir un lien à transmettre à l'utilisateur.",
+      "edit_title": "Modifier {name}",
+      "delete_title": "Supprimer le compte",
+      "delete_confirm": "Le compte « {name} » et ses données seront supprimés définitivement."
+    },
+    "invitations": {
+      "create": "Nouvelle invitation",
+      "list": "Invitations",
+      "email": "E-mail du destinataire",
+      "email_hint": "Facultatif : réserve l'invitation à cette adresse.",
+      "max_uses": "Nombre d'utilisations",
+      "expires_in_days": "Validité (jours)",
+      "expires_hint": "Laissez vide pour une invitation sans expiration.",
+      "code": "Code",
+      "uses": "Utilisations",
+      "expires_at": "Expiration",
+      "created_at": "Créée le",
+      "anyone": "Tout le monde",
+      "never": "Jamais",
+      "empty": "Aucune invitation.",
+      "deleted": "Invitation supprimée.",
+      "delete_title": "Supprimer l'invitation",
+      "delete_confirm": "Cette invitation ne pourra plus être utilisée."
+    },
+    "settings": {
+      "saved": "Réglages enregistrés.",
+      "general": "Général",
+      "limits": "Limites et conservation",
+      "site_name": "Nom du site",
+      "base_url": "Adresse du site",
+      "default_locale": "Langue par défaut",
+      "registration_mode": "Inscriptions",
+      "registration_open": "Ouvertes",
+      "registration_invite": "Sur invitation",
+      "registration_closed": "Fermées",
+      "maintenance": "Mode maintenance",
+      "maintenance_hint": "Le site est inaccessible aux utilisateurs (sauf administrateurs).",
+      "use_db_sessions": "Sessions en base de données",
+      "use_db_sessions_hint": "À activer si les sessions PHP de l'hébergeur sont peu fiables.",
+      "default_quota_mb": "Quota par défaut (Mo)",
+      "max_upload_mb": "Taille maximale d'un fichier (Mo)",
+      "fields": {
+        "max_dimension_px": "Dimension maximale d'une image (px)",
+        "max_total_pixels": "Nombre maximal de pixels par image",
+        "max_frames": "Nombre maximal d'images d'une animation",
+        "max_animation_ms": "Durée maximale d'une animation (ms)",
+        "events_retention_hours": "Conservation des événements (heures)",
+        "versions_retention": "Versions de map conservées",
+        "trash_days": "Durée de la corbeille (jours)",
+        "session_idle_hours": "Expiration d'inactivité de session (heures)"
+      }
+    },
+    "smtp": {
+      "title": "E-mail (SMTP)",
+      "hint": "Facultatif. Sans SMTP, les liens de réinitialisation sont fournis par l'administrateur.",
+      "host": "Serveur",
+      "port": "Port",
+      "encryption": "Chiffrement",
+      "encryption_none": "Aucun",
+      "username": "Utilisateur",
+      "password": "Mot de passe",
+      "password_set": "Un mot de passe est enregistré. Laissez vide pour le conserver.",
+      "password_unset": "Aucun mot de passe enregistré.",
+      "from_email": "Adresse d'expédition",
+      "from_name": "Nom d'expéditeur",
+      "test_to": "Destinataire du test",
+      "test_hint": "Le test utilise les réglages enregistrés.",
+      "test": "Envoyer un test",
+      "test_sent": "E-mail de test envoyé.",
+      "test_failed": "Échec de l'envoi."
+    },
+    "diagnostic": {
+      "rerun": "Relancer",
+      "status": {
+        "ok": "OK",
+        "warn": "Attention",
+        "error": "Erreur"
+      },
+      "sse_title": "Flux temps réel",
+      "sse_hint": "Vérifie que l'hébergeur transmet les messages du serveur au fil de l'eau (3 messages à une seconde d'intervalle).",
+      "sse_run": "Tester le flux temps réel",
+      "sse_ok": "Les messages arrivent au fil de l'eau : le flux temps réel fonctionne.",
+      "sse_buffered": "Les messages arrivent groupés : l'hébergeur met le flux en mémoire tampon. Le site basculera sur le mode de repli (interrogation longue).",
+      "sse_failed": {
+        "zero": "Flux interrompu, aucun message reçu. Le mode de repli sera utilisé.",
+        "one": "Flux interrompu après {count} message. Le mode de repli sera utilisé.",
+        "other": "Flux interrompu après {count} messages. Le mode de repli sera utilisé."
+      },
+      "sse_times": "Réception : {times}"
+    },
+    "audit": {
+      "date": "Date",
+      "user": "Utilisateur",
+      "action": "Action",
+      "entity": "Objet",
+      "ip": "IP",
+      "data": "Détails",
+      "system": "Système",
+      "empty": "Aucune entrée."
+    },
+    "migrations": {
+      "title": "Historique des migrations",
+      "version": "Version",
+      "name": "Nom",
+      "status": "État",
+      "applied_at": "Appliquée le",
+      "duration": "Durée",
+      "ms": "{ms} ms",
+      "checksum": "Empreinte",
+      "checksum_ok": "Conforme",
+      "checksum_bad": "Modifiée",
+      "empty": "Aucune migration."
     }
   }
 }

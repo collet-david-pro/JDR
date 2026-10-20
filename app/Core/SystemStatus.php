@@ -102,6 +102,17 @@ final class SystemStatus
         return $this->maintenance || self::isBehind($this->dbVersion, $requiredDbVersion);
     }
 
+    /**
+     * True when maintenance is caused by the flag alone (schema present and up to date).
+     */
+    public function maintenanceFlagOnly(string $requiredDbVersion): bool
+    {
+        $this->load();
+
+        return !$this->schemaMissing && $this->db === self::DB_OK && $this->maintenance
+            && !self::isBehind($this->dbVersion, $requiredDbVersion);
+    }
+
     public static function isBehind(?string $current, string $required): bool
     {
         if ($current === null || preg_match('/^\d+$/', $current) !== 1) {

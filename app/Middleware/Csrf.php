@@ -10,11 +10,12 @@ use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Core\RouteMatch;
+use JDR\Core\Session\Session;
 
 /**
- * X-CSRF-Token check for non-GET methods (hash_equals with the session token).
- * Skeleton until P1: secure by default, non-GET requests are refused unless the route
- * explicitly opts out with csrf=false (public endpoints protected otherwise).
+ * Every non-GET request must carry X-CSRF-Token equal to the session token (32 random bytes,
+ * given by GET /auth/me), compared with hash_equals(). Routes with csrf=false are exempt.
+ * Refusal: 403 csrf_invalid (the client fetches a fresh token from GET /auth/me).
  */
 final class Csrf implements Middleware
 {
@@ -24,7 +25,13 @@ final class Csrf implements Middleware
         if ($request->isSafeMethod() || ($route instanceof RouteMatch && $route->option('csrf') === false)) {
             return $next($request);
         }
-        // TODO(P1): compare X-CSRF-Token with the session token using hash_equals().
-        throw new ForbiddenException('', [], 'forbidden');
+        $session = $request->attribute('session');
+        $expected = $session instanceof Session ? $session->get('_csrf') : null;
+        $given = $request->header('x-csrf-token');
+        if (!is_string($expected) || $expected === '' || !is_string($given) || !hash_equals($expected, $given)) {
+            throw new ForbiddenException('', [], 'csrf_invalid');
+        }
+
+        return $next($request);
     }
 }

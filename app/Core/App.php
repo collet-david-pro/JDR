@@ -7,6 +7,15 @@ namespace JDR\Core;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\MaintenanceException;
+use JDR\Core\Session\CookieJar;
+use JDR\Core\Session\NativeCookieJar;
+use JDR\Core\Session\NativeSessionBackend;
+use JDR\Core\Session\SessionBackend;
+use JDR\Domain\Auth\Authenticator;
+use JDR\Domain\Settings\SecretBox;
+use JDR\Domain\Settings\Settings;
+use JDR\Domain\Support\AppPaths;
+use JDR\Domain\Users\UserDataExtensions;
 use JDR\Core\Errors\MethodNotAllowedException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Http\Shell;
@@ -14,6 +23,7 @@ use JDR\Middleware\Auth;
 use JDR\Middleware\Csrf;
 use JDR\Middleware\Json;
 use JDR\Middleware\Maintenance;
+use JDR\Middleware\MaintenanceGate;
 use JDR\Middleware\RateLimit;
 use JDR\Middleware\Session;
 
@@ -96,9 +106,55 @@ final class App
             $c->get(I18n::class),
             \REQUIRED_DB_VERSION,
         ));
-        $c->set(Cron::class, static fn (Container $c): Cron => new Cron($config, $c->get(Logger::class)));
+        $c->set(Cron::class, static fn (Container $c): Cron => new Cron($config, $c->get(Logger::class), $c));
+        self::registerAccountServices($c, $publicRoot, $config);
 
         return new self($publicRoot, $config, $c, $logger, $errors);
+    }
+
+    /**
+     * Sessions, authentication, rate limiting and account services (P1).
+     * Tests swap SessionBackend/CookieJar for the memory implementations.
+     */
+    private static function registerAccountServices(Container $c, string $publicRoot, ?Config $config): void
+    {
+        $c->instance(AppPaths::class, new AppPaths(
+            $publicRoot,
+            $config?->storagePath($publicRoot) ?? $publicRoot . '/storage',
+            dirname(__DIR__, 2),
+        ));
+        $c->instance(UserDataExtensions::class, new UserDataExtensions());
+        $c->set(CookieJar::class, static fn (): CookieJar => new NativeCookieJar());
+        $c->set(SessionBackend::class, static fn (Container $c): SessionBackend => new NativeSessionBackend(
+            static fn (): ?\SessionHandlerInterface => $c->get(Settings::class)->bool('use_db_sessions')
+                ? new DbSessionHandler($c->get(Db::class), $c->get(Clock::class), (string) ($_SERVER['REMOTE_ADDR'] ?? ''))
+                : null,
+        ));
+        $c->set(Session::class, static fn (Container $c): Session => new Session(
+            $c->get(SessionBackend::class),
+            $c->get(Clock::class),
+            static function () use ($c, $config): int {
+                if ($config === null) {
+                    return 12;
+                }
+                try {
+                    return $c->get(Settings::class)->int('session_idle_hours');
+                } catch (\Throwable) {
+                    return 12;
+                }
+            },
+            $config,
+        ));
+        $c->set(Auth::class, static fn (Container $c): Auth => new Auth(
+            static fn (): ?Authenticator => $config === null ? null : $c->get(Authenticator::class),
+            $c->get(Logger::class),
+        ));
+        $c->set(RateLimit::class, static fn (Container $c): RateLimit => new RateLimit(
+            static fn (): RateLimiter => $c->get(RateLimiter::class),
+        ));
+        if ($config !== null && strlen($config->appSecret()) >= 16) {
+            $c->set(SecretBox::class, static fn (): SecretBox => new SecretBox($config->appSecret()));
+        }
     }
 
     public function container(): Container
@@ -115,6 +171,10 @@ final class App
     {
         $request = Request::fromGlobals($this->config);
         $this->handle($request)->send($request->method !== 'HEAD');
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        $this->container->get(Cron::class)->maybeRunPseudo();
     }
 
     public function cron(string $key): int
@@ -169,6 +229,7 @@ final class App
             $this->container->get(Maintenance::class),
             $this->container->get(Session::class),
             $this->container->get(Auth::class),
+            new MaintenanceGate(),
             $this->container->get(Csrf::class),
             $this->container->get(RateLimit::class),
         ]);
