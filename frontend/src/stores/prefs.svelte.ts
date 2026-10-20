@@ -1,6 +1,8 @@
 import {
   DEFAULT_THEME,
   THEME_STORAGE_KEY,
+  isSchemePreference,
+  isUiStyle,
   parseThemePrefs,
   resolveScheme,
   type ResolvedScheme,
@@ -8,9 +10,15 @@ import {
   type UiStyle,
 } from '../lib/theme';
 
+/** Server preference keys of the theme (PUT /me/prefs/{key}). */
+export const THEME_PREF_KEYS = { scheme: 'theme_scheme', style: 'theme_style' } as const;
+
+/** Sends a preference to the server (set by the auth store while signed in). */
+export type RemotePrefSync = (key: string, value: string) => void;
+
 /**
- * User interface preferences (local to the device for now; synchronised with
- * PUT /me/prefs/{key} once accounts exist, phase P1).
+ * User interface preferences: stored on the device (localStorage) and, while signed in,
+ * synchronised with the account (GET /auth/me prefs, PUT /me/prefs/{key}).
  */
 class PrefsStore {
   scheme = $state<SchemePreference>(DEFAULT_THEME.scheme);
@@ -20,6 +28,7 @@ class PrefsStore {
   readonly resolvedScheme: ResolvedScheme = $derived(resolveScheme(this.scheme, this.systemDark));
 
   private win: Window | null = null;
+  private remote: RemotePrefSync | null = null;
 
   /** Reads stored preferences, follows system settings and applies the theme to <html>. */
   init(win: Window = window): void {
@@ -46,12 +55,44 @@ class PrefsStore {
     this.scheme = scheme;
     this.persist();
     this.apply();
+    this.remote?.(THEME_PREF_KEYS.scheme, scheme);
   }
 
   setStyle(style: UiStyle): void {
     this.style = style;
     this.persist();
     this.apply();
+    this.remote?.(THEME_PREF_KEYS.style, style);
+  }
+
+  /** Enables (signed in) or disables (signed out) the server synchronisation. */
+  setRemoteSync(sync: RemotePrefSync | null): void {
+    this.remote = sync;
+  }
+
+  /**
+   * Applies the account preferences received from the server (invalid values are ignored).
+   * Returns the theme keys missing on the server, so that the caller can upload the
+   * device values.
+   */
+  applyRemote(values: Readonly<Record<string, unknown>>): string[] {
+    const missing: string[] = [];
+    const scheme = values[THEME_PREF_KEYS.scheme];
+    const style = values[THEME_PREF_KEYS.style];
+    if (isSchemePreference(scheme)) this.scheme = scheme;
+    else missing.push(THEME_PREF_KEYS.scheme);
+    if (isUiStyle(style)) this.style = style;
+    else missing.push(THEME_PREF_KEYS.style);
+    this.persist();
+    this.apply();
+    return missing;
+  }
+
+  /** Current value of a theme preference key. */
+  valueOf(key: string): string | null {
+    if (key === THEME_PREF_KEYS.scheme) return this.scheme;
+    if (key === THEME_PREF_KEYS.style) return this.style;
+    return null;
   }
 
   private persist(): void {

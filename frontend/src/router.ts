@@ -15,6 +15,13 @@ import type { RoutingMode } from './lib/boot';
 
 export type RouteParams = Readonly<Record<string, string>>;
 
+/**
+ * Who may open a route (see lib/guard.ts): `public` (anyone), `guest` (public, but a
+ * signed-in user is sent away, e.g. /login), `protected` (signed-in users, the default),
+ * `admin` (site administrators).
+ */
+export type RouteAccess = 'public' | 'guest' | 'protected' | 'admin';
+
 export interface RouteDefinition<C> {
   readonly name: string;
   readonly path: string;
@@ -24,6 +31,8 @@ export interface RouteDefinition<C> {
   readonly load?: () => Promise<{ default: C }>;
   /** i18n key of the document title. */
   readonly titleKey?: string;
+  /** Access rule; `protected` when omitted (secure by default). */
+  readonly access?: RouteAccess;
 }
 
 export interface AppLocation {

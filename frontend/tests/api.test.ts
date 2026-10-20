@@ -300,3 +300,45 @@ describe('ApiClient 401 / 503 callbacks', () => {
     expect(calls(api)).toHaveLength(1);
   });
 });
+
+describe('ApiClient CSRF renewal', () => {
+  it('refreshes the token and replays a write once after 403 csrf_invalid', async () => {
+    let token = 'old';
+    const sent: (string | null)[] = [];
+    const api: ApiClient = new ApiClient({
+      baseUrl: '/api/v1',
+      csrfToken: token,
+      sleep: () => Promise.resolve(),
+      refreshCsrf: () => {
+        token = 'new';
+        api.setCsrfToken(token);
+        return Promise.resolve();
+      },
+      fetch: ((_url: string, init?: RequestInit) => {
+        const header = new Headers(init?.headers).get('X-CSRF-Token');
+        sent.push(header);
+        return Promise.resolve(
+          header === 'new'
+            ? jsonResponse({ ok: true, data: { done: true } })
+            : jsonResponse({ ok: false, error: { code: 'csrf_invalid', message: '' } }, 403),
+        );
+      }) as unknown as typeof fetch,
+    });
+    const res = await api.post<{ done: boolean }>('/games', { name: 'x' });
+    expect(res.data.done).toBe(true);
+    expect(sent).toEqual(['old', 'new']);
+  });
+
+  it('gives up after one renewal', async () => {
+    const refreshCsrf = vi.fn(() => Promise.resolve());
+    const { api } = client(
+      () =>
+        Promise.resolve(
+          jsonResponse({ ok: false, error: { code: 'csrf_invalid', message: '' } }, 403),
+        ),
+      { refreshCsrf },
+    );
+    await expect(api.post('/games')).rejects.toMatchObject({ code: 'csrf_invalid' });
+    expect(refreshCsrf).toHaveBeenCalledTimes(1);
+  });
+});

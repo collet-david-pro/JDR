@@ -10,7 +10,9 @@ import { setServices } from './lib/services';
 import { registerServiceWorker } from './lib/sw-register';
 import { Router } from './router';
 import { routes } from './routes';
+import { requiresLogin, loginPath } from './lib/guard';
 import { appStatus } from './stores/app.svelte';
+import { AuthStore } from './stores/auth.svelte';
 import { prefs } from './stores/prefs.svelte';
 
 function start(): void {
@@ -41,19 +43,25 @@ function start(): void {
     baseUrl: boot.apiBase,
     csrfToken: boot.csrf,
     onUnauthorized: () => {
-      const { path, query } = router.state.location;
-      if (path === '/login') return;
-      const next = query.size > 0 ? `${path}?${query.toString()}` : path;
-      router.navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
+      // Session expired or revoked: forget the user, then back to the login page when the
+      // current page needs an account (public pages stay where they are).
+      auth.handleUnauthorized();
+      const { location, match } = router.state;
+      if (match !== null && requiresLogin(match.route.access)) {
+        router.navigate(loginPath(location), { replace: true });
+      }
     },
     onMaintenance: () => {
       appStatus.maintenance = true;
     },
+    refreshCsrf: (): Promise<void> => auth.bootstrap(),
   });
 
-  setServices({ boot, api, router });
+  const auth: AuthStore = new AuthStore(api, prefs);
+  setServices({ boot, api, router, auth });
   router.start();
   mount(App, { target });
+  void auth.bootstrap();
 
   if (import.meta.env.PROD) {
     registerServiceWorker(boot.basePath, (activate) => {

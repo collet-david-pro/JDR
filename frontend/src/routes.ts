@@ -7,11 +7,53 @@ import Register from './pages/Register.svelte';
 /**
  * SPA routes (projet.md section 13.1). Core pages (shell, auth, dashboard) are bundled in
  * the initial chunk; the others are loaded on demand. Order matters: first match wins.
+ * `access` (lib/guard.ts): omitted = `protected` (signed-in users only).
  */
 export const routes: readonly RouteDefinition<PageComponent>[] = [
   { name: 'home', path: '/', component: Home, titleKey: 'app.name' },
-  { name: 'login', path: '/login', component: Login, titleKey: 'pages.login.title' },
-  { name: 'register', path: '/register', component: Register, titleKey: 'pages.register.title' },
+  {
+    name: 'login',
+    path: '/login',
+    component: Login,
+    titleKey: 'pages.login.title',
+    access: 'guest',
+  },
+  {
+    name: 'register',
+    path: '/register',
+    component: Register,
+    titleKey: 'pages.register.title',
+    access: 'guest',
+  },
+  {
+    name: 'invite',
+    path: '/invite/:code',
+    component: Register,
+    titleKey: 'pages.register.title',
+    access: 'guest',
+  },
+  {
+    name: 'forgot',
+    path: '/forgot',
+    load: () => import('./pages/Forgot.svelte'),
+    titleKey: 'pages.forgot.title',
+    access: 'public',
+  },
+  {
+    name: 'reset',
+    path: '/reset/:token',
+    load: () => import('./pages/Reset.svelte'),
+    titleKey: 'pages.reset.title',
+    access: 'public',
+  },
+  {
+    // Path used by the server for the links it sends (app/Domain/Support/Links.php).
+    name: 'reset-password',
+    path: '/reset-password/:token',
+    load: () => import('./pages/Reset.svelte'),
+    titleKey: 'pages.reset.title',
+    access: 'public',
+  },
   {
     name: 'game',
     path: '/games/:id',
@@ -41,6 +83,7 @@ export const routes: readonly RouteDefinition<PageComponent>[] = [
     path: '/display',
     load: () => import('./pages/Display.svelte'),
     titleKey: 'pages.display.title',
+    access: 'public',
   },
   {
     name: 'library',
@@ -51,7 +94,7 @@ export const routes: readonly RouteDefinition<PageComponent>[] = [
   {
     name: 'profile',
     path: '/profile',
-    load: () => import('./pages/Profile.svelte'),
+    load: () => import('./pages/profile/Profile.svelte'),
     titleKey: 'pages.profile.title',
   },
   {
@@ -59,5 +102,6 @@ export const routes: readonly RouteDefinition<PageComponent>[] = [
     path: '/admin/*',
     load: () => import('./pages/admin/Admin.svelte'),
     titleKey: 'pages.admin.title',
+    access: 'admin',
   },
 ];

@@ -52,6 +52,7 @@
   /* Layers */
   --z-banner: 50;
   --z-overlay: 100;
+  --z-toast: 200;
 
   /* Colours: modern / light (default) */
   color-scheme: light;
@@ -77,6 +78,7 @@
   --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.08);
   --shadow-md: 0 4px 12px rgb(16 24 40 / 0.1);
   --shadow-lg: 0 12px 32px rgb(16 24 40 / 0.14);
+  --color-backdrop: rgb(16 24 40 / 0.45);
 }
 
 /* Before the script sets data-scheme: follow the system to avoid a light flash. */
@@ -113,6 +115,7 @@
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 0.55);
+  --color-backdrop: rgb(0 0 0 / 0.6);
 }
 
 /* fantasy: warm paper tones, serif headings (system serif fonts only) */

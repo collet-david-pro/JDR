@@ -10,6 +10,8 @@
  *   (2 retries by default, exponential backoff).
  * - 401 and 503 responses are reported through callbacks (login redirect, maintenance screen)
  *   and then thrown as ApiError like any other error.
+ * - 403 `csrf_invalid` (session renewed on the server): the token is refreshed through
+ *   `refreshCsrf` (GET /auth/me) and the request is sent again, once.
  */
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -81,6 +83,8 @@ export interface ApiClientOptions {
   readonly retryDelayMs?: number;
   readonly onUnauthorized?: (error: ApiError) => void;
   readonly onMaintenance?: (error: ApiError) => void;
+  /** Fetches a fresh CSRF token (and calls setCsrfToken) after a 403 csrf_invalid. */
+  readonly refreshCsrf?: () => Promise<void>;
   /** Injectable for tests. */
   readonly sleep?: (ms: number) => Promise<void>;
 }
@@ -131,6 +135,7 @@ export class ApiClient {
   private readonly retryDelayMs: number;
   private readonly onUnauthorized: ((error: ApiError) => void) | undefined;
   private readonly onMaintenance: ((error: ApiError) => void) | undefined;
+  private readonly refreshCsrf: (() => Promise<void>) | undefined;
   private readonly sleep: (ms: number) => Promise<void>;
   private csrf: string | null;
 
@@ -143,6 +148,7 @@ export class ApiClient {
     this.retryDelayMs = options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS;
     this.onUnauthorized = options.onUnauthorized;
     this.onMaintenance = options.onMaintenance;
+    this.refreshCsrf = options.refreshCsrf;
     this.sleep = options.sleep ?? defaultSleep;
     this.csrf = options.csrfToken ?? null;
   }
@@ -187,6 +193,7 @@ export class ApiClient {
     const url = this.url(path, options.query);
     const idempotent = method === 'GET' || method === 'HEAD';
     const maxRetries = idempotent ? (options.retries ?? this.retries) : 0;
+    let csrfRetried = false;
 
     for (let attempt = 0; ; attempt++) {
       try {
@@ -198,6 +205,17 @@ export class ApiClient {
         }
         return await this.handleResponse<T>(response, options);
       } catch (error) {
+        if (
+          error instanceof ApiError &&
+          error.code === 'csrf_invalid' &&
+          !idempotent &&
+          !csrfRetried &&
+          this.refreshCsrf !== undefined
+        ) {
+          csrfRetried = true;
+          await this.refreshCsrf();
+          continue;
+        }
         if (
           error instanceof ApiError &&
           (error.code === 'network_error' || error.code === 'timeout') &&

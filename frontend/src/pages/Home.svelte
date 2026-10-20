@@ -1,135 +1,111 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import ThemeControls from '../components/ThemeControls.svelte';
+  import Gauge from '../components/Gauge.svelte';
   import { errorMessage } from '../lib/errors';
   import { t } from '../lib/i18n';
   import type { PageProps } from '../lib/page';
-  import { services } from '../lib/services';
-  import { HealthCheck } from '../stores/health.svelte';
+  import { href, services } from '../lib/services';
+  import type { StorageUsage } from '../lib/types';
 
-  // Route props (unused by this page).
   let _props: PageProps = $props();
 
-  const { api, boot } = services();
-  const health = new HealthCheck(api);
+  const { api, auth } = services();
+  let storage = $state.raw<StorageUsage | null>(null);
+  let storageError = $state<string | null>(null);
+  /** Session codes: 8 characters, displayed XXXX-XXXX (projet.md 6.4). */
+  const codePattern = '[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}';
 
   onMount(() => {
-    void health.run();
+    api
+      .get<StorageUsage>('/me/storage')
+      .then(({ data }) => {
+        storage = data;
+      })
+      .catch((error: unknown) => {
+        storageError = errorMessage(error, t);
+      });
   });
 </script>
 
-<!-- Provisional home page (P0): API status and theme selection. Dashboard in P1/P3. -->
-<section class="home">
+<!-- Dashboard (projet.md 18.1 p.2). Games arrive in P3, joining a session in P6. -->
+<div class="dashboard">
   <header>
-    <h1>{t('app.name')}</h1>
-    <p class="subtitle">{t('app.tagline')}</p>
+    <h1>{t('dashboard.title', { name: auth.user?.username ?? '' })}</h1>
   </header>
 
-  <div class="card" aria-live="polite" aria-busy={health.status === 'loading'}>
-    <h2>{t('health.title')}</h2>
-    <ul class="status-list">
-      <li>
-        {#if health.status === 'loading'}
-          <span class="dot" aria-hidden="true"></span>{t('common.loading')}
-        {:else if health.status === 'ok'}
-          <span class="dot dot-ok" aria-hidden="true"></span>{t('health.status_ok')}
-        {:else}
-          <span class="dot dot-error" aria-hidden="true"></span>{t('health.unreachable')}
-        {/if}
-      </li>
-      {#if health.data}
-        <li>
-          <span
-            class="dot"
-            class:dot-ok={health.data.db === 'ok'}
-            class:dot-error={health.data.db !== 'ok'}
-            aria-hidden="true"
-          ></span>{t(`health.db_${health.data.db}`)}
-          {#if health.data.dbVersion}
-            <span class="muted">({t('health.db_version', { version: health.data.dbVersion })})</span
-            >
-          {/if}
-        </li>
+  <div class="grid">
+    <section class="card" aria-labelledby="gm-games">
+      <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
+      <p class="muted">{t('dashboard.gm_games_empty')}</p>
+    </section>
+
+    <section class="card" aria-labelledby="player-games">
+      <h2 id="player-games">{t('dashboard.player_games')}</h2>
+      <p class="muted">{t('dashboard.player_games_empty')}</p>
+    </section>
+
+    <section class="card" aria-labelledby="join-session">
+      <h2 id="join-session">{t('dashboard.join.title')}</h2>
+      <form class="join" onsubmit={(event) => event.preventDefault()}>
+        <label for="join-code" class="visually-hidden">{t('dashboard.join.label')}</label>
+        <input
+          id="join-code"
+          name="code"
+          placeholder="XXXX-XXXX"
+          maxlength="9"
+          pattern={codePattern}
+          autocomplete="off"
+          disabled
+          aria-describedby="join-hint"
+        />
+        <button type="submit" class="button" disabled>{t('dashboard.join.submit')}</button>
+      </form>
+      <p id="join-hint" class="small muted">{t('dashboard.join.unavailable')}</p>
+    </section>
+
+    <section class="card" aria-labelledby="storage-title">
+      <h2 id="storage-title">{t('dashboard.storage')}</h2>
+      {#if storage}
+        <Gauge label={t('storage.label')} used={storage.used_bytes} quota={storage.quota_bytes} />
+      {:else if storageError}
+        <p class="small muted">{storageError}</p>
+      {:else}
+        <p class="small muted" aria-busy="true">{t('common.loading')}</p>
       {/if}
-      <li class="muted">{t('common.version', { version: boot.version })}</li>
-    </ul>
-
-    {#if health.error}
-      <p class="error" role="alert">
-        {errorMessage(health.error, t)}
-        {#if health.error.requestId}
-          <br /><span class="muted"
-            >{t('pages.error.request_id', { id: health.error.requestId })}</span
-          >
-        {/if}
-      </p>
-    {/if}
-
-    <button
-      type="button"
-      class="button"
-      onclick={() => health.run()}
-      disabled={health.status === 'loading'}
-    >
-      {t('common.retry')}
-    </button>
+      <p><a href={href('/library')}>{t('dashboard.library_link')}</a></p>
+    </section>
   </div>
-
-  <div class="card">
-    <ThemeControls />
-  </div>
-</section>
+</div>
 
 <style>
-  .home {
+  .dashboard {
     display: grid;
     gap: var(--space-5);
-    max-width: 48rem;
   }
-  header h1 {
+  h1 {
     margin: 0;
   }
-  .subtitle {
-    margin: var(--space-2) 0 0;
-    color: var(--color-text-muted);
-  }
-  .card {
-    padding: var(--space-5);
-    background: var(--color-surface);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
-  .card h2 {
-    margin: 0 0 var(--space-4);
-    font-size: var(--font-size-lg);
-  }
-  .status-list {
+  .grid {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: var(--space-4);
+  }
+  .join {
+    display: flex;
     gap: var(--space-2);
-    margin: 0 0 var(--space-4);
-    padding: 0;
-    list-style: none;
   }
-  .dot {
-    display: inline-block;
-    width: 0.625rem;
-    height: 0.625rem;
-    margin-right: var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--color-border-strong);
+  .join input {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-sunken);
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
-  .dot-ok {
-    background: var(--color-success);
-  }
-  .dot-error {
-    background: var(--color-danger);
-  }
-  .muted {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-  }
-  .error {
-    color: var(--color-danger);
+  #join-hint {
+    margin-bottom: 0;
   }
 </style>

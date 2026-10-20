@@ -2,12 +2,14 @@ import type { PageComponent } from './page';
 import type { ApiClient } from './api';
 import type { BootConfig } from './boot';
 import type { Router } from '../router';
+import type { AuthStore } from '../stores/auth.svelte';
 
 /** Application-wide singletons, created once by main.ts. */
 export interface Services {
   readonly boot: BootConfig;
   readonly api: ApiClient;
   readonly router: Router<PageComponent>;
+  readonly auth: AuthStore;
 }
 
 let current: Services | null = null;

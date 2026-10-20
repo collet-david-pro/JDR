@@ -2,6 +2,9 @@
   import { t } from '../lib/i18n';
   import { SCHEME_PREFERENCES, UI_STYLES } from '../lib/theme';
   import { prefs } from '../stores/prefs.svelte';
+
+  // Unique radio group names: several instances may be on screen (header menu, profile).
+  const uid = $props.id();
 </script>
 
 <div class="theme-controls">
@@ -12,7 +15,7 @@
         <label class:selected={prefs.scheme === scheme}>
           <input
             type="radio"
-            name="theme-scheme"
+            name={`${uid}-scheme`}
             value={scheme}
             checked={prefs.scheme === scheme}
             onchange={() => prefs.setScheme(scheme)}
@@ -30,7 +33,7 @@
         <label class:selected={prefs.style === style}>
           <input
             type="radio"
-            name="theme-style"
+            name={`${uid}-style`}
             value={style}
             checked={prefs.style === style}
             onchange={() => prefs.setStyle(style)}
