@@ -5,9 +5,17 @@
     hint?: string | null;
     disabled?: boolean;
     name?: string;
+    onchange?: (checked: boolean) => void;
   }
 
-  let { label, checked = $bindable(), hint = null, disabled = false, name }: Props = $props();
+  let {
+    label,
+    checked = $bindable(),
+    hint = null,
+    disabled = false,
+    name,
+    onchange,
+  }: Props = $props();
   const uid = $props.id();
 </script>
 
@@ -18,6 +26,7 @@
     bind:checked
     {disabled}
     {name}
+    onchange={() => onchange?.(checked)}
     aria-describedby={hint ? `${uid}-hint` : undefined}
   />
   <label for={`${uid}-box`}>{label}</label>

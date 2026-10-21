@@ -2,6 +2,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { REJECT_REASONS } from '../src/lib/assets/reduce-plan';
+import { UPLOAD_ERROR_CODES } from '../src/lib/assets/upload-errors';
 import { INT_KEYS } from '../src/lib/settings-form';
 import { createTranslator, toMessages } from '../src/lib/translator';
 import { SCHEME_PREFERENCES, UI_STYLES } from '../src/lib/theme';
@@ -89,6 +91,11 @@ function usedKeys(): Set<string> {
   for (const code of VALIDATION_CODES) keys.add(`validation.${code}`);
   for (const key of INT_KEYS) keys.add(`admin.settings.fields.${key}`);
   for (const status of ['ok', 'warn', 'error']) keys.add(`admin.diagnostic.status.${status}`);
+  for (const reason of REJECT_REASONS) keys.add(`library.upload.reject.${reason}`);
+  for (const code of UPLOAD_ERROR_CODES) {
+    keys.add(`library.upload.errors.${code}`);
+    keys.add(`errors.${code}`);
+  }
   // Keys chosen by a condition inside t(...).
   for (const key of [
     'admin.users.suspended',

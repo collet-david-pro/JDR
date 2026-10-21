@@ -41,6 +41,11 @@ export class ApiError extends Error {
   readonly fields: Readonly<Record<string, string>>;
   /** Seconds from a Retry-After header (429, 503), when present. */
   readonly retryAfter: number | null;
+  /**
+   * The raw `error` object of the envelope (extra members such as `usages` of
+   * `asset_in_use`); empty for client-side errors.
+   */
+  readonly details: Readonly<Record<string, unknown>>;
 
   constructor(init: {
     code: string;
@@ -49,6 +54,7 @@ export class ApiError extends Error {
     requestId?: string | null;
     fields?: Readonly<Record<string, string>>;
     retryAfter?: number | null;
+    details?: Readonly<Record<string, unknown>>;
     cause?: unknown;
   }) {
     super(init.message, init.cause === undefined ? undefined : { cause: init.cause });
@@ -57,6 +63,7 @@ export class ApiError extends Error {
     this.requestId = init.requestId ?? null;
     this.fields = init.fields ?? {};
     this.retryAfter = init.retryAfter ?? null;
+    this.details = init.details ?? {};
   }
 }
 
@@ -163,6 +170,25 @@ export class ApiClient {
 
   url(path: string, query?: QueryParams): string {
     return buildApiUrl(this.baseUrl, path, query);
+  }
+
+  /**
+   * Asks for a fresh CSRF token (after a 403 `csrf_invalid` received outside `request`,
+   * e.g. by the XHR uploader). Returns false when no refresher is configured.
+   */
+  async renewCsrf(): Promise<boolean> {
+    if (this.refreshCsrf === undefined) return false;
+    await this.refreshCsrf();
+    return true;
+  }
+
+  /**
+   * Reports an error received outside `request` (XHR uploads) to the 401 / 503 callbacks,
+   * exactly as `request` does.
+   */
+  notify(error: ApiError, notifyUnauthorized = true): void {
+    if (error.status === 401 && notifyUnauthorized) this.onUnauthorized?.(error);
+    else if (error.status === 503) this.onMaintenance?.(error);
   }
 
   get<T>(path: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
@@ -311,49 +337,61 @@ export class ApiClient {
     response: Response,
     options: RequestOptions,
   ): Promise<ApiResponse<T>> {
-    const requestId = response.headers.get('X-Request-Id');
-    const retryAfter = parseRetryAfter(response.headers.get('Retry-After'));
-
-    let payload: unknown = undefined;
-    if (response.status !== 204 && response.status !== 205) {
-      const text = await response.text();
-      if (text !== '') {
-        try {
-          payload = JSON.parse(text);
-        } catch {
-          payload = undefined;
-        }
-      }
+    const text = response.status !== 204 && response.status !== 205 ? await response.text() : '';
+    try {
+      return parseEnvelope<T>(
+        response.status,
+        text,
+        response.headers.get('X-Request-Id'),
+        response.headers.get('Retry-After'),
+      );
+    } catch (error) {
+      if (error instanceof ApiError) this.notify(error, options.notifyUnauthorized !== false);
+      throw error;
     }
-
-    if (response.ok) {
-      if (response.status === 204 || response.status === 205) {
-        return { data: null as T, meta: {}, status: response.status, requestId };
-      }
-      if (isSuccessEnvelope(payload)) {
-        return {
-          data: payload.data as T,
-          meta: isRecord(payload.meta) ? payload.meta : {},
-          status: response.status,
-          requestId,
-        };
-      }
-      throw new ApiError({
-        code: 'invalid_response',
-        message: 'Invalid API response envelope',
-        status: response.status,
-        requestId,
-      });
-    }
-
-    const error = toApiError(payload, response.status, requestId, retryAfter);
-    if (response.status === 401 && options.notifyUnauthorized !== false) {
-      this.onUnauthorized?.(error);
-    } else if (response.status === 503) {
-      this.onMaintenance?.(error);
-    }
-    throw error;
   }
+}
+
+/**
+ * Turns a raw HTTP answer (status, body text, headers) into an ApiResponse, or throws the
+ * matching ApiError. Shared by ApiClient (fetch) and the XHR uploader.
+ */
+export function parseEnvelope<T>(
+  status: number,
+  text: string,
+  requestId: string | null,
+  retryAfterHeader: string | null,
+): ApiResponse<T> {
+  let payload: unknown = undefined;
+  if (status !== 204 && status !== 205 && text !== '') {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = undefined;
+    }
+  }
+
+  if (status >= 200 && status < 300) {
+    if (status === 204 || status === 205) {
+      return { data: null as T, meta: {}, status, requestId };
+    }
+    if (isSuccessEnvelope(payload)) {
+      return {
+        data: payload.data as T,
+        meta: isRecord(payload.meta) ? payload.meta : {},
+        status,
+        requestId,
+      };
+    }
+    throw new ApiError({
+      code: 'invalid_response',
+      message: 'Invalid API response envelope',
+      status,
+      requestId,
+    });
+  }
+
+  throw toApiError(payload, status, requestId, parseRetryAfter(retryAfterHeader));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -381,6 +419,7 @@ function toApiError(
       requestId,
       fields: normalizeFields(err['fields']),
       retryAfter,
+      details: err,
     });
   }
   return new ApiError({

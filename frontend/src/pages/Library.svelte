@@ -1,9 +1,9 @@
 <script lang="ts">
-  import PagePlaceholder from '../components/PagePlaceholder.svelte';
+  import LibraryView from '../components/library/LibraryView.svelte';
   import type { PageProps } from '../lib/page';
 
-  let { params }: PageProps = $props();
+  let _props: PageProps = $props();
 </script>
 
-<!-- Provisional page: delivered in phase P2. -->
-<PagePlaceholder titleKey="pages.library.title" phase="P2" {params} />
+<!-- Asset library (projet.md 18.1 p.10), loaded on demand. -->
+<LibraryView />

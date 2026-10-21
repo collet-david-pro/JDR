@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import Button from '../../components/Button.svelte';
   import ErrorAlert from '../../components/ErrorAlert.svelte';
+  import { formatCheckValue } from '../../lib/diagnostic-format';
   import { describeError, type ErrorSummary } from '../../lib/errors';
   import { t, tryT } from '../../lib/i18n';
   import { services } from '../../lib/services';
@@ -40,12 +41,7 @@
     tryT(`diagnostic.checks.${check.id}`) ?? check.id;
   const hint = (check: DiagnosticCheck): string | null =>
     check.hint_key ? (tryT(check.hint_key) ?? check.hint_key) : null;
-  const value = (check: DiagnosticCheck): string =>
-    check.value === null
-      ? ''
-      : typeof check.value === 'boolean'
-        ? t(check.value ? 'common.yes' : 'common.no')
-        : String(check.value);
+  const value = (check: DiagnosticCheck): string => formatCheckValue(check.value, t);
 
   onMount(() => {
     void load();

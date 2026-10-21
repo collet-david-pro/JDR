@@ -2,6 +2,7 @@
   import { t } from '../../lib/i18n';
   import type { PageProps } from '../../lib/page';
   import { href } from '../../lib/services';
+  import LibraryView from '../../components/library/LibraryView.svelte';
   import NotFound from '../NotFound.svelte';
   import AdminAudit from './AdminAudit.svelte';
   import AdminDiagnostic from './AdminDiagnostic.svelte';
@@ -18,6 +19,7 @@
     { slug: 'users', label: t('admin.tabs.users') },
     { slug: 'invitations', label: t('admin.tabs.invitations') },
     { slug: 'settings', label: t('admin.tabs.settings') },
+    { slug: 'library', label: t('admin.tabs.library') },
     { slug: 'diagnostic', label: t('admin.tabs.diagnostic') },
     { slug: 'audit', label: t('admin.tabs.audit') },
     { slug: 'migrations', label: t('admin.tabs.migrations') },
@@ -50,6 +52,8 @@
       <AdminInvitations />
     {:else if current === 'settings'}
       <AdminSettings />
+    {:else if current === 'library'}
+      <LibraryView admin titleLevel={2} />
     {:else if current === 'diagnostic'}
       <AdminDiagnostic />
     {:else if current === 'audit'}
