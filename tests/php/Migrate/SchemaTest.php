@@ -269,10 +269,13 @@ final class SchemaTest extends DbTestCase
             self::assertStringNotContainsStringIgnoringCase('GENERATED', (string) $row['x'], "$where: generated");
             $lob = ['json', 'text', 'mediumtext', 'longtext', 'blob', 'mediumblob', 'longblob'];
             if (in_array($row['d'], $lob, true)) {
-                self::assertNull($row['def'], "$where: no DEFAULT allowed on JSON/TEXT/BLOB (MySQL 5.7)");
+                // MariaDB reports the literal string 'NULL' for "no default" on nullable columns.
+                self::assertContains($row['def'], [null, 'NULL'], "$where: no DEFAULT allowed on JSON/TEXT/BLOB (MySQL 5.7)");
             }
             if ($row['coll'] !== null) {
-                self::assertSame('utf8mb4_unicode_ci', $row['coll'], $where);
+                // MariaDB implements JSON as LONGTEXT COLLATE utf8mb4_bin.
+                $allowed = $row['d'] === 'longtext' ? ['utf8mb4_unicode_ci', 'utf8mb4_bin'] : ['utf8mb4_unicode_ci'];
+                self::assertContains($row['coll'], $allowed, $where);
             }
             if ($row['c'] === 'id' && $row['x'] === 'auto_increment') {
                 // MariaDB and MySQL 5.7 report the display width ("bigint(20) unsigned"), MySQL 8 does not.
