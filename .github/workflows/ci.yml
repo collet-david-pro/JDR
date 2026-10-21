@@ -186,20 +186,80 @@ jobs:
           exit "$failed"
 
   e2e:
-    name: E2E (Playwright)
-    # Activé en P1 (installation complète, parcours MJ/joueurs/écran) — projet §21.
-    if: false
+    name: E2E (Playwright, Chromium/Firefox/WebKit)
+    # projet §21 / P1 criteria: browser installation on a blank database (with and without
+    # JavaScript), accounts, rate limiting, "remember me", suspension, invitations, diagnostic.
+    # dev/e2e-serve.sh (started by e2e/playwright.config.ts) copies the deliverable to a temporary
+    # folder, recreates the E2E databases and serves them with php -S (ports 8090 and 8091).
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      db:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      E2E_DB_HOST: 127.0.0.1
+      E2E_DB_PORT: '3306'
+      E2E_DB_USER: root
+      E2E_DB_PASS: root
     steps:
       - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql, gd, zip
+          coverage: none
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+
+      - name: Build the front (assets/, sw.js, manifest.json)
         working-directory: frontend
-      - run: npx playwright install --with-deps chromium firefox webkit
-        working-directory: frontend
-      - run: npx playwright test
-        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install Playwright and its browsers
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium firefox webkit
+
+      - name: Wait for the database
+        run: |
+          for i in $(seq 1 60); do
+            if mysqladmin ping -h "$E2E_DB_HOST" -P "$E2E_DB_PORT" -u"$E2E_DB_USER" -p"$E2E_DB_PASS" --silent; then
+              echo "database ready"; break
+            fi
+            if [ "$i" = 60 ]; then echo "database not ready" >&2; exit 1; fi
+            sleep 2
+          done
+
+      - name: Run Playwright
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+            e2e/logs/
+          retention-days: 7

@@ -131,4 +131,4 @@ La version vient du fichier `VERSION` à la racine (semver) : la modifier à la 
 
 ## Intégration continue
 
-`.github/workflows/ci.yml` : `php-lint` (`php -l`, PHPCS informatif), `phpunit` (PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0), `frontend` (Node 22 : lint, check, test, build, `release.mjs verify`, archives en artefact), `migrations-frozen` (échec si une migration `NNNN_*.sql|php` déjà présente sur `main` ou dans un tag `v*` est modifiée, supprimée ou renommée), `e2e` Playwright (désactivé jusqu'à la phase 1).
+`.github/workflows/ci.yml` : `php-lint` (`php -l`, PHPCS informatif), `phpunit` (PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0), `frontend` (Node 22 : lint, check, test, build, `release.mjs verify`, archives en artefact), `migrations-frozen` (échec si une migration `NNNN_*.sql|php` déjà présente sur `main` ou dans un tag `v*` est modifiée, supprimée ou renommée), `e2e` Playwright (Chromium, Firefox, WebKit ; voir `e2e/` et `dev/e2e-serve.sh`).
