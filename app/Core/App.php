@@ -11,6 +11,9 @@ use JDR\Core\Session\CookieJar;
 use JDR\Core\Session\NativeCookieJar;
 use JDR\Core\Session\NativeSessionBackend;
 use JDR\Core\Session\SessionBackend;
+use JDR\Domain\Assets\AssetUserData;
+use JDR\Domain\Assets\ImageProcessor;
+use JDR\Domain\Assets\PipelineImageProcessor;
 use JDR\Domain\Auth\Authenticator;
 use JDR\Domain\Settings\SecretBox;
 use JDR\Domain\Settings\Settings;
@@ -19,6 +22,7 @@ use JDR\Domain\Users\UserDataExtensions;
 use JDR\Core\Errors\MethodNotAllowedException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Http\Shell;
+use JDR\Imaging\ImagePipeline;
 use JDR\Middleware\Auth;
 use JDR\Middleware\Csrf;
 use JDR\Middleware\Json;
@@ -83,6 +87,7 @@ final class App
         $errors ??= new ErrorHandler($logger, $i18n, $config?->debug() ?? false);
 
         $c = new Container();
+        $c->instance(Container::class, $c);
         $c->instance(Clock::class, $clock);
         $c->instance(Logger::class, $logger);
         $c->instance(I18n::class, $i18n);
@@ -123,7 +128,18 @@ final class App
             $config?->storagePath($publicRoot) ?? $publicRoot . '/storage',
             dirname(__DIR__, 2),
         ));
-        $c->instance(UserDataExtensions::class, new UserDataExtensions());
+        $c->set(UserDataExtensions::class, static function (Container $c) use ($config): UserDataExtensions {
+            $extensions = new UserDataExtensions();
+            if ($config !== null) {
+                $extensions->add($c->get(AssetUserData::class));
+            }
+
+            return $extensions;
+        });
+        // Asset import pipeline (P2): JDR\Imaging\ImagePipeline behind the ImageProcessor interface.
+        $c->set(ImageProcessor::class, static fn (): ImageProcessor => new PipelineImageProcessor(
+            static fn (): ImagePipeline => new ImagePipeline(),
+        ));
         $c->set(CookieJar::class, static fn (): CookieJar => new NativeCookieJar());
         $c->set(SessionBackend::class, static fn (Container $c): SessionBackend => new NativeSessionBackend(
             static fn (): ?\SessionHandlerInterface => $c->get(Settings::class)->bool('use_db_sessions')

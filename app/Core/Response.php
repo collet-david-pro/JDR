@@ -18,6 +18,12 @@ final class Response
     /** @var array<string, string> canonical name => value */
     private array $headers = [];
 
+    /** @var array{path: string, offset: int, length: int}|null file body (sent in chunks) */
+    private ?array $file = null;
+
+    /** Chunk size used when streaming a file body. */
+    public const FILE_CHUNK_BYTES = 65536;
+
     /**
      * @param array<string, string> $headers
      */
@@ -154,6 +160,48 @@ final class Response
         return $this;
     }
 
+    /**
+     * Uses (a byte range of) a file as the body: it is streamed in chunks by send(), never
+     * loaded in memory. body() stays empty; file() describes what will be sent.
+     */
+    public function withFile(string $path, int $offset = 0, ?int $length = null): self
+    {
+        $size = @filesize($path);
+        if ($size === false) {
+            throw new \RuntimeException('Response file is not readable.');
+        }
+        $offset = max(0, min($offset, $size));
+        $length = $length === null ? $size - $offset : max(0, min($length, $size - $offset));
+        $this->file = ['path' => $path, 'offset' => $offset, 'length' => $length];
+        $this->body = '';
+
+        return $this;
+    }
+
+    /**
+     * @return array{path: string, offset: int, length: int}|null
+     */
+    public function file(): ?array
+    {
+        return $this->file;
+    }
+
+    /**
+     * Body as a string, including a file body (tests and small files only).
+     */
+    public function contents(): string
+    {
+        if ($this->file === null) {
+            return $this->body;
+        }
+        if ($this->file['length'] === 0) {
+            return '';
+        }
+        $data = file_get_contents($this->file['path'], false, null, $this->file['offset'], $this->file['length']);
+
+        return $data === false ? '' : $data;
+    }
+
     public function withStatus(int $status): self
     {
         $this->status = $status;
@@ -170,7 +218,44 @@ final class Response
             }
         }
         if ($withBody && $this->status !== 204 && $this->status !== 304) {
-            echo $this->body;
+            if ($this->file !== null) {
+                $this->streamFile($this->file);
+            } else {
+                echo $this->body;
+            }
+        }
+    }
+
+    /**
+     * @param array{path: string, offset: int, length: int} $file
+     */
+    private function streamFile(array $file): void
+    {
+        $handle = @fopen($file['path'], 'rb');
+        if ($handle === false) {
+            return;
+        }
+        try {
+            if ($file['offset'] > 0) {
+                fseek($handle, $file['offset']);
+            }
+            $left = $file['length'];
+            while ($left > 0 && !feof($handle)) {
+                $chunk = fread($handle, min(self::FILE_CHUNK_BYTES, $left));
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+                echo $chunk;
+                $left -= strlen($chunk);
+                if (ob_get_level() === 0) {
+                    flush();
+                }
+                if (connection_aborted() === 1) {
+                    break;
+                }
+            }
+        } finally {
+            fclose($handle);
         }
     }
 }

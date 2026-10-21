@@ -6,6 +6,7 @@ namespace JDR\Core;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Domain\Assets\AssetHousekeeping;
 use JDR\Domain\Auth\LoginAttempts;
 use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Settings\Settings;
@@ -108,6 +109,9 @@ final class Cron
             'rate_limits' => static fn (): int => $c->get(RateLimiter::class)->purge(),
             'login_attempts' => static fn (): int => $c->get(LoginAttempts::class)->purge(),
             'password_resets' => static fn (): int => $c->get(PasswordResets::class)->purgeExpired(),
+            'assets_tmp' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeTmp(),
+            'assets_job_files' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeJobFiles(),
+            'assets_trash' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeTrash(),
         ];
     }
 }

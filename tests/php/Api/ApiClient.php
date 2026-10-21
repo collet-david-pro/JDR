@@ -8,6 +8,7 @@ use JDR\Core\App;
 use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Core\Session\MemoryCookieJar;
+use JDR\Domain\Assets\UploadedFile;
 
 /**
  * A browser for the API tests: keeps cookies (from the MemoryCookieJar) and the CSRF token.
@@ -51,6 +52,37 @@ final class ApiClient
             $headers += ['X-CSRF-Token' => $this->csrf];
         }
         $request = Request::create($method, '/api/v1' . $path, $headers, $raw, '', ['REMOTE_ADDR' => $this->ip], $this->cookies);
+
+        return $this->send($request);
+    }
+
+    /**
+     * Multipart upload (no $_FILES in CLI): the file and the text fields are handed to the
+     * controller through the request attributes "multipart_files" / "multipart_fields".
+     *
+     * @param array<string, string> $fields
+     * @param array<string, string> $headers
+     */
+    public function upload(string $path, string $file, array $fields = [], ?string $clientName = null, array $headers = [], int $error = UPLOAD_ERR_OK): Response
+    {
+        $size = is_file($file) ? (int) filesize($file) : 0;
+        $headers += [
+            'User-Agent' => $this->userAgent,
+            'Content-Type' => 'multipart/form-data; boundary=----jdr',
+            'Content-Length' => (string) ($size + 512),
+        ];
+        if ($this->csrf !== null) {
+            $headers += ['X-CSRF-Token' => $this->csrf];
+        }
+        $request = Request::create('POST', '/api/v1' . $path, $headers, '', '', ['REMOTE_ADDR' => $this->ip], $this->cookies);
+        $request->setAttribute('multipart_files', ['file' => UploadedFile::fromPath($file, $clientName ?? basename($file), $error)]);
+        $request->setAttribute('multipart_fields', $fields);
+
+        return $this->send($request);
+    }
+
+    private function send(Request $request): Response
+    {
         $response = $this->app->handle($request);
         foreach ($this->jar->drain() as $name => $cookie) {
             if ($cookie['value'] === '' || ($cookie['expires'] !== 0 && $cookie['expires'] < time())) {

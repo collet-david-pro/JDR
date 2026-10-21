@@ -12,7 +12,7 @@ defined('JDR_BOOT') || exit;
  */
 final class StorageSetup
 {
-    public const DIRS = ['assets', 'backups', 'logs', 'tmp', 'cache', 'cache/ch', 'locks'];
+    public const DIRS = ['assets', 'backups', 'logs', 'tmp', 'cache', 'cache/ch', 'locks', 'jobs'];
     public const LOCK_FILE = 'install.lock';
 
     public const HTACCESS = <<<'TXT'

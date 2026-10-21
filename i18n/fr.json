@@ -65,7 +65,10 @@
     "account_suspended": "Ce compte est suspendu. Contactez l'administrateur du site.",
     "last_admin": "Impossible : c'est le dernier administrateur actif du site.",
     "self_action": "Vous ne pouvez pas effectuer cette action sur votre propre compte.",
-    "rate_limited_for": "Trop de tentatives. Réessayez dans {duration}."
+    "rate_limited_for": "Trop de tentatives. Réessayez dans {duration}.",
+    "asset_in_use": "Cette image est utilisée dans des maps ou des tokens. Supprimez-la quand même ou retirez-la d'abord.",
+    "invalid_pack": "Ce pack d'assets est invalide ou dangereux (archive ZIP incorrecte).",
+    "job_expired": "Ce traitement a expiré : ses fichiers ont été supprimés. Relancez-le."
   },
   "pages": {
     "not_found": {
@@ -188,7 +191,9 @@
       "storage_quota_bytes": {
         "invalid": "Indiquez un nombre de Mo (ou laissez vide)."
       }
-    }
+    },
+    "not_ready": "Le traitement n'est pas terminé.",
+    "empty": "Aucun élément à traiter."
   },
   "mail": {
     "reset": {
@@ -424,7 +429,8 @@
       "settings": "Réglages",
       "diagnostic": "Diagnostic",
       "audit": "Journal d'audit",
-      "migrations": "Migrations"
+      "migrations": "Migrations",
+      "library": "Bibliothèque générale"
     },
     "stats": {
       "users": "Comptes",
@@ -554,7 +560,9 @@
         "one": "Flux interrompu après {count} message. Le mode de repli sera utilisé.",
         "other": "Flux interrompu après {count} messages. Le mode de repli sera utilisé."
       },
-      "sse_times": "Réception : {times}"
+      "sse_times": "Réception : {times}",
+      "none": "aucun",
+      "more": "(+{count})"
     },
     "audit": {
       "date": "Date",
@@ -578,6 +586,161 @@
       "checksum_ok": "Conforme",
       "checksum_bad": "Modifiée",
       "empty": "Aucune migration."
+    }
+  },
+  "asset_picker": {
+    "title": "Choisir une image",
+    "hint": "Flèches pour parcourir la grille, Entrée pour choisir.",
+    "results": "Images disponibles"
+  },
+  "library": {
+    "general_title": "Bibliothèque générale",
+    "results": "Images de la bibliothèque",
+    "empty": "Aucune image ne correspond à ces critères.",
+    "animated": "Animé",
+    "favorite": "Favori",
+    "no_category": "Sans catégorie",
+    "kinds": {
+      "tile": "Tuile",
+      "object": "Objet",
+      "token": "Token",
+      "texture": "Texture",
+      "background": "Fond"
+    },
+    "scope": {
+      "mine": "Ma bibliothèque",
+      "general": "Bibliothèque générale"
+    },
+    "fields": {
+      "name": "Nom",
+      "kind": "Type",
+      "category": "Catégorie",
+      "tag": "Tag",
+      "tags": "Tags"
+    },
+    "filters": {
+      "label": "Filtrer la bibliothèque",
+      "scope": "Bibliothèque",
+      "all_kinds": "Tous les types",
+      "all_categories": "Toutes les catégories",
+      "all_tags": "Tous les tags",
+      "favorites": "Favoris uniquement",
+      "general_item": "{name} (générale)"
+    },
+    "upload": {
+      "title": "Importer des images",
+      "drop": "Glissez-déposez vos images ici (PNG, JPEG, WebP, GIF), ou",
+      "choose": "Choisir des fichiers",
+      "limits": "Jusqu'à {max} et {dimension} px de côté ; les images statiques trop grandes sont réduites automatiquement.",
+      "queue": "Fichiers en cours d'import",
+      "added": {
+        "one": "{count} fichier ajouté à la file d'import.",
+        "other": "{count} fichiers ajoutés à la file d'import."
+      },
+      "progress": "Envoi de {name}",
+      "reduced": "réduite avant envoi",
+      "already": "déjà présente",
+      "duplicate": "« {name} » est déjà dans votre bibliothèque.",
+      "retry_file": "Réessayer l'import de {name}",
+      "cancel_file": "Annuler l'import de {name}",
+      "cancel_all": "Tout annuler",
+      "clear": "Effacer les imports terminés",
+      "status": {
+        "pending": "En attente",
+        "preparing": "Analyse",
+        "reducing": "Réduction en cours",
+        "uploading": "Envoi",
+        "waiting": "Trop de requêtes : nouvel essai bientôt",
+        "done": "Importée",
+        "error": "Échec",
+        "cancelled": "Annulée"
+      },
+      "reject": {
+        "unsupported_type": "Format non accepté : seules les images PNG, JPEG, WebP et GIF sont acceptées.",
+        "animation_too_long": "Animation trop longue : {frames} images et {duration} au maximum.",
+        "animated_too_big": "Animation trop grande : {dimension} px de côté au maximum (les animations ne sont jamais réduites).",
+        "animated_too_heavy": "Animation trop lourde : {max} au maximum (les animations ne sont jamais réduites).",
+        "too_big_to_reduce": "Image beaucoup trop grande pour être réduite dans le navigateur : réduisez-la avant de l'importer.",
+        "unreadable": "Image illisible ou endommagée.",
+        "reduce_failed": "La réduction automatique n'a pas suffi : l'image dépasse toujours {max}."
+      },
+      "errors": {
+        "file_too_large": "Fichier trop lourd : {max} au maximum.",
+        "unsupported_type": "Format refusé par le serveur : seules les images PNG, JPEG, WebP et GIF valides sont acceptées.",
+        "image_too_large": "Dimensions refusées : {dimension} px de côté au maximum.",
+        "animation_too_long": "Animation refusée : {frames} images et {duration} au maximum.",
+        "quota_exceeded": "Espace de stockage plein : supprimez des images ou demandez plus d'espace à l'administrateur."
+      }
+    },
+    "detail": {
+      "format": "Format",
+      "dimensions": "Dimensions",
+      "size_px": "{width} × {height} px",
+      "weight": "Poids",
+      "animation": "Animation",
+      "frames": {
+        "one": "{count} image · {seconds} s",
+        "other": "{count} images · {seconds} s"
+      },
+      "scope": "Bibliothèque",
+      "created": "Importée le",
+      "rename": "Renommer",
+      "saved": "Modifications enregistrées.",
+      "no_tags": "Aucun tag.",
+      "add_tag": "Ajouter un tag",
+      "remove_tag": "Retirer le tag {name}",
+      "show_usages": "Voir les usages"
+    },
+    "usages": {
+      "none": "Cette image n'est utilisée nulle part.",
+      "map": "Map : {name}",
+      "token": "Token : {name}",
+      "other_owner": "(appartient à un autre compte)"
+    },
+    "delete": {
+      "title": "Supprimer l'image",
+      "confirm": "Supprimer « {name} » ? Cette action est définitive.",
+      "in_use": "« {name} » est encore utilisée :",
+      "force": "Supprimer quand même",
+      "force_hint": "Les maps et tokens concernés afficheront une texture « manquante ».",
+      "force_confirm": "Supprimer malgré les usages",
+      "done": "« {name} » a été supprimée."
+    },
+    "taxonomy": {
+      "open": "Catégories et tags",
+      "title": "Catégories et tags",
+      "categories": "Catégories",
+      "no_categories": "Aucune catégorie.",
+      "no_tags": "Aucun tag.",
+      "new_category": "Nouvelle catégorie",
+      "parent": "Catégorie parente",
+      "no_parent": "Aucune (premier niveau)",
+      "new_tag": "Nouveau tag",
+      "rename": "Renommer {name}",
+      "delete": "Supprimer {name}",
+      "category_created": "Catégorie créée.",
+      "category_renamed": "Catégorie renommée.",
+      "category_deleted": "Catégorie « {name} » supprimée.",
+      "tag_created": "Tag créé.",
+      "tag_deleted": "Tag « {name} » supprimé."
+    },
+    "packs": {
+      "export_title": "Exporter un pack",
+      "import_title": "Importer un pack",
+      "export_text": "Crée une archive ZIP de vos images (avec noms, types, catégories et tags), réimportable ici ou sur un autre site.",
+      "import_text": "Importe une archive ZIP créée par « Exporter un pack ». Les images déjà présentes ne sont pas dupliquées.",
+      "all_assets": "Toutes mes images",
+      "file": "Archive ZIP",
+      "export_start": "Lancer l'export",
+      "import_start": "Lancer l'import",
+      "sending": "Envoi de l'archive : {percent} %",
+      "progress": "{done} sur {total} ({percent} %)",
+      "export_done": "Export terminé.",
+      "import_done": "Import terminé.",
+      "import_summary": "{imported} importée(s), {duplicates} déjà présente(s), {failed} en échec.",
+      "download": "Télécharger le pack",
+      "cancelled": "Opération annulée.",
+      "failed": "L'opération a échoué."
     }
   }
 }
