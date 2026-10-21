@@ -6,6 +6,7 @@ namespace JDR\Tests\Imaging;
 
 use JDR\Imaging\DimensionGuard;
 use JDR\Imaging\GifParser;
+use JDR\Imaging\ImagePipeline;
 use JDR\Imaging\ImageRejected;
 use JDR\Imaging\JpegParser;
 use JDR\Imaging\Limits;
@@ -80,10 +81,20 @@ final class ImagingComponentsTest extends ImagingTestCase
         self::assertSame(Sniffer::WEBP, $sniffer->sniff(self::fixture('valid_webp_animated.webp')));
         self::assertNull(Sniffer::bySignature('RIFF0000AVI '));
         self::assertNull(Sniffer::bySignature('GIF88a'));
-        // Signature of a GIF but nothing else: finfo must agree, or the file is refused.
+        // A bare JPEG SOI marker: finfo must agree with the signature, or the file is refused.
+        // Older libmagic builds (e.g. the one bundled with PHP 8.1) identify it as image/jpeg:
+        // the sniffer then accepts it and the full pipeline refuses the truncated file instead.
         $path = $this->work . '/short.gif';
         file_put_contents($path, "\xFF\xD8\xFF");
-        self::assertRejected(fn () => $sniffer->sniff($path), 'unsupported_type', 'mime_mismatch');
+        if ((new \finfo(FILEINFO_MIME_TYPE))->file($path) === 'image/jpeg') {
+            self::assertSame(Sniffer::JPEG, $sniffer->sniff($path));
+            self::assertRejected(
+                fn () => (new ImagePipeline())->process($path, new Limits(), $this->work),
+                'unsupported_type',
+            );
+        } else {
+            self::assertRejected(fn () => $sniffer->sniff($path), 'unsupported_type', 'mime_mismatch');
+        }
         unlink($path);
     }
 

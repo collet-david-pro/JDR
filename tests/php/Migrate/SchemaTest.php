@@ -275,7 +275,9 @@ final class SchemaTest extends DbTestCase
                 self::assertSame('utf8mb4_unicode_ci', $row['coll'], $where);
             }
             if ($row['c'] === 'id' && $row['x'] === 'auto_increment') {
-                self::assertSame('bigint unsigned', $row['ct'], "$where: primary keys are BIGINT UNSIGNED");
+                // MariaDB and MySQL 5.7 report the display width ("bigint(20) unsigned"), MySQL 8 does not.
+                $type = (string) preg_replace('/\(\d+\)/', '', (string) $row['ct']);
+                self::assertSame('bigint unsigned', $type, "$where: primary keys are BIGINT UNSIGNED");
             }
             if (str_ends_with((string) $row['c'], '_at')) {
                 self::assertSame('datetime', $row['d'], "$where: dates are DATETIME");
