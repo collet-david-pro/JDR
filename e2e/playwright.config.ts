@@ -65,7 +65,7 @@ export default defineConfig({
     },
     ...browsers.map((name) => ({
       name,
-      testMatch: /(auth|admin|library)\.spec\.ts/,
+      testMatch: /(auth|admin|library|games)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },
     })),
