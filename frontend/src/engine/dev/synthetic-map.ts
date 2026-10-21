@@ -9,6 +9,7 @@ import {
   type ChunksChangedEvent,
   type CellValue,
   type GridSpec,
+  type GridTheme,
   type LayerDef,
   type MapView,
   type PaletteEntry,
@@ -27,6 +28,9 @@ export class SyntheticMap implements MapView {
     { id: 'walls', kind: 'objects', visible: true, locked: false, opacity: 1 },
   ];
   palette: (PaletteEntry | null)[];
+  theme: GridTheme = 'parchment';
+  /** Not maintained by the demo (nothing reads it). */
+  revision = 0;
 
   private readonly chunks = new Map<TileLayerId, Map<ChunkKey, Uint16Array>>();
   private readonly chunkListeners = new Set<(e: ChunksChangedEvent) => void>();

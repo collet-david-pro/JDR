@@ -1,7 +1,7 @@
 /**
- * DOM input on the canvas (no Pixi): pan (middle button, or primary button in pan mode, or
- * two fingers), zoom (wheel / Ctrl|Cmd + wheel / pinch, centred on the pointer) and tool
- * pointer events. Coordinates are CSS px relative to the element.
+ * DOM input on the canvas (no Pixi): pan (middle button, or primary button in pan mode, two
+ * fingers, trackpad two-finger scroll), zoom (mouse wheel / Ctrl|Cmd + wheel / trackpad or
+ * touch pinch, centred on the pointer) and tool pointer events. Coordinates are CSS px relative to the element.
  */
 
 import type { PointerModifiers } from '../editor/contracts';
@@ -13,6 +13,7 @@ import {
   pinchState,
   wheelPixels,
   wheelZoomFactor,
+  WheelClassifier,
   type PinchState,
 } from './input-math';
 
@@ -55,6 +56,7 @@ export class InputController {
   private panSamples: PanSample[] = [];
   private pinch: PinchState | null = null;
   private readonly abort = new AbortController();
+  private readonly wheel = new WheelClassifier();
 
   constructor(
     private readonly el: HTMLElement,
@@ -193,18 +195,29 @@ export class InputController {
   private onWheel(e: WheelEvent): void {
     e.preventDefault();
     const p = this.local(e);
-    const ctrl = e.ctrlKey || e.metaKey;
     const page = this.el.clientHeight || 800;
     const dy = wheelPixels(e.deltaY, e.deltaMode, page);
     const dx = wheelPixels(e.deltaX, e.deltaMode, page);
-    if (e.shiftKey && !ctrl) {
-      // Shift + wheel: pan (vertical wheel scrolls horizontally, as in most editors).
-      this.cb.panStart();
-      this.cb.pan(-(dx || dy), dx ? -dy : 0);
-      this.cb.panEnd({ vx: 0, vy: 0 });
-      return;
+    switch (this.wheel.classify(e)) {
+      case 'pan':
+        // Trackpad two-finger scroll: the content moves with the fingers.
+        this.cb.panStart();
+        this.cb.pan(-dx, -dy);
+        this.cb.panEnd({ vx: 0, vy: 0 });
+        return;
+      case 'pan-shift':
+        // Shift + mouse wheel: vertical wheel scrolls horizontally, as in most editors.
+        this.cb.panStart();
+        this.cb.pan(-(dx || dy), dx ? -dy : 0);
+        this.cb.panEnd({ vx: 0, vy: 0 });
+        return;
+      case 'pinch':
+        if (dy !== 0) this.cb.zoom(wheelZoomFactor(dy, true), p.x, p.y);
+        return;
+      case 'zoom':
+        if (dy !== 0) this.cb.zoom(wheelZoomFactor(dy, false), p.x, p.y);
+        return;
     }
-    if (dy !== 0) this.cb.zoom(wheelZoomFactor(dy, ctrl), p.x, p.y);
   }
 
   /** Ends the current single-pointer gesture (a second finger arrived). */

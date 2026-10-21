@@ -3,6 +3,9 @@
  * and the scene engine (src/engine: Pixi). Changing it requires updating both sides.
  *
  * Coordinates are in cells (projet.md 12.1): origin top-left, Y down. Chunks are 32×32 cells (12.2).
+ *
+ * Revision 2 (P4a lot C): Overlay `selection` carries `rects[]`; `palette.add` may carry
+ * `autotile`; MapView exposes `theme` and `revision`; precisions from the engine (lot A) below.
  */
 
 export const CHUNK_SIZE = 32;
@@ -12,6 +15,7 @@ export type TileLayerId = 'ground' | 'terrain' | 'decor';
 export type ObjectLayerId = 'walls' | 'props' | 'lighting' | 'labels' | 'gm';
 export type LayerId = TileLayerId | ObjectLayerId;
 
+/** Layer of the stack. `MapView.layers` is ordered bottom → top (index 0 is drawn first). */
 export interface LayerDef {
   readonly id: LayerId;
   readonly kind: 'tiles' | 'objects';
@@ -28,9 +32,15 @@ export interface PaletteEntry {
   /** Signed URL of the full image, resolved by the host page. */
   readonly url: string | null;
   readonly name: string;
+  /** Reserved for auto-tiling (projet.md 15.2); ignored in P4a. */
+  readonly autotile?: string | null;
 }
 
-/** One cell value. flags: bits 0-1 rotation ×90°, bit 2 mirror H, bit 3 mirror V (12.2). */
+/**
+ * One cell value. flags: bits 0-1 rotation ×90° (clockwise), bit 2 mirror H, bit 3 mirror V
+ * (12.2). variant: an image whose width is an exact multiple N ≥ 2 of its height is a strip of
+ * N square frames and shows frame `variant mod N`; any other image ignores the variant.
+ */
 export interface CellValue {
   readonly index: number;
   readonly variant: number;
@@ -57,6 +67,14 @@ export interface GridSpec {
   readonly unitPerCell: number;
 }
 
+/** Integer cell rectangle (origin cell, size ≥ 1). */
+export interface CellRect {
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+}
+
 /** Chunk key "cx:cy". */
 export type ChunkKey = `${number}:${number}`;
 
@@ -71,7 +89,12 @@ export interface ChunksChangedEvent {
  */
 export interface MapView {
   readonly grid: GridSpec;
+  /** Bottom → top. */
   readonly layers: readonly LayerDef[];
+  /** Grid theme saved with the map (map.meta); the engine applies it on setMap / meta change. */
+  readonly theme: GridTheme;
+  /** Local change counter, incremented by every mutation (not the server revision). */
+  readonly revision: number;
   readonly palette: readonly (PaletteEntry | null)[];
   getCell(layer: TileLayerId, x: number, y: number): CellValue;
   /** Non-empty chunks of a layer. */
@@ -83,7 +106,10 @@ export interface MapView {
   onMetaChanged(listener: () => void): () => void;
 }
 
-/** Transient drawing drawn by the engine above everything (tool previews, selection, ruler). */
+/**
+ * Transient drawing drawn by the engine above everything (tool previews, selection, ruler).
+ * All coordinates are in cells (world); the ruler ends are floats (cell centres when snapped).
+ */
 export type Overlay =
   | {
       readonly kind: 'cells';
@@ -97,13 +123,8 @@ export type Overlay =
       readonly w: number;
       readonly h: number;
     }
-  | {
-      readonly kind: 'selection';
-      readonly x: number;
-      readonly y: number;
-      readonly w: number;
-      readonly h: number;
-    }
+  /** Union of rectangles (Shift adds), drawn with marching-ants outlines. */
+  | { readonly kind: 'selection'; readonly rects: readonly CellRect[] }
   | {
       readonly kind: 'ruler';
       readonly from: readonly [number, number];
@@ -124,11 +145,15 @@ export interface MapPointerEvent {
   readonly cell: { readonly x: number; readonly y: number };
   /** Position in cells (float). */
   readonly world: { readonly x: number; readonly y: number };
-  /** 0 primary, 1 middle, 2 secondary. */
+  /** 0 primary, 1 middle, 2 secondary; -1 when no button is held (hover move, leave). */
   readonly button: number;
   readonly mods: PointerModifiers;
 }
 
+/**
+ * x, y: the cell coordinates (float) shown at the centre of the viewport; zoom: screen pixels
+ * per cellPx (1 = 100 %), clamped to 0.05–8.
+ */
 export interface CameraState {
   readonly x: number;
   readonly y: number;
@@ -137,6 +162,7 @@ export interface CameraState {
 
 /** Engine API used by the editor page (implemented in src/engine/SceneEngine.ts). */
 export interface SceneEngineApi {
+  /** Shows a map (applies its theme) and fits it in the viewport. */
   setMap(view: MapView): void;
   setGridTheme(theme: GridTheme): void;
   setGridVisible(visible: boolean): void;
@@ -165,7 +191,12 @@ export type MapOp =
       readonly layer: TileLayerId;
       readonly cells: readonly TileCell[];
     }
-  | { readonly type: 'palette.add'; readonly index: number; readonly asset_id: string }
+  | {
+      readonly type: 'palette.add';
+      readonly index: number;
+      readonly asset_id: string;
+      readonly autotile?: string | null;
+    }
   | {
       readonly type: 'map.meta';
       readonly layers?: readonly LayerDef[];

@@ -67,3 +67,55 @@ export function pinchDelta(
   const factor = from.distance > 1 && to.distance > 1 ? to.distance / from.distance : 1;
   return { factor, dx: to.cx - from.cx, dy: to.cy - from.cy };
 }
+
+/** What a wheel event does: mouse wheel zoom, pinch / Ctrl+wheel zoom, or a pan. */
+export type WheelIntent = 'zoom' | 'pinch' | 'pan' | 'pan-shift';
+
+export interface WheelSample {
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly deltaMode: number;
+  readonly ctrlKey: boolean;
+  readonly metaKey: boolean;
+  readonly shiftKey: boolean;
+  /** ms (Event.timeStamp). */
+  readonly timeStamp: number;
+}
+
+/** Events closer than this belong to the same gesture (same device). */
+export const WHEEL_GESTURE_GAP_MS = 150;
+/** A mouse notch scrolls at least this many pixels (Chrome/Edge 100–120, Safari ≥ 53). */
+const MOUSE_NOTCH_MIN_PX = 50;
+
+/**
+ * Tells a mouse wheel from a trackpad (projet.md 15.2: two-finger scroll pans, pinch zooms):
+ * - Ctrl/Cmd + wheel, which is also how browsers report a trackpad pinch ⇒ 'pinch';
+ * - Shift + wheel ⇒ 'pan-shift' (vertical wheel pans horizontally);
+ * - line/page deltas (deltaMode ≠ 0), or large integer vertical-only pixel deltas ⇒ mouse ⇒ 'zoom';
+ * - horizontal component, fractional or small pixel deltas ⇒ trackpad ⇒ 'pan'.
+ * The device is remembered for the rest of a gesture so that small inertia deltas at the end of
+ * a mouse flick (or a large trackpad swipe) do not flip the behaviour.
+ */
+export class WheelClassifier {
+  private lastAt = -Infinity;
+  private device: 'mouse' | 'trackpad' = 'mouse';
+
+  classify(e: WheelSample): WheelIntent {
+    const sameGesture = e.timeStamp - this.lastAt < WHEEL_GESTURE_GAP_MS;
+    this.lastAt = e.timeStamp;
+    if (e.ctrlKey || e.metaKey) return 'pinch';
+    const trackpadHint = e.deltaMode === 0 && (e.deltaX !== 0 || !Number.isInteger(e.deltaY));
+    if (!sameGesture) {
+      this.device =
+        e.deltaMode !== 0
+          ? 'mouse'
+          : trackpadHint || Math.abs(e.deltaY) < MOUSE_NOTCH_MIN_PX
+            ? 'trackpad'
+            : 'mouse';
+    } else if (trackpadHint) {
+      this.device = 'trackpad';
+    }
+    if (e.shiftKey) return this.device === 'trackpad' ? 'pan' : 'pan-shift';
+    return this.device === 'trackpad' ? 'pan' : 'zoom';
+  }
+}

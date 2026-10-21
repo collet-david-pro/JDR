@@ -67,14 +67,22 @@ export class OverlayRenderer {
         break;
       }
       case 'selection': {
-        const r = normalizeRect(o.x, o.y, o.w, o.h);
-        const a = toScreen(r.x, r.y);
-        const b = toScreen(r.x + r.w, r.y + r.h);
-        g.rect(a.x, a.y, b.x - a.x, b.y - a.y)
-          .fill({ color: ACCENT, alpha: 0.08 })
-          .stroke({ width: 1.5, color: DARK, alpha: 0.85, alignment: 0.5 });
-        for (const [x0, y0, x1, y1] of rectDashes(a.x, a.y, b.x - a.x, b.y - a.y, 6, 4)) {
-          g.moveTo(x0, y0).lineTo(x1, y1);
+        // Union of rectangles: each one outlined (overlaps stay readable at these alphas).
+        const boxes = o.rects.map((rect) => {
+          const r = normalizeRect(rect.x, rect.y, rect.w, rect.h);
+          const a = toScreen(r.x, r.y);
+          const b = toScreen(r.x + r.w, r.y + r.h);
+          return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y };
+        });
+        if (boxes.length === 0) break;
+        for (const b of boxes) g.rect(b.x, b.y, b.w, b.h);
+        g.fill({ color: ACCENT, alpha: 0.08 });
+        for (const b of boxes) g.rect(b.x, b.y, b.w, b.h);
+        g.stroke({ width: 1.5, color: DARK, alpha: 0.85, alignment: 0.5 });
+        for (const b of boxes) {
+          for (const [x0, y0, x1, y1] of rectDashes(b.x, b.y, b.w, b.h, 6, 4)) {
+            g.moveTo(x0, y0).lineTo(x1, y1);
+          }
         }
         g.stroke({ width: 1.5, color: LIGHT, alpha: 1, cap: 'butt' });
         break;

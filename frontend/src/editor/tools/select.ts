@@ -27,24 +27,9 @@ export function clipRect(r: CellRect, width: number, height: number): CellRect |
   return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
 }
 
-/** Overlay for a selection: a rectangle, or the cells of a multi-rectangle union. */
+/** Overlay for a selection (null when empty). */
 export function selectionOverlay(rects: readonly CellRect[]): Overlay | null {
-  if (rects.length === 0) return null;
-  if (rects.length === 1) return { kind: 'selection', ...rects[0]! };
-  const seen = new Set<string>();
-  const cells: (readonly [number, number])[] = [];
-  for (const r of rects) {
-    for (let y = r.y; y < r.y + r.h; y++) {
-      for (let x = r.x; x < r.x + r.w; x++) {
-        const k = `${x},${y}`;
-        if (!seen.has(k)) {
-          seen.add(k);
-          cells.push([x, y]);
-        }
-      }
-    }
-  }
-  return { kind: 'cells', cells };
+  return rects.length === 0 ? null : { kind: 'selection', rects };
 }
 
 export function createSelectTool(ctx: ToolContext): SelectTool {
@@ -56,6 +41,10 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
     anchor === null
       ? null
       : clipRect(rectBetween(anchor, [x, y]), ctx.doc.grid.width, ctx.doc.grid.height);
+
+  /** Selection being dragged (added to the current one with Shift). */
+  const dragOverlay = (r: CellRect): Overlay | null =>
+    selectionOverlay(additive ? unionRects(rects, r) : [r]);
 
   const result = (): ToolResult => ({ selection: rects, overlay: selectionOverlay(rects) });
 
@@ -77,13 +66,12 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
           additive = e.mods.shift;
           const r = dragRect(e.cell.x, e.cell.y);
           return {
-            overlay:
-              r === null ? selectionOverlay(additive ? rects : []) : { kind: 'selection', ...r },
+            overlay: r === null ? selectionOverlay(additive ? rects : []) : dragOverlay(r),
           };
         }
         case 'move': {
           const r = dragRect(e.cell.x, e.cell.y);
-          return r === null ? {} : { overlay: { kind: 'selection', ...r } };
+          return r === null ? {} : { overlay: dragOverlay(r) };
         }
         case 'up': {
           if (anchor === null) return {};

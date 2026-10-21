@@ -218,19 +218,24 @@ describe('selection, pipette, ruler, hand', () => {
     select.onPointer(ev('down', 1, 1));
     expect(select.onPointer(ev('move', 3, 2)).overlay).toEqual({
       kind: 'selection',
-      x: 1,
-      y: 1,
-      w: 3,
-      h: 2,
+      rects: [{ x: 1, y: 1, w: 3, h: 2 }],
     });
     expect(select.onPointer(ev('up', 3, 2)).selection).toEqual([{ x: 1, y: 1, w: 3, h: 2 }]);
     select.onPointer(ev('down', 10, 10, { shift: true }));
+    // While dragging with Shift, the preview shows the current selection plus the new rectangle.
+    expect(select.onPointer(ev('move', 12, 12, { shift: true })).overlay).toEqual({
+      kind: 'selection',
+      rects: [
+        { x: 1, y: 1, w: 3, h: 2 },
+        { x: 10, y: 10, w: 3, h: 3 },
+      ],
+    });
     const added = select.onPointer(ev('up', 30, 11, { shift: true }));
     expect(added.selection).toEqual([
       { x: 1, y: 1, w: 3, h: 2 },
       { x: 10, y: 10, w: 10, h: 2 },
     ]);
-    expect(overlayCells(added)).toBe(26);
+    expect(added.overlay).toEqual({ kind: 'selection', rects: added.selection });
     select.onPointer(ev('down', 0, 0));
     expect(select.onPointer(ev('up', 0, 0)).selection).toEqual([{ x: 0, y: 0, w: 1, h: 1 }]);
     expect(select.cancel()).toEqual({ selection: [], overlay: null });

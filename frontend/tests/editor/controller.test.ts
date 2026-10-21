@@ -74,7 +74,7 @@ describe('EditorController', () => {
     ctrl.handleAction('tool.ruler');
     expect(host.overlay).toBeNull();
     ctrl.handleAction('tool.select');
-    expect(host.overlay).toEqual({ kind: 'selection', x: 1, y: 1, w: 2, h: 2 });
+    expect(host.overlay).toEqual({ kind: 'selection', rects: [{ x: 1, y: 1, w: 2, h: 2 }] });
     ctrl.handleAction('cancel');
     expect(settings.selection).toEqual([]);
   });

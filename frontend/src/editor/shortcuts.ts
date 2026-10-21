@@ -146,16 +146,30 @@ export function shortcutLabel(
   platform: Platform,
   bindings: readonly KeyBinding[] = DEFAULT_BINDINGS,
 ): string | null {
-  const b = bindings.find((x) => x.action === action && (x.platform ?? platform) === platform);
-  if (b === undefined) return null;
+  return shortcutLabels(action, platform, bindings)[0] ?? null;
+}
+
+/** Every distinct label of an action on a platform (e.g. redo: "Ctrl+Shift+Z", "Ctrl+Y"). */
+export function shortcutLabels(
+  action: ShortcutAction,
+  platform: Platform,
+  bindings: readonly KeyBinding[] = DEFAULT_BINDINGS,
+): string[] {
+  const labels = bindings
+    .filter((b) => b.action === action && (b.platform ?? platform) === platform)
+    .map((b) => bindingLabel(b, platform));
+  return [...new Set(labels)];
+}
+
+function bindingLabel(b: KeyBinding, platform: Platform): string {
   const keyName =
     b.code !== undefined
       ? b.code.replace(/^(Digit|Numpad|Key)/, '')
       : b.key === ' '
         ? 'Space'
-        : b.key!.length === 1
-          ? b.key!.toUpperCase()
-          : b.key!;
+        : (b.key ?? '').length === 1
+          ? (b.key ?? '').toUpperCase()
+          : (b.key ?? '');
   if (platform === 'mac') {
     return `${b.mod ? '⌘' : ''}${b.alt ? '⌥' : ''}${b.shift ? '⇧' : ''}${keyName}`;
   }

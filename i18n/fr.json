@@ -862,7 +862,9 @@
       "settings": "Réglages"
     },
     "maps": {
-      "empty": "Les maps seront disponibles à l'étape P4 (éditeur de maps)."
+      "draft_title": "Éditeur de map (brouillon local)",
+      "draft_text": "Vous pouvez déjà dessiner une map dans l'éditeur. Elle reste un brouillon local : l'enregistrement sur le serveur arrive à l'étape P4b, et fermer la page efface le brouillon.",
+      "open_editor": "Ouvrir l'éditeur (brouillon local)"
     },
     "sessions": {
       "empty": "Les séances seront disponibles à l'étape P6."
@@ -1047,6 +1049,162 @@
       "title": "Navigateur non compatible",
       "text": "L'affichage des maps nécessite WebGPU ou WebGL 2, qui ne sont pas disponibles dans ce navigateur.",
       "hint": "Utilisez une version récente de Chrome, Edge, Firefox ou Safari, et vérifiez que l'accélération matérielle est activée dans les réglages du navigateur."
+    }
+  },
+  "editor": {
+    "draft": {
+      "title": "Nouveau brouillon de map",
+      "intro": "Cette map est un brouillon local : elle n'est pas enregistrée sur le serveur (l'enregistrement arrive à l'étape P4b). Fermer ou recharger la page efface le brouillon.",
+      "width": "Largeur (cases)",
+      "height": "Hauteur (cases)",
+      "size_hint": "Entre {min} et {max} cases par côté.",
+      "invalid": "Taille invalide : entre {min} et {max} cases par côté.",
+      "create": "Ouvrir l'éditeur"
+    },
+    "name": "Brouillon — {game}",
+    "back": "Retour à la partie",
+    "unsaved": "Non enregistré — P4b",
+    "unsaved_hint": "Brouillon local : la sauvegarde sur le serveur arrive à l'étape P4b. Fermer ou recharger la page efface le brouillon.",
+    "undo": "Annuler",
+    "undo_label": "Annuler : {action}",
+    "redo": "Rétablir",
+    "redo_label": "Rétablir : {action}",
+    "loading": "Chargement du moteur graphique…",
+    "load_error": "Le moteur graphique n'a pas pu démarrer.",
+    "viewport": "Carte de {width} × {height} cases. Raccourcis clavier : touche ?",
+    "help_button": "Raccourcis",
+    "zoom_in": "Zoom avant",
+    "zoom_out": "Zoom arrière",
+    "zoom_fit": "Ajuster à l'écran",
+    "grid": {
+      "show": "Grille",
+      "theme": "Thème de grille",
+      "themes": {
+        "parchment": "Parchemin",
+        "slate": "Ardoise",
+        "blueprint": "Plan technique",
+        "dark": "Sombre",
+        "light": "Clair"
+      }
+    },
+    "tools": {
+      "label": "Outils",
+      "select": "Sélection",
+      "hand": "Main",
+      "brush": "Pinceau",
+      "eraser": "Gomme",
+      "fill": "Remplissage",
+      "shape": "Formes",
+      "pipette": "Pipette",
+      "ruler": "Règle",
+      "shortcut": "Raccourci : {key}"
+    },
+    "options": {
+      "label": "Options de l'outil",
+      "size": "Taille du pinceau",
+      "brush_shape": "Forme du pinceau",
+      "shape_square": "Carrée",
+      "shape_round": "Ronde",
+      "random_variant": "Variante aléatoire",
+      "random_variant_hint": "La tuile choisie n'a qu'une image (une bande de N images carrées donne N variantes).",
+      "random_rotation": "Rotation aléatoire",
+      "kind": "Forme",
+      "rect": "Rectangle",
+      "ellipse": "Ellipse",
+      "line": "Ligne",
+      "filled": "Plein",
+      "outline": "Contour",
+      "fill_hint": "Remplit la zone de même tuile (au plus 50 000 cases).",
+      "select_hint": "Glissez pour sélectionner des cases. Maj : ajouter à la sélection. Échap : vider.",
+      "hand_hint": "Glissez pour déplacer la vue (ou maintenez Espace avec un autre outil).",
+      "pipette_hint": "Cliquez sur une case pour reprendre sa tuile.",
+      "ruler_hint": "Glissez pour mesurer une distance. Alt : sans aimantation.",
+      "tile": "Tuile : {name}",
+      "no_tile": "Aucune tuile choisie"
+    },
+    "layers": {
+      "title": "Calques",
+      "activate": "Calque actif : {name}",
+      "visible": "Visibilité de {name}",
+      "locked": "Verrou de {name}",
+      "solo": "Solo de {name}",
+      "opacity": "Opacité de {name}",
+      "up": "Monter {name}",
+      "down": "Descendre {name}",
+      "objects_hint": "Calque d'objets (murs, lumières… à l'étape P5).",
+      "names": {
+        "ground": "Sol",
+        "terrain": "Terrain",
+        "decor": "Décor",
+        "walls": "Murs",
+        "props": "Objets",
+        "lighting": "Éclairage",
+        "labels": "Étiquettes",
+        "gm": "MJ"
+      }
+    },
+    "palette": {
+      "title": "Palette de tuiles",
+      "add": "Ajouter une tuile",
+      "picker_title": "Choisir une tuile",
+      "empty": "Aucune tuile : ajoutez-en depuis la bibliothèque (images de type « Tuile »).",
+      "use": "Utiliser {name}",
+      "frames": "{count} variantes"
+    },
+    "panels": {
+      "show": "Afficher les panneaux",
+      "hide": "Masquer les panneaux"
+    },
+    "status": {
+      "label": "Barre d'état",
+      "cell": "Case {x}, {y}",
+      "no_cell": "Case —",
+      "zoom": "Zoom {value} %",
+      "fps": "{value} i/s",
+      "renderer_webgpu": "WebGPU",
+      "renderer_webgl": "WebGL 2",
+      "performance": "Mode performance",
+      "history": {
+        "zero": "Aucune action",
+        "one": "{count} action",
+        "other": "{count} actions"
+      }
+    },
+    "command": {
+      "paint": "peindre",
+      "erase": "effacer",
+      "fill": "remplir",
+      "shape": "forme",
+      "layer": "modifier le calque",
+      "layer_order": "réordonner les calques",
+      "theme": "thème de grille"
+    },
+    "notices": {
+      "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
+      "no_tile": "Choisissez d'abord une tuile dans la palette.",
+      "fill_limit": "Zone trop grande : le remplissage est limité à {limit} cases.",
+      "fill_nothing": "Rien à remplir ici."
+    },
+    "help": {
+      "title": "Raccourcis clavier",
+      "keys": "Touches",
+      "action": "Action",
+      "brush_smaller": "Réduire le pinceau",
+      "brush_larger": "Agrandir le pinceau",
+      "undo": "Annuler",
+      "redo": "Rétablir",
+      "panels": "Masquer ou afficher les panneaux (la carte doit avoir le focus)",
+      "help": "Afficher cette aide",
+      "zoom_reset": "Zoom à 100 %",
+      "zoom_fit": "Ajuster la map à l'écran",
+      "pan_hold": "Maintenir pour déplacer la vue",
+      "cancel": "Annuler le geste en cours, vider la sélection",
+      "layer": "Calque actif (1 à 9, de bas en haut)",
+      "pointer_title": "Souris et trackpad",
+      "wheel": "Molette : zoom. Maj + molette : défilement horizontal.",
+      "trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
+      "middle": "Bouton du milieu : déplacer la vue.",
+      "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ."
     }
   }
 }

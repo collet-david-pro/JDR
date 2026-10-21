@@ -177,6 +177,7 @@ export class SceneEngine implements SceneEngineApi {
   private view: MapView | null = null;
   private grid: GridSpec | null = null;
   private layersSnapshot = '';
+  private currentTheme: GridTheme | null = null;
   private viewSubscriptions: (() => void)[] = [];
 
   private cam: CameraState = { x: 0, y: 0, zoom: 1 };
@@ -336,6 +337,7 @@ export class SceneEngine implements SceneEngineApi {
     this.layersSnapshot = layersKey(view.layers);
     this.textures.setPalette(view.palette);
     this.tilemap.setMap(view);
+    this.applyTheme(view.theme);
     this.gridRenderer.drawBackground(this.grid);
     this.viewSubscriptions = [
       view.onChunksChanged((event: ChunksChangedEvent) => {
@@ -348,11 +350,16 @@ export class SceneEngine implements SceneEngineApi {
   }
 
   setGridTheme(theme: GridTheme): void {
-    this.gridRenderer.setTheme(theme);
-    this.pixi.background.color = this.gridRenderer.theme.outside;
+    this.applyTheme(theme);
     this.gridRenderer.drawBackground(this.grid);
     this.screenDirty = true;
     this.requestRender();
+  }
+
+  private applyTheme(theme: GridTheme): void {
+    this.currentTheme = theme;
+    this.gridRenderer.setTheme(theme);
+    this.pixi.background.color = this.gridRenderer.theme.outside;
   }
 
   setGridVisible(visible: boolean): void {
@@ -455,6 +462,10 @@ export class SceneEngine implements SceneEngineApi {
       prev.cellPx !== g.cellPx;
     this.grid = { ...g };
     this.textures.setPalette(view.palette);
+    if (view.theme !== this.currentTheme) {
+      this.applyTheme(view.theme);
+      if (!gridChanged) this.gridRenderer.drawBackground(this.grid);
+    }
     if (gridChanged) {
       this.tilemap.setMap(view);
       this.gridRenderer.drawBackground(this.grid);

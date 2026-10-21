@@ -1,5 +1,6 @@
 /** Editor tool interfaces (pure logic driven by MapPointerEvent, projet.md 15.2). */
 import type {
+  CellRect,
   CellValue,
   Command,
   GridSpec,
@@ -20,13 +21,8 @@ export const BRUSH_MIN = 1;
 export const BRUSH_MAX = 16;
 export const FILL_LIMIT = 50_000;
 
-/** Integer cell rectangle (inclusive origin, size ≥ 1). */
-export interface CellRect {
-  readonly x: number;
-  readonly y: number;
-  readonly w: number;
-  readonly h: number;
-}
+/** Integer cell rectangle (defined in the contract). */
+export type { CellRect } from '../contracts';
 
 /** Non-blocking message for the UI (i18n key + params). */
 export interface ToolNotice {

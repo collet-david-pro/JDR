@@ -7,15 +7,19 @@
  * them with eval-free polyfills and disables the renderer's eval check. It must run before
  * any renderer is created, hence this module: every engine file imports Pixi from here.
  *
- * Workers: the texture loader decodes images in a worker created from a `blob:` URL
- * (lib/_virtual/loadImageBitmap.worker.mjs), allowed by `worker-src 'self' blob:`; the image
- * fetch inside the worker is same-origin (`connect-src 'self'`). Canvas text uses a 2D
- * canvas (no eval). Never add 'unsafe-eval' to the CSP.
+ * Images: decoded on the main thread with fetch + createImageBitmap (asynchronous, off the
+ * main thread in practice). Pixi's worker path is disabled: before using it, Pixi checks
+ * ImageBitmap support by fetching a `data:` URL inside a worker, which `connect-src 'self'`
+ * refuses (CSP violation reported in Firefox and WebKit, P4a lot C). Canvas text uses a 2D
+ * canvas (no eval). Never add 'unsafe-eval' (nor `data:` in connect-src) to the CSP.
  *
  * This module (and everything importing it) must only be loaded with a dynamic import()
  * (see ./load.ts) so that Pixi stays out of the initial bundle (projet.md 13.1, 22).
  */
 import 'pixi.js/unsafe-eval';
+import { loadTextures } from 'pixi.js';
+
+if (loadTextures.config !== undefined) loadTextures.config.preferWorkers = false;
 
 export {
   Assets,

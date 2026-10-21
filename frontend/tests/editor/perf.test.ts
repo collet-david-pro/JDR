@@ -62,6 +62,7 @@ describe('editor core performance', () => {
     const history = new History(doc);
     const tools = createTools(context(doc, settings({ brushSize: 16, brushShape: 'round' })));
     let worst = 0;
+    const moves: number[] = [];
     const total = time(() => {
       history.execute(tools.brush.onPointer(ev('down', 20, 20)).command!);
       for (let i = 1; i <= 2000; i++) {
@@ -72,15 +73,19 @@ describe('editor core performance', () => {
           if (r.command) history.execute(r.command);
         });
         worst = Math.max(worst, t);
+        moves.push(t);
       }
       tools.brush.onPointer(ev('up', 0, 0));
     });
     const undoMs = time(() => history.undo());
+    const p95 = [...moves].sort((a, b) => a - b)[Math.floor(moves.length * 0.95)] ?? 0;
     console.info(
-      `[perf] stroke 2 000 moves size 16: total ${total.toFixed(1)} ms, worst move ${worst.toFixed(2)} ms, undo ${undoMs.toFixed(1)} ms`,
+      `[perf] stroke 2 000 moves size 16: total ${total.toFixed(1)} ms, worst move ${worst.toFixed(2)} ms, p95 ${p95.toFixed(2)} ms, undo ${undoMs.toFixed(1)} ms`,
     );
     expect(history.state.undoSize).toBe(0);
     expect(doc.chunkKeys('ground')).toEqual([]);
-    expect(worst).toBeLessThan(50);
+    // p95 (a single move may hit a GC pause when the suite runs in parallel).
+    expect(p95).toBeLessThan(16);
+    expect(worst).toBeLessThan(250);
   });
 });

@@ -276,7 +276,7 @@ export class MapDocument implements MapView {
     this._palette = this._palette.map((p) => {
       if (p === null || p.assetId !== assetId) return p;
       changed = true;
-      return { assetId, url: info.url, name: info.name };
+      return { ...p, url: info.url, name: info.name };
     });
     if (changed) this.markMeta();
   }
@@ -347,7 +347,7 @@ export class MapDocument implements MapView {
           : { type: 'tiles.set', floor: op.floor, layer: op.layer, cells: prev };
       }
       case 'palette.add':
-        this.addPalette(op.index, op.asset_id);
+        this.addPalette(op.index, op.asset_id, op.autotile ?? null);
         return null;
       case 'map.meta': {
         const layers = op.layers === undefined ? undefined : validateLayers(op.layers);
@@ -371,7 +371,7 @@ export class MapDocument implements MapView {
     }
   }
 
-  private addPalette(index: number, assetId: string): void {
+  private addPalette(index: number, assetId: string, autotile: string | null): void {
     if (!Number.isInteger(index) || index < 1 || index > 0xffff || assetId === '') {
       throw new MapOpError('bad_palette_index', `Invalid palette index ${index}`);
     }
@@ -383,7 +383,12 @@ export class MapDocument implements MapView {
     const info = this.resolveAsset(assetId);
     const next = [...this._palette];
     while (next.length < index) next.push(null);
-    next[index] = { assetId, url: info?.url ?? null, name: info?.name ?? assetId };
+    next[index] = {
+      assetId,
+      url: info?.url ?? null,
+      name: info?.name ?? assetId,
+      ...(autotile !== null ? { autotile } : {}),
+    };
     this._palette = next;
     this.markMeta();
   }
