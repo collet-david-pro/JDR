@@ -1,7 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Gauge from '../components/Gauge.svelte';
-  import { errorMessage } from '../lib/errors';
+  import GameCard from '../components/games/GameCard.svelte';
+  import GameShelf from '../components/games/GameShelf.svelte';
+  import NewGameDialog from '../components/games/NewGameDialog.svelte';
+  import { describeError, errorMessage } from '../lib/errors';
+  import { DashboardGames } from '../lib/games/dashboard.svelte';
+  import { gamesClient } from '../lib/games/service';
   import { t } from '../lib/i18n';
   import type { PageProps } from '../lib/page';
   import { href, services } from '../lib/services';
@@ -9,13 +14,17 @@
 
   let _props: PageProps = $props();
 
-  const { api, auth } = services();
+  const { api, auth, router } = services();
+  const games = new DashboardGames(gamesClient());
+  let creating = $state(false);
+  const gamesFailure = $derived(games.error === null ? null : describeError(games.error, t));
   let storage = $state.raw<StorageUsage | null>(null);
   let storageError = $state<string | null>(null);
   /** Session codes: 8 characters, displayed XXXX-XXXX (projet.md 6.4). */
   const codePattern = '[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}';
 
   onMount(() => {
+    void games.load();
     api
       .get<StorageUsage>('/me/storage')
       .then(({ data }) => {
@@ -27,21 +36,56 @@
   });
 </script>
 
-<!-- Dashboard (projet.md 18.1 p.2). Games arrive in P3, joining a session in P6. -->
+<!-- Dashboard (projet.md 18.1 p.2). Joining a session arrives in P6. -->
 <div class="dashboard">
   <header>
     <h1>{t('dashboard.title', { name: auth.user?.username ?? '' })}</h1>
   </header>
 
   <div class="grid">
-    <section class="card" aria-labelledby="gm-games">
-      <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
-      <p class="muted">{t('dashboard.gm_games_empty')}</p>
+    <section class="card games" aria-labelledby="gm-games">
+      <div class="section-head">
+        <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
+        <button type="button" class="button button-primary" onclick={() => (creating = true)}>
+          {t('games.create.open')}
+        </button>
+      </div>
+      {#if gamesFailure}
+        <div class="alert alert-error" role="alert">
+          <p>{gamesFailure.message}</p>
+          <button type="button" class="button button-small" onclick={() => games.load()}>
+            {t('common.retry')}
+          </button>
+        </div>
+      {:else if !games.loaded}
+        <p class="muted" aria-busy="true">{t('common.loading')}</p>
+      {:else if games.gm.length === 0}
+        <p class="muted">{t('games.dashboard.gm_empty')}</p>
+      {:else}
+        <ul class="game-list">
+          {#each games.gm as game (game.id)}
+            <li><GameCard {game} /></li>
+          {/each}
+        </ul>
+      {/if}
+      <GameShelf model={games} />
     </section>
 
-    <section class="card" aria-labelledby="player-games">
+    <section class="card games" aria-labelledby="player-games">
       <h2 id="player-games">{t('dashboard.player_games')}</h2>
-      <p class="muted">{t('dashboard.player_games_empty')}</p>
+      {#if gamesFailure}
+        <p class="small muted">{t('games.dashboard.unavailable')}</p>
+      {:else if !games.loaded}
+        <p class="muted" aria-busy="true">{t('common.loading')}</p>
+      {:else if games.player.length === 0}
+        <p class="muted">{t('dashboard.player_games_empty')}</p>
+      {:else}
+        <ul class="game-list">
+          {#each games.player as game (game.id)}
+            <li><GameCard {game} showGm /></li>
+          {/each}
+        </ul>
+      {/if}
     </section>
 
     <section class="card" aria-labelledby="join-session">
@@ -77,6 +121,12 @@
   </div>
 </div>
 
+<NewGameDialog
+  bind:open={creating}
+  oncreate={(input) => games.create(input)}
+  oncreated={(game) => router.navigate(`/games/${encodeURIComponent(game.id)}`)}
+/>
+
 <style>
   .dashboard {
     display: grid;
@@ -89,6 +139,33 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: var(--space-4);
+  }
+  .games {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+  .games h2 {
+    margin: 0;
+  }
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .game-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .alert p {
+    margin: 0 0 var(--space-2);
   }
   .join {
     display: flex;

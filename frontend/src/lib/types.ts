@@ -286,3 +286,145 @@ export interface Job {
   readonly progress: JobProgress;
   readonly result: unknown;
 }
+
+/* ------------------------------------------------------------------------------------------
+ * Phase P3: games, members, tokens and encounters (etapes/P03 "Contrat d'API P3").
+ * Every distance (vision, light, encounter offsets) is expressed in grid cells.
+ * ---------------------------------------------------------------------------------------- */
+
+export type GameRole = 'gm' | 'co_gm' | 'player';
+export type MemberRole = Exclude<GameRole, 'gm'>;
+
+/** `state` filter of GET /games. */
+export type GameState = 'active' | 'archived' | 'trash';
+
+export interface GameSettings {
+  readonly fog_strict: boolean;
+  readonly players_blocked_by_walls: boolean;
+  readonly players_can_move_own_tokens: boolean;
+  readonly players_see_other_pcs: boolean;
+  readonly unit_label: string;
+  readonly unit_per_cell: number;
+  readonly default_cell_px: number;
+}
+
+export interface UserRef {
+  readonly id: string;
+  readonly username: string;
+}
+
+export interface Game {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string | null;
+  readonly cover_asset_id: string | null;
+  /** Signed thumbnail URL of the cover (projet.md 9.3). */
+  readonly cover_url: string | null;
+  readonly gm: UserRef;
+  readonly my_role: GameRole;
+  readonly settings: GameSettings;
+  readonly counts: { readonly maps: number; readonly tokens: number; readonly members: number };
+  readonly archived_at: string | null;
+  readonly deleted_at: string | null;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+/** POST /games */
+export interface GameInput {
+  readonly name: string;
+  readonly description?: string;
+  readonly settings?: Partial<GameSettings>;
+}
+
+/** PATCH /games/{id} (settings may be partial). */
+export interface GamePatch {
+  readonly name?: string;
+  readonly description?: string;
+  readonly cover_asset_id?: string | null;
+  readonly settings?: Partial<GameSettings>;
+}
+
+export interface Member {
+  readonly user: UserRef;
+  /** The GM is listed with the role `gm`. */
+  readonly role: GameRole;
+  readonly joined_at: string;
+}
+
+export const TOKEN_KINDS = ['pc', 'npc', 'monster', 'object'] as const;
+export type TokenKind = (typeof TOKEN_KINDS)[number];
+
+export interface TokenVision {
+  readonly enabled: boolean;
+  /** Cells. */
+  readonly range: number;
+  /** Darkvision, cells. */
+  readonly dark: number;
+}
+
+export interface TokenLight {
+  /** Bright light radius, cells. */
+  readonly radius: number;
+  /** Dim light radius, cells. */
+  readonly dim_radius: number;
+  /** "#rrggbb" */
+  readonly color: string;
+  /** 0..1 */
+  readonly intensity: number;
+  readonly flicker: boolean;
+}
+
+export interface Token {
+  readonly id: string;
+  readonly game_id: string;
+  readonly name: string;
+  readonly asset_id: string | null;
+  readonly image: { readonly full: string; readonly thumb: string } | null;
+  readonly kind: TokenKind;
+  readonly size_w: number;
+  readonly size_h: number;
+  readonly default_owner_user_id: string | null;
+  readonly vision: TokenVision;
+  readonly light: TokenLight | null;
+  readonly ring_color: string | null;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+/** POST /games/{id}/tokens and PATCH /tokens/{id}. */
+export interface TokenInput {
+  readonly name: string;
+  readonly asset_id: string | null;
+  readonly kind: TokenKind;
+  readonly size_w: number;
+  readonly size_h: number;
+  readonly default_owner_user_id: string | null;
+  readonly vision: TokenVision;
+  readonly light: TokenLight | null;
+  readonly ring_color: string | null;
+}
+
+export interface EncounterToken {
+  readonly token_id: string;
+  /** Offsets relative to the placement point, cells. */
+  readonly dx: number;
+  readonly dy: number;
+}
+
+export interface Encounter {
+  readonly id: string;
+  readonly game_id: string;
+  readonly name: string;
+  readonly notes: string | null;
+  readonly tokens: readonly EncounterToken[];
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+/** POST /games/{id}/encounters and PATCH /encounters/{id}. */
+export interface EncounterInput {
+  readonly name: string;
+  readonly notes: string;
+  readonly tokens: readonly EncounterToken[];
+}

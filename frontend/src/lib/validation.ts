@@ -16,6 +16,9 @@ export const VALIDATION_CODES = [
   'taken',
   'mismatch',
   'wrong_password',
+  'too_small',
+  'too_large',
+  'not_found',
 ] as const;
 
 export type ValidationCode = (typeof VALIDATION_CODES)[number];
