@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- Development only (npm run dev, then open /src/engine/dev/demo.html). Not part of the
+     production build: vite.config.ts only bundles src/main.ts. -->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Engine demo</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font:
+          13px system-ui,
+          sans-serif;
+        background: #111;
+        color: #eee;
+      }
+      #bar {
+        position: absolute;
+        z-index: 1;
+        top: 8px;
+        left: 8px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 8px;
+        background: rgb(0 0 0 / 70%);
+        border-radius: 6px;
+      }
+      #host {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bar">
+      <select id="theme"></select>
+      <label><input id="grid" type="checkbox" checked /> grille</label>
+      <label><input id="pan" type="checkbox" /> main</label>
+      <button id="fit" type="button">ajuster</button>
+      <span id="info"></span>
+    </div>
+    <div id="host"></div>
+    <script type="module" src="./demo.ts"></script>
+  </body>
+</html>

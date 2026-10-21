@@ -1041,5 +1041,12 @@
       "leave_text": "Vous n'aurez plus accès à « {name} ». Le MJ pourra vous ajouter de nouveau.",
       "left": "Vous avez quitté « {name} »."
     }
+  },
+  "engine": {
+    "unsupported": {
+      "title": "Navigateur non compatible",
+      "text": "L'affichage des maps nécessite WebGPU ou WebGL 2, qui ne sont pas disponibles dans ce navigateur.",
+      "hint": "Utilisez une version récente de Chrome, Edge, Firefox ou Safari, et vérifiez que l'accélération matérielle est activée dans les réglages du navigateur."
+    }
   }
 }
