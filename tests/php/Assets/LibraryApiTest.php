@@ -42,9 +42,11 @@ final class LibraryApiTest extends AssetsTestCase
         self::assertSame([$wall['id']], $ids($page2));
         self::assertNull($page2->payload()['meta']['next_cursor']);
 
-        foreach (['/assets?scope=game:1', '/assets?scope=all', '/assets?kind=dragon', '/assets?category=abc'] as $bad) {
+        foreach (['/assets?scope=game:abc', '/assets?scope=all', '/assets?kind=dragon', '/assets?category=abc'] as $bad) {
             self::assertSame(422, $alice->get($bad)->status(), $bad);
         }
+        // P3: game scope of a game the user does not belong to (tests/php/Games for the rest).
+        self::assertSame(404, $alice->get('/assets?scope=game:1')->status());
     }
 
     public function testEditTagsCategoriesAndFavorites(): void

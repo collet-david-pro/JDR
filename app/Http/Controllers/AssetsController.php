@@ -27,6 +27,7 @@ use JDR\Domain\Assets\Input;
 use JDR\Domain\Assets\TagService;
 use JDR\Domain\Assets\UploadedFile;
 use JDR\Domain\Auth\CurrentUser;
+use JDR\Domain\Games\GamePolicy;
 use JDR\Domain\Support\Validator;
 
 /**
@@ -45,6 +46,7 @@ final class AssetsController
         private CategoryService $categories,
         private TagService $tags,
         private I18n $i18n,
+        private GamePolicy $games,
         private ?Config $config = null,
     ) {
     }
@@ -60,7 +62,7 @@ final class AssetsController
     }
 
     /**
-     * GET /assets?scope=mine|general&kind=&q=&tag=&category=&favorites=1&cursor=&limit=
+     * GET /assets?scope=mine|general|game:{id}&kind=&q=&tag=&category=&favorites=1&cursor=&limit=
      */
     public function index(Request $request): Response
     {
@@ -68,8 +70,12 @@ final class AssetsController
         $query = $request->query;
         $errors = [];
         $scope = $query['scope'] ?? 'mine';
-        if (!in_array($scope, ['mine', 'general'], true)) {
-            $errors['scope'] = 'invalid'; // game:{id} arrives in P3
+        $gameId = null;
+        if (is_string($scope) && preg_match('/^game:(\d{1,19})$/D', $scope, $m) === 1) {
+            $gameId = (int) $m[1];
+            $scope = 'game';
+        } elseif (!in_array($scope, ['mine', 'general'], true)) {
+            $errors['scope'] = 'invalid';
         }
         $kind = self::queryString($query, 'kind');
         if ($kind !== null && !in_array($kind, Asset::KINDS, true)) {
@@ -91,8 +97,16 @@ final class AssetsController
         $tag = self::queryString($query, 'tag');
         $favorites = in_array($query['favorites'] ?? null, ['1', 'true'], true);
         [$cursor, $limit] = Input::paging($request);
+        $assetIds = [];
+        if ($gameId !== null) {
+            // Contract P3 / D8: GM and co-GM get every asset of the game, a player only the cover
+            // and the images of the tokens they own by default; non-members 404.
+            $game = $this->games->requireView($user, $gameId);
+            $assetIds = $this->assets->gameAssetIds($game->id, $game->isEditor() ? null : $user->id);
+        }
         $page = $this->assets->page($user->id, [
             'scope' => (string) $scope,
+            'asset_ids' => $assetIds,
             'kind' => $kind,
             'q' => $q,
             'tag_ids' => $tag === null ? null : $this->tags->visibleIds($user->id, $tag),

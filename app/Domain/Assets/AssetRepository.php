@@ -102,10 +102,10 @@ final class AssetRepository
     }
 
     /**
-     * Library page, newest first. Filters: scope ("mine" | "general"), kind, q (name contains),
+     * Library page, newest first. Filters: scope ("mine" | "general" | "game" with asset_ids), kind, q (name contains),
      * tag_ids (any of), category_id, favorites (of $userId). Cursor = id of the last item.
      *
-     * @param array{scope: string, kind?: ?string, q?: ?string, tag_ids?: ?list<int>, category_id?: ?int, favorites?: bool} $filters
+     * @param array{scope: string, asset_ids?: list<int>, kind?: ?string, q?: ?string, tag_ids?: ?list<int>, category_id?: ?int, favorites?: bool} $filters
      * @return array{items: list<Asset>, next_cursor: ?string}
      */
     public function page(int $userId, array $filters, ?int $cursor, int $limit): array
@@ -120,6 +120,14 @@ final class AssetRepository
         }
         if ($filters['scope'] === 'general') {
             $where[] = 'a.`owner_user_id` IS NULL';
+        } elseif ($filters['scope'] === 'game') {
+            // Ids computed by gameAssetIds() for this viewer (rights already applied).
+            $gameIds = $filters['asset_ids'] ?? [];
+            if ($gameIds === []) {
+                return ['items' => [], 'next_cursor' => null];
+            }
+            $where[] = 'a.`id` IN (' . implode(', ', array_fill(0, count($gameIds), '?')) . ')';
+            array_push($params, ...$gameIds);
         } else {
             $where[] = 'a.`owner_user_id` = ?';
             $params[] = $userId;
@@ -258,6 +266,63 @@ final class AssetRepository
                 'name' => (int) $r['gm_user_id'] === $viewerId ? (string) $r['name'] : null,
             ], $tokens),
         ];
+    }
+
+    /**
+     * Assets used by a game (projet.md 9.3, contract P3 / D8), whatever their owner:
+     * $playerId null (GM, co-GM) => cover + images of the live tokens + assets of the live maps
+     * (map_asset_refs); $playerId set (player) => cover + images of the tokens they own by default.
+     *
+     * @return list<int>
+     */
+    public function gameAssetIds(int $gameId, ?int $playerId): array
+    {
+        $tokens = 'SELECT t.`asset_id` FROM ' . $this->db->t('tokens') . ' t WHERE t.`game_id` = ? '
+            . 'AND t.`deleted_at` IS NULL AND t.`asset_id` IS NOT NULL';
+        $params = [$gameId, $gameId];
+        if ($playerId !== null) {
+            $tokens .= ' AND t.`default_owner_user_id` = ?';
+            $params[] = $playerId;
+        }
+        $sql = 'SELECT g.`cover_asset_id` AS asset_id FROM ' . $this->db->t('games') . ' g WHERE g.`id` = ? '
+            . 'AND g.`cover_asset_id` IS NOT NULL UNION ' . $tokens;
+        if ($playerId === null) {
+            $sql .= ' UNION SELECT r.`asset_id` FROM ' . $this->db->t('map_asset_refs') . ' r INNER JOIN '
+                . $this->db->t('maps') . ' m ON m.`id` = r.`map_id` WHERE m.`game_id` = ? AND m.`deleted_at` IS NULL '
+                . 'AND r.`ref_count` > 0';
+            $params[] = $gameId;
+        }
+        $rows = $this->db->fetchAll($sql, $params);
+
+        return array_values(array_unique(array_map(static fn (array $r): int => (int) $r['asset_id'], $rows)));
+    }
+
+    /**
+     * True when $userId may see the asset through a live game (same rules as gameAssetIds()):
+     * cover of a game they belong to, image of a token of a game they run / co-run or of a token
+     * they own by default, asset of a live map of a game they run / co-run.
+     */
+    public function visibleThroughGames(int $assetId, int $userId): bool
+    {
+        $g = $this->db->t('games');
+        $gm = $this->db->t('game_members');
+        $member = 'EXISTS (SELECT 1 FROM ' . $gm . ' x WHERE x.`game_id` = g.`id` AND x.`user_id` = ?)';
+        $editor = '(g.`gm_user_id` = ? OR EXISTS (SELECT 1 FROM ' . $gm . " x WHERE x.`game_id` = g.`id` AND x.`user_id` = ? AND x.`role` = 'co_gm'))";
+        $sql = 'SELECT 1 FROM ' . $g . ' g WHERE g.`deleted_at` IS NULL AND ('
+            . '(g.`cover_asset_id` = ? AND (g.`gm_user_id` = ? OR ' . $member . '))'
+            . ' OR EXISTS (SELECT 1 FROM ' . $this->db->t('tokens') . ' t WHERE t.`game_id` = g.`id` AND t.`asset_id` = ? '
+            . 'AND t.`deleted_at` IS NULL AND (' . $editor . ' OR (t.`default_owner_user_id` = ? AND ' . $member . ')))'
+            . ' OR (' . $editor . ' AND EXISTS (SELECT 1 FROM ' . $this->db->t('map_asset_refs') . ' r INNER JOIN '
+            . $this->db->t('maps') . ' m ON m.`id` = r.`map_id` WHERE m.`game_id` = g.`id` AND m.`deleted_at` IS NULL '
+            . 'AND r.`asset_id` = ? AND r.`ref_count` > 0))'
+            . ') LIMIT 1';
+        $params = [
+            $assetId, $userId, $userId,
+            $assetId, $userId, $userId, $userId, $userId,
+            $userId, $userId, $assetId,
+        ];
+
+        return $this->db->fetchValue($sql, $params) !== null;
     }
 
     /**

@@ -190,10 +190,79 @@
       },
       "storage_quota_bytes": {
         "invalid": "Indiquez un nombre de Mo (ou laissez vide)."
+      },
+      "identifier": {
+        "not_found": "Aucun compte ne correspond à cette adresse e-mail ou à ce pseudo.",
+        "already_member": "Cette personne fait déjà partie de la partie."
+      },
+      "size_w": {
+        "too_small": "Au moins 0,25 case.",
+        "too_large": "20 cases au maximum."
+      },
+      "size_h": {
+        "too_small": "Au moins 0,25 case.",
+        "too_large": "20 cases au maximum."
+      },
+      "vision_range": {
+        "too_small": "La portée ne peut pas être négative.",
+        "too_large": "1 000 cases au maximum."
+      },
+      "vision_dark": {
+        "too_small": "La portée ne peut pas être négative.",
+        "too_large": "1 000 cases au maximum."
+      },
+      "light_radius": {
+        "too_small": "Le rayon ne peut pas être négatif.",
+        "too_large": "1 000 cases au maximum."
+      },
+      "light_dim_radius": {
+        "too_small": "Le rayon ne peut pas être négatif.",
+        "too_large": "1 000 cases au maximum.",
+        "below_radius": "La lumière faible doit aller au moins aussi loin que la lumière vive."
+      },
+      "light_intensity": {
+        "too_small": "Entre 0 et 1.",
+        "too_large": "Entre 0 et 1."
+      },
+      "light_color": {
+        "invalid": "Couleur au format #rrggbb."
+      },
+      "ring_color": {
+        "invalid": "Couleur au format #rrggbb."
+      },
+      "unit_label": {
+        "too_long": "10 caractères au maximum."
+      },
+      "unit_per_cell": {
+        "too_small": "Au moins 0,01.",
+        "too_large": "9 999,99 au maximum."
+      },
+      "default_cell_px": {
+        "invalid": "Nombre entier de pixels.",
+        "too_small": "Au moins 16 px.",
+        "too_large": "512 px au maximum."
+      },
+      "asset_id": {
+        "not_found": "Image introuvable ou inutilisable dans cette partie."
+      },
+      "cover_asset_id": {
+        "not_found": "Image introuvable ou inutilisable dans cette partie."
+      },
+      "default_owner_user_id": {
+        "not_found": "Ce compte ne fait pas partie de la partie."
+      },
+      "tokens": {
+        "not_found": "Un des tokens n'existe pas ou n'appartient pas à cette partie.",
+        "too_large": "100 tokens au maximum par rencontre."
       }
     },
     "not_ready": "Le traitement n'est pas terminé.",
-    "empty": "Aucun élément à traiter."
+    "empty": "Aucun élément à traiter.",
+    "too_small": "Valeur trop petite.",
+    "too_large": "Valeur trop grande.",
+    "not_found": "Introuvable.",
+    "already_member": "Cette personne fait déjà partie de la partie.",
+    "below_radius": "Le rayon de lumière faible doit être supérieur ou égal au rayon de lumière vive."
   },
   "mail": {
     "reset": {
@@ -367,7 +436,6 @@
   "dashboard": {
     "title": "Bonjour {name}",
     "gm_games": "Mes parties (MJ)",
-    "gm_games_empty": "Aucune partie pour l'instant. La création de parties arrive à l'étape P3.",
     "player_games": "Parties où je joue",
     "player_games_empty": "Vous ne participez à aucune partie pour l'instant.",
     "join": {
@@ -741,6 +809,237 @@
       "download": "Télécharger le pack",
       "cancelled": "Opération annulée.",
       "failed": "L'opération a échoué."
+    }
+  },
+  "games": {
+    "archived_banner": "Partie archivée le {date}. Elle reste consultable mais n'apparaît plus dans vos parties actives.",
+    "color_picker": "Sélecteur de couleur : {label}",
+    "card": {
+      "gm": "MJ : {name}"
+    },
+    "counts": {
+      "maps": {
+        "zero": "Aucune map",
+        "one": "{count} map",
+        "other": "{count} maps"
+      },
+      "tokens": {
+        "zero": "Aucun token",
+        "one": "{count} token",
+        "other": "{count} tokens"
+      },
+      "members": {
+        "zero": "Aucun membre",
+        "one": "{count} membre",
+        "other": "{count} membres"
+      }
+    },
+    "create": {
+      "open": "Nouvelle partie",
+      "title": "Nouvelle partie",
+      "submit": "Créer la partie"
+    },
+    "dashboard": {
+      "gm_empty": "Aucune partie pour l'instant. Créez votre première partie pour préparer vos tokens et inviter vos joueurs.",
+      "unavailable": "Liste indisponible pour le moment."
+    },
+    "fields": {
+      "name": "Nom",
+      "description": "Description",
+      "description_hint": "Facultatif : quelques mots sur la campagne."
+    },
+    "roles": {
+      "gm": "MJ",
+      "co_gm": "Co-MJ",
+      "player": "Joueur"
+    },
+    "tabs": {
+      "label": "Sections de la partie",
+      "maps": "Maps",
+      "tokens": "Tokens",
+      "players": "Joueurs",
+      "sessions": "Séances",
+      "settings": "Réglages"
+    },
+    "maps": {
+      "empty": "Les maps seront disponibles à l'étape P4 (éditeur de maps)."
+    },
+    "sessions": {
+      "empty": "Les séances seront disponibles à l'étape P6."
+    },
+    "shelf": {
+      "title": "Archives et corbeille",
+      "archived": "Archivées",
+      "trash": "Corbeille",
+      "trash_hint": "Les parties supprimées restent restaurables pendant un temps limité, puis sont effacées définitivement.",
+      "archived_empty": "Aucune partie archivée.",
+      "trash_empty": "La corbeille est vide.",
+      "deleted_at": "Supprimée le {date}",
+      "restore": "Restaurer",
+      "restore_named": "Restaurer « {name} »",
+      "restored": "« {name} » a été restaurée."
+    },
+    "players": {
+      "add_title": "Ajouter un membre",
+      "identifier": "E-mail ou pseudo",
+      "identifier_hint": "Le compte doit déjà exister sur le site.",
+      "role": "Rôle",
+      "role_of": "Rôle de {name}",
+      "add": "Ajouter",
+      "added": "{name} a été ajouté à la partie.",
+      "caption": "Membres de la partie",
+      "user": "Membre",
+      "joined_at": "Depuis",
+      "remove": "Retirer",
+      "remove_named": "Retirer {name}",
+      "remove_title": "Retirer ce membre ?",
+      "remove_text": "{name} n'aura plus accès à cette partie. Vous pourrez l'ajouter de nouveau plus tard.",
+      "removed": "{name} a été retiré de la partie.",
+      "read_only": "Seul le MJ peut gérer les membres de la partie.",
+      "empty": "Aucun joueur pour l'instant. Ajoutez-en un ci-dessus, ou attendez qu'ils rejoignent une séance par code (P6)."
+    },
+    "tokens": {
+      "title": "Tokens",
+      "intro": "Jetons purement visuels : image, taille, vision et lumière. Les distances sont en cases.",
+      "create": "Nouveau token",
+      "create_title": "Nouveau token",
+      "edit_title": "Modifier le token",
+      "empty": "Aucun token pour l'instant.",
+      "saved": "Token « {name} » enregistré.",
+      "deleted": "Token « {name} » supprimé.",
+      "delete_title": "Supprimer ce token ?",
+      "delete_text": "« {name} » sera supprimé, ainsi que sa place dans les rencontres préparées.",
+      "edit_named": "Modifier {name}",
+      "delete_named": "Supprimer {name}",
+      "name": "Nom",
+      "kind": "Type",
+      "kinds": {
+        "pc": "Personnage joueur",
+        "npc": "PNJ",
+        "monster": "Monstre",
+        "object": "Objet"
+      },
+      "owner": "Propriétaire par défaut",
+      "owner_hint": "Le joueur qui recevra ce token en séance (modifiable dans le lobby).",
+      "no_owner": "Aucun (reste au MJ)",
+      "owner_value": "Propriétaire : {name}",
+      "choose_image": "Choisir une image",
+      "change_image": "Changer l'image",
+      "remove_image": "Retirer l'image",
+      "size": "Taille (en cases)",
+      "size_w": "Largeur",
+      "size_h": "Hauteur",
+      "size_value": "{w} × {h} cases",
+      "vision": "Vision",
+      "vision_enabled": "Ce token voit (dévoile le brouillard)",
+      "vision_range": "Portée (cases)",
+      "vision_dark": "Vision dans le noir (cases)",
+      "vision_off": "Sans vision",
+      "vision_value": "Vision : {range} cases ({distance})",
+      "dark_value": "Vision dans le noir : {range} cases ({distance})",
+      "distance_hint": "Soit {distance}.",
+      "light": "Lumière portée",
+      "light_enabled": "Ce token porte une lumière",
+      "light_hint": "Torche, lanterne… bloquée par les murs.",
+      "light_radius": "Rayon de lumière vive (cases)",
+      "light_dim_radius": "Rayon de lumière faible (cases)",
+      "light_color": "Couleur",
+      "light_intensity": "Intensité",
+      "light_intensity_hint": "De 0 (très faible) à 1 (maximale).",
+      "light_flicker": "Vacillement",
+      "light_value": "Lumière : {radius} / {dim} cases",
+      "ring": "Anneau",
+      "ring_enabled": "Afficher un anneau de couleur",
+      "ring_color": "Couleur de l'anneau"
+    },
+    "encounters": {
+      "title": "Rencontres préparées",
+      "intro": "Groupes de tokens avec leurs positions relatives, à poser d'un clic sur une map (à partir de l'étape P4).",
+      "create": "Nouvelle rencontre",
+      "create_title": "Nouvelle rencontre",
+      "edit_title": "Modifier la rencontre",
+      "need_tokens": "Créez d'abord des tokens.",
+      "empty": "Aucune rencontre préparée.",
+      "count": {
+        "zero": "Aucun token",
+        "one": "{count} token",
+        "other": "{count} tokens"
+      },
+      "no_tokens": "Aucun token dans cette rencontre.",
+      "saved": "Rencontre « {name} » enregistrée.",
+      "deleted": "Rencontre « {name} » supprimée.",
+      "delete_title": "Supprimer cette rencontre ?",
+      "delete_text": "La rencontre « {name} » sera supprimée. Les tokens eux-mêmes sont conservés.",
+      "edit_named": "Modifier {name}",
+      "delete_named": "Supprimer {name}",
+      "name": "Nom",
+      "notes": "Notes",
+      "composition": "Composition",
+      "add_label": "Token à ajouter",
+      "add_placeholder": "Choisir un token…",
+      "add": "Ajouter",
+      "remove_named": "Retirer {name} de la rencontre",
+      "dx_of": "Décalage horizontal de {name} (cases)",
+      "dy_of": "Décalage vertical de {name} (cases)",
+      "offset_invalid": "Décalage invalide : saisissez un nombre de cases (ex. 2 ou -1,5).",
+      "grid": {
+        "label": "Positions relatives (origine au centre)",
+        "help": "Sélectionnez un token puis choisissez sa case dans la grille, ou saisissez dx/dy en cases. Alt + flèches déplace le token d'une case.",
+        "placing": "Choisissez la case de {name} (flèches puis Entrée).",
+        "select_first": "Sélectionnez un token dans la liste, ou une case occupée, pour le placer.",
+        "origin": "Origine",
+        "cell": "x {dx}, y {dy}",
+        "empty_cell": "{position}, vide",
+        "filled_cell": "{position} : {tokens}"
+      },
+      "too_many": "100 tokens au maximum par rencontre."
+    },
+    "settings": {
+      "general": "Partie",
+      "cover": "Couverture",
+      "cover_choose": "Choisir une couverture",
+      "cover_change": "Changer la couverture",
+      "cover_remove": "Retirer la couverture",
+      "cover_none": "Aucune couverture.",
+      "play": "Règles d'affichage",
+      "fog_strict": "Brouillard strict",
+      "fog_strict_hint": "Les joueurs ne reçoivent que les zones explorées ou proches de leurs tokens (anti-triche).",
+      "players_blocked_by_walls": "Les tokens des joueurs sont bloqués par les murs",
+      "players_blocked_by_walls_hint": "Empêche de traverser un mur et de dévoiler ce qui se trouve derrière.",
+      "players_can_move_own_tokens": "Les joueurs déplacent leurs tokens",
+      "players_can_move_own_tokens_hint": "Sinon, seul le MJ déplace les tokens.",
+      "players_see_other_pcs": "Les joueurs voient les autres personnages joueurs",
+      "players_see_other_pcs_hint": "Affiche les tokens des autres joueurs même hors de la vision.",
+      "grid": "Grille et unités",
+      "unit_label": "Unité",
+      "unit_label_hint": "Par exemple ft ou m.",
+      "unit_per_cell": "Valeur d'une case",
+      "default_cell_px": "Taille de case par défaut (px)",
+      "default_cell_px_hint": "Utilisée pour les nouvelles maps.",
+      "saved": "Réglages enregistrés.",
+      "unchanged": "Aucune modification à enregistrer.",
+      "read_only": "Réglages en lecture seule : seul le MJ peut les modifier.",
+      "danger": "Archivage et suppression",
+      "archive": "Archiver la partie",
+      "unarchive": "Désarchiver",
+      "archive_hint": "La partie est conservée mais retirée de vos parties actives.",
+      "archived": "Partie archivée.",
+      "restored": "Partie désarchivée.",
+      "delete": "Supprimer la partie",
+      "delete_hint": "La partie va dans la corbeille ; elle reste restaurable depuis le tableau de bord pendant un temps limité.",
+      "delete_title": "Supprimer cette partie ?",
+      "delete_text": "« {name} » sera placée dans la corbeille et ne sera plus accessible à ses membres. Vous pourrez la restaurer depuis le tableau de bord tant qu'elle n'est pas purgée.",
+      "deleted": "« {name} » a été placée dans la corbeille."
+    },
+    "player": {
+      "session": "Séance en cours",
+      "no_session": "Aucune séance en cours. Les séances arrivent à l'étape P6.",
+      "tokens": "Mes tokens",
+      "no_tokens": "Le MJ ne vous a encore attribué aucun token.",
+      "leave": "Quitter la partie",
+      "leave_title": "Quitter cette partie ?",
+      "leave_text": "Vous n'aurez plus accès à « {name} ». Le MJ pourra vous ajouter de nouveau.",
+      "left": "Vous avez quitté « {name} »."
     }
   }
 }

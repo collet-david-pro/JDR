@@ -14,13 +14,34 @@ use JDR\Domain\Users\User;
  * Rights on assets (projet.md 11.2): everyone sees the general library, only admins change it;
  * a personal asset is seen and changed by its owner only (admins included: no access to the
  * personal assets of others). Another user's personal asset is reported as not found.
- * P3 adds: members of a game using the asset.
+ * P3 (contract D8): the personal asset of another user is also visible through a live game
+ * (AssetRepository::visibleThroughGames(): GM/co-GM see every asset of the game, a player only
+ * the cover and the images of the tokens they own by default). Seeing never allows changing.
  */
 final class AssetPolicy
 {
+    public function __construct(private AssetRepository $assets)
+    {
+    }
+
     public function canView(User $user, Asset $asset): bool
     {
-        return $asset->ownerId === null || $asset->ownerId === $user->id;
+        return $asset->ownerId === null || $asset->ownerId === $user->id
+            || $this->assets->visibleThroughGames($asset->id, $user->id);
+    }
+
+    /**
+     * May an editor (GM / co-GM) of $gameId put this asset on the game (token image, cover):
+     * own or general asset, or an asset the game already uses.
+     */
+    public function canUseInGame(User $user, Asset $asset, int $gameId): bool
+    {
+        if ($asset->deletedAt !== null) {
+            return false;
+        }
+
+        return $asset->ownerId === null || $asset->ownerId === $user->id
+            || in_array($asset->id, $this->assets->gameAssetIds($gameId, null), true);
     }
 
     public function canEdit(User $user, Asset $asset): bool

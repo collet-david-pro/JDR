@@ -15,6 +15,7 @@ use JDR\Domain\Assets\AssetUserData;
 use JDR\Domain\Assets\ImageProcessor;
 use JDR\Domain\Assets\PipelineImageProcessor;
 use JDR\Domain\Auth\Authenticator;
+use JDR\Domain\Games\GameUserData;
 use JDR\Domain\Settings\SecretBox;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Support\AppPaths;
@@ -132,6 +133,7 @@ final class App
             $extensions = new UserDataExtensions();
             if ($config !== null) {
                 $extensions->add($c->get(AssetUserData::class));
+                $extensions->add($c->get(GameUserData::class));
             }
 
             return $extensions;
