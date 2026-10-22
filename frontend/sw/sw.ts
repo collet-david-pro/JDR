@@ -99,14 +99,31 @@ function classify(url: URL, request: Request): RequestKind {
   return 'network';
 }
 
+/**
+ * Cache first. A failing cache (storage error, eviction, private mode) never fails the request:
+ * the network answer is returned and stored in the background.
+ */
 async function cacheFirst(request: Request, cacheName: string, trim: boolean): Promise<Response> {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  if (cached) return cached;
+  let cache: Cache | null;
+  try {
+    cache = await caches.open(cacheName);
+    const cached = await cache.match(request);
+    if (cached) return cached;
+  } catch {
+    cache = null;
+  }
   const response = await fetch(request);
-  if (response.ok && response.status === 200) {
-    await cache.put(request, response.clone());
-    if (trim) await trimCache(cache, FILES_CACHE_MAX_ENTRIES);
+  if (cache !== null && response.ok && response.status === 200) {
+    const store = cache;
+    const copy = response.clone();
+    void (async () => {
+      try {
+        await store.put(request, copy);
+        if (trim) await trimCache(store, FILES_CACHE_MAX_ENTRIES);
+      } catch {
+        // Not cached this time.
+      }
+    })();
   }
   return response;
 }

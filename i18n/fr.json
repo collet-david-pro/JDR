@@ -254,6 +254,24 @@
       "tokens": {
         "not_found": "Un des tokens n'existe pas ou n'appartient pas à cette partie.",
         "too_large": "100 tokens au maximum par rencontre."
+      },
+      "width": {
+        "too_small": "Au moins 1 case.",
+        "too_large": "400 cases au maximum.",
+        "invalid": "Nombre entier de cases."
+      },
+      "height": {
+        "too_small": "Au moins 1 case.",
+        "too_large": "400 cases au maximum.",
+        "invalid": "Nombre entier de cases."
+      },
+      "folder": {
+        "too_long": "191 caractères au maximum."
+      },
+      "cell_px": {
+        "too_small": "Au moins 16 px.",
+        "too_large": "512 px au maximum.",
+        "invalid": "Nombre entier de pixels."
       }
     },
     "not_ready": "Le traitement n'est pas terminé.",
@@ -262,7 +280,12 @@
     "too_large": "Valeur trop grande.",
     "not_found": "Introuvable.",
     "already_member": "Cette personne fait déjà partie de la partie.",
-    "below_radius": "Le rayon de lumière faible doit être supérieur ou égal au rayon de lumière vive."
+    "below_radius": "Le rayon de lumière faible doit être supérieur ou égal au rayon de lumière vive.",
+    "too_many": "Trop d'éléments.",
+    "out_of_bounds": "Hors des limites de la carte.",
+    "palette_index": "Index de palette invalide.",
+    "already_used": "Cet identifiant d'opération a déjà été utilisé.",
+    "conflict": "Cet élément a été modifié entre-temps."
   },
   "mail": {
     "reset": {
@@ -862,9 +885,57 @@
       "settings": "Réglages"
     },
     "maps": {
-      "draft_title": "Éditeur de map (brouillon local)",
-      "draft_text": "Vous pouvez déjà dessiner une map dans l'éditeur. Elle reste un brouillon local : l'enregistrement sur le serveur arrive à l'étape P4b, et fermer la page efface le brouillon.",
-      "open_editor": "Ouvrir l'éditeur (brouillon local)"
+      "create": "Nouvelle map",
+      "create_here": "Nouvelle map dans ce dossier",
+      "create_title": "Nouvelle map",
+      "create_submit": "Créer et ouvrir l'éditeur",
+      "created": "Map « {name} » créée.",
+      "edit": "Renommer / déplacer",
+      "edit_label": "Renommer ou déplacer {name}",
+      "edit_title": "Renommer ou déplacer la map",
+      "saved": "Map « {name} » enregistrée.",
+      "duplicate": "Dupliquer",
+      "duplicate_label": "Dupliquer {name}",
+      "duplicated": "Map « {name} » dupliquée.",
+      "trash": "Corbeille",
+      "trash_label": "Mettre {name} à la corbeille",
+      "trashed": "Map « {name} » mise à la corbeille (restaurable depuis l'onglet Corbeille).",
+      "restore": "Restaurer",
+      "restored": "Map « {name} » restaurée.",
+      "views": "Maps affichées",
+      "view_active": "Maps",
+      "view_trash": "Corbeille",
+      "trash_intro": "Les maps de la corbeille sont supprimées définitivement après le délai de conservation.",
+      "trash_empty": "La corbeille est vide.",
+      "empty": "Aucune map : créez la première.",
+      "no_folder": "Sans dossier",
+      "sort": {
+        "label": "Trier par",
+        "manual": "Ordre",
+        "name": "Nom",
+        "updated": "Dernière modification"
+      },
+      "kinds": {
+        "battle": "Combat",
+        "world": "Monde"
+      },
+      "card": {
+        "size": "{width} × {height} cases",
+        "updated": "Modifiée le {date}",
+        "deleted": "Supprimée le {date}"
+      },
+      "fields": {
+        "name": "Nom",
+        "folder": "Dossier",
+        "folder_hint": "Facultatif. Sous-dossiers séparés par « / », par exemple « Acte 1/Crypte ».",
+        "kind": "Type",
+        "width": "Largeur (cases)",
+        "height": "Hauteur (cases)",
+        "size_hint": "Entre {min} et {max} cases par côté.",
+        "cell_px": "Taille d'une case (px)",
+        "unit_per_cell": "Distance par case",
+        "unit_label": "Unité"
+      }
     },
     "sessions": {
       "empty": "Les séances seront disponibles à l'étape P6."
@@ -1052,19 +1123,7 @@
     }
   },
   "editor": {
-    "draft": {
-      "title": "Nouveau brouillon de map",
-      "intro": "Cette map est un brouillon local : elle n'est pas enregistrée sur le serveur (l'enregistrement arrive à l'étape P4b). Fermer ou recharger la page efface le brouillon.",
-      "width": "Largeur (cases)",
-      "height": "Hauteur (cases)",
-      "size_hint": "Entre {min} et {max} cases par côté.",
-      "invalid": "Taille invalide : entre {min} et {max} cases par côté.",
-      "create": "Ouvrir l'éditeur"
-    },
-    "name": "Brouillon — {game}",
     "back": "Retour à la partie",
-    "unsaved": "Non enregistré — P4b",
-    "unsaved_hint": "Brouillon local : la sauvegarde sur le serveur arrive à l'étape P4b. Fermer ou recharger la page efface le brouillon.",
     "undo": "Annuler",
     "undo_label": "Annuler : {action}",
     "redo": "Rétablir",
@@ -1205,6 +1264,34 @@
       "trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
       "middle": "Bouton du milieu : déplacer la vue.",
       "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ."
+    },
+    "map_title": "{map} — {game}",
+    "save": {
+      "saved": "Enregistré",
+      "saving": "Enregistrement…",
+      "offline": {
+        "zero": "Hors ligne — aucune modification en attente",
+        "one": "Hors ligne — {count} modification en attente",
+        "other": "Hors ligne — {count} modifications en attente"
+      },
+      "conflict": "Conflit résolu",
+      "loading": "Chargement de la map… ({done}/{total})",
+      "loading_map": "Chargement de la map…",
+      "memory_only": "Stockage local indisponible : les modifications non envoyées seraient perdues en fermant la page.",
+      "load_partial": "Une partie de la map n'a pas pu être lue ou certaines modifications locales n'ont pas pu être réappliquées.",
+      "load_error": "La map n'a pas pu être chargée.",
+      "errors": {
+        "revision_conflict": "La map a changé sur le serveur : rechargez-la (vos modifications sont conservées).",
+        "unauthenticated": "Session expirée : reconnectez-vous, vos modifications sont conservées sur cet appareil.",
+        "forbidden": "Vous n'avez plus le droit de modifier cette map : modifications conservées sur cet appareil.",
+        "not_found": "Cette map n'existe plus (ou est dans la corbeille) : modifications conservées sur cet appareil.",
+        "rejected": "Une modification a été refusée par le serveur et n'a pas été enregistrée.",
+        "unknown": "Enregistrement impossible."
+      }
     }
+  },
+  "maps": {
+    "default_floor_name": "Rez-de-chaussée",
+    "copy_suffix": " (copie)"
   }
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SaveIndicator from './SaveIndicator.svelte';
   import { GRID_THEME_IDS } from '../../engine/grid-themes';
   import type { GridTheme } from '../../editor/contracts';
   import { commandLabel, themeLabel } from '../../editor/ui/labels';
@@ -10,9 +11,12 @@
     session: EditorSession;
     gameId: string;
     gameName: string;
+    mapName: string;
+    /** Loads the map again (offered after a revision conflict). */
+    onreload?: (() => void) | undefined;
   }
 
-  let { session, gameId, gameName }: Props = $props();
+  let { session, gameId, gameName, mapName, onreload }: Props = $props();
   const ui = $derived(session.ui);
 
   const undoText = $derived(
@@ -28,14 +32,14 @@
 </script>
 
 <header class="topbar">
-  <a class="button button-ghost button-small back" href={href(`/games/${gameId}`)}>
+  <a class="button button-ghost button-small back" href={href(`/games/${gameId}?tab=maps`)}>
     <span aria-hidden="true">←</span>
     {t('editor.back')}
   </a>
-  <h1 class="name">{t('editor.name', { game: gameName })}</h1>
-  <span class="badge badge-warn" title={t('editor.unsaved_hint')} data-testid="editor-unsaved">
-    {t('editor.unsaved')}
-  </span>
+  <h1 class="name" title={t('editor.map_title', { map: mapName, game: gameName })}>
+    {mapName}
+  </h1>
+  <SaveIndicator {session} {onreload} />
 
   <div class="group" role="group" aria-label={t('editor.undo')}>
     <button

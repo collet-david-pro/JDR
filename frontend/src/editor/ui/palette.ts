@@ -43,10 +43,25 @@ export class PaletteCatalog {
     });
   }
 
+  /** Palette entry loaded with the map (signed URLs; variant frames unknown ⇒ 1). */
+  rememberEntry(
+    assetId: string,
+    info: { name: string; full: string | null; thumb: string | null },
+  ): void {
+    if (this.known.has(assetId)) return;
+    const full = info.full ?? info.thumb ?? '';
+    this.known.set(assetId, {
+      name: info.name,
+      full,
+      thumb: info.thumb ?? full,
+      frames: 1,
+    });
+  }
+
   /** For MapDocumentInit.resolveAsset. */
   resolve(assetId: string): AssetInfo | null {
     const k = this.known.get(assetId);
-    return k === undefined ? null : { url: k.full, name: k.name };
+    return k === undefined ? null : { url: k.full === '' ? null : k.full, name: k.name };
   }
 
   frames(assetId: string): number {
@@ -62,7 +77,7 @@ export class PaletteCatalog {
         index,
         assetId: entry.assetId,
         name: entry.name,
-        thumb: k?.thumb ?? entry.url,
+        thumb: k !== undefined && k.thumb !== '' ? k.thumb : entry.url,
         frames: k?.frames ?? 1,
       });
     });

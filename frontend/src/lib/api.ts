@@ -78,6 +78,10 @@ export interface RequestOptions {
   readonly retries?: number;
   /** When false, a 401 does not trigger onUnauthorized (e.g. the login form itself). */
   readonly notifyUnauthorized?: boolean;
+  /** fetch keepalive (request survives the page unload; body ≤ 64 KB). */
+  readonly keepalive?: boolean;
+  /** Accept header (default application/json). */
+  readonly accept?: string;
 }
 
 export interface ApiClientOptions {
@@ -211,6 +215,41 @@ export class ApiClient {
     return this.request<T>('DELETE', path, options);
   }
 
+  /**
+   * Request whose successful answer is not a JSON envelope (binary chunks): returns the raw
+   * Response of a 2xx answer; errors are thrown as ApiError like `request` (same retries,
+   * CSRF renewal and 401/503 callbacks).
+   */
+  async raw(method: HttpMethod, path: string, options: RequestOptions = {}): Promise<Response> {
+    const url = this.url(path, options.query);
+    const idempotent = method === 'GET' || method === 'HEAD';
+    const maxRetries = idempotent ? (options.retries ?? this.retries) : 0;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await this.send(method, url, options);
+        if (idempotent && RETRYABLE_STATUS.has(response.status) && attempt < maxRetries) {
+          await response.body?.cancel().catch(() => undefined);
+          await this.sleep(this.retryDelayMs * 2 ** attempt);
+          continue;
+        }
+        if (response.ok) return response;
+        await this.handleResponse(response, options);
+        // handleResponse always throws for a non-2xx status.
+        throw new ApiError({ code: 'http_error', message: `HTTP ${response.status}`, status: 0 });
+      } catch (error) {
+        if (
+          error instanceof ApiError &&
+          (error.code === 'network_error' || error.code === 'timeout') &&
+          attempt < maxRetries
+        ) {
+          await this.sleep(this.retryDelayMs * 2 ** attempt);
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
   async request<T>(
     method: HttpMethod,
     path: string,
@@ -256,7 +295,7 @@ export class ApiClient {
   }
 
   private async send(method: HttpMethod, url: string, options: RequestOptions): Promise<Response> {
-    const headers = new Headers({ Accept: 'application/json' });
+    const headers = new Headers({ Accept: options.accept ?? 'application/json' });
     if (options.headers) {
       for (const [name, value] of Object.entries(options.headers)) headers.set(name, value);
     }
@@ -301,6 +340,7 @@ export class ApiClient {
       signal: controller.signal,
     };
     if (body !== undefined) init.body = body;
+    if (options.keepalive === true) init.keepalive = true;
 
     try {
       return await this.fetchImpl(url, init);

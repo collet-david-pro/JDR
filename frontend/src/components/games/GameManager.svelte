@@ -2,7 +2,7 @@
   import { tick } from 'svelte';
   import Button from '../Button.svelte';
   import EmptyTab from './EmptyTab.svelte';
-  import EditorDraftCard from '../editor/EditorDraftCard.svelte';
+  import MapsTab from '../maps/MapsTab.svelte';
   import PlayersTab from './PlayersTab.svelte';
   import SettingsTab from './SettingsTab.svelte';
   import TokensTab from './TokensTab.svelte';
@@ -124,7 +124,7 @@
       tabindex="0"
     >
       {#if current === 'maps'}
-        <EditorDraftCard gameId={game.id} />
+        <MapsTab {game} />
       {:else if current === 'tokens'}
         <TokensTab {model} />
       {:else if current === 'players'}

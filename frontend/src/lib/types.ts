@@ -428,3 +428,144 @@ export interface EncounterInput {
   readonly notes: string;
   readonly tokens: readonly EncounterToken[];
 }
+
+/* ------------------------------------------------------------------------------------------
+ * Phase P4b: maps (etapes/P04 "Contrat d'API P4b", projet.md 9.2, 11.4, 12.1).
+ * Coordinates and sizes are in cells.
+ * ---------------------------------------------------------------------------------------- */
+
+export type MapKind = 'battle' | 'world';
+
+/** `state` filter of GET /games/{id}/maps. */
+export type MapListState = 'active' | 'trash';
+
+/** Item of GET /games/{id}/maps. */
+export interface MapSummary {
+  readonly id: string;
+  readonly game_id: string;
+  readonly name: string;
+  /** Folder path, e.g. "Acte 1/Crypte"; null at the root. */
+  readonly folder: string | null;
+  readonly sort_order: number;
+  readonly kind: MapKind;
+  readonly grid: { readonly width: number; readonly height: number };
+  /** Signed thumbnail URL (P4c), null until a thumbnail exists. */
+  readonly thumb_url: string | null;
+  readonly revision: number;
+  readonly updated_at: string;
+  readonly deleted_at: string | null;
+}
+
+export interface MapGrid {
+  readonly type: 'square';
+  readonly cell_px: number;
+  readonly width: number;
+  readonly height: number;
+  readonly unit_label: string;
+  readonly unit_per_cell: number;
+}
+
+export interface MapAmbient {
+  readonly darkness: number;
+  readonly tint: string | null;
+  readonly time_of_day: string | number | null;
+  readonly weather: { readonly type: string; readonly intensity: number };
+}
+
+/** Palette entry (index 0 is null). */
+export interface MapPaletteEntry {
+  readonly asset_id: string;
+  readonly name: string;
+  /** Signed full-size URL, null when the asset is no longer readable. */
+  readonly url: string | null;
+  readonly thumb_url: string | null;
+  readonly autotile: string | null;
+}
+
+/** Layer of the stack (projet.md 12.1), bottom → top. */
+export interface MapLayer {
+  readonly id: string;
+  readonly kind: 'tiles' | 'objects';
+  readonly visible?: boolean;
+  readonly locked?: boolean;
+  readonly opacity?: number;
+  readonly gm_only?: boolean;
+}
+
+export interface MapFloor {
+  readonly id: string;
+  readonly level: number;
+  readonly name: string;
+  readonly sort_order: number;
+}
+
+/** GET /maps/{id}, POST /games/{id}/maps, POST /maps/{id}/duplicate. */
+export interface MapDetail extends Omit<MapSummary, 'grid'> {
+  readonly grid: MapGrid;
+  readonly theme: string;
+  readonly ambient: MapAmbient;
+  readonly palette: readonly (MapPaletteEntry | null)[];
+  readonly layers: readonly MapLayer[];
+  readonly floors: readonly MapFloor[];
+  readonly format_version: number;
+  readonly objects: readonly unknown[];
+  readonly notes: readonly unknown[];
+  readonly tokens_placed: readonly unknown[];
+}
+
+/** POST /games/{id}/maps */
+export interface MapInput {
+  readonly name: string;
+  readonly folder?: string | null;
+  readonly kind?: MapKind;
+  readonly width: number;
+  readonly height: number;
+  readonly cell_px?: number;
+  readonly unit_label?: string;
+  readonly unit_per_cell?: number;
+  readonly theme?: string;
+}
+
+/** PATCH /maps/{id} */
+export interface MapPatch {
+  readonly name?: string;
+  readonly folder?: string | null;
+  readonly sort_order?: number;
+}
+
+/** Op of POST /maps/{id}/ops, wire format (projet.md 11.4). */
+export type WireMapOp =
+  | {
+      readonly type: 'tiles.set';
+      readonly floor: string;
+      readonly layer: string;
+      readonly cells: readonly (readonly number[])[];
+    }
+  | {
+      readonly type: 'palette.add';
+      readonly index: number;
+      readonly asset_id: string;
+      readonly autotile?: string | null;
+    }
+  | {
+      readonly type: 'map.meta';
+      readonly name?: string;
+      readonly grid?: Partial<Omit<MapGrid, 'type'>>;
+      readonly layers?: readonly MapLayer[];
+      readonly theme?: string;
+      readonly ambient?: MapAmbient;
+    };
+
+/** Body of POST /maps/{id}/ops */
+export interface MapOpsRequest {
+  readonly base_revision: number;
+  readonly client_op_id: string;
+  readonly ops: readonly WireMapOp[];
+}
+
+/** Answer of POST /maps/{id}/ops */
+export interface MapOpsResult {
+  readonly revision: number;
+  readonly applied?: number;
+  readonly conflicts: readonly unknown[];
+}

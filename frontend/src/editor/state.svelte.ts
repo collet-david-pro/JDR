@@ -9,6 +9,7 @@ import type { HistoryState } from './history/History';
 import { clampBrushSize } from './tools/common';
 import type { BrushShape, CellRect, ShapeKind, ToolId } from './tools/types';
 import type { PaletteItem } from './ui/palette';
+import type { SaveStatus } from './sync/OpsQueue';
 
 export interface EditorNotice {
   /** Increases with every notice (lets the live region re-announce the same text). */
@@ -53,6 +54,13 @@ export class EditorUiState implements EditorSettings {
   renderer = $state<'webgpu' | 'webgl' | null>(null);
   performanceMode = $state(false);
   notice = $state.raw<EditorNotice | null>(null);
+
+  /** Pointer edits allowed (false while the map loads). */
+  editable = $state(true);
+  /** Tile blocks loading progress (requests done / total), null when loaded. */
+  loading = $state.raw<{ readonly done: number; readonly total: number } | null>(null);
+  /** Save indicator; null for a map that is not saved on the server. */
+  save = $state.raw<SaveStatus | null>(null);
 
   /** Variant frames of the current tile image (1 when unknown or single image). */
   get tileFrames(): number {

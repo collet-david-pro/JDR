@@ -3,7 +3,15 @@
  * the scene engine. Plain TypeScript (the Svelte components only read `ui` and call methods),
  * testable with a fake engine.
  */
-import type { GridSpec, GridTheme, LayerId, SceneEngineApi, TileLayerId } from '../contracts';
+import type {
+  GridSpec,
+  GridTheme,
+  LayerDef,
+  LayerId,
+  PaletteEntry,
+  SceneEngineApi,
+  TileLayerId,
+} from '../contracts';
 import { EditorController } from '../EditorController';
 import { History } from '../history/History';
 import {
@@ -38,6 +46,12 @@ export interface EditorKeyEvent extends KeyLike {
 export interface EditorSessionOptions {
   readonly grid: GridSpec;
   readonly floor?: string;
+  /** Saved map: layer stack, palette (index 0 null) and grid theme. */
+  readonly layers?: readonly LayerDef[];
+  readonly palette?: readonly (PaletteEntry | null)[];
+  readonly theme?: GridTheme;
+  /** False while the map is loading: pointer edits are ignored (default true). */
+  readonly editable?: boolean;
   readonly ui?: EditorUiState;
   readonly platform?: Platform;
   readonly bindings?: readonly KeyBinding[];
@@ -87,9 +101,13 @@ export class EditorSession {
     this.bindings = options.bindings;
     this.describeNotice = options.describeNotice ?? ((n) => n.code);
     this.isViewportTarget = options.isViewportTarget ?? (() => true);
+    this.ui.editable = options.editable ?? true;
     this.doc = new MapDocument({
       grid: options.grid,
       ...(options.floor !== undefined ? { floor: options.floor } : {}),
+      ...(options.layers !== undefined ? { layers: options.layers } : {}),
+      ...(options.palette !== undefined ? { palette: options.palette } : {}),
+      ...(options.theme !== undefined ? { theme: options.theme } : {}),
       resolveAsset: (id) => this.catalog.resolve(id),
     });
     this.view = new SoloView(this.doc);
@@ -136,7 +154,7 @@ export class EditorSession {
       engine.onPointer((e) => {
         const inside = e.cell.x >= 0 && e.cell.y >= 0 && e.cell.x < width && e.cell.y < height;
         this.ui.cursor = e.type !== 'leave' && inside ? { x: e.cell.x, y: e.cell.y } : null;
-        this.controller.handlePointer(e);
+        if (this.ui.editable) this.controller.handlePointer(e);
       }),
       engine.onCamera((camera) => (this.ui.zoom = camera.zoom)),
       engine.onFps((fps) => {
@@ -163,6 +181,17 @@ export class EditorSession {
 
   setTool(id: ToolId): void {
     this.controller.setTool(id);
+  }
+
+  /** Allows or blocks pointer edits (blocked while the map loads). */
+  setEditable(editable: boolean): void {
+    this.ui.editable = editable;
+    if (!editable) this.controller.handleAction('cancel');
+  }
+
+  /** Refreshes the palette panel (e.g. after entries were loaded or replayed). */
+  refreshPalette(): void {
+    this.syncMeta();
   }
 
   undo(): void {

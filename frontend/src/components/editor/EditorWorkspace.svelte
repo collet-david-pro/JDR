@@ -7,12 +7,20 @@
   import PalettePanel from './PalettePanel.svelte';
   import StatusBar from './StatusBar.svelte';
   import ToolBar from './ToolBar.svelte';
-  import type { GridSpec } from '../../editor/contracts';
   import { detectPlatform } from '../../editor/shortcuts';
+  import { visibleChunkKeys } from '../../editor/sync/chunk-loader';
+  import { MapSync } from '../../editor/sync/MapSync';
+  import { saveErrorText } from '../../editor/sync/save-status';
+  import { gridOf, layersFromWire, paletteFromWire, themeOf } from '../../editor/sync/wire';
   import { noticeText } from '../../editor/ui/labels';
   import { EditorSession } from '../../editor/ui/session';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
   import { t } from '../../lib/i18n';
+  import type { MapsClient } from '../../lib/maps/maps-client';
+  import { openMapStores } from '../../lib/persistence/map-stores';
+  import { requestPersistentStorage } from '../../lib/persistence/idb';
+  import type { MapDetail } from '../../lib/types';
+  import { toasts } from '../../stores/toasts.svelte';
 
   /**
    * Full-screen editor (projet.md 18.1 p.5): top bar, tools on the left, map, collapsible
@@ -22,19 +30,32 @@
   interface Props {
     gameId: string;
     gameName: string;
-    grid: GridSpec;
+    /** The map loaded from the server (GET /maps/{id}). */
+    map: MapDetail;
+    client: Pick<MapsClient, 'chunks' | 'sendOps'>;
+    /** Loads the page again (after a revision conflict). */
+    onreload?: (() => void) | undefined;
     /** Shows the frame rate in the status bar. */
     debug?: boolean;
   }
 
-  let { gameId, gameName, grid, debug = false }: Props = $props();
+  let { gameId, gameName, map, client, onreload, debug = false }: Props = $props();
+  // The page mounts a new workspace for another map: the initial props are kept.
+  // svelte-ignore state_referenced_locally
+  const initial = { map, client };
+  const grid = gridOf(initial.map);
 
   let viewport: HTMLDivElement | undefined = $state();
   let engineState = $state<'loading' | 'ready' | 'unsupported' | 'error'>('loading');
+  let loadFailed = $state(false);
 
-  // svelte-ignore state_referenced_locally
   const session = new EditorSession({
     grid,
+    floor: initial.map.floors[0]?.id ?? 'f1',
+    layers: layersFromWire(initial.map.layers),
+    palette: paletteFromWire(initial.map.palette),
+    theme: themeOf(initial.map.theme),
+    editable: false,
     platform: detectPlatform(navigator),
     describeNotice: noticeText,
     isViewportTarget: (target) =>
@@ -43,6 +64,47 @@
       (target instanceof Node && viewport !== undefined && viewport.contains(target)),
   });
   const ui = session.ui;
+  for (const entry of initial.map.palette) {
+    if (entry != null) {
+      session.catalog.rememberEntry(entry.asset_id, {
+        name: entry.name,
+        full: entry.url,
+        thumb: entry.thumb_url,
+      });
+    }
+  }
+  session.refreshPalette();
+
+  let sync: MapSync | null = null;
+  let destroyed = false;
+
+  /** Persistence starts once the engine shows the map (visible blocks first). */
+  async function startSync(visible: ReturnType<typeof visibleChunkKeys> | null): Promise<void> {
+    void requestPersistentStorage();
+    const stores = await openMapStores();
+    if (destroyed) return;
+    sync = new MapSync({
+      session,
+      map: initial.map,
+      client: initial.client,
+      stores,
+      win: window,
+      doc: document,
+      onRejected: (error) => {
+        session.notify(saveErrorText(error.code));
+        toasts.show('error', saveErrorText('rejected'));
+      },
+    });
+    try {
+      const result = await sync.start(visible);
+      if (result.chunks.errors > 0 || result.replayFailed > 0) {
+        toasts.show('error', t('editor.save.load_partial'));
+      }
+    } catch (error) {
+      console.error(error);
+      loadFailed = true;
+    }
+  }
 
   $effect(() => {
     const host = viewport;
@@ -60,6 +122,11 @@
           session.attach(created);
           engineState = 'ready';
           host.focus({ preventScroll: true });
+          const visible = visibleChunkKeys(grid, created.camera.get(), {
+            width: host.clientWidth,
+            height: host.clientHeight,
+          });
+          void startSync(visible);
         })
         .catch((error: unknown) => {
           if (cancelled) return;
@@ -74,7 +141,11 @@
     };
   });
 
-  $effect(() => () => session.dispose());
+  $effect(() => () => {
+    destroyed = true;
+    sync?.dispose();
+    session.dispose();
+  });
 
   function keydown(event: KeyboardEvent): void {
     if (engineState !== 'ready') return;
@@ -89,7 +160,7 @@
 />
 
 <div class="editor" class:panels-hidden={!ui.panelsOpen} data-testid="editor">
-  <EditorTopBar {session} {gameId} {gameName} />
+  <EditorTopBar {session} {gameId} {gameName} mapName={map.name} {onreload} />
 
   <ToolBar {session} />
 
@@ -108,7 +179,14 @@
       data-state={engineState}
       onpointerdown={() => viewport?.focus({ preventScroll: true })}
     ></div>
-    {#if engineState === 'loading'}
+    {#if loadFailed}
+      <div class="state alert alert-error" role="alert" data-testid="editor-load-error">
+        <span>{t('editor.save.load_error')}</span>
+        <button type="button" class="button" onclick={() => window.location.reload()}>
+          {t('common.reload')}
+        </button>
+      </div>
+    {:else if engineState === 'loading'}
       <p class="state muted" aria-busy="true">{t('editor.loading')}</p>
     {:else if engineState === 'unsupported'}
       <div class="state"><EngineUnsupported /></div>
