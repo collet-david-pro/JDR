@@ -10,6 +10,7 @@ use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
+use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
@@ -23,6 +24,7 @@ use JDR\Maps\OpsApplier;
  * 4. chunks written (empty => row deleted), map_asset_refs updated by exact deltas,
  *    changed columns + revision + 1 + updated_at, response remembered in processed_ops;
  * 6. response {revision, applied, conflicts: []}.
+ * P4c: an auto version snapshot may be taken in the same transaction (MapVersionService::afterOps).
  * A replayed client_op_id of another user or another map is refused (422 already_used).
  */
 final class MapOpsService
@@ -32,6 +34,7 @@ final class MapOpsService
         private MapPolicy $policy,
         private AssetRepository $assets,
         private AssetPolicy $assetPolicy,
+        private MapVersionService $versions,
     ) {
     }
 
@@ -105,6 +108,7 @@ final class MapOpsService
             }
             $this->maps->applyRefDeltas($locked->id, $applier->refDeltas());
             $this->maps->update($locked->id, $state->changedColumns(), true);
+            $this->versions->afterOps($locked, $revision, $user->id);
 
             $response = ['revision' => $revision, 'applied' => count($ops), 'conflicts' => []];
             try {

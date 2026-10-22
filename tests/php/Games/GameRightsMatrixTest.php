@@ -8,7 +8,7 @@ use JDR\Core\Router;
 
 /**
  * Acceptance criterion P3 (projet.md 23, 11.2): on EVERY route of the application that takes the
- * id of a game, token, encounter or map (P4b) (list generated from the router), an anonymous visitor gets
+ * id of a game, token, encounter or map (P4b, P4c: versions, export, import, thumbnail) (list generated from the router), an anonymous visitor gets
  * 401, a third-party account (admins included) gets 404 and no data, a player member gets 403 on
  * every GM write.
  */
@@ -38,7 +38,7 @@ final class GameRightsMatrixTest extends GamesTestCase
     }
 
     /**
-     * @param array{game: string, token: string, encounter: string, member: string, map: string} $ids
+     * @param array{game: string, token: string, encounter: string, member: string, map: string, version: string} $ids
      */
     private static function path(string $pattern, array $ids): string
     {
@@ -50,6 +50,8 @@ final class GameRightsMatrixTest extends GamesTestCase
             default => $ids['encounter'],
         };
         $path = (string) preg_replace('/\{id(?::[^}]+)?\}/', $id, $pattern);
+
+        $path = (string) preg_replace('/\{vid(?::[^}]+)?\}/', $ids['version'], $path);
 
         return (string) preg_replace('/\{userId(?::[^}]+)?\}/', $ids['member'], $path);
     }
@@ -72,7 +74,7 @@ final class GameRightsMatrixTest extends GamesTestCase
     public function testEveryGameRouteIsClosedToStrangersAndGmWritesToPlayers(): void
     {
         $routes = self::gameRoutes();
-        self::assertGreaterThanOrEqual(28, count($routes));
+        self::assertGreaterThanOrEqual(34, count($routes));
 
         $gm = $this->user('Alice');
         $game = $this->newGame($gm, 'Secret des Abysses', ['description' => 'Notes cachées']);
@@ -90,8 +92,13 @@ final class GameRightsMatrixTest extends GamesTestCase
             ['type' => 'palette.add', 'index' => 1, 'asset_id' => $asset['id']],
             ['type' => 'tiles.set', 'floor' => $floor, 'layer' => 'ground', 'cells' => [[1, 1, 1, 0, 0]]],
         ]])->status());
-        $ids = ['game' => $game['id'], 'token' => $token['id'], 'encounter' => $encounter['id'], 'member' => $coGm['user']['id'], 'map' => $map['id']];
-        $secrets = ['Secret des Abysses', 'Notes cachées', 'Liche ancienne', 'Embuscade', $asset['uuid'], 'Crypte interdite'];
+        $version = self::data($gm->post('/maps/' . $map['id'] . '/versions', ['label' => 'Avant le piège']));
+        $ids = [
+            'game' => $game['id'], 'token' => $token['id'], 'encounter' => $encounter['id'], 'member' => $coGm['user']['id'],
+            'map' => $map['id'], 'version' => $version['id'],
+        ];
+        $secrets = ['Secret des Abysses', 'Notes cachées', 'Liche ancienne', 'Embuscade', $asset['uuid'], 'Crypte interdite', 'Avant le piège',
+            (string) $this->db->fetchValue('SELECT `sha256` FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [(int) $asset['id']])];
 
         $anonymous = $this->client('198.51.100.200');
         $anonymous->me();
@@ -147,12 +154,15 @@ final class GameRightsMatrixTest extends GamesTestCase
         self::assertSame(1, $mapAfter['revision']);
         self::assertSame(['Crypte interdite'], array_column(self::data($gm->get('/games/' . $game['id'] . '/maps')), 'name'));
         self::assertSame(1, $this->rows('map_chunks'));
+        self::assertSame(1, $this->rows('maps'));
+        self::assertSame(['manual'], array_column(self::data($gm->get('/maps/' . $map['id'] . '/versions')), 'kind'));
+        self::assertNull($mapAfter['thumb_url']);
     }
 
     public function testUnknownIdsAre404ForEveryone(): void
     {
         $gm = $this->user('Alice');
-        $ids = ['game' => '999999', 'token' => '999999', 'encounter' => '999999', 'member' => '999999', 'map' => '999999'];
+        $ids = ['game' => '999999', 'token' => '999999', 'encounter' => '999999', 'member' => '999999', 'map' => '999999', 'version' => '999999'];
         foreach (self::gameRoutes() as ['method' => $method, 'pattern' => $pattern]) {
             $r = $gm->request($method, self::path($pattern, $ids), $method === 'GET' ? null : []);
             self::assertSame(404, $r->status(), $method . ' ' . $pattern);

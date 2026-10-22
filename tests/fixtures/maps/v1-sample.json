@@ -1,0 +1,134 @@
+{
+    "format": "jdr-map",
+    "format_version": 1,
+    "app_version": "0.4.0",
+    "name": "Crypte oubliée",
+    "kind": "battle",
+    "grid": {
+        "type": "square",
+        "cell_px": 70,
+        "width": 60,
+        "height": 40,
+        "unit_label": "ft",
+        "unit_per_cell": 5
+    },
+    "theme": "parchment",
+    "ambient": {
+        "darkness": 0.85,
+        "tint": "#223355",
+        "time_of_day": null,
+        "weather": {
+            "type": "none",
+            "intensity": 0
+        }
+    },
+    "palette": [
+        null,
+        {
+            "asset": "sha256:b77a0108f2dc2fb16a22a8ad95b03a69555c9485c220d00a7ef30be52150b8d7",
+            "name": "dalle_pierre_01",
+            "autotile": null
+        },
+        {
+            "asset": "sha256:63be17f935a62e7954428df084786c48a7754fc02223a4bedbfbcca756ed970e",
+            "name": "herbe",
+            "autotile": "grass"
+        },
+        {
+            "asset": "sha256:c9b12f5e43ffbe57f1befd178e207067f33e6862c64619af5fde3b405796263c",
+            "name": "eau",
+            "autotile": null
+        }
+    ],
+    "layers": [
+        {
+            "id": "ground",
+            "kind": "tiles",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "terrain",
+            "kind": "tiles",
+            "visible": true,
+            "locked": false,
+            "opacity": 0.8
+        },
+        {
+            "id": "decor",
+            "kind": "tiles",
+            "visible": false,
+            "locked": true,
+            "opacity": 1
+        },
+        {
+            "id": "walls",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "props",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "lighting",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "labels",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "gm",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1,
+            "gm_only": true
+        }
+    ],
+    "floors": [
+        {
+            "uid": "f1",
+            "level": 0,
+            "name": "Rez-de-chaussée"
+        }
+    ],
+    "chunks": {
+        "f1": {
+            "ground": {
+                "0:0": "7dGxFQAgCANRwNHs3H8gwSWu8D4vBVWKnJ0x8mWuOgv4ye6AuxPuLrjb/d2f3V+SJEn6yQU=",
+                "1:0": "7c+xDQAgDANBg2AyOvYfKExBmjvp5dr3jEC3mazX/rXdfwEAALoU"
+            },
+            "terrain": {
+                "0:0": "7dOhEQAgDATBBAx94ei/IJihhgyIXfPu3K+ZGUeLu8Bb54ijst+j9co+AADwtw0="
+            }
+        }
+    },
+    "fog": {},
+    "objects": [],
+    "notes": [],
+    "links": [],
+    "tokens_placed": [],
+    "generation": {
+        "generator": "dungeon-bsp",
+        "gen_version": 1,
+        "seed": "K7F2QM9X",
+        "params": {
+            "rooms": 8,
+            "corridor": "narrow"
+        }
+    }
+}

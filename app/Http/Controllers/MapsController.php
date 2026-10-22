@@ -36,7 +36,7 @@ final class MapsController
     {
         $maps = $this->maps->list(CurrentUser::require($request), self::id($request), $request->query);
 
-        return Response::ok($this->presenter->summaries($maps));
+        return Response::ok($this->presenter->summaries($maps, $this->apiBase($request)));
     }
 
     /**
@@ -66,7 +66,7 @@ final class MapsController
     {
         $map = $this->maps->update(CurrentUser::require($request), self::id($request), self::body($request));
 
-        return Response::ok($this->presenter->summary($map));
+        return Response::ok($this->presenter->summary($map, $this->apiBase($request)));
     }
 
     /**
@@ -86,7 +86,7 @@ final class MapsController
     {
         $map = $this->maps->restore(CurrentUser::require($request), self::id($request));
 
-        return Response::ok($this->presenter->summary($map));
+        return Response::ok($this->presenter->summary($map, $this->apiBase($request)));
     }
 
     /**

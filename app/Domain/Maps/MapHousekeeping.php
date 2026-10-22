@@ -7,12 +7,13 @@ namespace JDR\Domain\Maps;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
+use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Settings\Settings;
 
 /**
  * Cron tasks (projet.md 6.5): "maps_trash" permanently deletes the maps in the trash for more
- * than trash_days (floors, chunks, refs... by FK CASCADE); "processed_ops" forgets the
- * idempotence records older than 48 h (7.2).
+ * than trash_days (floors, chunks, refs, versions... by FK CASCADE; thumbnail file deleted, P4c);
+ * "processed_ops" forgets the idempotence records older than 48 h (7.2).
  */
 final class MapHousekeeping
 {
@@ -20,8 +21,12 @@ final class MapHousekeeping
     public const PROCESSED_OPS_HOURS = 48;
     public const PROCESSED_OPS_BATCH = 5000;
 
-    public function __construct(private MapRepository $maps, private Settings $settings, private Clock $clock)
-    {
+    public function __construct(
+        private MapRepository $maps,
+        private Settings $settings,
+        private Clock $clock,
+        private MapThumbnailService $thumbs,
+    ) {
     }
 
     public function purgeTrash(int $limit = self::BATCH): int
@@ -30,7 +35,9 @@ final class MapHousekeeping
         $before = gmdate('Y-m-d H:i:s', $this->clock->timestamp() - $days * 86400);
         $count = 0;
         foreach ($this->maps->expiredTrash($before, $limit) as $mapId) {
+            $thumb = $this->maps->find($mapId)?->thumbAssetPath;
             $this->maps->hardDelete($mapId);
+            $this->thumbs->deleteFile($thumb);
             $count++;
         }
 

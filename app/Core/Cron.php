@@ -10,6 +10,8 @@ use JDR\Domain\Assets\AssetHousekeeping;
 use JDR\Domain\Auth\LoginAttempts;
 use JDR\Domain\Games\GameHousekeeping;
 use JDR\Domain\Maps\MapHousekeeping;
+use JDR\Domain\Maps\Transfer\MapThumbnailService;
+use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Settings\Settings;
 
@@ -117,6 +119,10 @@ final class Cron
             'games_trash' => static fn (): int => $c->get(GameHousekeeping::class)->purgeTrash(),
             'maps_trash' => static fn (): int => $c->get(MapHousekeeping::class)->purgeTrash(),
             'processed_ops' => static fn (): int => $c->get(MapHousekeeping::class)->purgeProcessedOps(),
+            'map_versions' => static fn (): int => $c->get(MapVersionService::class)->trim(
+                $c->get(Settings::class)->int('versions_retention'),
+            ),
+            'map_thumbs' => static fn (): int => $c->get(MapThumbnailService::class)->purgeOrphans(),
         ];
     }
 }

@@ -7,22 +7,24 @@ namespace JDR\Domain\Maps;
 defined('JDR_BOOT') || exit;
 
 use JDR\Domain\Assets\AssetUrls;
+use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Support\Dates;
 
 /**
  * API representations "MapSummary" and "Map" (contract P4b). Only call for an editor of the
- * game (D8: palette URLs are signed for the GM / co-GMs only).
+ * game (D8: palette URLs are signed for the GM / co-GMs only). thumb_url: signed URL of the
+ * thumbnail (P4c, MapThumbnailService), null without thumbnail.
  */
 final class MapPresenter
 {
-    public function __construct(private MapRepository $maps, private AssetUrls $urls)
+    public function __construct(private MapRepository $maps, private AssetUrls $urls, private MapThumbnailService $thumbs)
     {
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function summary(Map $map): array
+    public function summary(Map $map, string $apiBase): array
     {
         return [
             'id' => $map->id,
@@ -32,7 +34,7 @@ final class MapPresenter
             'sort_order' => $map->sortOrder,
             'kind' => $map->kind,
             'grid' => ['width' => $map->width, 'height' => $map->height],
-            'thumb_url' => null,
+            'thumb_url' => $this->thumbs->url($apiBase, $map),
             'revision' => $map->revision,
             'updated_at' => Dates::iso($map->updatedAt),
             'deleted_at' => Dates::iso($map->deletedAt),
@@ -43,9 +45,9 @@ final class MapPresenter
      * @param list<Map> $maps
      * @return list<array<string, mixed>>
      */
-    public function summaries(array $maps): array
+    public function summaries(array $maps, string $apiBase): array
     {
-        return array_map(fn (Map $m): array => $this->summary($m), $maps);
+        return array_map(fn (Map $m): array => $this->summary($m, $apiBase), $maps);
     }
 
     /**
@@ -54,7 +56,7 @@ final class MapPresenter
     public function full(Map $map, string $apiBase): array
     {
         return [
-            ...$this->summary($map),
+            ...$this->summary($map, $apiBase),
             'grid' => [
                 'type' => $map->gridType,
                 'cell_px' => $map->cellPx,

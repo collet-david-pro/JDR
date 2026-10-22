@@ -22,7 +22,7 @@ final class CronTasksTest extends DbTestCase
         $cron = $app->container()->get(Cron::class);
 
         self::assertSame(
-            ['rate_limits', 'login_attempts', 'password_resets', 'assets_tmp', 'assets_job_files', 'assets_trash', 'games_trash', 'maps_trash', 'processed_ops'],
+            ['rate_limits', 'login_attempts', 'password_resets', 'assets_tmp', 'assets_job_files', 'assets_trash', 'games_trash', 'maps_trash', 'processed_ops', 'map_versions', 'map_thumbs'],
             $cron->runTasks(5.0),
         );
         self::assertSame(204, $cron->run('k'));
