@@ -9,6 +9,7 @@ defined('JDR_BOOT') || exit;
 use JDR\Domain\Assets\AssetHousekeeping;
 use JDR\Domain\Auth\LoginAttempts;
 use JDR\Domain\Games\GameHousekeeping;
+use JDR\Domain\Maps\MapHousekeeping;
 use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Settings\Settings;
 
@@ -114,6 +115,8 @@ final class Cron
             'assets_job_files' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeJobFiles(),
             'assets_trash' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeTrash(),
             'games_trash' => static fn (): int => $c->get(GameHousekeeping::class)->purgeTrash(),
+            'maps_trash' => static fn (): int => $c->get(MapHousekeeping::class)->purgeTrash(),
+            'processed_ops' => static fn (): int => $c->get(MapHousekeeping::class)->purgeProcessedOps(),
         ];
     }
 }

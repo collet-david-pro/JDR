@@ -8,14 +8,14 @@ use JDR\Core\Router;
 
 /**
  * Acceptance criterion P3 (projet.md 23, 11.2): on EVERY route of the application that takes the
- * id of a game, token or encounter (list generated from the router), an anonymous visitor gets
+ * id of a game, token, encounter or map (P4b) (list generated from the router), an anonymous visitor gets
  * 401, a third-party account (admins included) gets 404 and no data, a player member gets 403 on
  * every GM write.
  */
 final class GameRightsMatrixTest extends GamesTestCase
 {
     /**
-     * Every route whose path holds the id of a game, token or encounter.
+     * Every route whose path holds the id of a game, token, encounter or map.
      *
      * @return list<array{method: string, pattern: string}>
      */
@@ -26,7 +26,7 @@ final class GameRightsMatrixTest extends GamesTestCase
         $routes = (new \ReflectionProperty(Router::class, 'routes'))->getValue($router);
         $out = [];
         foreach ($routes as $route) {
-            if (preg_match('#^/(games|tokens|encounters)/\{id#', $route['pattern']) !== 1) {
+            if (preg_match('#^/(games|tokens|encounters|maps)/\{id#', $route['pattern']) !== 1) {
                 continue;
             }
             foreach ($route['methods'] as $method) {
@@ -38,7 +38,7 @@ final class GameRightsMatrixTest extends GamesTestCase
     }
 
     /**
-     * @param array{game: string, token: string, encounter: string, member: string} $ids
+     * @param array{game: string, token: string, encounter: string, member: string, map: string} $ids
      */
     private static function path(string $pattern, array $ids): string
     {
@@ -46,6 +46,7 @@ final class GameRightsMatrixTest extends GamesTestCase
         $id = match ($kind) {
             'games' => $ids['game'],
             'tokens' => $ids['token'],
+            'maps' => $ids['map'],
             default => $ids['encounter'],
         };
         $path = (string) preg_replace('/\{id(?::[^}]+)?\}/', $id, $pattern);
@@ -71,7 +72,7 @@ final class GameRightsMatrixTest extends GamesTestCase
     public function testEveryGameRouteIsClosedToStrangersAndGmWritesToPlayers(): void
     {
         $routes = self::gameRoutes();
-        self::assertGreaterThanOrEqual(19, count($routes));
+        self::assertGreaterThanOrEqual(28, count($routes));
 
         $gm = $this->user('Alice');
         $game = $this->newGame($gm, 'Secret des Abysses', ['description' => 'Notes cachées']);
@@ -83,8 +84,14 @@ final class GameRightsMatrixTest extends GamesTestCase
             'name' => 'Embuscade',
             'tokens' => [['token_id' => $token['id'], 'dx' => 1, 'dy' => 0]],
         ]));
-        $ids = ['game' => $game['id'], 'token' => $token['id'], 'encounter' => $encounter['id'], 'member' => $coGm['user']['id']];
-        $secrets = ['Secret des Abysses', 'Notes cachées', 'Liche ancienne', 'Embuscade', $asset['uuid']];
+        $map = self::data($gm->post('/games/' . $game['id'] . '/maps', ['name' => 'Crypte interdite', 'width' => 40, 'height' => 40]));
+        $floor = $map['floors'][0]['id'];
+        self::assertSame(200, $gm->post('/maps/' . $map['id'] . '/ops', ['base_revision' => 0, 'client_op_id' => 'matrix-1', 'ops' => [
+            ['type' => 'palette.add', 'index' => 1, 'asset_id' => $asset['id']],
+            ['type' => 'tiles.set', 'floor' => $floor, 'layer' => 'ground', 'cells' => [[1, 1, 1, 0, 0]]],
+        ]])->status());
+        $ids = ['game' => $game['id'], 'token' => $token['id'], 'encounter' => $encounter['id'], 'member' => $coGm['user']['id'], 'map' => $map['id']];
+        $secrets = ['Secret des Abysses', 'Notes cachées', 'Liche ancienne', 'Embuscade', $asset['uuid'], 'Crypte interdite'];
 
         $anonymous = $this->client('198.51.100.200');
         $anonymous->me();
@@ -94,7 +101,11 @@ final class GameRightsMatrixTest extends GamesTestCase
 
         foreach ($routes as ['method' => $method, 'pattern' => $pattern]) {
             $path = self::path($pattern, $ids);
-            $body = $method === 'GET' ? null : ['name' => 'x', 'role' => 'player', 'identifier' => 'Dave'];
+            $body = $method === 'GET' ? null : [
+                'name' => 'x', 'role' => 'player', 'identifier' => 'Dave', 'width' => 10, 'height' => 10,
+                'base_revision' => 1, 'client_op_id' => 'matrix-' . $method . '-' . md5($path),
+                'ops' => [['type' => 'tiles.set', 'floor' => $floor, 'layer' => 'ground', 'cells' => [[1, 1, 0, 0, 0]]]],
+            ];
             $label = $method . ' ' . $path;
 
             $r = $anonymous->request($method, $path, $body);
@@ -131,12 +142,17 @@ final class GameRightsMatrixTest extends GamesTestCase
         self::assertSame('Liche ancienne', self::data($gm->get('/tokens/' . $token['id']))['name']);
         self::assertSame('Embuscade', self::data($gm->get('/games/' . $game['id'] . '/encounters'))[0]['name']);
         self::assertSame(['gm', 'player', 'co_gm'], array_column(self::data($gm->get('/games/' . $game['id'] . '/members')), 'role'));
+        $mapAfter = self::data($gm->get('/maps/' . $map['id']));
+        self::assertSame('Crypte interdite', $mapAfter['name']);
+        self::assertSame(1, $mapAfter['revision']);
+        self::assertSame(['Crypte interdite'], array_column(self::data($gm->get('/games/' . $game['id'] . '/maps')), 'name'));
+        self::assertSame(1, $this->rows('map_chunks'));
     }
 
     public function testUnknownIdsAre404ForEveryone(): void
     {
         $gm = $this->user('Alice');
-        $ids = ['game' => '999999', 'token' => '999999', 'encounter' => '999999', 'member' => '999999'];
+        $ids = ['game' => '999999', 'token' => '999999', 'encounter' => '999999', 'member' => '999999', 'map' => '999999'];
         foreach (self::gameRoutes() as ['method' => $method, 'pattern' => $pattern]) {
             $r = $gm->request($method, self::path($pattern, $ids), $method === 'GET' ? null : []);
             self::assertSame(404, $r->status(), $method . ' ' . $pattern);
