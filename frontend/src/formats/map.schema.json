@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jdr.local/schemas/map.schema.json",
+  "title": "JDR map document",
+  "description": "Map document exchanged by export / import and stored by snapshots (projet.md 12.1), format_version 1 as accepted in phase P4. Coordinates in cells (floats), origin top-left, Y down. Asset references are content hashes (sha256:<hex>). Unknown members are refused; objects, notes, links, placed tokens and fog come with later phases and must be empty. The client validates with src/formats/map-document.ts (same rules, plus unique ids/levels, the three tile layers, blocks of known floors inside the grid, no key named __proto__ / constructor / prototype); the server applies the same hand-written validation (app/Maps/Document/MapDocumentValidator.php).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "format_version", "name", "grid", "palette", "layers", "floors", "chunks"],
+  "properties": {
+    "format": { "const": "jdr-map" },
+    "format_version": { "const": 1 },
+    "app_version": { "type": "string", "maxLength": 40 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "\\S" },
+    "kind": { "enum": ["battle", "world"] },
+    "grid": { "$ref": "#/$defs/grid" },
+    "theme": { "enum": ["parchment", "slate", "blueprint", "dark", "light"] },
+    "ambient": { "$ref": "#/$defs/ambient" },
+    "palette": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "prefixItems": [{ "type": "null" }],
+      "items": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/paletteEntry" }] }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/layer" }
+    },
+    "floors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/floor" }
+    },
+    "chunks": {
+      "description": "floor uid → tile layer → \"cx:cy\" → base64 of a raw-deflate tile block (projet.md 12.2). An empty map may be written [].",
+      "anyOf": [
+        { "type": "array", "maxItems": 0 },
+        {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/floorUid" },
+          "additionalProperties": {
+            "anyOf": [
+              { "type": "array", "maxItems": 0 },
+              {
+                "type": "object",
+                "propertyNames": { "enum": ["ground", "terrain", "decor"] },
+                "additionalProperties": { "$ref": "#/$defs/blockMap" }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "fog": {
+      "description": "Fog of war (projet.md 12.3): comes with P5, must be empty in P4.",
+      "anyOf": [
+        { "type": "null" },
+        { "type": "array", "maxItems": 0 },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              { "type": "null" },
+              { "type": "array", "maxItems": 0 },
+              { "type": "object", "maxProperties": 0 }
+            ]
+          }
+        }
+      ]
+    },
+    "objects": { "$ref": "#/$defs/laterList" },
+    "notes": { "$ref": "#/$defs/laterList" },
+    "links": { "$ref": "#/$defs/laterList" },
+    "tokens_placed": { "$ref": "#/$defs/laterList" },
+    "generation": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["generator", "gen_version", "seed"],
+          "properties": {
+            "generator": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{0,39}$" },
+            "gen_version": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+            "seed": { "type": "string", "minLength": 1, "maxLength": 64 },
+            "params": { "anyOf": [{ "type": "object" }, { "type": "array", "maxItems": 0 }] }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "laterList": {
+      "description": "Content of a later phase (P5, P9): null or empty in P4.",
+      "anyOf": [{ "type": "null" }, { "type": "array", "maxItems": 0 }]
+    },
+    "assetRef": { "type": "string", "pattern": "^sha256:[0-9a-fA-F]{64}$" },
+    "floorUid": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,21}$" },
+    "blockMap": {
+      "anyOf": [
+        { "type": "array", "maxItems": 0 },
+        {
+          "type": "object",
+          "propertyNames": { "pattern": "^[0-9]{1,3}:[0-9]{1,3}$" },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 8192,
+            "pattern": "^[A-Za-z0-9+/]+={0,2}$"
+          }
+        }
+      ]
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cell_px", "width", "height", "unit_label", "unit_per_cell"],
+      "properties": {
+        "type": { "const": "square" },
+        "cell_px": { "type": "integer", "minimum": 16, "maximum": 512 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 400 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 400 },
+        "unit_label": { "type": "string", "maxLength": 10 },
+        "unit_per_cell": { "type": "number", "minimum": 0.01, "maximum": 9999.99 }
+      }
+    },
+    "ambient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "darkness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tint": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "time_of_day": {
+          "anyOf": [{ "type": "null" }, { "type": "number", "minimum": 0, "maximum": 24 }]
+        },
+        "weather": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "enum": ["none", "rain", "snow", "fog", "storm"] },
+            "intensity": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "paletteEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset"],
+      "properties": {
+        "asset": { "$ref": "#/$defs/assetRef" },
+        "name": { "anyOf": [{ "type": "null" }, { "type": "string", "maxLength": 120 }] },
+        "autotile": {
+          "anyOf": [{ "type": "null" }, { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,40}$" }]
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "enum": ["ground", "terrain", "decor", "walls", "props", "lighting", "labels", "gm"]
+        },
+        "kind": { "enum": ["tiles", "objects"] },
+        "visible": { "type": "boolean" },
+        "locked": { "type": "boolean" },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "gm_only": { "type": "boolean" }
+      }
+    },
+    "floor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uid", "level", "name"],
+      "properties": {
+        "uid": { "$ref": "#/$defs/floorUid" },
+        "level": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 60, "pattern": "\\S" }
+      }
+    }
+  }
+}

@@ -68,7 +68,9 @@
     "rate_limited_for": "Trop de tentatives. Réessayez dans {duration}.",
     "asset_in_use": "Cette image est utilisée dans des maps ou des tokens. Supprimez-la quand même ou retirez-la d'abord.",
     "invalid_pack": "Ce pack d'assets est invalide ou dangereux (archive ZIP incorrecte).",
-    "job_expired": "Ce traitement a expiré : ses fichiers ont été supprimés. Relancez-le."
+    "job_expired": "Ce traitement a expiré : ses fichiers ont été supprimés. Relancez-le.",
+    "unsupported_format_version": "Ce fichier de map vient d'une version plus récente du site : mettez le site à jour pour l'importer.",
+    "invalid_map_file": "Ce fichier n'est pas une map valide (JSON ou archive ZIP exportée depuis le site)."
   },
   "pages": {
     "not_found": {
@@ -272,6 +274,16 @@
         "too_small": "Au moins 16 px.",
         "too_large": "512 px au maximum.",
         "invalid": "Nombre entier de pixels."
+      },
+      "label": {
+        "too_long": "120 caractères au maximum."
+      },
+      "file": {
+        "missing_document": "L'archive ne contient pas de fichier map.json.",
+        "too_large": "Le fichier est trop volumineux."
+      },
+      "client_op_id": {
+        "already_used": "Cette opération a déjà été utilisée pour autre chose : rechargez puis réessayez."
       }
     },
     "not_ready": "Le traitement n'est pas terminé.",
@@ -935,6 +947,77 @@
         "cell_px": "Taille d'une case (px)",
         "unit_per_cell": "Distance par case",
         "unit_label": "Unité"
+      },
+      "import": {
+        "button": "Importer",
+        "title": "Importer une map",
+        "file": "Fichier de map",
+        "file_hint": "Document JSON exporté par l'application, ou archive ZIP (map + images).",
+        "reading": "Lecture du fichier…",
+        "more_issues": {
+          "one": "… et {count} autre problème.",
+          "other": "… et {count} autres problèmes."
+        },
+        "preview": {
+          "name": "Nom",
+          "size": "Taille",
+          "file": "Fichier",
+          "json": "JSON, {size}",
+          "zip": "ZIP, {size}",
+          "assets": "Images",
+          "assets_count": {
+            "zero": "aucune image référencée",
+            "one": "{count} image référencée",
+            "other": "{count} images référencées"
+          },
+          "bundled": {
+            "zero": "aucune fournie",
+            "one": "{count} fournie",
+            "other": "{count} fournies"
+          },
+          "content": "Contenu",
+          "cells": {
+            "zero": "map vide",
+            "one": "{count} case peinte",
+            "other": "{count} cases peintes"
+          },
+          "format": "Format",
+          "migrated": "version {version}, convertie au format actuel"
+        },
+        "submit": "Importer",
+        "uploading": "Envoi du fichier…",
+        "done": "Map « {name} » importée.",
+        "missing": {
+          "one": "{count} image est introuvable sur ce serveur : ses cases restent vides (texture manquante).",
+          "other": "{count} images sont introuvables sur ce serveur : leurs cases restent vides (texture manquante)."
+        },
+        "unnamed": "(sans nom)",
+        "open": "Ouvrir la map",
+        "errors": {
+          "empty": "Le fichier est vide.",
+          "too_large": "Le fichier est trop volumineux pour être lu.",
+          "unknown_type": "Type de fichier non reconnu : choisissez un fichier .json ou .zip.",
+          "bad_zip": "Archive ZIP illisible ou non prise en charge.",
+          "zip_without_map": "L'archive ne contient pas de fichier map.json.",
+          "not_json": "Ce fichier n'est pas un document JSON valide.",
+          "not_a_map": "Ce fichier n'est pas une map exportée par l'application.",
+          "unsupported_format_version": "Format de map trop récent (version {version}) : mettez l'application à jour.",
+          "invalid": "Le document de map contient des erreurs :",
+          "unreadable": "Le fichier n'a pas pu être lu par le serveur (archive ou document illisible).",
+          "server_too_large": "Le fichier dépasse la taille autorisée par le serveur.",
+          "quota_exceeded": "Espace de stockage insuffisant pour importer les images de cette archive."
+        },
+        "issues": {
+          "required": "{path} : valeur manquante",
+          "type": "{path} : type incorrect",
+          "value": "{path} : valeur non autorisée",
+          "range": "{path} : valeur hors limites",
+          "too_long": "{path} : trop long ou trop d'éléments",
+          "duplicate": "{path} : identifiant en double",
+          "unknown_ref": "{path} : référence inconnue",
+          "bad_block": "{path} : bloc de tuiles illisible",
+          "unsupported": "{path} : élément non pris en charge à cette version (objets, notes, brouillard… arrivent plus tard)"
+        }
       }
     },
     "sessions": {
@@ -1263,7 +1346,8 @@
       "wheel": "Molette : zoom. Maj + molette : défilement horizontal.",
       "trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
       "middle": "Bouton du milieu : déplacer la vue.",
-      "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ."
+      "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ.",
+      "snapshot": "Instantané nommé de la map"
     },
     "map_title": "{map} — {game}",
     "save": {
@@ -1288,10 +1372,130 @@
         "rejected": "Une modification a été refusée par le serveur et n'a pas été enregistrée.",
         "unknown": "Enregistrement impossible."
       }
+    },
+    "versions": {
+      "button": "Historique",
+      "title": "Historique",
+      "close": "Fermer l'historique",
+      "snapshot": "Instantané",
+      "snapshot_title": "Instantané nommé",
+      "label": "Libellé (facultatif)",
+      "label_hint": "Par exemple : « Avant d'ajouter la crypte ».",
+      "snapshot_submit": "Créer l'instantané",
+      "snapshot_done": "Instantané « {name} » créé.",
+      "empty": "Aucune version pour l'instant : un instantané automatique est créé toutes les 5 minutes d'édition.",
+      "restore": "Restaurer",
+      "restore_label": "Restaurer la version « {name} »",
+      "restore_title": "Restaurer cette version ?",
+      "restore_message": "La map reviendra à la version « {name} » du {date}. Un instantané de l'état actuel sera créé avant : vous pourrez revenir en arrière.",
+      "restore_confirm": "Restaurer",
+      "restored": "Version restaurée. L'historique annuler / rétablir a été remis à zéro.",
+      "pending_ops": "Des modifications ne sont pas encore enregistrées (hors ligne ?). Réessayez une fois la map enregistrée.",
+      "kinds": {
+        "auto": "Automatique",
+        "manual": "Manuel",
+        "pre_restore": "Avant restauration",
+        "pre_generate": "Avant génération",
+        "pre_update": "Avant mise à jour"
+      }
+    },
+    "export": {
+      "button": "Exporter",
+      "json": "JSON (sans images)",
+      "zip": "Archive ZIP (avec images)",
+      "png": "Image PNG…",
+      "unsaved": "Des modifications ne sont pas encore enregistrées : l'export contient le dernier état enregistré."
     }
   },
   "maps": {
     "default_floor_name": "Rez-de-chaussée",
     "copy_suffix": " (copie)"
+  },
+  "export_png": {
+    "title": "Exporter en PNG",
+    "file_type": "Image PNG ou archive ZIP",
+    "extent": "Étendue",
+    "extents": {
+      "map": "Map entière",
+      "selection": "Sélection",
+      "view": "Vue actuelle"
+    },
+    "cells": "{w} × {h} cases",
+    "content": "Contenu",
+    "layers": {
+      "ground": "Sol",
+      "terrain": "Terrain",
+      "decor": "Décor"
+    },
+    "grid": "Grille",
+    "transparent": "Fond transparent",
+    "floor_hint": "Étage unique : rez-de-chaussée. Les calques masqués sont décochés par défaut.",
+    "resolution": "Résolution",
+    "mode": "Mode",
+    "modes": {
+      "factor": "Facteur (×1, ×2, ×4)",
+      "cell": "Pixels par case",
+      "width": "Largeur cible",
+      "height": "Hauteur cible",
+      "custom": "Échelle personnalisée"
+    },
+    "cell_px": "Pixels par case",
+    "target_width": "Largeur (px)",
+    "target_height": "Hauteur (px)",
+    "scale": "Échelle (ex. 1,5)",
+    "size": "{width} × {height} px · {mpx} Mpx · {ppc} px par case",
+    "warnings": {
+      "large": "Image très grande (≥ {threshold} Mpx) : l’export peut prendre du temps.",
+      "viewer_limit": "Plus de {side} px de côté : certaines visionneuses ne l’ouvriront pas."
+    },
+    "errors": {
+      "size_invalid": "Valeur de résolution invalide.",
+      "size_too_small": "Image trop petite (au moins 1 px par case).",
+      "size_too_large": "Image trop grande (plafond : {max} Mpx).",
+      "size_png_limit": "Dimension au-delà de la limite du format PNG.",
+      "print_invalid": "Réglages d’impression invalides.",
+      "print_margins": "Marges ou recouvrement trop grands pour ce format de page.",
+      "print_too_many_pages": "Trop de pages (999 au maximum).",
+      "no_extent": "Cette étendue n’est pas disponible.",
+      "no_layers": "Choisissez au moins un calque ou la grille."
+    },
+    "print": "Impression",
+    "print_enable": "Mode impression (densité PNG)",
+    "mm_per_cell": "1 case = N mm",
+    "paging": "Découper en pages (archive ZIP)",
+    "paper": "Format",
+    "papers": {
+      "a4": "A4",
+      "a3": "A3",
+      "letter": "Letter"
+    },
+    "orientation": "Orientation",
+    "portrait": "Portrait",
+    "landscape": "Paysage",
+    "margin": "Marges (mm)",
+    "overlap": "Recouvrement (mm)",
+    "crop_marks": "Repères de coupe",
+    "dpi": "{dpi} ppp",
+    "pages": {
+      "one": "{count} page",
+      "other": "{count} pages ({columns} × {rows})"
+    },
+    "missing": {
+      "one": "{count} tuile sans image sera remplacée par la texture de repli :",
+      "other": "{count} tuiles sans image seront remplacées par la texture de repli :"
+    },
+    "failed_images": {
+      "one": "{count} image n’a pas pu être chargée (texture de repli utilisée) :",
+      "other": "{count} images n’ont pas pu être chargées (texture de repli utilisée) :"
+    },
+    "start": "Exporter",
+    "cancel": "Annuler l’export",
+    "progress_label": "Progression de l’export",
+    "preparing": "Préparation…",
+    "progress": "Bandes rendues : {done} / {total} ({percent} %)",
+    "done_file": "Export terminé : fichier enregistré.",
+    "done_download": "Export terminé : téléchargement lancé.",
+    "cancelled": "Export annulé.",
+    "failed": "Échec de l’export : {error}"
   }
 }

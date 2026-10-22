@@ -1,5 +1,7 @@
 <script lang="ts">
+  import ExportMenu from './ExportMenu.svelte';
   import SaveIndicator from './SaveIndicator.svelte';
+  import type { ExportKind } from '../../editor/ui/export-source';
   import { GRID_THEME_IDS } from '../../engine/grid-themes';
   import type { GridTheme } from '../../editor/contracts';
   import { commandLabel, themeLabel } from '../../editor/ui/labels';
@@ -14,9 +16,25 @@
     mapName: string;
     /** Loads the map again (offered after a revision conflict). */
     onreload?: (() => void) | undefined;
+    /** An export is being downloaded (P4c). */
+    exporting?: boolean;
+    onexport?: ((kind: ExportKind) => void) | undefined;
   }
 
-  let { session, gameId, gameName, mapName, onreload }: Props = $props();
+  let {
+    session,
+    gameId,
+    gameName,
+    mapName,
+    onreload,
+    exporting = false,
+    onexport,
+  }: Props = $props();
+
+  function toggleHistory(): void {
+    ui.historyOpen = !ui.historyOpen;
+    if (ui.historyOpen && !ui.panelsOpen) session.togglePanels();
+  }
   const ui = $derived(session.ui);
 
   const undoText = $derived(
@@ -113,6 +131,16 @@
   </div>
 
   <div class="group end">
+    <button
+      type="button"
+      class="button button-small"
+      aria-pressed={ui.historyOpen}
+      data-testid="editor-history"
+      onclick={toggleHistory}>{t('editor.versions.button')}</button
+    >
+    {#if onexport}
+      <ExportMenu busy={exporting} disabled={ui.save === null} {onexport} />
+    {/if}
     <button
       type="button"
       class="button button-small"

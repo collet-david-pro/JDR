@@ -139,6 +139,8 @@ export function shortcutDescription(action: ShortcutAction): string | null {
       return t('editor.help.zoom_reset');
     case 'zoom.fit':
       return t('editor.help.zoom_fit');
+    case 'snapshot':
+      return t('editor.help.snapshot');
     case 'pan.hold':
       return t('editor.help.pan_hold');
     case 'cancel':

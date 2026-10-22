@@ -322,6 +322,9 @@ export class EditorSession {
       case 'help':
         this.ui.helpOpen = true;
         break;
+      case 'snapshot':
+        if (this.ui.save !== null) this.ui.snapshotOpen = true;
+        break;
       default:
         break;
     }

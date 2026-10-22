@@ -45,6 +45,10 @@ export class EditorUiState implements EditorSettings {
   gridVisible = $state(true);
   panelsOpen = $state(true);
   helpOpen = $state(false);
+  /** History panel shown (P4c). */
+  historyOpen = $state(false);
+  /** Named snapshot dialog open (Cmd/Ctrl+Shift+S, P4c). */
+  snapshotOpen = $state(false);
   panMode = $state(false);
 
   /** Status bar. */

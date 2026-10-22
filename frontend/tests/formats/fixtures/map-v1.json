@@ -1,0 +1,105 @@
+{
+  "format": "jdr-map",
+  "format_version": 1,
+  "app_version": "0.4.0",
+  "name": "Crypte oubliée",
+  "kind": "battle",
+  "grid": {
+    "type": "square",
+    "cell_px": 70,
+    "width": 60,
+    "height": 40,
+    "unit_label": "ft",
+    "unit_per_cell": 5
+  },
+  "theme": "parchment",
+  "ambient": {
+    "darkness": 0.85,
+    "tint": "#223355",
+    "time_of_day": null,
+    "weather": {
+      "type": "none",
+      "intensity": 0
+    }
+  },
+  "palette": [
+    null,
+    {
+      "asset": "sha256:ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12ab12",
+      "name": "dalle_pierre_01",
+      "autotile": null
+    },
+    {
+      "asset": "sha256:cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34cd34",
+      "name": "herbe"
+    },
+    null
+  ],
+  "layers": [
+    {
+      "id": "ground",
+      "kind": "tiles",
+      "visible": true,
+      "locked": false,
+      "opacity": 1
+    },
+    {
+      "id": "terrain",
+      "kind": "tiles"
+    },
+    {
+      "id": "decor",
+      "kind": "tiles"
+    },
+    {
+      "id": "walls",
+      "kind": "objects"
+    },
+    {
+      "id": "props",
+      "kind": "objects"
+    },
+    {
+      "id": "lighting",
+      "kind": "objects"
+    },
+    {
+      "id": "labels",
+      "kind": "objects"
+    },
+    {
+      "id": "gm",
+      "kind": "objects",
+      "gm_only": true
+    }
+  ],
+  "floors": [
+    {
+      "uid": "f1",
+      "level": 0,
+      "name": "Rez-de-chaussée"
+    }
+  ],
+  "chunks": {
+    "f1": {
+      "ground": {
+        "0:0": "7cNBCQAgAASwO8Fk/uwfSARTyAbbq7n6jnQGAAAA+NIB",
+        "1:1": "7c4xDQAwCACwMWt8+BeEDAhpFbQyHnDLnw4AAABrNQ=="
+      },
+      "decor": {
+        "0:0": "7c4xDQAwCACwMWt8+BeEDAhpFbQy/mOVmA4AAABwVgM="
+      }
+    }
+  },
+  "fog": {},
+  "objects": [],
+  "notes": [],
+  "links": [],
+  "tokens_placed": [],
+  "generation": {
+    "generator": "dungeon-bsp",
+    "gen_version": 1,
+    "seed": "K7F2QM9X",
+    "params": {}
+  }
+}

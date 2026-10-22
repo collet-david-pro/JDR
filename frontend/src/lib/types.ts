@@ -569,3 +569,48 @@ export interface MapOpsResult {
   readonly applied?: number;
   readonly conflicts: readonly unknown[];
 }
+
+/* ------------------------------------------------------------------------------------------
+ * Phase P4c: versions, export / import, thumbnail (etapes/P04 "Contrat d'API P4c",
+ * projet.md 9.2, 11.4 "Versions", 12.1).
+ * ---------------------------------------------------------------------------------------- */
+
+export type MapVersionKind = 'auto' | 'manual' | 'pre_restore' | 'pre_generate' | 'pre_update';
+
+/** Item of GET /maps/{id}/versions (most recent first), answer of POST /maps/{id}/versions. */
+export interface MapVersion {
+  readonly id: string;
+  readonly map_id: string;
+  /** Map revision captured by the snapshot. */
+  readonly revision: number;
+  readonly kind: MapVersionKind;
+  readonly label: string | null;
+  /** Size of the stored (compressed) snapshot. */
+  readonly size_bytes: number;
+  readonly created_by: { readonly id: string; readonly username: string } | null;
+  readonly created_at: string;
+}
+
+/** Answer of POST /maps/{id}/versions/{vid}/restore. */
+export interface MapRestoreResult {
+  readonly revision: number;
+  readonly map: MapDetail;
+}
+
+/** Asset reference of an imported document that the server could not resolve. */
+export interface MissingAsset {
+  /** "sha256:<hex>" */
+  readonly ref: string;
+  readonly name: string;
+}
+
+/** Answer of POST /games/{id}/maps/import. */
+export interface MapImportResult {
+  readonly map: MapDetail;
+  readonly missing_assets: readonly MissingAsset[];
+}
+
+/** Answer of PUT /maps/{id}/thumbnail. */
+export interface MapThumbnailResult {
+  readonly thumb_url: string;
+}

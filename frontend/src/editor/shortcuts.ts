@@ -26,6 +26,8 @@ export type ShortcutAction =
   | 'help'
   | 'zoom.reset'
   | 'zoom.fit'
+  /** Named snapshot (P4c, projet.md 15.3: Cmd/Ctrl+Shift+S). */
+  | 'snapshot'
   /** Space held: temporary hand tool (the UI handles keyup). */
   | 'pan.hold'
   | 'cancel';
@@ -90,6 +92,7 @@ export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   { action: 'help', key: '?' },
   ...digitBindings(0, 'zoom.reset', true),
   ...digitBindings(1, 'zoom.fit', true),
+  { action: 'snapshot', key: 's', mod: true, shift: true, alt: false },
   { action: 'pan.hold', key: ' ', shift: false, alt: false },
   { action: 'cancel', key: 'Escape' },
 ] satisfies KeyBinding[]);

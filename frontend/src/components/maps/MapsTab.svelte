@@ -2,18 +2,28 @@
   import MapCard from './MapCard.svelte';
   import MapCreateDialog from './MapCreateDialog.svelte';
   import MapEditDialog from './MapEditDialog.svelte';
+  import MapImportDialog from './MapImportDialog.svelte';
   import { describeError } from '../../lib/errors';
   import { folderNames, isMapSort, MAP_SORTS, type MapSort } from '../../lib/maps/folders';
+  import { MapImportModel } from '../../lib/maps/map-import.svelte';
   import { MapsTabModel } from '../../lib/maps/maps-tab.svelte';
   import { mapsClient } from '../../lib/maps/service';
   import { t } from '../../lib/i18n';
   import { services } from '../../lib/services';
-  import type { Game, MapDetail, MapListState, MapPatch, MapSummary } from '../../lib/types';
+  import type {
+    Game,
+    MapDetail,
+    MapImportResult,
+    MapListState,
+    MapPatch,
+    MapSummary,
+  } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
 
   /**
    * Maps tab of the game page (projet.md 18.1 p.3): thumbnails grouped by folder, sort,
-   * creation, rename / move, duplicate, trash with restoration, opening in the editor.
+   * creation, rename / move, duplicate, trash with restoration, opening in the editor,
+   * import of a map file (P4c).
    */
   interface Props {
     game: Game;
@@ -23,6 +33,9 @@
 
   // svelte-ignore state_referenced_locally
   const model = new MapsTabModel(mapsClient(), game.id);
+  // svelte-ignore state_referenced_locally
+  const importer = new MapImportModel(mapsClient(), game.id);
+  let importOpen = $state(false);
   const failure = $derived(model.error === null ? null : describeError(model.error, t));
   const folders = $derived(folderNames(model.maps));
   const uid = $props.id();
@@ -57,11 +70,20 @@
     createOpen = true;
   }
 
-  function created(map: MapDetail): void {
-    toasts.success(t('games.maps.created', { name: map.name }));
+  function openEditor(map: MapDetail): void {
     services().router.navigate(
       `/games/${encodeURIComponent(game.id)}/maps/${encodeURIComponent(map.id)}/edit`,
     );
+  }
+
+  function created(map: MapDetail): void {
+    toasts.success(t('games.maps.created', { name: map.name }));
+    openEditor(map);
+  }
+
+  function imported(result: MapImportResult): void {
+    model.added(result.map);
+    toasts.success(t('games.maps.import.done', { name: result.map.name }));
   }
 
   function edit(map: MapSummary): void {
@@ -120,6 +142,13 @@
       </select>
     </label>
     {#if model.view === 'active'}
+      <button
+        type="button"
+        class="button"
+        aria-haspopup="dialog"
+        data-testid="map-import"
+        onclick={() => (importOpen = true)}>{t('games.maps.import.button')}</button
+      >
       <button
         type="button"
         class="button button-primary"
@@ -201,6 +230,15 @@
   oncreated={created}
 />
 <MapEditDialog bind:open={editOpen} map={editing} {folders} onsave={save} />
+<MapImportDialog
+  bind:open={importOpen}
+  model={importer}
+  onimported={imported}
+  onopenmap={(map) => {
+    importOpen = false;
+    openEditor(map);
+  }}
+/>
 
 <style>
   .head,

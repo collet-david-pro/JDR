@@ -79,6 +79,12 @@ export class MapsTabModel {
     return copy;
   }
 
+  /** A map created elsewhere (import) joins the list. */
+  added(map: MapDetail): void {
+    if (this.view !== 'active' || this.maps.some((m) => m.id === map.id)) return;
+    this.maps = [...this.maps, summaryOf(map)];
+  }
+
   /** To the trash (restorable). */
   async trash(id: string): Promise<void> {
     await this.client.remove(id);

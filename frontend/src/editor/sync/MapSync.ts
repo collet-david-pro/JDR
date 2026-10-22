@@ -33,6 +33,8 @@ export interface MapSyncOptions {
   /** Notice shown when the server refuses a batch. */
   readonly onRejected?: (error: TransportError) => void;
   readonly onReloadRequired?: () => void;
+  /** Every op is confirmed by the server (after a confirmed batch): thumbnail refresh (P4c). */
+  readonly onSaved?: (revision: number) => void;
 }
 
 export interface MapSyncStart {
@@ -55,6 +57,7 @@ export class MapSync {
   private readonly offs: (() => void)[] = [];
   private cacheTimer: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
+  private readonly onSaved: ((revision: number) => void) | undefined;
 
   constructor(options: MapSyncOptions) {
     this.session = options.session;
@@ -64,6 +67,7 @@ export class MapSync {
     this.win = options.win;
     this.doc = options.doc;
     this.floor = options.session.doc.floor;
+    this.onSaved = options.onSaved;
     const events: QueueEvents = {
       onRejected: (_batch, error) => options.onRejected?.(error),
       onReloadRequired: () => options.onReloadRequired?.(),
@@ -116,6 +120,17 @@ export class MapSync {
     session.setEditable(true);
     if (this.queue.hasUnconfirmed) void this.queue.flush();
     return { chunks, replayed, replayFailed };
+  }
+
+  /**
+   * Sends every pending op now and waits for the answers (before a snapshot, a restoration or
+   * an export). Resolves true when nothing is left unconfirmed, false otherwise (offline,
+   * refused, paused).
+   */
+  async settle(): Promise<boolean> {
+    if (this.disposed) return false;
+    await this.queue.flush();
+    return !this.queue.hasUnconfirmed;
   }
 
   /** Leaving the editor inside the application: last send, then stop. */
@@ -218,6 +233,7 @@ export class MapSync {
 
   /** Everything is saved and nobody else wrote: refresh the local copy of the blocks. */
   private confirmed(revision: number, inSync: boolean): void {
+    if (!this.queue.hasUnconfirmed) this.onSaved?.(revision);
     if (this.cacheTimer !== null) clearTimeout(this.cacheTimer);
     this.cacheTimer = null;
     if (!inSync) {
