@@ -6,7 +6,7 @@ import { resetRateLimits } from '../helpers/db';
 import { main, unique, userPassword } from '../helpers/env';
 
 /**
- * Map editor, P4a (local draft, projet.md 15): the page and its controls are found through
+ * Map editor (projet.md 15), on a map created from the Maps tab: the page and its controls are found through
  * data-testid / aria attributes so that the scenario does not depend on the editor texts
  * (i18n/_pending/editor.json until merged into fr.json).
  *
@@ -51,13 +51,18 @@ async function uploadTile(page: Page): Promise<void> {
   await expect(page.locator('ul.queue li.item-done')).toHaveCount(1, { timeout: 20_000 });
 }
 
-/** Opens the size form of the editor and creates the draft; returns false when no GPU. */
-async function openDraft(page: Page, width: number, height: number): Promise<boolean> {
-  const setup = page.getByTestId('editor-setup');
-  await expect(setup).toBeVisible();
-  await setup.locator('input[name="width"]').fill(String(width));
-  await setup.locator('input[name="height"]').fill(String(height));
-  await page.getByTestId('editor-create').click();
+/** Creates a map from the Maps tab of the game (the editor opens); false when no GPU. */
+async function openNewMap(page: Page, gameId: string, width: number, height: number): Promise<boolean> {
+  // Already on the game page (just created): no reload while its chunks are still loading.
+  if (new URL(page.url()).pathname !== `/games/${gameId}`) await page.goto(`/games/${gameId}?tab=maps`);
+  await page.getByTestId('map-new').click();
+  const form = page.getByTestId('map-create-form');
+  await expect(form).toBeVisible();
+  await form.locator('input[name="name"]').fill(unique('Map '));
+  await form.locator('input[name="width"]').fill(String(width));
+  await form.locator('input[name="height"]').fill(String(height));
+  await page.getByTestId('map-create').click();
+  await expect(page).toHaveURL(new RegExp(`/games/${gameId}/maps/\\d+/edit$`));
   const viewport = page.getByTestId('editor-viewport');
   await expect(viewport).toHaveAttribute('data-state', /^(ready|unsupported|error)$/, {
     timeout: 30_000,
@@ -69,6 +74,9 @@ async function openDraft(page: Page, width: number, height: number): Promise<boo
   }
   expect(state).toBe('ready');
   await expect(page.getByTestId('status-renderer')).toHaveAttribute('data-renderer', /webgpu|webgl/);
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved', {
+    timeout: 15_000,
+  });
   return true;
 }
 
@@ -92,7 +100,7 @@ async function mapShot(page: Page): Promise<Buffer> {
   return page.getByTestId('editor-viewport').screenshot();
 }
 
-test('GM paints on a local draft map: palette, brush, undo/redo, layers, fill limit', async ({
+test('GM paints on a map: palette, brush, undo/redo, layers, fill limit', async ({
   page,
   browserName,
 }) => {
@@ -103,19 +111,16 @@ test('GM paints on a local draft map: palette, brush, undo/redo, layers, fill li
   await login(page, gm, userPassword);
   await uploadTile(page);
 
-  // New game from the dashboard ⇒ Maps tab ⇒ editor (local draft).
+  // New game from the dashboard ⇒ Maps tab ⇒ new map ⇒ editor.
   await page.goto('/');
   await page.getByRole('button', { name: 'Nouvelle partie' }).click();
   await page.locator('input[name="name"]').fill(unique('Carte '));
   await page.getByRole('button', { name: 'Créer la partie' }).click();
   await expect(page).toHaveURL(/\/games\/\d+/);
   const game = { id: new URL(page.url()).pathname.split('/').pop() as string };
-  await page.getByTestId('open-editor').click();
-  await expect(page).toHaveURL(new RegExp(`/games/${game.id}/maps/local/edit$`));
-  const ready = await openDraft(page, 60, 40);
+  const ready = await openNewMap(page, game.id, 60, 40);
   test.skip(!ready, `${browserName}: neither WebGPU nor WebGL 2 in this headless browser`);
 
-  await expect(page.getByTestId('editor-unsaved')).toBeVisible();
   await addTileFromLibrary(page);
   await expect(page.getByTestId('tool-brush')).toHaveAttribute('aria-pressed', 'true');
 
@@ -176,8 +181,10 @@ test('GM paints on a local draft map: palette, brush, undo/redo, layers, fill li
   await expect(page.getByTestId('editor-help-dialog')).toBeHidden();
 
   // Fill limited to 50 000 cells: refused on an empty 250 × 250 map, with an announcement.
-  await page.goto(`/games/${game.id}/maps/local/edit`);
-  expect(await openDraft(page, 250, 250)).toBe(true);
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-state', 'saved', {
+    timeout: 15_000,
+  });
+  expect(await openNewMap(page, game.id, 250, 250)).toBe(true);
   await addTileFromLibrary(page);
   await page.getByTestId('tool-fill').click();
   const box2 = (await page.getByTestId('editor-viewport').boundingBox())!;
@@ -194,10 +201,11 @@ test('a player cannot open the editor of a game', async ({ page }) => {
   const api = await AdminApi.open(main.baseURL);
   const game = (await api.send('post', '/games', { name: unique('Secret ') })).data;
   await api.send('post', `/games/${game.id}/members`, { identifier: player });
+  const map = (await api.send('post', `/games/${game.id}/maps`, { name: 'Secret', width: 10, height: 10 })).data;
   await api.close();
 
   await login(page, player, userPassword);
-  await page.goto(`/games/${game.id}/maps/local/edit`);
+  await page.goto(`/games/${game.id}/maps/${map.id}/edit`);
   await expect(page.getByRole('heading', { name: 'Accès refusé' })).toBeVisible();
   await expect(page.getByTestId('editor')).toHaveCount(0);
 });
