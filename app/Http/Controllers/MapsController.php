@@ -109,6 +109,7 @@ final class MapsController
 
     /**
      * GET /maps/{id}/chunks?floor=&layers=&cells= -> application/octet-stream, X-Map-Revision
+     * Also open to a player of a running session on this map, fog_strict blocks only (P6 D11).
      */
     public function chunks(Request $request): Response
     {

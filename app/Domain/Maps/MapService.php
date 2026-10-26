@@ -7,11 +7,14 @@ namespace JDR\Domain\Maps;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
+use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Core\I18n;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Games\GamePolicy;
+use JDR\Domain\Sessions\FogScope;
+use JDR\Domain\Sessions\PlayerMapAccess;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 
@@ -24,6 +27,7 @@ use JDR\Maps\ChunkCodec;
 final class MapService
 {
     public const MAX_CHUNK_KEYS = 1024;
+    private const MAX_SCOPED_KEYS = 400;
 
     public function __construct(
         private Db $db,
@@ -32,6 +36,7 @@ final class MapService
         private GamePolicy $games,
         private I18n $i18n,
         private MapSceneRepository $scene,
+        private PlayerMapAccess $players,
     ) {
     }
 
@@ -182,14 +187,25 @@ final class MapService
 
     /**
      * GET /maps/{id}/chunks: binary body [cx u16 LE][cy u16 LE][layer u8][len u32 LE][data] ...
-     * and the map revision, read in one consistent snapshot.
+     * and the map revision, read in one consistent snapshot. GM / co-GM: everything; a player of
+     * a running session on this map (D11): the blocks of his fog_strict scope (409 session_paused
+     * in pause, 403 otherwise).
      *
      * @param array<string, mixed> $query floor, layers ("ground,terrain,decor"), cells ("cx:cy,...")
      * @return array{body: string, revision: int}
      */
     public function chunks(User $user, int $mapId, array $query): array
     {
-        [$map] = $this->policy->requireEdit($user, $mapId);
+        $scope = null;
+        try {
+            [$map] = $this->policy->requireEdit($user, $mapId);
+        } catch (ForbiddenException $denied) {
+            $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+            $map = $this->maps->find($mapId);
+            if ($map === null || $map->deletedAt !== null) {
+                throw new NotFoundException();
+            }
+        }
         $floors = $this->maps->floors($map->id);
         $errors = [];
         $floorId = null;
@@ -216,10 +232,24 @@ final class MapService
             return ['body' => '', 'revision' => $map->revision];
         }
 
-        return $this->db->transaction(function () use ($map, $floorId, $layers, $cells): array {
+        // Blocks of a player: the requested ones inside his scope. A long list is not sent to SQL:
+        // the floor is read whole and filtered here.
+        $filter = null;
+        if ($scope !== null && $scope->isRestricted()) {
+            $cells = $scope->filterCells($floorId, $cells);
+            if (count($cells ?? []) > self::MAX_SCOPED_KEYS) {
+                $cells = null;
+                $filter = $scope;
+            }
+        }
+
+        return $this->db->transaction(function () use ($map, $floorId, $layers, $cells, $filter): array {
             $revision = (int) $this->db->fetchValue('SELECT `revision` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$map->id]);
             $body = '';
             foreach ($this->maps->readChunks($map->id, $floorId, $layers, $cells) as $chunk) {
+                if ($filter instanceof FogScope && !$filter->allowsBlock($floorId, $chunk['cx'], $chunk['cy'])) {
+                    continue;
+                }
                 $body .= pack('vvCV', $chunk['cx'], $chunk['cy'], ChunkCodec::LAYERS[$chunk['layer']] ?? 0, strlen($chunk['data']))
                     . $chunk['data'];
             }

@@ -6,16 +6,19 @@ namespace JDR\Domain\Maps;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Maps\Versions\MapVersionService;
+use JDR\Domain\Sessions\PlayerMapAccess;
 use JDR\Domain\Users\User;
 
 /**
  * P5 reads and resets of a map's scene (etapes/P05 "Contrat d'API P5"), GM / co-GM only
  * (MapPolicy: player 403, others 404):
- * - GET /maps/{id}/fog?floor= -> {floor, chunks: [[cx, cy, base64 raw deflate]]} (cy, cx order);
+ * - GET /maps/{id}/fog?floor= -> {floor, chunks: [[cx, cy, base64 raw deflate]]} (cy, cx order); also open
+ *   to a player of a running session on this map (P6 D11): the blocks of his fog_strict scope;
  * - DELETE /maps/{id}/fog?floor= -> {revision}: every fog chunk of the floor erased, revision + 1;
  * - GET /maps/{id}/objects?floor=&bbox=x1,y1,x2,y2 -> {objects}: objects of the floor whose
  *   bounding box intersects the rectangle (all of the floor without bbox).
@@ -28,6 +31,7 @@ final class MapSceneService
         private MapSceneRepository $scene,
         private MapPolicy $policy,
         private MapVersionService $versions,
+        private PlayerMapAccess $players,
     ) {
     }
 
@@ -37,12 +41,23 @@ final class MapSceneService
      */
     public function fog(User $user, int $mapId, array $query): array
     {
-        [$map] = $this->policy->requireEdit($user, $mapId);
+        $scope = null;
+        try {
+            [$map] = $this->policy->requireEdit($user, $mapId);
+        } catch (ForbiddenException $denied) {
+            // D11: a player of a running session on this map reads the fog blocks of his fog_strict scope.
+            $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+            $map = $this->maps->find($mapId);
+            if ($map === null || $map->deletedAt !== null) {
+                throw new NotFoundException();
+            }
+        }
         $floorId = $this->floor($map, $query);
-        $chunks = array_map(
-            static fn (array $c): array => [$c['cx'], $c['cy'], base64_encode($c['data'])],
-            $this->scene->fog($map->id, $floorId),
-        );
+        $blocks = $this->scene->fog($map->id, $floorId);
+        if ($scope !== null) {
+            $blocks = array_values(array_filter($blocks, static fn (array $c): bool => $scope->allowsBlock($floorId, $c['cx'], $c['cy'])));
+        }
+        $chunks = array_map(static fn (array $c): array => [$c['cx'], $c['cy'], base64_encode($c['data'])], $blocks);
 
         return ['floor' => (string) $floorId, 'chunks' => $chunks];
     }

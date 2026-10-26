@@ -13,7 +13,8 @@ use JDR\Domain\Maps\MapSceneService;
 
 /**
  * P5 scene routes (etapes/P05 "Contrat d'API P5"): GET|DELETE /maps/{id}/fog?floor= and
- * GET /maps/{id}/objects?floor=&bbox=. Rights: MapPolicy (GM / co-GM; player 403; others 404).
+ * GET /maps/{id}/objects?floor=&bbox=. Rights: MapPolicy (GM / co-GM; player 403; others 404),
+ * except GET /maps/{id}/fog, also open to a player of a running session on this map (P6 D11, filtered).
  */
 final class MapSceneController
 {
