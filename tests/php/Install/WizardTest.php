@@ -139,7 +139,8 @@ final class WizardTest extends InstallDbTestCase
                 break;
             }
         }
-        self::assertSame(['migrate', 'migrate', 'migrate', 'site', 'storage', 'config', 'lock', 'done'], $phases);
+        // One "migrate" step per migration (0001, 0002, 0003) plus the last one that moves on.
+        self::assertSame(['migrate', 'migrate', 'migrate', 'migrate', 'site', 'storage', 'config', 'lock', 'done'], $phases);
     }
 
     public function testExistingTablesNeedAnExplicitChoice(): void

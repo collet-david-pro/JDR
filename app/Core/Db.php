@@ -13,6 +13,10 @@ defined('JDR_BOOT') || exit;
  * - Imposes UTC time zone and a strict, portable sql_mode on every connection.
  * - Table prefix applied through t('users') => `jdr_users`.
  * - transaction() retries twice on deadlock (SQLSTATE 40001 / error 1213).
+ * - Transaction hooks (one-shot, for the current outermost transaction): beforeCommit() runs
+ *   inside the transaction just before COMMIT (an exception there rolls back), afterCommit()
+ *   once committed, afterRollback() when it is rolled back. A retried transaction starts with
+ *   no hook (its callable registers them again). Used by JDR\Realtime\EventStore (P6, D1).
  */
 final class Db
 {
@@ -28,6 +32,13 @@ final class Db
     private string $pass;
     private string $prefix;
     private int $txDepth = 0;
+
+    /** @var list<\Closure(Db): void> */
+    private array $beforeCommit = [];
+    /** @var list<\Closure(Db): void> */
+    private array $afterCommit = [];
+    /** @var list<\Closure(Db): void> */
+    private array $afterRollback = [];
 
     /**
      * @param array{host?:string,port?:int|string,name?:string,user?:string,pass?:string,prefix?:string} $cfg
@@ -179,14 +190,17 @@ final class Db
             $this->txDepth++;
             try {
                 $result = $fn($this);
+                $this->runBeforeCommit();
                 $this->txDepth--;
                 $pdo->commit();
-
-                return $result;
             } catch (\Throwable $e) {
                 $this->txDepth = 0;
-                if ($pdo->inTransaction()) {
-                    $pdo->rollBack();
+                try {
+                    if ($pdo->inTransaction()) {
+                        $pdo->rollBack();
+                    }
+                } finally {
+                    $this->runAfterRollback();
                 }
                 if ($attempt < self::DEADLOCK_RETRIES && self::isDeadlock($e)) {
                     $attempt++;
@@ -195,6 +209,93 @@ final class Db
                 }
                 throw $e;
             }
+            $this->runAfterCommit();
+
+            return $result;
+        }
+    }
+
+    /**
+     * True inside a transaction opened by transaction() (hooks can be registered).
+     */
+    public function inTransaction(): bool
+    {
+        return $this->txDepth > 0;
+    }
+
+    /**
+     * Runs $fn($db) inside the current transaction, just before COMMIT (in registration order;
+     * a hook may register more). An exception rolls the transaction back.
+     *
+     * @param \Closure(Db): void $fn
+     */
+    public function beforeCommit(\Closure $fn): void
+    {
+        $this->requireTransaction();
+        $this->beforeCommit[] = $fn;
+    }
+
+    /**
+     * Runs $fn($db) once the current transaction is committed. Hooks should not throw: an
+     * exception propagates to the caller of transaction() after the remaining hooks have run.
+     *
+     * @param \Closure(Db): void $fn
+     */
+    public function afterCommit(\Closure $fn): void
+    {
+        $this->requireTransaction();
+        $this->afterCommit[] = $fn;
+    }
+
+    /**
+     * Runs $fn($db) when the current transaction is rolled back (before a deadlock retry too).
+     *
+     * @param \Closure(Db): void $fn
+     */
+    public function afterRollback(\Closure $fn): void
+    {
+        $this->requireTransaction();
+        $this->afterRollback[] = $fn;
+    }
+
+    private function requireTransaction(): void
+    {
+        if ($this->txDepth === 0) {
+            throw new \LogicException('No transaction opened by Db::transaction().');
+        }
+    }
+
+    private function runBeforeCommit(): void
+    {
+        while ($this->beforeCommit !== []) {
+            $hook = array_shift($this->beforeCommit);
+            $hook($this);
+        }
+    }
+
+    private function runAfterCommit(): void
+    {
+        $hooks = $this->afterCommit;
+        $this->beforeCommit = $this->afterCommit = $this->afterRollback = [];
+        $error = null;
+        foreach ($hooks as $hook) {
+            try {
+                $hook($this);
+            } catch (\Throwable $e) {
+                $error ??= $e;
+            }
+        }
+        if ($error !== null) {
+            throw $error;
+        }
+    }
+
+    private function runAfterRollback(): void
+    {
+        $hooks = $this->afterRollback;
+        $this->beforeCommit = $this->afterCommit = $this->afterRollback = [];
+        foreach ($hooks as $hook) {
+            $hook($this);
         }
     }
 

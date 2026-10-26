@@ -100,6 +100,13 @@ final class SchemaTest extends DbTestCase
     ];
 
     /**
+     * Tables added by later migrations (0003_events_seq: etapes P06 D1-D2).
+     */
+    private const LATER_COLUMNS = [
+        'event_seq' => ['id', 'purged_upto'],
+    ];
+
+    /**
      * Foreign keys: name suffix (after fk_{prefix}) => [table, column, referenced table, ON DELETE].
      */
     private const FOREIGN_KEYS = [
@@ -204,7 +211,7 @@ final class SchemaTest extends DbTestCase
     {
         $prefix = self::$db->prefix();
         $actual = array_map(static fn (string $t): string => substr($t, strlen($prefix)), self::testTables(self::$db));
-        $expected = self::SCHEMA_TABLES;
+        $expected = [...self::SCHEMA_TABLES, ...array_keys(self::LATER_COLUMNS)];
         sort($actual);
         sort($expected);
         self::assertSame($expected, $actual);
@@ -217,7 +224,7 @@ final class SchemaTest extends DbTestCase
     public static function tableColumns(): array
     {
         $out = [];
-        foreach (self::COLUMNS as $table => $columns) {
+        foreach (self::COLUMNS + self::LATER_COLUMNS as $table => $columns) {
             $out[$table] = [$table, $columns];
         }
 
@@ -246,7 +253,7 @@ final class SchemaTest extends DbTestCase
             . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE ?',
             [addcslashes(self::$db->prefix(), '_%') . '%']
         );
-        self::assertCount(count(self::SCHEMA_TABLES), $rows);
+        self::assertCount(count(self::SCHEMA_TABLES) + count(self::LATER_COLUMNS), $rows);
         foreach ($rows as $row) {
             self::assertSame('InnoDB', $row['e'], $row['t']);
             self::assertSame('Dynamic', $row['r'], $row['t']);
