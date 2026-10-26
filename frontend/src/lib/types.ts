@@ -2,6 +2,7 @@
  * API data types of phase P1 (etapes/P01 "Contrat d'API P1"). Identifiers are strings,
  * dates are ISO 8601 UTC strings.
  */
+import type { FogChunkWire, MapObject, MapOp, PlacedToken } from '../editor/contracts';
 
 export type Role = 'user' | 'admin';
 export type UserStatus = 'active' | 'suspended';
@@ -508,9 +509,11 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly layers: readonly MapLayer[];
   readonly floors: readonly MapFloor[];
   readonly format_version: number;
-  readonly objects: readonly unknown[];
+  /** P5: objects of every floor (GM view: nothing filtered). */
+  readonly objects: readonly MapObject[];
   readonly notes: readonly unknown[];
-  readonly tokens_placed: readonly unknown[];
+  /** P5: placed tokens of every floor. */
+  readonly tokens_placed: readonly PlacedToken[];
 }
 
 /** POST /games/{id}/maps */
@@ -553,8 +556,23 @@ export type WireMapOp =
       readonly grid?: Partial<Omit<MapGrid, 'type'>>;
       readonly layers?: readonly MapLayer[];
       readonly theme?: string;
-      readonly ambient?: MapAmbient;
-    };
+      readonly ambient?: Partial<MapAmbient>;
+    }
+  /** P5 ops: same shape on the wire as in the editor (src/editor/contracts.ts). */
+  | Extract<
+      MapOp,
+      {
+        readonly type:
+          | 'object.add'
+          | 'object.update'
+          | 'object.remove'
+          | 'maptoken.add'
+          | 'maptoken.update'
+          | 'maptoken.remove'
+          | 'fog.reveal'
+          | 'fog.hide';
+      }
+    >;
 
 /** Body of POST /maps/{id}/ops */
 export interface MapOpsRequest {
@@ -563,11 +581,40 @@ export interface MapOpsRequest {
   readonly ops: readonly WireMapOp[];
 }
 
+/**
+ * P5: an object / placed-token op rejected individually (projet.md 11.4); the other ops of the
+ * lot are applied. `current` = server state (null when the object no longer exists).
+ * stale: rev lower than the server's; gone: unknown uid (deleted meanwhile); exists: add of a
+ * uid already used.
+ */
+export type MapOpConflict =
+  | {
+      readonly op_index: number;
+      readonly kind: 'object';
+      readonly uid: string;
+      readonly reason: 'stale' | 'gone' | 'exists';
+      readonly current: MapObject | null;
+    }
+  | {
+      readonly op_index: number;
+      readonly kind: 'maptoken';
+      readonly uid: string;
+      readonly reason: 'stale' | 'gone' | 'exists';
+      readonly current: PlacedToken | null;
+    };
+
 /** Answer of POST /maps/{id}/ops */
 export interface MapOpsResult {
   readonly revision: number;
+  /** Ops applied (conflicting ops excluded). */
   readonly applied?: number;
-  readonly conflicts: readonly unknown[];
+  readonly conflicts: readonly MapOpConflict[];
+}
+
+/** P5: GET /maps/{id}/fog?floor= (GM / co-GM). Chunks with no explored bit are absent. */
+export interface MapFogResult {
+  readonly floor: string;
+  readonly chunks: readonly FogChunkWire[];
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -608,6 +655,8 @@ export interface MissingAsset {
 export interface MapImportResult {
   readonly map: MapDetail;
   readonly missing_assets: readonly MissingAsset[];
+  /** P5: names of placed-token definitions not found in the target game (tokens dropped). */
+  readonly missing_tokens?: readonly string[];
 }
 
 /** Answer of PUT /maps/{id}/thumbnail. */
