@@ -4,7 +4,9 @@
   import { DEFAULT_SETTINGS } from '../../lib/games/game-form';
   import type { GamePageModel } from '../../lib/games/game-page.svelte';
   import { t } from '../../lib/i18n';
-  import { services } from '../../lib/services';
+  import { href, services, sessionsClient } from '../../lib/services';
+  import type { Session } from '../../lib/sessions';
+  import { isOpenSession, sessionStateLabel } from '../../lib/sessions/labels';
   import { toasts } from '../../stores/toasts.svelte';
 
   /**
@@ -22,6 +24,20 @@
   const settings = $derived({ ...DEFAULT_SETTINGS, ...game?.settings });
   let confirmOpen = $state(false);
   let leaving = $state(false);
+  /** The open session of the game (lobby, running or paused), if the server lists one. */
+  let openSession = $state.raw<Session | null>(null);
+
+  $effect(() => {
+    const id = model.gameId;
+    sessionsClient()
+      .list(id, { limit: 5 })
+      .then((page) => {
+        openSession = page.items.find((s) => isOpenSession(s.state)) ?? null;
+      })
+      .catch(() => {
+        openSession = null;
+      });
+  });
 
   async function leave(): Promise<void> {
     const me = auth.user?.id;
@@ -53,7 +69,22 @@
 
     <section class="card" aria-labelledby="current-session">
       <h2 id="current-session">{t('games.player.session')}</h2>
-      <p class="muted">{t('games.player.no_session')}</p>
+      {#if openSession !== null}
+        <p>
+          {openSession.name}
+          <span class="badge">{sessionStateLabel(openSession.state)}</span>
+        </p>
+        <p>
+          <a
+            class="button button-primary"
+            data-testid="join-open-session"
+            href={href(`/sessions/${encodeURIComponent(openSession.id)}`)}
+            >{t('sessions.player.join_current')}</a
+          >
+        </p>
+      {:else}
+        <p class="muted">{t('games.player.no_session')}</p>
+      {/if}
     </section>
 
     <section class="card stack" aria-labelledby="my-tokens">

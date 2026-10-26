@@ -9,7 +9,10 @@
   import { gamesClient } from '../lib/games/service';
   import { t } from '../lib/i18n';
   import type { PageProps } from '../lib/page';
-  import { href, services } from '../lib/services';
+  import { href, services, sessionsClient } from '../lib/services';
+  import { activeSessions, type ActiveSession } from '../lib/sessions/active';
+  import { formatSessionCode, isValidSessionCode } from '../lib/sessions';
+  import { sessionProblem, sessionStateLabel } from '../lib/sessions/labels';
   import type { StorageUsage } from '../lib/types';
 
   let _props: PageProps = $props();
@@ -20,8 +23,35 @@
   const gamesFailure = $derived(games.error === null ? null : describeError(games.error, t));
   let storage = $state.raw<StorageUsage | null>(null);
   let storageError = $state<string | null>(null);
-  /** Session codes: 8 characters, displayed XXXX-XXXX (projet.md 6.4). */
-  const codePattern = '[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}';
+  /** Session code typed in the "Rejoindre une séance" field (shown XXXX-XXXX, projet.md 6.4). */
+  let code = $state('');
+  let joining = $state(false);
+  let joinError = $state<string | null>(null);
+  let active = $state.raw<readonly ActiveSession[]>([]);
+
+  async function join(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    if (!isValidSessionCode(code) || joining) return;
+    joining = true;
+    joinError = null;
+    try {
+      const joined = await sessionsClient().join(code);
+      router.navigate(`/sessions/${encodeURIComponent(joined.session_id)}`);
+    } catch (error) {
+      joinError = sessionProblem(error);
+    } finally {
+      joining = false;
+    }
+  }
+
+  // Sessions to resume, once the games are known.
+  $effect(() => {
+    if (!games.loaded) return;
+    const list = [...games.gm, ...games.player];
+    void activeSessions(sessionsClient(), list).then((found) => {
+      active = found;
+    });
+  });
 
   onMount(() => {
     void games.load();
@@ -36,7 +66,7 @@
   });
 </script>
 
-<!-- Dashboard (projet.md 18.1 p.2). Joining a session arrives in P6. -->
+<!-- Dashboard (projet.md 18.1 p.2). -->
 <div class="dashboard">
   <header>
     <h1>{t('dashboard.title', { name: auth.user?.username ?? '' })}</h1>
@@ -90,21 +120,44 @@
 
     <section class="card" aria-labelledby="join-session">
       <h2 id="join-session">{t('dashboard.join.title')}</h2>
-      <form class="join" onsubmit={(event) => event.preventDefault()}>
+      <form class="join" novalidate onsubmit={join}>
         <label for="join-code" class="visually-hidden">{t('dashboard.join.label')}</label>
         <input
           id="join-code"
           name="code"
           placeholder="XXXX-XXXX"
           maxlength="9"
-          pattern={codePattern}
           autocomplete="off"
-          disabled
-          aria-describedby="join-hint"
+          autocapitalize="characters"
+          spellcheck="false"
+          value={code}
+          oninput={(e) => (code = formatSessionCode(e.currentTarget.value))}
+          aria-describedby={joinError === null ? undefined : 'join-error'}
+          data-testid="home-join-code"
         />
-        <button type="submit" class="button" disabled>{t('dashboard.join.submit')}</button>
+        <button
+          type="submit"
+          class="button"
+          disabled={!isValidSessionCode(code) || joining}
+          data-testid="home-join-submit">{t('dashboard.join.submit')}</button
+        >
       </form>
-      <p id="join-hint" class="small muted">{t('dashboard.join.unavailable')}</p>
+      {#if joinError !== null}
+        <p id="join-error" class="alert alert-error" role="alert">{joinError}</p>
+      {/if}
+      {#if active.length > 0}
+        <h3 class="small">{t('sessions.home.resume')}</h3>
+        <ul class="resume" data-testid="home-sessions">
+          {#each active as { game, session } (session.id)}
+            <li>
+              <a href={href(`/sessions/${encodeURIComponent(session.id)}`)}
+                >{game.name} · {session.name}</a
+              >
+              <span class="badge">{sessionStateLabel(session.state)}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </section>
 
     <section class="card" aria-labelledby="storage-title">
@@ -182,7 +235,20 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
-  #join-hint {
-    margin-bottom: 0;
+  .resume {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .resume li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  h3 {
+    margin: var(--space-3) 0 0;
   }
 </style>

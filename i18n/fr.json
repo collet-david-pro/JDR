@@ -1051,9 +1051,6 @@
         }
       }
     },
-    "sessions": {
-      "empty": "Les séances seront disponibles à l'étape P6."
-    },
     "shelf": {
       "title": "Archives et corbeille",
       "archived": "Archivées",
@@ -1712,6 +1709,150 @@
       "lighting": "Éclairage (obscurité ambiante et lumières)",
       "fog": "Brouillard (zones inexplorées en noir)",
       "hint": "Vue du MJ sans les éléments réservés au MJ : murs, portes et fenêtres toujours dessinés, tokens cachés et objets du calque MJ exclus, portes secrètes dessinées comme des murs. Lumières à intensité moyenne, sans vacillement."
+    }
+  },
+  "sessions": {
+    "state": {
+      "lobby": "Salle d'attente",
+      "running": "En cours",
+      "paused": "En pause",
+      "ended": "Terminée"
+    },
+    "tab": {
+      "title": "Séances",
+      "new": "Nouvelle séance",
+      "empty": "Aucune séance pour l'instant. Créez-en une pour jouer avec vos joueurs.",
+      "open": "Ouvrir",
+      "view": "Consulter",
+      "open_exists": "La séance « {name} » est encore ouverte : terminez-la avant d'en créer une nouvelle."
+    },
+    "new": {
+      "title": "Nouvelle séance",
+      "name": "Nom de la séance",
+      "name_hint": "Facultatif : un nom daté est proposé par défaut.",
+      "map": "Map de départ",
+      "no_map": "Aucune (à choisir plus tard)",
+      "submit": "Créer la séance"
+    },
+    "join": {
+      "title": "Rejoindre une séance"
+    },
+    "home": {
+      "resume": "Séances à reprendre"
+    },
+    "player": {
+      "soon": "Vue joueur : P6f",
+      "back": "Retour à la partie",
+      "join_current": "Rejoindre la séance en cours"
+    },
+    "console": {
+      "back": "Retour aux séances",
+      "code": "Code de séance",
+      "controls": "Commandes de la séance",
+      "start": "Lancer",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "end": "Terminer",
+      "end_title": "Terminer la séance ?",
+      "end_text": "Les joueurs seront déconnectés de la partie en cours. Cette action est définitive.",
+      "follow": "Les joueurs suivent ma vue",
+      "share_view": "Partager ma vue",
+      "view_shared": "Votre vue est partagée.",
+      "map_label": "Map de la séance (vue du MJ)",
+      "no_map": "Aucune map n'est choisie : ouvrez l'onglet Maps pour en choisir une.",
+      "kicked": "Vous n'avez plus accès à cette séance.",
+      "reload_asked": "Le serveur demande de recharger la page.",
+      "note_shown": "Note affichée aux joueurs : {title}"
+    },
+    "panels": {
+      "label": "Panneaux de la console",
+      "players": "Joueurs",
+      "tokens": "Tokens",
+      "reveal": "Révéler",
+      "ambiance": "Ambiance",
+      "notes": "Notes",
+      "maps": "Maps"
+    },
+    "players": {
+      "title": "Joueurs",
+      "ready_count": "{ready} prêt(s) sur {connected} connecté(s)",
+      "empty": "Personne n'a encore rejoint la séance : partagez le code.",
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "kicked": "Exclu",
+      "is_ready": "Prêt",
+      "not_ready": "Pas prêt",
+      "kick": "Exclure",
+      "kick_named": "Exclure {name} de la séance",
+      "assignments": "Affectation des tokens",
+      "no_tokens": "Aucun token n'est posé sur la map pour l'instant.",
+      "drag_hint": "Glissez un token sur un joueur, ou choisissez son propriétaire dans la liste.",
+      "owner_of": "Propriétaire de {name}",
+      "nobody": "Personne",
+      "unassigned": {
+        "one": "{count} token sans propriétaire.",
+        "other": "{count} tokens sans propriétaire."
+      }
+    },
+    "tokens": {
+      "title": "Tokens",
+      "definition": "Token à poser",
+      "place_hidden": "Poser masqué (invisible des joueurs)",
+      "place": "Poser sur la map",
+      "pick_another": "Changer de token",
+      "stop_placing": "Terminer la pose",
+      "place_hint": "Cliquez sur la map pour poser le token.",
+      "placed": "Posés sur cet étage",
+      "none_placed": "Aucun token posé.",
+      "hidden": "Masqué",
+      "hide": "Masquer",
+      "reveal": "Révéler",
+      "remove": "Retirer",
+      "remove_named": "Retirer {name} de la map",
+      "no_definitions": "Cette partie n'a pas encore de token : créez-en dans l'onglet Tokens."
+    },
+    "reveal": {
+      "title": "Révéler",
+      "action": "Action",
+      "reveal": "Révéler",
+      "hide": "Masquer",
+      "shape": "Forme",
+      "brush": "Pinceau",
+      "rect": "Rectangle",
+      "radius": "Rayon : {value} cases",
+      "start": "Activer l'outil de brouillard",
+      "stop": "Revenir à la sélection",
+      "hint": "Un clic sur une porte ou une lumière la bascule ; cliquez sur un objet pour le sélectionner.",
+      "selected": "Sélection",
+      "reveal_object": "Révéler l'objet aux joueurs",
+      "reveal_token": "Révéler le token aux joueurs"
+    },
+    "ambiance": {
+      "title": "Ambiance",
+      "time_enabled": "Heure de la journée",
+      "time": "Heure : {value}",
+      "darkness": "Obscurité : {value} %",
+      "tint": "Teinte",
+      "weather": "Météo",
+      "intensity": "Intensité : {value} %"
+    },
+    "notes": {
+      "title": "Notes",
+      "note_title": "Titre",
+      "body": "Texte à lire aux joueurs",
+      "show": "Afficher aux joueurs",
+      "sent": "Note envoyée aux joueurs."
+    },
+    "maps": {
+      "title": "Maps",
+      "map": "Map",
+      "current": "actuelle",
+      "floor": "Étage",
+      "change": "Changer de map",
+      "none": "Aucune map dans cette partie.",
+      "unavailable": "La liste des maps est indisponible.",
+      "confirm_title": "Changer de map ?",
+      "confirm_text": "Tous les joueurs passent sur la nouvelle map."
     }
   }
 }

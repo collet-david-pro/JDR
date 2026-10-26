@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import Button from '../Button.svelte';
-  import EmptyTab from './EmptyTab.svelte';
   import MapsTab from '../maps/MapsTab.svelte';
   import PlayersTab from './PlayersTab.svelte';
+  import SessionsTab from './SessionsTab.svelte';
   import SettingsTab from './SettingsTab.svelte';
   import TokensTab from './TokensTab.svelte';
   import type { GamePageModel } from '../../lib/games/game-page.svelte';
@@ -130,7 +130,7 @@
       {:else if current === 'players'}
         <PlayersTab {model} />
       {:else if current === 'sessions'}
-        <EmptyTab title={t('games.tabs.sessions')} text={t('games.sessions.empty')} />
+        <SessionsTab {game} />
       {:else}
         <SettingsTab {model} />
       {/if}
