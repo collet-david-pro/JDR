@@ -23,6 +23,7 @@
   class="net"
   data-testid="network-indicator"
   data-state={kind}
+  data-mode={status.mode}
   title={t('play.network.mode', { mode })}
   role="status"
 >

@@ -25,6 +25,38 @@ import type { SessionSnapshot } from './types';
 export const PRESENCE_MS = 20_000;
 const MAX_SNAPSHOT_RETRIES = 4;
 
+interface JdrTestHook {
+  /** Ids of every event handed to the session (a duplicate would show twice). */
+  received: string[];
+  lastEventId: string;
+  /** Placed tokens: uid => [x, y]. */
+  tokens: Record<string, [number, number]>;
+  /** Doors: uid => 'open' | 'closed'. */
+  doors: Record<string, string>;
+}
+
+/**
+ * E2E hook: only when localStorage['jdr.test'] === '1' (set by the tests), the ids of the events
+ * received by the session and its last applied id are exposed on window.__jdrTest. Inert otherwise.
+ */
+function recordTestEvent(id: string, state: SessionState): void {
+  try {
+    if (typeof window === 'undefined' || window.localStorage.getItem('jdr.test') !== '1') return;
+    const w = window as unknown as { __jdrTest?: JdrTestHook };
+    const hook = (w.__jdrTest ??= { received: [], lastEventId: '', tokens: {}, doors: {} });
+    hook.received.push(id);
+    hook.lastEventId = state.lastEventId;
+    hook.tokens = Object.fromEntries(Object.values(state.tokens).map((t) => [t.uid, [t.x, t.y]]));
+    hook.doors = Object.fromEntries(
+      Object.values(state.objects).flatMap((o) =>
+        o.type === 'door' ? [[o.uid, o.props.state]] : [],
+      ),
+    );
+  } catch {
+    /* storage unavailable: no hook */
+  }
+}
+
 export type SessionApi = Pick<SessionsClient, 'snapshot' | 'get' | 'presence' | 'actions'>;
 
 export interface SessionSyncOptions {
@@ -194,6 +226,7 @@ export class SessionSync {
     if (before === null || this.stopped) return;
     const { state, effects } = applyEvent(before, e);
     this.current = state;
+    recordTestEvent(e.id, state);
     if (state !== before) this.notify();
     let reloading = false;
     for (const effect of effects) {
