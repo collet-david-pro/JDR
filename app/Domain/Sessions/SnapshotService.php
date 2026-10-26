@@ -104,7 +104,8 @@ final class SnapshotService
         $full = $this->maps->full($map, $apiBase);
         $revealed = $this->scene->revealedUids($map->id);
         $bboxes = $scope->isRestricted() ? $this->scene->bboxes($map->id) : [];
-        $objects = $this->view->objects($full['objects'], $revealed, $scope, $bboxes);
+        $hidden = array_map(static fn (array $t): string => (string) $t['uid'], array_filter($full['tokens_placed'], static fn (array $t): bool => $t['hidden'] === true));
+        $objects = $this->view->objects($full['objects'], $revealed, $scope, $bboxes, array_values($hidden));
         $placed = $this->view->tokens($ctx, $user->id, $full['tokens_placed'], $scope, $assigned);
         $allowed = array_flip($this->preload->assetIds($ctx, $user, $map, $scope));
 

@@ -37,7 +37,9 @@ final class SessionSceneQueries
     }
 
     /**
-     * Placed tokens of a map that are assigned in the session, with their definition's vision.
+     * Placed tokens of a map that are assigned in the session and not hidden (a hidden token is
+     * not shown to its owner either: its position must not widen his scope), with their
+     * definition's vision.
      *
      * @return list<array{user_id: int, floor_id: int, x: float, y: float, vision: array<string, mixed>}>
      */
@@ -47,7 +49,7 @@ final class SessionSceneQueries
             'SELECT ta.`user_id`, mt.`floor_id`, mt.`x`, mt.`y`, t.`vision` FROM ' . $this->db->t('map_tokens') . ' mt '
             . 'JOIN ' . $this->db->t('token_assignments') . ' ta ON ta.`token_id` = mt.`token_id` AND ta.`session_id` = ? '
             . 'JOIN ' . $this->db->t('tokens') . ' t ON t.`id` = mt.`token_id` '
-            . 'WHERE mt.`map_id` = ?',
+            . 'WHERE mt.`map_id` = ? AND mt.`hidden` = 0',
             [$sessionId, $mapId],
         );
         $out = [];

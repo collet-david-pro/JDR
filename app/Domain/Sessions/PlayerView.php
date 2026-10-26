@@ -61,11 +61,12 @@ final class PlayerView
      * @param list<array<string, mixed>>                                        $objects
      * @param list<string>                                                      $revealed uids
      * @param array<string, array{0: float, 1: float, 2: float, 3: float}>      $bboxes uid => box (only read when restricted)
+     * @param list<string>                                                      $hiddenTokens uids of the hidden placed tokens
      * @return list<array<string, mixed>>
      */
-    public function objects(array $objects, array $revealed, FogScope $scope, array $bboxes): array
+    public function objects(array $objects, array $revealed, FogScope $scope, array $bboxes, array $hiddenTokens = []): array
     {
-        $out = PlayerFilter::objects($objects, $revealed);
+        $out = PlayerFilter::objects($objects, $revealed, $hiddenTokens);
         if (!$scope->isRestricted()) {
             return $out;
         }

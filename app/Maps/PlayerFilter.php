@@ -16,7 +16,9 @@ defined('JDR_BOOT') || exit;
  * - a secret door that is not revealed becomes a plain wall (same uid, floor, sort_order, rev):
  *   {type: wall, layer: walls, geometry {points: [a, b], closed: false}, props: stone 0.15,
  *   blocking vision, light and movement};
- * - hidden placed tokens are removed.
+ * - hidden placed tokens are removed;
+ * - a light following a hidden token (props.follows_token) loses that link (P6c: the uid of a
+ *   hidden token never reaches a player).
  */
 final class PlayerFilter
 {
@@ -32,12 +34,14 @@ final class PlayerFilter
 
     /**
      * @param list<array<string, mixed>> $objects
-     * @param list<string>               $revealed uids of revealed objects
+     * @param list<string>               $revealed     uids of revealed objects
+     * @param list<string>               $hiddenTokens uids of the hidden placed tokens of the map
      * @return list<array<string, mixed>>
      */
-    public static function objects(array $objects, array $revealed = []): array
+    public static function objects(array $objects, array $revealed = [], array $hiddenTokens = []): array
     {
         $isRevealed = array_fill_keys($revealed, true);
+        $isHidden = array_fill_keys($hiddenTokens, true);
         $out = [];
         foreach ($objects as $object) {
             $uid = (string) ($object['uid'] ?? '');
@@ -51,6 +55,10 @@ final class PlayerFilter
             }
             if (($object['type'] ?? null) === 'door' && ($object['props']['secret'] ?? false) === true && !$shown) {
                 $object = self::asWall($object);
+            }
+            $follows = $object['props']['follows_token'] ?? null;
+            if (($object['type'] ?? null) === 'light' && is_string($follows) && isset($isHidden[$follows])) {
+                $object['props']['follows_token'] = null;
             }
             $out[] = $object;
         }
