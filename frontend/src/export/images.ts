@@ -5,6 +5,7 @@
  */
 import { fallbackTilePixels, frameRect, type FrameRect } from './cell-render';
 import type { SnapshotPaletteEntry } from './scene';
+import type { SnapshotTokenImage } from './scene-snapshot';
 
 export interface TileSource extends FrameRect {
   readonly image: CanvasImageSource;
@@ -96,6 +97,62 @@ export async function loadTileImages(
     close() {
       for (const b of images.values()) b.close();
       for (const f of fallbacks.values()) if ('close' in f.image) (f.image as ImageBitmap).close();
+    },
+  };
+}
+
+/** A loaded token image with its size (CanvasImageSource has no common size property). */
+export interface TokenImage {
+  readonly image: CanvasImageSource;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface TokenImages {
+  /** Image of SnapshotToken.image, null when it failed (drawn as a disc with initials). */
+  get(index: number): TokenImage | null;
+  /** Entries that could not be loaded (reported like the tiles, index −1 − token image). */
+  readonly failed: readonly SnapshotPaletteEntry[];
+  close(): void;
+}
+
+export const NO_TOKEN_IMAGES: TokenImages = {
+  get: () => null,
+  failed: [],
+  close: () => undefined,
+};
+
+/** Loads the token images of the export (same loader and limits as the tiles). */
+export async function loadTokenImages(
+  entries: readonly SnapshotTokenImage[],
+  signal: AbortSignal,
+  load: ImageLoader = fetchImage,
+  concurrency = 6,
+): Promise<TokenImages> {
+  const images = new Map<number, TokenImage>();
+  const failed: SnapshotPaletteEntry[] = [];
+  const queue = [...entries];
+  const worker = async (): Promise<void> => {
+    for (let entry = queue.shift(); entry !== undefined; entry = queue.shift()) {
+      signal.throwIfAborted();
+      try {
+        const bitmap = await load(entry.url, signal);
+        images.set(entry.index, { image: bitmap, width: bitmap.width, height: bitmap.height });
+      } catch (error) {
+        if (signal.aborted) throw error;
+        failed.push({ index: -1 - entry.index, name: entry.name, url: entry.url });
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
+  signal.throwIfAborted();
+  return {
+    failed,
+    get: (index) => images.get(index) ?? null,
+    close() {
+      for (const i of images.values()) {
+        if ('close' in i.image) (i.image as ImageBitmap).close();
+      }
     },
   };
 }

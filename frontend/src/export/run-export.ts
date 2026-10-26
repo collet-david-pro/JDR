@@ -6,13 +6,14 @@
  * Cancellation: the worker is terminated (or the main-thread loop stops), the output stream is
  * aborted and the partial file removed when possible.
  */
-import type { MapView, TileLayerId } from '../editor/contracts';
-import { loadTileImages } from './images';
+import type { MapView, SceneView, TileLayerId } from '../editor/contracts';
+import { loadTileImages, loadTokenImages } from './images';
 import { runExport, type ExportProgress, type Surface } from './job';
 import type { OutputTarget } from './output';
 import { canUseOffscreen2d, type FromWorker, type ToWorker } from './protocol';
 import type { Ctx2D } from './renderer';
 import { buildSnapshot, type ExportOptions, type SnapshotPaletteEntry } from './scene';
+import { DEFAULT_SCENE_CONTENT } from './scene-snapshot';
 
 export interface ExportOutcome {
   readonly files: number;
@@ -27,6 +28,8 @@ export interface ExportHandle {
 
 export interface StartExportInput {
   readonly view: MapView;
+  /** P5 scene of the edited floor (null / absent = tiles only). */
+  readonly scene?: SceneView | null;
   readonly layers: readonly TileLayerId[];
   readonly options: ExportOptions;
   readonly target: OutputTarget;
@@ -93,6 +96,9 @@ export function startExport(input: StartExportInput): ExportHandle {
       input.options.extent,
       input.layers,
       document.baseURI,
+      input.scene
+        ? { view: input.scene, content: input.options.scene ?? DEFAULT_SCENE_CONTENT }
+        : null,
     );
     if (worker !== null) return runInWorker(worker, id, snapshot, transfer);
     return runOnMainThread(snapshot);
@@ -161,10 +167,18 @@ export function startExport(input: StartExportInput): ExportHandle {
     snapshot: ReturnType<typeof buildSnapshot>['snapshot'],
   ): Promise<ExportOutcome> => {
     const images = await loadTileImages(snapshot.palette, controller.signal);
+    const tokenImages = await loadTokenImages(
+      snapshot.scene?.tokenImages ?? [],
+      controller.signal,
+    ).catch((error: unknown) => {
+      images.close();
+      throw error;
+    });
     try {
       let last = 0;
       const result = await runExport(snapshot, input.options, {
         images,
+        tokenImages,
         createSurface: mainThreadSurface,
         sink: (bytes) => input.target.write(bytes),
         signal: controller.signal,
@@ -181,6 +195,7 @@ export function startExport(input: StartExportInput): ExportHandle {
       return { files: result.files, failed: result.failed, where: 'main' };
     } finally {
       images.close();
+      tokenImages.close();
     }
   };
 

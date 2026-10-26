@@ -11,13 +11,15 @@
  * (whose worker path already breaks under connect-src 'self', engine/pixi.ts), GPU read-back of
  * every band, and ~200 KB more in the worker chunk. The P4 preview only draws tiles and the
  * grid, which Canvas 2D reproduces with the engine's own rules (cell-render.ts), at exact pixel
- * positions and with bounded memory. P5+ layers (lighting, fog) will need revisiting this.
+ * positions and with bounded memory. P5 (decision at launch, etapes/P05-vision.md): the
+ * objects, tokens, lighting (lightmap on a second band surface) and fog are drawn in Canvas 2D
+ * too (scene-render.ts), with the light polygons of the synchronous VisionCore.
  */
 import type { DeflateStreamOptions, ByteSink } from '../formats/png-encoder';
 import { PngEncoder } from '../formats/png-encoder';
 import { ZipWriter } from '../formats/zip-writer';
 import { outputSize } from './dimensions';
-import type { TileImages } from './images';
+import type { TileImages, TokenImages } from './images';
 import {
   cropMarks,
   layoutPages,
@@ -128,6 +130,8 @@ export interface ExportProgress {
 
 export interface ExportDeps {
   readonly images: TileImages;
+  /** Token images (P5 scene); absent = discs with initials. */
+  readonly tokenImages?: TokenImages;
   readonly createSurface: (width: number, height: number) => Surface;
   readonly sink: ByteSink;
   readonly signal: AbortSignal;
@@ -166,9 +170,13 @@ export async function runExport(
   const maxWidth = deps.maxSurfaceWidth ?? MAX_SURFACE_WIDTH;
   const plan = planExport(options, maxWidth);
   if (typeof plan === 'string') throw new Error(`Invalid print layout: ${plan}`);
-  const scene = new ExportScene(snapshot, options.extent, options.pxPerCell, options, deps.images);
   const surfaceW = Math.min(maxWidth, Math.max(...plan.files.map((f) => f.width)));
   const surfaceH = Math.min(BAND_HEIGHT, Math.max(...plan.files.map((f) => f.height)));
+  let light: Surface | null = null;
+  const scene = new ExportScene(snapshot, options.extent, options.pxPerCell, options, deps.images, {
+    tokenImages: deps.tokenImages ?? null,
+    lightSurface: () => (light ??= deps.createSurface(surfaceW, surfaceH)).ctx,
+  });
   const surface = deps.createSurface(surfaceW, surfaceH);
   const ppm =
     options.print === null ? null : pixelsPerMeter(options.pxPerCell, options.print.mmPerCell);
@@ -231,8 +239,12 @@ export async function runExport(
     throw error;
   } finally {
     surface.release?.();
+    (light as Surface | null)?.release?.();
   }
-  return { files: plan.files.length, failed: deps.images.failed };
+  return {
+    files: plan.files.length,
+    failed: [...deps.images.failed, ...(deps.tokenImages?.failed ?? [])],
+  };
 }
 
 /** Renders one band column of a file into the surface (top-left aligned). */

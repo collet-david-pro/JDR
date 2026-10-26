@@ -73,6 +73,7 @@
       const { startExport } = await import('../../export/run-export');
       handle = startExport({
         view: source.view,
+        scene: source.scene ?? null,
         layers: ev.layers,
         options: ev.options,
         target,

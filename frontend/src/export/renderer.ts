@@ -1,7 +1,8 @@
 /**
  * Canvas 2D renderer of the export (OffscreenCanvas in the worker, or a canvas on the main
  * thread): background of the grid theme (unless transparent), tile layers bottom → top with
- * their opacity, then the grid. Draws any pixel region of the full export image, so the image
+ * their opacity, then the P5 scene (objects, tokens, lighting, fog: scene-render.ts) when the
+ * snapshot has one, then the grid (above everything, projet.md 14.1). Draws any pixel region of the full export image, so the image
  * can be produced band by band (and column by column) with bounded memory.
  *
  * Why Canvas 2D and not Pixi on an OffscreenCanvas (projet.md 13.4, "à vérifier"): see job.ts.
@@ -11,13 +12,32 @@ import { colorToCss } from '../engine/fallback-color';
 import { gridTheme } from '../engine/grid-themes';
 import { cellDraw, gridLinePlan, type GridLinePlan } from './cell-render';
 import { outputSize } from './dimensions';
-import type { TileImages } from './images';
+import type { TileImages, TokenImages } from './images';
 import type { MapSnapshot } from './scene';
+import { ScenePainter } from './scene-render';
+import { DEFAULT_SCENE_CONTENT, type SceneContentOptions } from './scene-snapshot';
+
+/** Optional inputs of the P5 scene layers. */
+export interface ExportSceneExtras {
+  readonly tokenImages?: TokenImages | null;
+  /** Second surface for the lightmap (created on first use, at least one band large). */
+  readonly lightSurface?: (() => Ctx2D) | null;
+}
 
 /** The subset of CanvasRenderingContext2D / OffscreenCanvasRenderingContext2D we use. */
 export interface Ctx2D {
+  /** The drawing surface (OffscreenCanvas / canvas): drawn back with drawImage. */
+  readonly canvas: unknown;
   globalAlpha: number;
+  globalCompositeOperation: GlobalCompositeOperation;
   fillStyle: string | CanvasGradient | CanvasPattern;
+  strokeStyle: string | CanvasGradient | CanvasPattern;
+  lineWidth: number;
+  lineCap: CanvasLineCap;
+  lineJoin: CanvasLineJoin;
+  font: string;
+  textAlign: CanvasTextAlign;
+  textBaseline: CanvasTextBaseline;
   imageSmoothingEnabled: boolean;
   imageSmoothingQuality: ImageSmoothingQuality;
   setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void;
@@ -38,7 +58,30 @@ export interface Ctx2D {
   restore(): void;
   beginPath(): void;
   rect(x: number, y: number, w: number, h: number): void;
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+  closePath(): void;
+  ellipse(
+    x: number,
+    y: number,
+    radiusX: number,
+    radiusY: number,
+    rotation: number,
+    startAngle: number,
+    endAngle: number,
+  ): void;
   clip(): void;
+  fill(): void;
+  stroke(): void;
+  createRadialGradient(
+    x0: number,
+    y0: number,
+    r0: number,
+    x1: number,
+    y1: number,
+    r1: number,
+  ): CanvasGradient;
+  fillText(text: string, x: number, y: number): void;
 }
 
 interface PreparedLayer {
@@ -53,13 +96,21 @@ export class ExportScene {
   readonly background: string | null;
   private readonly layers: readonly PreparedLayer[];
   private readonly lines: GridLinePlan | null;
+  private readonly painter: ScenePainter | null;
+  private readonly transparent: boolean;
+  private lightCtx: Ctx2D | null = null;
 
   constructor(
     snapshot: MapSnapshot,
     readonly extent: CellRect,
     readonly ppc: number,
-    options: { readonly grid: boolean; readonly transparent: boolean },
+    options: {
+      readonly grid: boolean;
+      readonly transparent: boolean;
+      readonly scene?: SceneContentOptions;
+    },
     private readonly images: TileImages,
+    private readonly extras: ExportSceneExtras = {},
   ) {
     const size = outputSize(extent, ppc);
     this.width = size.width;
@@ -71,6 +122,22 @@ export class ExportScene {
       .map((l) => ({ opacity: l.opacity, chunks: new Map(l.chunks) }));
     const grid = { ...snapshot.grid, unitLabel: '', unitPerCell: 1 };
     this.lines = options.grid ? gridLinePlan(extent, grid, ppc, theme) : null;
+    this.transparent = options.transparent;
+    this.painter =
+      snapshot.scene == null
+        ? null
+        : new ScenePainter(
+            snapshot.scene,
+            extent,
+            ppc,
+            options.scene ?? DEFAULT_SCENE_CONTENT,
+            extras.tokenImages ?? null,
+          );
+  }
+
+  /** True when draw() needs the lightmap surface. */
+  get needsLightSurface(): boolean {
+    return this.painter?.drawLighting === true;
   }
 
   /**
@@ -120,6 +187,19 @@ export class ExportScene {
       }
     }
     ctx.globalAlpha = 1;
+    const painter = this.painter;
+    if (painter !== null) {
+      painter.objects(ctx, x, y, w, h, ox, oy);
+      painter.tokens(ctx, x, y, w, h, ox, oy);
+      if (painter.drawLighting) {
+        this.lightCtx ??= this.extras.lightSurface?.() ?? null;
+        if (this.lightCtx !== null) {
+          painter.lighting(ctx, this.lightCtx, x, y, w, h, dx, dy, this.transparent);
+        }
+      }
+      painter.fogLayer(ctx, x, y, w, h, ox, oy);
+      ctx.globalAlpha = 1;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const lines = this.lines;
     if (lines !== null) {

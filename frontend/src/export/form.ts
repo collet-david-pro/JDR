@@ -28,6 +28,7 @@ import {
   type ExportOptions,
   type MissingAsset,
 } from './scene';
+import { DEFAULT_SCENE_CONTENT } from './scene-snapshot';
 import type { ExportSource } from './types';
 
 export interface ExportForm {
@@ -35,6 +36,10 @@ export interface ExportForm {
   layers: Record<TileLayerId, boolean>;
   grid: boolean;
   transparent: boolean;
+  /** P5 scene content (only used when the source has a scene). */
+  tokens: boolean;
+  lighting: boolean;
+  fog: boolean;
   mode: ResolutionMode;
   factor: string;
   cellPx: string;
@@ -72,6 +77,9 @@ export function defaultForm(source: ExportSource): ExportForm {
     layers,
     grid: true,
     transparent: false,
+    tokens: DEFAULT_SCENE_CONTENT.tokens,
+    lighting: DEFAULT_SCENE_CONTENT.lighting,
+    fog: DEFAULT_SCENE_CONTENT.fog,
     mode: 'factor',
     factor: '1',
     cellPx: String(cellPx),
@@ -103,6 +111,8 @@ export type FormError =
 export interface FormEvaluation {
   readonly extent: CellRect | null;
   readonly layers: readonly TileLayerId[];
+  /** The source has a P5 scene (objects, tokens, lighting, fog options shown). */
+  readonly hasScene: boolean;
   readonly size: SizeReport | null;
   readonly print: PrintOptions | null;
   readonly layout: PageLayout | null;
@@ -123,7 +133,8 @@ export function evaluateForm(form: ExportForm, source: ExportSource): FormEvalua
   const layers = TILE_LAYERS.filter((id) => form.layers[id]).sort(
     (a, b) => order.indexOf(a) - order.indexOf(b),
   );
-  if (layers.length === 0 && !form.grid) errors.push('no_layers');
+  const hasScene = source.scene != null;
+  if (layers.length === 0 && !form.grid && !hasScene) errors.push('no_layers');
 
   const factor = Number(form.factor);
   const size =
@@ -181,11 +192,15 @@ export function evaluateForm(form: ExportForm, source: ExportSource): FormEvalua
           baseName: base,
           title: source.name,
           software: SOFTWARE,
+          ...(hasScene
+            ? { scene: { tokens: form.tokens, lighting: form.lighting, fog: form.fog } }
+            : {}),
         }
       : null;
   return {
     extent,
     layers,
+    hasScene,
     size,
     print,
     layout,

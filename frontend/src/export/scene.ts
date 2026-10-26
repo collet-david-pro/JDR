@@ -9,9 +9,11 @@ import {
   type GridSpec,
   type GridTheme,
   type MapView,
+  type SceneView,
   type TileLayerId,
 } from '../editor/contracts';
 import type { PrintOptions } from './print-layout';
+import { buildSceneSnapshot, type SceneContentOptions, type SnapshotScene } from './scene-snapshot';
 
 export interface SnapshotLayer {
   readonly id: TileLayerId;
@@ -34,6 +36,8 @@ export interface MapSnapshot {
   readonly layers: readonly SnapshotLayer[];
   /** Palette entries used by the exported cells. */
   readonly palette: readonly SnapshotPaletteEntry[];
+  /** P5 objects, tokens, lights, fog (absent / null = tiles only, as in P4). */
+  readonly scene?: SnapshotScene | null;
 }
 
 export interface ExportOptions {
@@ -48,6 +52,8 @@ export interface ExportOptions {
   /** PNG text chunks. */
   readonly title: string;
   readonly software: string;
+  /** P5 content switches (absent = tokens drawn, no lighting, no fog). */
+  readonly scene?: SceneContentOptions;
 }
 
 export const TILE_LAYERS: readonly TileLayerId[] = ['ground', 'terrain', 'decor'];
@@ -138,6 +144,7 @@ export function buildSnapshot(
   extent: CellRect,
   layers: readonly TileLayerId[],
   baseUrl?: string,
+  scene?: { readonly view: SceneView; readonly content: SceneContentOptions } | null,
 ): { snapshot: MapSnapshot; transfer: ArrayBuffer[] } {
   const range = chunkRange(extent);
   const transfer: ArrayBuffer[] = [];
@@ -167,12 +174,26 @@ export function buildSnapshot(
         url: entry?.url ? absoluteUrl(entry.url, baseUrl) : null,
       };
     });
+  let sceneSnapshot: SnapshotScene | null = null;
+  if (scene) {
+    const built = buildSceneSnapshot(
+      scene.view,
+      view.layers,
+      { width: view.grid.width, height: view.grid.height },
+      extent,
+      scene.content,
+      baseUrl,
+    );
+    sceneSnapshot = built.scene;
+    transfer.push(...built.transfer);
+  }
   return {
     snapshot: {
       grid: { width: view.grid.width, height: view.grid.height, cellPx: view.grid.cellPx },
       theme: view.theme,
       layers: snapshotLayers,
       palette,
+      scene: sceneSnapshot,
     },
     transfer,
   };

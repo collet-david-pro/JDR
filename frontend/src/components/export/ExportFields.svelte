@@ -72,6 +72,27 @@
   <p class="hint">{t('export_png.floor_hint')}</p>
 </fieldset>
 
+{#if evaluation.hasScene}
+  <fieldset data-testid="export-scene">
+    <legend>{t('export_png.scene.legend')}</legend>
+    <div class="choices">
+      <label class="choice">
+        <input type="checkbox" bind:checked={form.tokens} data-testid="export-tokens" />
+        {t('export_png.scene.tokens')}
+      </label>
+      <label class="choice">
+        <input type="checkbox" bind:checked={form.lighting} data-testid="export-lighting" />
+        {t('export_png.scene.lighting')}
+      </label>
+      <label class="choice">
+        <input type="checkbox" bind:checked={form.fog} data-testid="export-fog" />
+        {t('export_png.scene.fog')}
+      </label>
+    </div>
+    <p class="hint">{t('export_png.scene.hint')}</p>
+  </fieldset>
+{/if}
+
 <fieldset>
   <legend>{t('export_png.resolution')}</legend>
   <label class="field">

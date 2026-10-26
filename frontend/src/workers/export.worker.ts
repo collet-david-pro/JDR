@@ -1,9 +1,10 @@
 /**
  * export.worker (projet.md 13.4, 17): renders the PNG export band by band on an OffscreenCanvas
  * (Canvas 2D, see export/job.ts for the choice) and streams the encoded bytes to the page.
+ * P5: light polygons are computed here with the synchronous VisionCore (vision/core.ts).
  * Cancellation = the page terminates the worker.
  */
-import { loadTileImages } from '../export/images';
+import { loadTileImages, loadTokenImages } from '../export/images';
 import { runExport, type ExportProgress, type Surface } from '../export/job';
 import { MAX_UNACKED, canUseOffscreen2d, type FromWorker, type ToWorker } from '../export/protocol';
 import type { Ctx2D } from '../export/renderer';
@@ -59,9 +60,11 @@ async function start(id: number, message: Extract<ToWorker, { type: 'start' }>):
   const controller = new AbortController();
   try {
     const images = await loadTileImages(snapshot.palette, controller.signal);
+    const tokenImages = await loadTokenImages(snapshot.scene?.tokenImages ?? [], controller.signal);
     let lastProgress = 0;
     const result = await runExport(snapshot, options, {
       images,
+      tokenImages,
       createSurface,
       signal: controller.signal,
       sink: (bytes) => {
@@ -86,6 +89,7 @@ async function start(id: number, message: Extract<ToWorker, { type: 'start' }>):
     // Wait until the page wrote everything before reporting completion.
     while (acked < seq) await new Promise<void>((resolve) => (ackWaiter = resolve));
     images.close();
+    tokenImages.close();
     post({ type: 'done', id, payload: { files: result.files, failed: result.failed } });
   } catch (error) {
     const e = error instanceof Error ? error : new Error(String(error));
