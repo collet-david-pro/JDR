@@ -6,7 +6,7 @@ Ce n'est **pas un VTT de règles** : ni dés, ni initiative, ni fiches, ni point
 
 Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé classique ou auto-hébergement, Apache ou Nginx) : installation par simple envoi des fichiers puis `install.php`, aucune extension exotique, aucun démon, aucun Composer en production.
 
-> **État : en développement — version 0.1.0 (non publiée).** Les phases 0 à 4 de la feuille de route sont terminées (voir ci-dessous et [CHANGELOG.md](CHANGELOG.md)). Pas encore prêt pour la production.
+> **État : en développement — version 0.1.0 (non publiée).** Les phases 0 à 5 de la feuille de route sont terminées (voir ci-dessous et [CHANGELOG.md](CHANGELOG.md)). Pas encore prêt pour la production.
 
 ## Ce qui fonctionne aujourd'hui
 
@@ -18,7 +18,10 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
 - **Éditeur de maps** (WebGPU, repli WebGL2) : grille carrée et thèmes de grille, calques, tuiles par blocs, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler/rétablir, raccourcis clavier, trackpad.
   - Enregistrement automatique avec **file d'attente hors ligne** (aucune perte en cas de coupure réseau ou de fermeture brutale de l'onglet).
   - **Historique de versions** restaurable, **export/import** JSON ou ZIP (images incluses), miniatures.
-  - **Export PNG** haute résolution (×1, ×2, ×4 ou personnalisé, jusqu'à de très grandes images, fond transparent, mode impression en pages A4/A3/Letter).
+  - **Export PNG** haute résolution (×1, ×2, ×4 ou personnalisé, jusqu'à de très grandes images, fond transparent, mode impression en pages A4/A3/Letter), avec tokens, éclairage et brouillard en option.
+- **Murs, lumière, vision et brouillard** : outils Mur (`W`, polyligne ou pièce, aimantation), Porte/fenêtre (`D`, posée sur un mur qu'elle découpe ; portes ouvertes/fermées, verrouillées, secrètes), Lumière (`L`, préréglages torche, lanterne, bougie, feu de camp, lumière magique ; couleur, vacillement, cônes), Token (`K`), Révéler/masquer (`F`, pinceau, rectangle ou pièce entière).
+  - Lumière et vision **arrêtées par les murs** (calcul dans un worker), ambiance (obscurité, teinte, cycle jour/nuit), ombres portées.
+  - **Brouillard de guerre** explorable et enregistré ; vue **« comme le joueur »** (un token ou tous les PJ) ; panneaux Propriétés, Tokens et Ambiance.
 - Interface en français, thème clair/sombre/automatique et plusieurs styles d'interface (moderne, fantasy, science-fiction).
 
 ## Feuille de route
@@ -30,7 +33,7 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
 | P2 | Bibliothèque d'images et quotas | ✅ |
 | P3 | Parties, membres, tokens, rencontres | ✅ |
 | P4 | Éditeur de maps (moteur, outils, persistance hors ligne, versions, import/export, export PNG) | ✅ |
-| P5 | Murs, portes, fenêtres, lumières, vision des tokens, brouillard de guerre | à venir |
+| P5 | Murs, portes, fenêtres, lumières, vision des tokens, brouillard de guerre | ✅ |
 | P6 | Séances de jeu en temps réel (code de séance, lobby, synchronisation) | à venir |
 | P7 | Mode présentiel : écrans de projection appairés, échelle réelle | à venir |
 | P8 | Génération procédurale (donjons, grottes, extérieurs, villages, textures) | à venir |
