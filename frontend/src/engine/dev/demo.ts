@@ -5,12 +5,17 @@
  * Synthetic map fully filled on 3 tile layers. Primary button paints on `decor` (index under
  * the cursor + 1), middle button or "main" pans, wheel zooms. window.__engineDemo.bench()
  * runs a scripted pan/zoom and returns the measured frame rates.
+ *
+ * P5: a synthetic scene (rooms, doors, windows, `lights` lights, `tokens` tokens, partial fog;
+ * `scene=0` disables it) with view controls. window.__engineDemo.benchScene() measures the
+ * frame rate with lights / tokens in GM and player views and the door → frame latency.
  */
 
 import type { GridTheme, PaletteEntry } from '../../editor/contracts';
 import { GRID_THEME_IDS } from '../grid-themes';
 import { loadSceneEngine, isEngineUnsupportedError, type SceneEngine } from '../load';
 import { fillSynthetic, rng, SyntheticMap } from './synthetic-map';
+import { SyntheticScene } from './synthetic-scene';
 
 const GROUND = 8;
 const OTHER = 8;
@@ -140,6 +145,8 @@ async function waitIdle(engine: SceneEngine): Promise<void> {
     await new Promise((r) => setTimeout(r, 50));
     const frames = engine.stats.frames;
     if (frames === last) return;
+    // Flickering lights in view keep rendering: settle after a short delay.
+    if (engine.stats.animating && i >= 10) return;
     last = frames;
   }
 }
@@ -152,7 +159,8 @@ async function main(): Promise<void> {
   const info = document.getElementById('info') as HTMLElement;
   const palette = await makePalette();
   const map = new SyntheticMap(size, size, cellPx, palette);
-  fillSynthetic(map, GROUND, OTHER);
+  // `tiles=0`: empty map (theme background only), easier to read the P5 layers.
+  if (params.get('tiles') !== '0') fillSynthetic(map, GROUND, OTHER);
 
   let engine: SceneEngine;
   try {
@@ -165,6 +173,17 @@ async function main(): Promise<void> {
     throw error;
   }
   engine.setMap(map);
+  const withScene = params.get('scene') !== '0';
+  const scene = withScene
+    ? new SyntheticScene({
+        width: size,
+        height: size,
+        lights: Number(params.get('lights') ?? 30),
+        tokens: Number(params.get('tokens') ?? 20),
+        darkness: Number(params.get('darkness') ?? 0.75),
+      })
+    : null;
+  if (scene !== null) engine.setScene(scene);
 
   let fps = 0;
   engine.onFps((v) => (fps = v));
@@ -188,6 +207,26 @@ async function main(): Promise<void> {
   const pan = document.getElementById('pan') as HTMLInputElement;
   pan.addEventListener('change', () => engine.setPanMode(pan.checked));
   document.getElementById('fit')?.addEventListener('click', () => engine.camera.fit());
+  const mode = document.getElementById('mode') as HTMLSelectElement;
+  const explore = document.getElementById('explore') as HTMLInputElement;
+  const applyView = (): void => {
+    const m = mode.value as 'gm' | 'player' | 'display';
+    const viewers = m !== 'gm' || explore.checked ? (scene?.playerTokens() ?? []) : [];
+    engine.setView({ mode: m, viewers });
+  };
+  mode.addEventListener('change', applyView);
+  explore.addEventListener('change', applyView);
+  for (const key of ['lighting', 'fog', 'shadows'] as const) {
+    const box = document.getElementById(key) as HTMLInputElement;
+    box.addEventListener('change', () => engine.setView({ [key]: box.checked }));
+  }
+  const perf = document.getElementById('perf') as HTMLInputElement;
+  perf.addEventListener('change', () => engine.setPerformanceMode(perf.checked ? true : 'auto'));
+  let doorIndex = 0;
+  document.getElementById('door')?.addEventListener('click', () => {
+    if (scene === null || scene.doors.length === 0) return;
+    scene.toggleDoor(scene.doors[doorIndex++ % scene.doors.length]!);
+  });
 
   setInterval(() => {
     const s = engine.stats;
@@ -195,7 +234,10 @@ async function main(): Promise<void> {
     info.textContent =
       `${s.renderer} dpr ${s.dpr}${s.performanceMode ? ' (perf)' : ''} · ${fps} i/s · ` +
       `zoom ${cam.zoom.toFixed(3)} · ${s.mode} · visible ${s.visible}/${s.resident} · ` +
-      `cache ${(s.cacheBytes / 1048576).toFixed(0)} Mo · particles ${s.particles}`;
+      `cache ${(s.cacheBytes / 1048576).toFixed(0)} Mo · particles ${s.particles}` +
+      (scene === null
+        ? ''
+        : ` · lights ${s.lightsDrawn}/${s.lights} · tokens ${s.tokens} · vision ${s.visionMs ?? '-'} ms`);
   }, 500);
 
   const bench = async (msPerPhase = 3000): Promise<PhaseResult[]> => {
@@ -236,7 +278,90 @@ async function main(): Promise<void> {
     return results;
   };
 
-  Object.assign(window, { __engineDemo: { engine, map, bench, waitIdle: () => waitIdle(engine) } });
+  /** Toggles a door and resolves with the measured latencies once the new frame is drawn. */
+  const doorLatency = async (uid: string): Promise<{ visionMs: number; wallMs: number }> => {
+    if (scene === null) throw new Error('no scene');
+    const before = engine.stats.visionSamples;
+    const start = performance.now();
+    scene.toggleDoor(uid);
+    for (;;) {
+      await new Promise((r) => requestAnimationFrame(r));
+      if (engine.stats.visionSamples > before) break;
+      if (performance.now() - start > 5000) throw new Error('timeout');
+    }
+    return { visionMs: engine.stats.visionMs ?? NaN, wallMs: performance.now() - start };
+  };
+
+  const benchScene = async (msPerPhase = 3000, doorRuns = 20) => {
+    if (scene === null) throw new Error('no scene (scene=0)');
+    const results: PhaseResult[] = [];
+    const center = { x: size / 2, y: size / 2 };
+    const zoom = Math.min(1, Math.max(0.3, engine.camera.get().zoom * 3));
+    const phases: [string, Parameters<SceneEngine['setView']>[0]][] = [
+      ['gm lights', { mode: 'gm', viewers: [], shadows: false }],
+      ['gm lights + shadows', { mode: 'gm', viewers: [], shadows: true }],
+      ['player view', { mode: 'player', viewers: scene.playerTokens(), shadows: false }],
+      ['player + shadows', { mode: 'player', viewers: scene.playerTokens(), shadows: true }],
+    ];
+    for (const [name, view] of phases) {
+      engine.setView(view);
+      engine.camera.set({ ...center, zoom });
+      await waitIdle(engine);
+      results.push(
+        await runPhase(engine, `${name}: pan`, msPerPhase, (t) =>
+          engine.camera.set({ x: center.x + Math.sin(t * Math.PI * 2) * size * 0.2 }),
+        ),
+      );
+    }
+    engine.setView({ mode: 'gm', viewers: [], shadows: false });
+    engine.camera.set({ ...center, zoom });
+    await waitIdle(engine);
+    // Idle with flickering lights in view: continuous animation only.
+    results.push(await runPhase(engine, 'gm idle (flicker only)', msPerPhase, () => undefined));
+    const doors: { visionMs: number; wallMs: number }[] = [];
+    engine.setView({ mode: 'player', viewers: scene.playerTokens() });
+    await waitIdle(engine);
+    for (let i = 0; i < doorRuns; i++) {
+      doors.push(await doorLatency(scene.doors[i % scene.doors.length]!));
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    const sorted = (k: 'visionMs' | 'wallMs') => doors.map((d) => d[k]).sort((a, b) => a - b);
+    const stat = (k: 'visionMs' | 'wallMs') => {
+      const v = sorted(k);
+      return {
+        median: Math.round(v[Math.floor(v.length / 2)]! * 10) / 10,
+        max: Math.round(v[v.length - 1]! * 10) / 10,
+      };
+    };
+    // Rendering at rest: no frame without animation (lights frozen = performance mode).
+    engine.setPerformanceMode(true);
+    await waitIdle(engine);
+    const restStart = engine.stats.frames;
+    await new Promise((r) => setTimeout(r, 1000));
+    const restFrames = engine.stats.frames - restStart;
+    engine.setPerformanceMode('auto');
+    engine.setView({ mode: 'gm', viewers: [] });
+    return {
+      renderer: engine.renderer,
+      lights: engine.stats.lights,
+      tokens: engine.stats.tokens,
+      phases: results,
+      door: { runs: doors.length, visionMs: stat('visionMs'), wallMs: stat('wallMs') },
+      restFramesPerSecondFrozen: restFrames,
+    };
+  };
+
+  Object.assign(window, {
+    __engineDemo: {
+      engine,
+      map,
+      scene,
+      bench,
+      benchScene,
+      doorLatency,
+      waitIdle: () => waitIdle(engine),
+    },
+  });
 }
 
 void main();

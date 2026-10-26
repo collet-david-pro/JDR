@@ -24,9 +24,12 @@ if (loadTextures.config !== undefined) loadTextures.config.preferWorkers = false
 export {
   Assets,
   autoDetectRenderer,
+  BufferImageSource,
   Container,
   Graphics,
   Matrix,
+  Mesh,
+  MeshGeometry,
   Particle,
   ParticleContainer,
   Rectangle,

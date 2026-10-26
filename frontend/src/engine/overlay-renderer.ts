@@ -1,11 +1,13 @@
 /**
  * Edit overlay (projet.md 14.1 item 12), drawn in screen space above everything: brush /
- * eraser cell preview, shape rectangle, dashed selection, ruler with its label.
+ * eraser cell preview, shape rectangle, dashed selection, ruler with its label, and the P5
+ * overlays (overlay-scene.ts). A `group` draws its items in order.
  */
 
-import type { CameraState, GridSpec, Overlay } from '../editor/contracts';
+import type { CameraState, GridSpec, Overlay, SceneView } from '../editor/contracts';
 import { worldToScreen, type Viewport } from './camera';
 import { cellRuns, normalizeRect, rectDashes, type CellRun } from './overlay-geometry';
+import { drawSceneOverlay, isSceneOverlay } from './overlay-scene';
 import { Container, Graphics, Text } from './pixi';
 
 const ACCENT = 0x2f80ed;
@@ -19,7 +21,8 @@ export class OverlayRenderer {
   private readonly labelBg = new Graphics();
   private label: Text | null = null;
   private overlay: Overlay | null = null;
-  private runs: CellRun[] = [];
+  private readonly runs = new Map<Overlay, CellRun[]>();
+  private scene: SceneView | null = null;
 
   constructor() {
     this.root.addChild(this.gfx, this.labelBg);
@@ -27,7 +30,17 @@ export class OverlayRenderer {
 
   set(overlay: Overlay | null): void {
     this.overlay = overlay;
-    this.runs = overlay?.kind === 'cells' ? cellRuns(overlay.cells) : [];
+    this.runs.clear();
+    const collect = (o: Overlay, depth: number): void => {
+      if (o.kind === 'cells') this.runs.set(o, cellRuns(o.cells));
+      else if (o.kind === 'group' && depth < 8) for (const i of o.items) collect(i, depth + 1);
+    };
+    if (overlay !== null) collect(overlay, 0);
+  }
+
+  /** Scene read by the `objects` overlay (selected objects / tokens). */
+  setScene(scene: SceneView | null): void {
+    this.scene = scene;
   }
 
   draw(camera: CameraState, viewport: Viewport, grid: GridSpec | null, dpr: number): void {
@@ -40,12 +53,34 @@ export class OverlayRenderer {
     const cellPx = grid.cellPx;
     const toScreen = (x: number, y: number): { x: number; y: number } =>
       worldToScreen(camera, viewport, cellPx, x, y);
+    this.drawOne(o, camera, viewport, cellPx, dpr, toScreen, 0);
+  }
 
+  private drawOne(
+    o: Overlay,
+    camera: CameraState,
+    viewport: Viewport,
+    cellPx: number,
+    dpr: number,
+    toScreen: (x: number, y: number) => { x: number; y: number },
+    depth: number,
+  ): void {
+    const g = this.gfx;
+    if (isSceneOverlay(o)) {
+      drawSceneOverlay(g, o, toScreen, this.scene);
+      return;
+    }
     switch (o.kind) {
+      case 'group':
+        if (depth >= 8) break;
+        for (const item of o.items) {
+          this.drawOne(item, camera, viewport, cellPx, dpr, toScreen, depth + 1);
+        }
+        break;
       case 'cells': {
         const size = cellPx * camera.zoom;
         let any = false;
-        for (const run of this.runs) {
+        for (const run of this.runs.get(o) ?? []) {
           const p = toScreen(run.x, run.y);
           const w = run.w * size;
           if (p.x > viewport.width || p.y > viewport.height || p.x + w < 0 || p.y + size < 0) {

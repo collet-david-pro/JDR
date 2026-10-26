@@ -6,9 +6,12 @@
  * Load it with a dynamic import (see ./load.ts): Pixi must stay out of the initial bundle.
  *
  * Rendering is on demand: a frame is only requested when something changed (camera, chunks,
- * overlay, textures, size) or work remains (inertia, progressive chunk builds). No idle loop:
- * Pixi's system ticker (used by its GC scheduler) is stopped and pumped from our frames and
- * from a slow housekeeping timer.
+ * overlay, textures, size, scene) or work remains (inertia, progressive chunk builds, light
+ * flicker in view, ambient transition). No idle loop: Pixi's system ticker (used by its GC
+ * scheduler) is stopped and pumped from our frames and from a slow housekeeping timer.
+ *
+ * P5 (scene/scene-layer.ts): objects, placed tokens, lightmap + ambient, shadows, fog and the
+ * player views, in the order of scene/pipeline.ts (projet.md 14.1).
  */
 
 import type {
@@ -22,7 +25,11 @@ import type {
   Overlay,
   PointerModifiers,
   SceneEngineApi,
+  SceneView,
+  ViewOptions,
+  VisibleScene,
 } from '../editor/contracts';
+import { createVisionService, type VisionService } from '../vision';
 import {
   camerasEqual,
   clampZoom,
@@ -44,6 +51,8 @@ import { GridRenderer } from './grid-renderer';
 import { InputController, type ToolPointerType } from './input';
 import { OverlayRenderer } from './overlay-renderer';
 import { autoDetectRenderer, Container, Ticker, type Renderer } from './pixi';
+import { RENDER_PIPELINE, type PipelineLayer } from './scene/pipeline';
+import { SceneLayer, type SceneLayerStats } from './scene/scene-layer';
 import { hasWebGL2 } from './support';
 import { PaletteTextures } from './textures';
 import { TileMapRenderer, type TileMapStats } from './tilemap';
@@ -57,15 +66,21 @@ export interface SceneEngineOptions {
   readonly reducedMotion?: boolean;
   /** Time budget per frame for chunk builds / cache renders, ms (default 6). */
   readonly buildBudgetMs?: number;
+  /**
+   * Vision service (P5) shared with the page (fog exploration); the page keeps ownership.
+   * Default: one created with createVisionService() and destroyed with the engine.
+   */
+  readonly vision?: VisionService;
 }
 
-export interface SceneEngineStats extends TileMapStats {
+export interface SceneEngineStats extends TileMapStats, SceneLayerStats {
   readonly renderer: 'webgpu' | 'webgl';
   readonly dpr: number;
   readonly performanceMode: boolean;
   readonly frames: number;
   /** Cumulative main-thread time spent in frames (update + render submit), ms. */
   readonly cpuMs: number;
+  readonly view: ViewOptions;
 }
 
 /** Zoom considered settled after this long without change (cache level switch). */
@@ -168,6 +183,11 @@ export class SceneEngine implements SceneEngineApi {
 
   private readonly stage = new Container();
   private readonly world = new Container({ isRenderGroup: true });
+  /** Objects and tokens (same camera transform as `world`). */
+  private readonly worldScene = new Container({ isRenderGroup: true });
+  /** GM fog veil (same camera transform). */
+  private readonly worldFog = new Container({ isRenderGroup: true });
+  private readonly sceneLayer: SceneLayer;
   private readonly textures: PaletteTextures;
   private readonly tilemap: TileMapRenderer;
   private readonly overlayRenderer = new OverlayRenderer();
@@ -244,14 +264,36 @@ export class SceneEngine implements SceneEngineApi {
       this.requestRender();
     });
     this.tilemap = new TileMapRenderer(pixi, this.textures);
+    const vision = options.vision ?? createVisionService();
+    this.sceneLayer = new SceneLayer(pixi, vision, options.vision === undefined, {
+      // Scene changes may move what the `objects` overlay / gizmos show.
+      requestRender: () => {
+        this.screenDirty = true;
+        this.requestRender();
+      },
+      reducedMotion: this.reducedMotion,
+    });
 
     this.world.addChild(gridRenderer.background, this.tilemap.root);
-    this.stage.addChild(
-      this.world,
-      gridRenderer.lines,
-      gridRenderer.border,
-      this.overlayRenderer.root,
-    );
+    this.worldScene.addChild(this.sceneLayer.objects.root, this.sceneLayer.tokens.root);
+    this.worldFog.addChild(this.sceneLayer.fogWorld);
+    const lighting = this.sceneLayer.lighting;
+    const layers: Record<PipelineLayer, Container[]> = {
+      background: [this.world],
+      tiles: [],
+      shadows: [lighting.shadowSprite],
+      objects: [this.worldScene],
+      tokens: [],
+      lighting: [lighting.lightSprite],
+      fog: [this.worldFog, lighting.fogSprite],
+      grid: [gridRenderer.lines],
+      border: [gridRenderer.border],
+      gizmos: [this.sceneLayer.objects.gizmos],
+      overlay: [this.overlayRenderer.root],
+    };
+    for (const layer of RENDER_PIPELINE) {
+      for (const c of layers[layer]) this.stage.addChild(c);
+    }
 
     this.canvas = pixi.canvas as HTMLCanvasElement;
     this.canvas.style.display = 'block';
@@ -314,6 +356,31 @@ export class SceneEngine implements SceneEngineApi {
     this.resize(true);
   }
 
+  /** P5: objects, placed tokens, fog and ambient of the shown floor (null removes them). */
+  setScene(scene: SceneView | null): void {
+    this.sceneLayer.setScene(scene);
+    this.overlayRenderer.setScene(scene);
+    this.screenDirty = true;
+    this.requestRender();
+  }
+
+  /** P5: view mode and render switches, merged with the current options. */
+  setView(options: Partial<ViewOptions>): void {
+    this.sceneLayer.setView(options);
+    this.screenDirty = true;
+    this.requestRender();
+  }
+
+  /** Current view options (default gm, no viewers, lighting and fog on, no shadows). */
+  get viewOptions(): ViewOptions {
+    return this.sceneLayer.view;
+  }
+
+  /** P5: visibility of the viewers after each recomputation (at most every 100 ms). */
+  onVisibility(listener: (scene: VisibleScene) => void): () => void {
+    return this.sceneLayer.onVisibility(listener);
+  }
+
   /** Current DPR used by the renderer. */
   get dpr(): number {
     return this.dprValue;
@@ -322,6 +389,8 @@ export class SceneEngine implements SceneEngineApi {
   get stats(): SceneEngineStats {
     return {
       ...this.tilemap.stats,
+      ...this.sceneLayer.stats,
+      view: this.sceneLayer.view,
       renderer: this.renderer,
       dpr: this.dprValue,
       performanceMode: this.performanceMode,
@@ -339,6 +408,7 @@ export class SceneEngine implements SceneEngineApi {
     this.tilemap.setMap(view);
     this.applyTheme(view.theme);
     this.gridRenderer.drawBackground(this.grid);
+    this.sceneLayer.setGrid(this.grid, view.layers);
     this.viewSubscriptions = [
       view.onChunksChanged((event: ChunksChangedEvent) => {
         this.tilemap.chunksChanged(event);
@@ -404,6 +474,7 @@ export class SceneEngine implements SceneEngineApi {
     this.pointerEvents.clear();
     this.cameraEvents.clear();
     this.fpsEvents.clear();
+    this.sceneLayer.destroy();
     this.tilemap.destroy();
     this.overlayRenderer.destroy();
     this.gridRenderer.destroy();
@@ -469,10 +540,14 @@ export class SceneEngine implements SceneEngineApi {
     if (gridChanged) {
       this.tilemap.setMap(view);
       this.gridRenderer.drawBackground(this.grid);
+      this.sceneLayer.setGrid(this.grid, view.layers);
       this.setCamera(this.cam);
     } else {
       const key = layersKey(view.layers);
-      if (key !== this.layersSnapshot) this.tilemap.setLayers(view.layers);
+      if (key !== this.layersSnapshot) {
+        this.tilemap.setLayers(view.layers);
+        this.sceneLayer.setLayers(view.layers);
+      }
     }
     this.layersSnapshot = layersKey(view.layers);
     this.screenDirty = true;
@@ -511,8 +586,10 @@ export class SceneEngine implements SceneEngineApi {
     }
 
     const t = worldTransform(this.cam, this.viewport, this.cellPx);
-    this.world.scale.set(t.scale);
-    this.world.position.set(t.tx, t.ty);
+    for (const w of [this.world, this.worldScene, this.worldFog]) {
+      w.scale.set(t.scale);
+      w.position.set(t.tx, t.ty);
+    }
 
     const settled = now - this.lastZoomAt >= ZOOM_SETTLE_MS;
     if (this.tilemap.update(now, this.cam, this.viewport, this.dprValue, settled, this.budgetMs)) {
@@ -522,10 +599,19 @@ export class SceneEngine implements SceneEngineApi {
     if (this.cameraChanged || this.screenDirty) {
       this.gridRenderer.drawScreen(this.cam, this.viewport, this.grid, this.dprValue);
       this.overlayRenderer.draw(this.cam, this.viewport, this.grid, this.dprValue);
-      this.screenDirty = false;
     }
+    const sceneAnimating = this.sceneLayer.prepare({
+      now,
+      camera: this.cam,
+      viewport: this.viewport,
+      dpr: this.dprValue,
+      cameraChanged: this.cameraChanged || this.screenDirty,
+    });
+    if (sceneAnimating) again = true;
+    this.screenDirty = false;
 
     this.pixi.render({ container: this.stage });
+    this.sceneLayer.rendered(performance.now());
     this.frames++;
     Ticker.system.update(now);
     this.cpuMs += performance.now() - started;
@@ -560,6 +646,7 @@ export class SceneEngine implements SceneEngineApi {
     const hadSize = this.viewport.width > 1 && this.viewport.height > 1;
     this.viewport = { width, height };
     this.dprValue = dpr;
+    this.sceneLayer.setPerformance(this.performanceMode);
     this.pixi.resize(width, height, dpr);
     this.screenDirty = true;
     this.cameraChanged = true;
