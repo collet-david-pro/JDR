@@ -11,6 +11,7 @@ use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Maps\Versions\MapVersionService;
+use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
@@ -32,6 +33,10 @@ use JDR\Maps\TokenRules;
  * moves (+ 1) only when at least one op was applied. The response is remembered with its
  * conflicts.
  * A replayed client_op_id of another user or another map is refused (422 already_used).
+ * P6c (etapes P06 D10, projet.md 11.4 point 5): when the map is the current map of a running /
+ * paused session, MapOpsBroadcaster writes map.ops and the filtered map.ops.public in the same
+ * transaction (state captured before the ops, events written after them, before COMMIT: no change
+ * without its event, and the map row lock makes the before / after states the lot's own).
  */
 final class MapOpsService
 {
@@ -42,6 +47,7 @@ final class MapOpsService
         private AssetPolicy $assetPolicy,
         private MapVersionService $versions,
         private MapSceneRepository $scene,
+        private MapOpsBroadcaster $broadcaster,
     ) {
     }
 
@@ -97,6 +103,7 @@ final class MapOpsService
                 $locked->layers,
                 array_map(static fn (array $f): int => $f['id'], $this->maps->floors($locked->id)),
             );
+            $capture = $this->broadcaster->prepare($locked, $user, $ops, $clientOpId);
             $applier = new OpsApplier(
                 $state,
                 new MapChunkStore($this->maps, $locked->id),
@@ -129,6 +136,9 @@ final class MapOpsService
             $this->maps->applyRefDeltas($locked->id, $applier->refDeltas());
             $this->maps->update($locked->id, $state->changedColumns(), true);
             $this->versions->afterOps($locked, $revision, $user->id);
+            if ($capture !== null) {
+                $this->broadcaster->publish($capture, $revision, $envelope['ops'], $conflicts, $applier->dirtyChunks(), $state->changedColumns());
+            }
 
             $response = ['revision' => $revision, 'applied' => $applied, 'conflicts' => $conflicts];
             $this->remember($clientOpId, $user, $locked->id, $response);

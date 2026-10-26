@@ -57,7 +57,7 @@ final class AppTest extends TestCase
     {
         self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', (string) $response->header('X-Request-Id'));
         self::assertSame(\APP_VERSION, $response->header('X-App-Version'));
-        self::assertSame('1', $response->header('X-Protocol-Version'));
+        self::assertSame('2', $response->header('X-Protocol-Version'));
         self::assertStringStartsWith(
             "default-src 'self'; script-src 'self' 'nonce-",
             (string) $response->header('Content-Security-Policy'),
@@ -111,7 +111,7 @@ final class AppTest extends TestCase
         $response = $this->app(null)->handle(Request::create('GET', '/api/v1/version'));
         self::assertSame(200, $response->status());
         self::assertSame(
-            ['version' => \APP_VERSION, 'protocol' => 1, 'required_db_version' => \REQUIRED_DB_VERSION],
+            ['version' => \APP_VERSION, 'protocol' => 2, 'required_db_version' => \REQUIRED_DB_VERSION],
             $response->payload()['data'],
         );
     }

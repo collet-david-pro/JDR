@@ -15,7 +15,7 @@ defined('JDR_ROOT') || define('JDR_ROOT', dirname(__DIR__));
 defined('REQUIRED_DB_VERSION') || define('REQUIRED_DB_VERSION', '0003');
 
 /** Incremented on every incompatible change of the API/events contract (X-Protocol-Version). */
-defined('PROTOCOL_VERSION') || define('PROTOCOL_VERSION', 1);
+defined('PROTOCOL_VERSION') || define('PROTOCOL_VERSION', 2);
 
 if (!defined('APP_VERSION')) {
     $jdrVersion = is_file(JDR_ROOT . '/VERSION') ? trim((string) file_get_contents(JDR_ROOT . '/VERSION')) : '';
