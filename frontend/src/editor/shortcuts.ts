@@ -17,6 +17,15 @@ export type ShortcutAction =
   | 'tool.shape'
   | 'tool.pipette'
   | 'tool.ruler'
+  | 'tool.wall'
+  | 'tool.door'
+  | 'tool.light'
+  | 'tool.token'
+  | 'tool.fog'
+  /** Enter: finish the gesture (wall polyline). */
+  | 'confirm'
+  /** Delete / Backspace: remove the selected objects. */
+  | 'delete'
   | 'brush.smaller'
   | 'brush.larger'
   | 'undo'
@@ -80,6 +89,14 @@ export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   tool('tool.shape', 'u'),
   tool('tool.pipette', 'i'),
   tool('tool.ruler', 'm'),
+  tool('tool.wall', 'w'),
+  tool('tool.door', 'd'),
+  tool('tool.light', 'l'),
+  tool('tool.token', 'k'),
+  tool('tool.fog', 'f'),
+  { action: 'confirm', key: 'Enter', shift: false, alt: false },
+  { action: 'delete', key: 'Delete', shift: false, alt: false },
+  { action: 'delete', key: 'Backspace', shift: false, alt: false },
   { action: 'brush.smaller', key: '[' },
   { action: 'brush.larger', key: ']' },
   { action: 'undo', key: 'z', mod: true, shift: false, alt: false },

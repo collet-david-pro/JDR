@@ -2,10 +2,18 @@
  * Conversion between the server map format (contract P4b, projet.md 11.4/12.1: snake_case,
  * string identifiers) and the editor model (src/editor/contracts.ts).
  */
-import type { GridSpec, GridTheme, LayerDef, LayerId, MapOp, PaletteEntry } from '../contracts';
+import type {
+  GridSpec,
+  GridTheme,
+  LayerDef,
+  LayerId,
+  MapOp,
+  PaletteEntry,
+  TokenDefView,
+} from '../contracts';
 import { DEFAULT_LAYERS } from '../model/ops';
 import { validateLayers } from '../model/validate';
-import type { MapDetail, MapLayer, MapPaletteEntry, WireMapOp } from '../../lib/types';
+import type { MapDetail, MapLayer, MapPaletteEntry, Token, WireMapOp } from '../../lib/types';
 
 const THEMES: readonly GridTheme[] = ['parchment', 'slate', 'blueprint', 'dark', 'light'];
 
@@ -80,5 +88,25 @@ export function toWireOp(op: MapOp): WireMapOp {
     type: 'map.meta',
     ...(op.layers !== undefined ? { layers: layersToWire(op.layers) } : {}),
     ...(op.theme !== undefined ? { theme: op.theme } : {}),
+    ...(op.ambient !== undefined ? { ambient: op.ambient } : {}),
+  };
+}
+
+/** Token definition of the game (GET /games/{id}/tokens) as seen by the engine and tools. */
+export function tokenDefFromWire(token: Token): TokenDefView {
+  return {
+    id: token.id,
+    name: token.name,
+    imageUrl: token.image?.full ?? null,
+    sizeW: token.size_w > 0 ? token.size_w : 1,
+    sizeH: token.size_h > 0 ? token.size_h : 1,
+    ringColor: token.ring_color,
+    kind: token.kind,
+    vision: {
+      enabled: token.vision.enabled,
+      range: token.vision.range,
+      dark: token.vision.dark,
+    },
+    light: token.light === null ? null : { ...token.light },
   };
 }

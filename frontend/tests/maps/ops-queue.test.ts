@@ -402,7 +402,7 @@ describe('OpsQueue server refusals', () => {
 
   it('shows "conflict resolved" for a while when the answer carries conflicts', async () => {
     const { server, queue } = setup();
-    server.conflicts = [{ uid: 'o1' }];
+    server.conflicts = [{ op_index: 0, kind: 'object', uid: 'o1', reason: 'gone', current: null }];
     queue.push([paint([[1, 1, 1]])]);
     await queue.flush();
     expect(queue.status.state).toBe('conflict');

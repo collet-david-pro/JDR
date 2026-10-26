@@ -1,6 +1,7 @@
 <script lang="ts">
   import ExportMenu from './ExportMenu.svelte';
   import SaveIndicator from './SaveIndicator.svelte';
+  import ViewControls from './ViewControls.svelte';
   import type { ExportKind } from '../../editor/ui/export-source';
   import { GRID_THEME_IDS } from '../../engine/grid-themes';
   import type { GridTheme } from '../../editor/contracts';
@@ -129,6 +130,8 @@
       {t('editor.zoom_fit')}
     </button>
   </div>
+
+  <ViewControls {session} />
 
   <div class="group end">
     <button

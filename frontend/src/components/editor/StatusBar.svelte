@@ -14,7 +14,11 @@
 </script>
 
 <footer class="status" aria-label={t('editor.status.label')} data-testid="editor-status">
-  <span data-testid="status-cell">
+  <span
+    data-testid="status-cell"
+    data-wx={ui.cursorWorld?.x.toFixed(3) ?? ''}
+    data-wy={ui.cursorWorld?.y.toFixed(3) ?? ''}
+  >
     {ui.cursor === null
       ? t('editor.status.no_cell')
       : t('editor.status.cell', { x: ui.cursor.x, y: ui.cursor.y })}
@@ -27,6 +31,14 @@
     {t('editor.status.history', { count: ui.history.undoSize })}
   </span>
   <span class="end">
+    {#if ui.visionMs !== null}
+      <span
+        class:visually-hidden={!debug}
+        data-testid="status-vision"
+        data-ms={ui.visionMs}
+        data-samples={ui.visionSamples}>{t('editor.status.vision', { value: ui.visionMs })}</span
+      >
+    {/if}
     {#if debug && ui.fps !== null}
       <span data-testid="status-fps">{t('editor.status.fps', { value: ui.fps })}</span>
     {/if}

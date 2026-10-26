@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ObjectToolOptions from './ObjectToolOptions.svelte';
   import { BRUSH_MAX, BRUSH_MIN, type BrushShape, type ShapeKind } from '../../editor/tools/types';
   import { brushShapeLabel, shapeKindLabel } from '../../editor/ui/labels';
   import type { EditorSession } from '../../editor/ui/session';
@@ -108,6 +109,8 @@
   {:else if tool === 'ruler'}
     <p class="small muted">{t('editor.options.ruler_hint')}</p>
   {/if}
+
+  <ObjectToolOptions {session} />
 </section>
 
 <style>

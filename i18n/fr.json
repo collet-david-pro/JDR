@@ -982,7 +982,18 @@
             "other": "{count} cases peintes"
           },
           "format": "Format",
-          "migrated": "version {version}, convertie au format actuel"
+          "migrated": "version {version}, convertie au format actuel",
+          "objects": {
+            "zero": "aucun mur, porte, fenêtre ni lumière",
+            "one": "{count} objet (mur, porte, fenêtre ou lumière)",
+            "other": "{count} objets (murs, portes, fenêtres, lumières)"
+          },
+          "tokens": {
+            "zero": "aucun token posé",
+            "one": "{count} token posé",
+            "other": "{count} tokens posés"
+          },
+          "fog": "brouillard d'exploration inclus"
         },
         "submit": "Importer",
         "uploading": "Envoi du fichier…",
@@ -1015,8 +1026,13 @@
           "too_long": "{path} : trop long ou trop d'éléments",
           "duplicate": "{path} : identifiant en double",
           "unknown_ref": "{path} : référence inconnue",
-          "bad_block": "{path} : bloc de tuiles illisible",
-          "unsupported": "{path} : élément non pris en charge à cette version (objets, notes, brouillard… arrivent plus tard)"
+          "bad_block": "{path} : bloc de tuiles ou de brouillard illisible",
+          "unsupported": "{path} : élément non pris en charge à cette version (notes, liens… arrivent plus tard)",
+          "below_radius": "{path} : le rayon de lumière faible doit être au moins égal au rayon de pleine lumière"
+        },
+        "missing_tokens": {
+          "one": "{count} token n'existe pas dans cette partie (recherche par nom) : ses jetons posés n'ont pas été importés.",
+          "other": "{count} tokens n'existent pas dans cette partie (recherche par nom) : leurs jetons posés n'ont pas été importés."
         }
       }
     },
@@ -1239,7 +1255,12 @@
       "shape": "Formes",
       "pipette": "Pipette",
       "ruler": "Règle",
-      "shortcut": "Raccourci : {key}"
+      "shortcut": "Raccourci : {key}",
+      "wall": "Mur",
+      "door": "Porte / fenêtre",
+      "light": "Lumière",
+      "token": "Token",
+      "fog": "Brouillard"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1262,7 +1283,30 @@
       "pipette_hint": "Cliquez sur une case pour reprendre sa tuile.",
       "ruler_hint": "Glissez pour mesurer une distance. Alt : sans aimantation.",
       "tile": "Tuile : {name}",
-      "no_tile": "Aucune tuile choisie"
+      "no_tile": "Aucune tuile choisie",
+      "wall_kind": "Type de mur",
+      "thickness": "Épaisseur : {value} case",
+      "wall_room": "Pièce (rectangle de murs)",
+      "wall_hint": "Clic : point. Double-clic ou Entrée : terminer. Échap : annuler. Alt : sans aimantation.",
+      "wall_room_hint": "Glissez pour tracer une pièce fermée. Alt : sans aimantation.",
+      "opening": "Ouverture",
+      "opening_width": "Largeur : {value} case",
+      "door_hint": "Cliquez sur un mur : il est découpé autour de l'ouverture.",
+      "light_preset": "Préréglage",
+      "light_hint": "Clic : poser. Glisser : régler le rayon. Alt : sans aimantation.",
+      "token_none": "Aucun token choisi (panneau Tokens).",
+      "token_current": "Token : {name}",
+      "token_hint": "Cliquez sur une case pour poser le token.",
+      "fog_shape": "Forme",
+      "fog_shapes": {
+        "brush": "Pinceau",
+        "rect": "Rectangle",
+        "room": "Pièce"
+      },
+      "fog_brush": "Rayon du pinceau : {value} case",
+      "fog_hide": "Masquer (Alt inverse)",
+      "fog_hint": "Révèle le brouillard par défaut ; Alt ou l'option masque.",
+      "select_objects_hint": "Clic sur un objet ou un token pour le sélectionner, Maj : ajouter, glisser : déplacer, Suppr : supprimer, double-clic sur une porte : ouvrir / fermer."
     },
     "layers": {
       "title": "Calques",
@@ -1310,7 +1354,8 @@
         "zero": "Aucune action",
         "one": "{count} action",
         "other": "{count} actions"
-      }
+      },
+      "vision": "Vision : {value} ms"
     },
     "command": {
       "paint": "peindre",
@@ -1319,13 +1364,32 @@
       "shape": "forme",
       "layer": "modifier le calque",
       "layer_order": "réordonner les calques",
-      "theme": "thème de grille"
+      "theme": "thème de grille",
+      "wall": "mur",
+      "door": "porte",
+      "window": "fenêtre",
+      "light": "lumière",
+      "token": "poser un token",
+      "fog_reveal": "révéler le brouillard",
+      "fog_hide": "masquer le brouillard",
+      "move": "déplacer",
+      "edit_object": "modifier l'objet",
+      "edit_token": "modifier le token",
+      "delete": "supprimer",
+      "door_toggle": "ouvrir / fermer la porte",
+      "ambient": "ambiance"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
       "no_tile": "Choisissez d'abord une tuile dans la palette.",
       "fill_limit": "Zone trop grande : le remplissage est limité à {limit} cases.",
-      "fill_nothing": "Rien à remplir ici."
+      "fill_nothing": "Rien à remplir ici.",
+      "no_wall": "Placez la porte ou la fenêtre sur un mur.",
+      "no_token": "Choisissez d'abord un token dans le panneau Tokens.",
+      "room_open": "Pièce non fermée : la zone dépasse la limite (murs ouverts ?).",
+      "object_locked": "Objet ou calque verrouillé : déverrouillez-le pour le modifier.",
+      "wall_limit": "Un mur compte au plus 1 000 points.",
+      "invalid": "Modification refusée : valeur invalide."
     },
     "help": {
       "title": "Raccourcis clavier",
@@ -1347,7 +1411,9 @@
       "trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
       "middle": "Bouton du milieu : déplacer la vue.",
       "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ.",
-      "snapshot": "Instantané nommé de la map"
+      "snapshot": "Instantané nommé de la map",
+      "confirm": "Terminer le mur en cours",
+      "delete": "Supprimer les objets sélectionnés"
     },
     "map_title": "{map} — {game}",
     "save": {
@@ -1405,6 +1471,134 @@
       "zip": "Archive ZIP (avec images)",
       "png": "Image PNG…",
       "unsaved": "Des modifications ne sont pas encore enregistrées : l'export contient le dernier état enregistré."
+    },
+    "objects": {
+      "types": {
+        "wall": "Mur",
+        "door": "Porte",
+        "window": "Fenêtre",
+        "light": "Lumière",
+        "token": "Token"
+      },
+      "wall_kinds": {
+        "stone": "Pierre",
+        "brick": "Brique",
+        "wood": "Bois",
+        "metal": "Métal",
+        "natural": "Naturel",
+        "invisible": "Invisible"
+      },
+      "window_kind": "Type de fenêtre",
+      "window_kinds": {
+        "glass": "Vitrée",
+        "bars": "Barreaux",
+        "opening": "Ouverture"
+      },
+      "light_presets": {
+        "torch": "Torche",
+        "lantern": "Lanterne",
+        "candle": "Bougie",
+        "campfire": "Feu de camp",
+        "magic": "Lumière magique"
+      },
+      "visibility": {
+        "all": "Tous",
+        "gm": "MJ seulement",
+        "hidden_until_revealed": "Caché jusqu'à révélation"
+      },
+      "swing": {
+        "a": "Charnière en A",
+        "b": "Charnière en B",
+        "slide": "Coulissante"
+      },
+      "flicker": {
+        "none": "Aucun",
+        "torch": "Torche",
+        "pulse": "Pulsation"
+      },
+      "item": "{type} ({x}, {y})",
+      "item_named": "{type} {name} ({x}, {y})"
+    },
+    "ambient": {
+      "weather_types": {
+        "none": "Aucune",
+        "rain": "Pluie",
+        "snow": "Neige",
+        "fog": "Brume",
+        "storm": "Orage"
+      },
+      "title": "Ambiance",
+      "darkness": "Obscurité : {value} %",
+      "tint": "Teinte",
+      "time_enabled": "Heure du jour (cycle jour / nuit)",
+      "time": "Heure : {value}",
+      "weather": "Météo",
+      "weather_intensity": "Intensité : {value} %",
+      "weather_hint": "Météo enregistrée avec la map (effets visuels à une étape ultérieure)."
+    },
+    "properties": {
+      "title": "Propriétés",
+      "none": "Aucun objet sélectionné",
+      "several": {
+        "one": "{count} élément sélectionné",
+        "other": "{count} éléments sélectionnés"
+      },
+      "mixed": "(valeurs différentes)",
+      "visibility": "Visibilité",
+      "layer": "Calque",
+      "locked": "Verrouillé",
+      "thickness": "Épaisseur (cases)",
+      "blocks_vision": "Bloque la vision",
+      "blocks_light": "Bloque la lumière",
+      "blocks_move": "Bloque le déplacement",
+      "door_open": "Ouverte",
+      "door_locked": "Verrouillée",
+      "door_secret": "Secrète",
+      "swing": "Sens d'ouverture",
+      "light_enabled": "Allumée",
+      "radius": "Rayon de lumière vive (cases)",
+      "dim_radius": "Rayon de lumière faible (cases)",
+      "color": "Couleur",
+      "intensity": "Intensité (0 à 1)",
+      "flicker": "Vacillement",
+      "flicker_amp": "Amplitude (0 à 1)",
+      "flicker_speed": "Vitesse",
+      "cone": "Cône",
+      "cone_angle": "Ouverture du cône (°)",
+      "cone_direction": "Direction (°)",
+      "token_hidden": "Caché aux joueurs",
+      "scale": "Échelle",
+      "rotation": "Rotation (°)",
+      "token_light": "Lumière propre (remplace celle du token)",
+      "list": "Objets de la map ({count})",
+      "list_empty": "Aucun objet sur cet étage.",
+      "list_more": "Seuls les {count} premiers objets sont listés."
+    },
+    "tokens": {
+      "title": "Tokens",
+      "empty": "Aucun token dans cette partie : créez-en dans l'onglet Tokens de la partie.",
+      "load_error": "Les tokens de la partie n'ont pas pu être chargés.",
+      "use": "Poser {name} (outil Token)"
+    },
+    "view": {
+      "label": "Vue",
+      "gm": "Vue MJ",
+      "all_pcs": "Comme tous les PJ",
+      "as_token": "Comme {name}",
+      "lighting": "Éclairage",
+      "fog": "Brouillard",
+      "shadows": "Ombres",
+      "explore": "Exploration",
+      "explore_hint": "Le brouillard se dévoile selon ce que voient les tokens choisis (tous les PJ en vue MJ).",
+      "performance": "Mode performance",
+      "performance_auto": "Performance : auto",
+      "performance_on": "Performance : forcé",
+      "performance_off": "Performance : désactivé",
+      "fog_reset": "Réinitialiser le brouillard",
+      "fog_reset_title": "Réinitialiser le brouillard",
+      "fog_reset_message": "Tout le brouillard exploré de cet étage sera effacé. Cette action ne peut pas être annulée.",
+      "fog_reset_confirm": "Réinitialiser",
+      "fog_reset_done": "Brouillard réinitialisé."
     }
   },
   "maps": {
@@ -1496,6 +1690,13 @@
     "done_file": "Export terminé : fichier enregistré.",
     "done_download": "Export terminé : téléchargement lancé.",
     "cancelled": "Export annulé.",
-    "failed": "Échec de l’export : {error}"
+    "failed": "Échec de l’export : {error}",
+    "scene": {
+      "legend": "Scène",
+      "tokens": "Tokens",
+      "lighting": "Éclairage (obscurité ambiante et lumières)",
+      "fog": "Brouillard (zones inexplorées en noir)",
+      "hint": "Vue du MJ sans les éléments réservés au MJ : murs, portes et fenêtres toujours dessinés, tokens cachés et objets du calque MJ exclus, portes secrètes dessinées comme des murs. Lumières à intensité moyenne, sans vacillement."
+    }
   }
 }

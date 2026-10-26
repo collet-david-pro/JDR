@@ -22,6 +22,16 @@ export function toolLabel(id: ToolId): string {
       return t('editor.tools.pipette');
     case 'ruler':
       return t('editor.tools.ruler');
+    case 'wall':
+      return t('editor.tools.wall');
+    case 'door':
+      return t('editor.tools.door');
+    case 'light':
+      return t('editor.tools.light');
+    case 'token':
+      return t('editor.tools.token');
+    case 'fog':
+      return t('editor.tools.fog');
   }
 }
 
@@ -93,6 +103,32 @@ export function commandLabel(key: string): string {
       return t('editor.command.layer_order');
     case 'editor.command.theme':
       return t('editor.command.theme');
+    case 'editor.command.wall':
+      return t('editor.command.wall');
+    case 'editor.command.door':
+      return t('editor.command.door');
+    case 'editor.command.window':
+      return t('editor.command.window');
+    case 'editor.command.light':
+      return t('editor.command.light');
+    case 'editor.command.token':
+      return t('editor.command.token');
+    case 'editor.command.fog_reveal':
+      return t('editor.command.fog_reveal');
+    case 'editor.command.fog_hide':
+      return t('editor.command.fog_hide');
+    case 'editor.command.move':
+      return t('editor.command.move');
+    case 'editor.command.edit_object':
+      return t('editor.command.edit_object');
+    case 'editor.command.edit_token':
+      return t('editor.command.edit_token');
+    case 'editor.command.delete':
+      return t('editor.command.delete');
+    case 'editor.command.door_toggle':
+      return t('editor.command.door_toggle');
+    case 'editor.command.ambient':
+      return t('editor.command.ambient');
     default:
       return key;
   }
@@ -108,6 +144,18 @@ export function noticeText(notice: ToolNotice): string {
       return t('editor.notices.fill_limit', { limit: Number(notice.params?.['limit'] ?? 0) });
     case 'fill_nothing':
       return t('editor.notices.fill_nothing');
+    case 'no_wall':
+      return t('editor.notices.no_wall');
+    case 'no_token':
+      return t('editor.notices.no_token');
+    case 'room_open':
+      return t('editor.notices.room_open');
+    case 'object_locked':
+      return t('editor.notices.object_locked');
+    case 'wall_limit':
+      return t('editor.notices.wall_limit');
+    case 'invalid':
+      return t('editor.notices.invalid');
   }
 }
 
@@ -122,7 +170,16 @@ export function shortcutDescription(action: ShortcutAction): string | null {
     case 'tool.shape':
     case 'tool.pipette':
     case 'tool.ruler':
+    case 'tool.wall':
+    case 'tool.door':
+    case 'tool.light':
+    case 'tool.token':
+    case 'tool.fog':
       return toolLabel(action.slice(5) as ToolId);
+    case 'confirm':
+      return t('editor.help.confirm');
+    case 'delete':
+      return t('editor.help.delete');
     case 'brush.smaller':
       return t('editor.help.brush_smaller');
     case 'brush.larger':

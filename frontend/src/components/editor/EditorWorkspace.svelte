@@ -1,21 +1,31 @@
 <script lang="ts">
   import { untrack } from 'svelte';
+  import AmbientPanel from './AmbientPanel.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
   import HelpDialog from './HelpDialog.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import LayersPanel from './LayersPanel.svelte';
   import PalettePanel from './PalettePanel.svelte';
+  import PropertiesPanel from './PropertiesPanel.svelte';
   import SnapshotDialog from './SnapshotDialog.svelte';
   import StatusBar from './StatusBar.svelte';
+  import TokensPanel from './TokensPanel.svelte';
   import ToolBar from './ToolBar.svelte';
+  import ConfirmDialog from '../ConfirmDialog.svelte';
   import ExportPngDialog from '../export/ExportPngDialog.svelte';
   import type { ExportSource } from '../../export/types';
   import { detectPlatform } from '../../editor/shortcuts';
   import { visibleChunkKeys } from '../../editor/sync/chunk-loader';
   import { MapSync } from '../../editor/sync/MapSync';
   import { saveErrorText } from '../../editor/sync/save-status';
-  import { gridOf, layersFromWire, paletteFromWire, themeOf } from '../../editor/sync/wire';
+  import {
+    gridOf,
+    layersFromWire,
+    paletteFromWire,
+    themeOf,
+    tokenDefFromWire,
+  } from '../../editor/sync/wire';
   import {
     markThumbnailStale,
     takeThumbnailStale,
@@ -38,8 +48,9 @@
   import type { MapsClient } from '../../lib/maps/maps-client';
   import { openMapStores } from '../../lib/persistence/map-stores';
   import { requestPersistentStorage } from '../../lib/persistence/idb';
-  import type { MapDetail } from '../../lib/types';
+  import type { MapDetail, Token } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
+  import { createVisionService } from '../../vision/index';
 
   /**
    * Full-screen editor (projet.md 18.1 p.5): top bar, tools on the left, map, collapsible
@@ -60,17 +71,21 @@
       | 'restoreVersion'
       | 'exportFile'
       | 'putThumbnail'
+      | 'fog'
+      | 'resetFog'
     >;
+    /** Token definitions of the game (Tokens panel, token tool; P5). */
+    loadTokens?: (() => Promise<Token[]>) | undefined;
     /** Loads the page again (after a revision conflict). */
     onreload?: (() => void) | undefined;
     /** Shows the frame rate in the status bar. */
     debug?: boolean;
   }
 
-  let { gameId, gameName, map, client, onreload, debug = false }: Props = $props();
+  let { gameId, gameName, map, client, loadTokens, onreload, debug = false }: Props = $props();
   // The page mounts a new workspace for another map: the initial props are kept.
   // svelte-ignore state_referenced_locally
-  const initial = { map, client };
+  const initial = { map, client, loadTokens };
   const grid = gridOf(initial.map);
 
   let viewport: HTMLDivElement | undefined = $state();
@@ -83,6 +98,7 @@
     layers: layersFromWire(initial.map.layers),
     palette: paletteFromWire(initial.map.palette),
     theme: themeOf(initial.map.theme),
+    ambient: initial.map.ambient,
     editable: false,
     platform: detectPlatform(navigator),
     describeNotice: noticeText,
@@ -102,6 +118,42 @@
     }
   }
   session.refreshPalette();
+
+  // ---- P5: token definitions, vision service ----------------------------------------------
+  let tokensState = $state<'loading' | 'ready' | 'error'>('loading');
+  if (initial.loadTokens === undefined) tokensState = 'ready';
+  else {
+    initial
+      .loadTokens()
+      .then((tokens) => {
+        session.scene.setTokenDefs(tokens.map(tokenDefFromWire));
+        tokensState = 'ready';
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        tokensState = 'error';
+      });
+  }
+  /** Vision service shared with the engine (never in $state). */
+  const vision = createVisionService();
+  let fogResetBusy = $state(false);
+
+  async function resetFog(): Promise<void> {
+    fogResetBusy = true;
+    try {
+      session.scene.flushExploration();
+      await sync?.settle();
+      const result = await initial.client.resetFog(initial.map.id, session.doc.floor);
+      sync?.noteRevision(result.revision);
+      session.scene.fogReset();
+      ui.resetFogOpen = false;
+      toasts.success(t('editor.view.fog_reset_done'));
+    } catch (error) {
+      toasts.error(error);
+    } finally {
+      fogResetBusy = false;
+    }
+  }
 
   let sync: MapSync | null = null;
   let destroyed = false;
@@ -164,6 +216,7 @@
       const engine = engineRef;
       pngSource = {
         view: session.doc,
+        scene: session.doc,
         name: map.name,
         selection: selectionBounds(grid, ui.selection),
         viewport:
@@ -211,7 +264,7 @@
     });
     try {
       const result = await sync.start(visible);
-      if (result.chunks.errors > 0 || result.replayFailed > 0) {
+      if (result.chunks.errors > 0 || result.replayFailed > 0 || result.fogErrors !== 0) {
         toasts.show('error', t('editor.save.load_partial'));
       }
       const stale = takeThumbnailStale(initial.map.id);
@@ -230,7 +283,7 @@
     let engine: SceneEngine | null = null;
     let cancelled = false;
     untrack(() => {
-      loadSceneEngine(host)
+      loadSceneEngine(host, { vision })
         .then((created) => {
           if (cancelled) {
             created.destroy();
@@ -263,10 +316,12 @@
 
   $effect(() => () => {
     destroyed = true;
+    session.scene.flushExploration();
     sync?.dispose();
     // Leaving the editor sends a pending thumbnail (not after a restoration: old content).
     void thumbnails.dispose({ flush: !restored });
     session.dispose();
+    vision.destroy();
   });
 
   function keydown(event: KeyboardEvent): void {
@@ -340,8 +395,11 @@
           onclose={() => (ui.historyOpen = false)}
         />
       {/if}
+      <PropertiesPanel {session} />
       <LayersPanel {session} />
       <PalettePanel {session} />
+      <TokensPanel {session} state={tokensState} />
+      <AmbientPanel {session} />
     </aside>
   {/if}
 
@@ -357,6 +415,15 @@
   bind:open={ui.snapshotOpen}
   busy={versions.busy === 'snapshot'}
   onsubmit={(label) => void snapshot(label)}
+/>
+<ConfirmDialog
+  bind:open={ui.resetFogOpen}
+  title={t('editor.view.fog_reset_title')}
+  message={t('editor.view.fog_reset_message')}
+  confirmLabel={t('editor.view.fog_reset_confirm')}
+  danger
+  busy={fogResetBusy}
+  onconfirm={() => void resetFog()}
 />
 {#if pngSource !== null}
   <ExportPngDialog open={pngOpen} source={pngSource} onclose={() => (pngOpen = false)} />

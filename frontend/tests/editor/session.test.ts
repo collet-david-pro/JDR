@@ -62,6 +62,12 @@ class FakeEngine implements EngineLike {
     for (const l of this.fpsL) l(v);
   }
   destroy(): void {}
+  setScene(): void {}
+  setView(): void {}
+  onVisibility(): () => void {
+    return () => undefined;
+  }
+  setPerformanceMode(): void {}
 }
 
 const tile = (id: string, width = 64, height = 64): TileAsset => ({

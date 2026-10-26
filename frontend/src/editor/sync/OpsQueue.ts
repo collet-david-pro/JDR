@@ -13,7 +13,7 @@
  *   ⇒ the batch is dropped and reported; 401/403/404 ⇒ the queue pauses (ops kept locally).
  */
 import type { MapOp } from '../contracts';
-import type { MapOpsRequest, MapOpsResult } from '../../lib/types';
+import type { MapOpConflict, MapOpsRequest, MapOpsResult } from '../../lib/types';
 import type { PendingBatch, PendingOpsStore } from '../../lib/persistence/map-stores';
 import { OpenBatch, countChanges } from './batch';
 import { toWireOp } from './wire';
@@ -55,6 +55,11 @@ export interface QueueEvents {
   onRejected?(batch: PendingBatch, error: TransportError): void;
   /** The map changed on the server in an incompatible way: reload it. */
   onReloadRequired?(): void;
+  /**
+   * P5: object / placed-token ops refused individually (projet.md 11.4); the caller replaces
+   * the local values by `current` (outside the history). Called before onConfirmed.
+   */
+  onConflicts?(conflicts: readonly MapOpConflict[]): void;
   /** A batch was confirmed. `inSync`: the server state is exactly the local state. */
   onConfirmed?(revision: number, inSync: boolean): void;
 }
@@ -281,6 +286,11 @@ export class OpsQueue {
     void this.pump(true, true);
   }
 
+  /** The server revision moved outside the queue (e.g. fog reset, P5). */
+  noteRevision(revision: number): void {
+    this.revision = Math.max(this.revision, revision);
+  }
+
   /** The page reloaded the map after a revision conflict. */
   resume(revision: number): void {
     this.revision = revision;
@@ -487,6 +497,11 @@ export class OpsQueue {
       this.clearTimer('conflictTimer');
       this.conflictTimer = this.clock.setTimeout(() => this.emit(), CONFLICT_NOTICE_MS);
       this.inSync = false;
+      try {
+        this.events.onConflicts?.(result.conflicts);
+      } catch (error) {
+        console.error(error);
+      }
     }
     await this.store.delete(this.mapId, batch.seq).catch((e: unknown) => console.error(e));
     this.events.onConfirmed?.(this.revision, this.inSync && this.batches.length === 0);

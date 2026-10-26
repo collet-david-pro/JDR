@@ -16,7 +16,10 @@ export type MapOpErrorCode =
   | 'bad_palette_index'
   | 'palette_conflict'
   | 'bad_layers'
-  | 'unknown_op';
+  | 'unknown_op'
+  | 'bad_fog'
+  | 'bad_object'
+  | 'object_exists';
 
 export class MapOpError extends Error {
   override readonly name = 'MapOpError';

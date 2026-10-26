@@ -8,8 +8,9 @@ import type { ChunkKey, MapOp } from '../contracts';
 import type { EditorSession } from '../ui/session';
 import type { MapsClient } from '../../lib/maps/maps-client';
 import type { MapStores } from '../../lib/persistence/map-stores';
-import type { MapDetail } from '../../lib/types';
-import { MapOpError } from '../model/ops';
+import type { MapDetail, MapOpConflict } from '../../lib/types';
+import { decodeFog, fogFromBase64 } from '../../formats/fog-codec';
+import { MapOpError, chunkKey } from '../model/ops';
 import { loadMapChunks, type ChunkLoadResult } from './chunk-loader';
 import { OpsQueue, type QueueEvents, type TransportError } from './OpsQueue';
 
@@ -24,7 +25,8 @@ export interface LifecycleTarget {
 export interface MapSyncOptions {
   readonly session: EditorSession;
   readonly map: MapDetail;
-  readonly client: Pick<MapsClient, 'chunks' | 'sendOps'>;
+  /** `fog` (P5) is optional for callers without fog (tests). */
+  readonly client: Pick<MapsClient, 'chunks' | 'sendOps'> & Partial<Pick<MapsClient, 'fog'>>;
   readonly stores: MapStores;
   /** window (online, offline, pagehide, beforeunload). */
   readonly win?: LifecycleTarget;
@@ -35,6 +37,8 @@ export interface MapSyncOptions {
   readonly onReloadRequired?: () => void;
   /** Every op is confirmed by the server (after a confirmed batch): thumbnail refresh (P4c). */
   readonly onSaved?: (revision: number) => void;
+  /** P5: some ops were refused because the object changed on the server (already resolved). */
+  readonly onConflicts?: (conflicts: readonly MapOpConflict[]) => void;
 }
 
 export interface MapSyncStart {
@@ -43,6 +47,8 @@ export interface MapSyncStart {
   readonly replayed: number;
   /** Replayed ops that no longer apply (skipped). */
   readonly replayFailed: number;
+  /** P5: fog chunks that could not be loaded (-1: the whole request failed). */
+  readonly fogErrors: number;
 }
 
 export class MapSync {
@@ -71,6 +77,10 @@ export class MapSync {
     const events: QueueEvents = {
       onRejected: (_batch, error) => options.onRejected?.(error),
       onReloadRequired: () => options.onReloadRequired?.(),
+      onConflicts: (conflicts) => {
+        this.session.resolveConflicts(conflicts);
+        options.onConflicts?.(conflicts);
+      },
       onConfirmed: (revision, inSync) => this.confirmed(revision, inSync),
     };
     this.queue = new OpsQueue({
@@ -92,6 +102,8 @@ export class MapSync {
     const { session } = this;
     session.setEditable(false);
     const pending = await this.queue.restore();
+    session.doc.loadScene(this.map.objects ?? [], this.map.tokens_placed ?? []);
+    const fog = this.loadFog();
     const chunks = await loadMapChunks({
       doc: session.doc,
       mapId: this.map.id,
@@ -108,9 +120,10 @@ export class MapSync {
         session.ui.loading = done >= total ? null : { done, total };
       },
     });
+    const fogErrors = await fog;
     session.ui.loading = null;
     const { replayed, replayFailed } = this.replay(pending);
-    if (this.disposed) return { chunks, replayed, replayFailed };
+    if (this.disposed) return { chunks, replayed, replayFailed, fogErrors };
     session.refreshPalette();
     this.offs.push(
       session.history.onOps((ops: readonly MapOp[]) => this.queue.push(ops)),
@@ -119,7 +132,12 @@ export class MapSync {
     this.listen();
     session.setEditable(true);
     if (this.queue.hasUnconfirmed) void this.queue.flush();
-    return { chunks, replayed, replayFailed };
+    return { chunks, replayed, replayFailed, fogErrors };
+  }
+
+  /** The server revision moved outside the queue (fog reset): later batches build on it. */
+  noteRevision(revision: number): void {
+    this.queue.noteRevision(revision);
   }
 
   /**
@@ -149,6 +167,30 @@ export class MapSync {
   }
 
   // ---- Internals -------------------------------------------------------------------------
+
+  /** Explored fog of the floor (P5). Returns the number of chunks that failed. */
+  private async loadFog(): Promise<number> {
+    const fetchFog = this.client.fog;
+    if (fetchFog === undefined) return 0;
+    let chunks;
+    try {
+      chunks = (await fetchFog.call(this.client, this.map.id, this.floor)).chunks;
+    } catch (error) {
+      console.error(error);
+      return -1;
+    }
+    let errors = 0;
+    for (const [cx, cy, data] of chunks) {
+      try {
+        const bits = await decodeFog(fogFromBase64(data));
+        if (!this.disposed) this.session.doc.importFog(chunkKey(cx, cy), bits);
+      } catch (error) {
+        console.error(error);
+        errors++;
+      }
+    }
+    return errors;
+  }
 
   /**
    * Applies again the ops of the local queue. A palette.add whose index was taken meanwhile by

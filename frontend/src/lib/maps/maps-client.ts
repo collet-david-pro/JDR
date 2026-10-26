@@ -7,6 +7,7 @@ import { ApiError, type ApiClient } from '../api';
 import { xhrUpload, type XhrFactory } from '../assets/xhr-upload';
 import type {
   MapDetail,
+  MapFogResult,
   MapImportResult,
   MapInput,
   MapListState,
@@ -167,6 +168,27 @@ export class MapsClient {
     }
   }
 
+  // ---- P5: fog -------------------------------------------------------------------------------
+
+  /** Explored fog of a floor (projet.md 12.3): `[cx, cy, base64 raw deflate]` per chunk. */
+  async fog(id: string, floor: string, signal?: AbortSignal): Promise<MapFogResult> {
+    const { data } = await this.api.get<MapFogResult>(`/maps/${seg(id)}/fog`, {
+      query: { floor },
+      ...(signal ? { signal } : {}),
+    });
+    return {
+      floor: typeof data?.floor === 'string' ? data.floor : floor,
+      chunks: Array.isArray(data?.chunks) ? data.chunks : [],
+    };
+  }
+
+  /** Clears the whole fog of a floor (GM reset); answers the new map revision. */
+  async resetFog(id: string, floor: string): Promise<{ revision: number }> {
+    return (
+      await this.api.delete<{ revision: number }>(`/maps/${seg(id)}/fog`, { query: { floor } })
+    ).data;
+  }
+
   // ---- P4c: versions -----------------------------------------------------------------------
 
   /** Snapshots of a map, most recent first. */
@@ -248,6 +270,7 @@ export class MapsClient {
         return {
           map: data.map,
           missing_assets: Array.isArray(data.missing_assets) ? data.missing_assets : [],
+          missing_tokens: Array.isArray(data.missing_tokens) ? data.missing_tokens : [],
         };
       } catch (error) {
         if (error instanceof ApiError) {

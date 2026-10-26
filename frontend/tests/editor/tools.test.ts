@@ -238,7 +238,11 @@ describe('selection, pipette, ruler, hand', () => {
     expect(added.overlay).toEqual({ kind: 'selection', rects: added.selection });
     select.onPointer(ev('down', 0, 0));
     expect(select.onPointer(ev('up', 0, 0)).selection).toEqual([{ x: 0, y: 0, w: 1, h: 1 }]);
-    expect(select.cancel()).toEqual({ selection: [], overlay: null });
+    expect(select.cancel()).toEqual({
+      selection: [],
+      objectSelection: { objects: [], tokens: [] },
+      overlay: null,
+    });
   });
 
   it('pipette returns the tile under the cursor', () => {
@@ -296,6 +300,11 @@ describe('selection, pipette, ruler, hand', () => {
       'eraser:E',
       'fill:G',
       'shape:U',
+      'wall:W',
+      'door:D',
+      'light:L',
+      'token:K',
+      'fog:F',
       'pipette:I',
       'ruler:M',
     ]);

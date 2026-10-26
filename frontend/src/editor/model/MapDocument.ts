@@ -6,17 +6,24 @@
  */
 import {
   CHUNK_SIZE,
+  type Ambient,
   type CellValue,
   type ChunkKey,
   type ChunksChangedEvent,
+  type FogBitmap,
   type GridSpec,
   type GridTheme,
   type LayerDef,
+  type MapObject,
   type MapOp,
   type MapView,
   type PaletteEntry,
+  type PlacedToken,
+  type SceneChangedEvent,
+  type SceneView,
   type TileCell,
   type TileLayerId,
+  type TokenDefView,
 } from '../contracts';
 import {
   CELL_STRIDE,
@@ -28,6 +35,8 @@ import {
 } from '../../formats/chunk-codec';
 import type { CompressionOptions } from '../../formats/compression';
 import { DEFAULT_LAYERS, EMPTY_CELL, MapOpError, chunkKey, parseChunkKey } from './ops';
+import { SceneState, isSceneOp } from './SceneState';
+import { DEFAULT_AMBIENT, ambientOf } from './scene-values';
 import { validateLayers } from './validate';
 
 export const MAX_MAP_CELLS_PER_SIDE = 400;
@@ -45,6 +54,8 @@ export interface MapDocumentInit {
   /** Index 0 must be null. */
   readonly palette?: readonly (PaletteEntry | null)[];
   readonly theme?: GridTheme;
+  /** P5: maps.ambient (defaults: no darkness, no tint). */
+  readonly ambient?: unknown;
   /** Resolves url/name of an asset added by a palette.add op. */
   readonly resolveAsset?: (assetId: string) => AssetInfo | null;
 }
@@ -64,9 +75,21 @@ interface ChunkRecord {
 
 type Listener<T> = (value: T) => void;
 
-export class MapDocument implements MapView {
+/** Ops as actually applied (object / token revs stamped, see SceneState) and their inverse. */
+export interface AppliedOps {
+  readonly ops: MapOp[];
+  readonly inverse: MapOp[];
+}
+
+type MetaOp = Extract<MapOp, { type: 'map.meta' }>;
+type AmbientPatch = NonNullable<MetaOp['ambient']>;
+
+export class MapDocument implements MapView, SceneView {
   readonly grid: GridSpec;
   readonly floor: string;
+  /** Objects, placed tokens, fog, ambient of the floor (P5). */
+  private readonly scene: SceneState;
+  private readonly sceneListeners = new Set<Listener<SceneChangedEvent>>();
   private _layers: readonly LayerDef[];
   private _palette: readonly (PaletteEntry | null)[];
   private _theme: GridTheme;
@@ -97,6 +120,79 @@ export class MapDocument implements MapView {
     this._theme = init.theme ?? 'parchment';
     this.resolveAsset = init.resolveAsset ?? (() => null);
     for (const l of TILE_LAYERS) this.chunks.set(l, new Map());
+    this.scene = new SceneState(
+      this.floor,
+      { width, height },
+      init.ambient === undefined || init.ambient === null
+        ? DEFAULT_AMBIENT
+        : ambientOf(init.ambient),
+      () => this.schedule(),
+    );
+  }
+
+  // ---- SceneView (P5) --------------------------------------------------------------------
+
+  get sceneRevision(): number {
+    return this.scene.sceneRevision;
+  }
+  get ambient(): Ambient {
+    return this.scene.ambient;
+  }
+  objects(): readonly MapObject[] {
+    return this.scene.objects();
+  }
+  object(uid: string): MapObject | undefined {
+    return this.scene.object(uid);
+  }
+  tokens(): readonly PlacedToken[] {
+    return this.scene.tokens();
+  }
+  token(uid: string): PlacedToken | undefined {
+    return this.scene.token(uid);
+  }
+  tokenDef(tokenId: string): TokenDefView | null {
+    return this.scene.tokenDef(tokenId);
+  }
+  /** Token definitions of the game (token tool, panels). */
+  tokenDefs(): readonly TokenDefView[] {
+    return this.scene.tokenDefs();
+  }
+  fogKeys(): readonly ChunkKey[] {
+    return this.scene.fogKeys();
+  }
+  fogChunk(key: ChunkKey): FogBitmap | null {
+    return this.scene.fogChunk(key);
+  }
+  onSceneChanged(listener: Listener<SceneChangedEvent>): () => void {
+    this.sceneListeners.add(listener);
+    return () => this.sceneListeners.delete(listener);
+  }
+  /** Foreign change counter of `object:<uid>` / `token:<uid>` (History co-editing check). */
+  foreignStamp(key: string): number {
+    return this.scene.foreignStamp(key);
+  }
+
+  // ---- P5 non-undoable updates (load, conflicts, reset): not ops ------------------------
+
+  /** Objects and placed tokens of the map (GET /maps/{id}); other floors are ignored. */
+  loadScene(objects: readonly MapObject[], tokens: readonly PlacedToken[]): { skipped: number } {
+    return this.scene.load(objects, tokens);
+  }
+  setTokenDefs(defs: readonly TokenDefView[]): void {
+    this.scene.setTokenDefs(defs);
+  }
+  importFog(key: ChunkKey, bits: FogBitmap): void {
+    this.scene.importFog(key, bits);
+  }
+  clearFog(): void {
+    this.scene.clearFog();
+  }
+  /** Server state after a conflict (null: deleted). */
+  replaceObject(uid: string, value: MapObject | null): void {
+    this.scene.replaceObject(uid, value);
+  }
+  replaceToken(uid: string, value: PlacedToken | null): void {
+    this.scene.replaceToken(uid, value);
   }
 
   // ---- MapView ---------------------------------------------------------------------------
@@ -248,18 +344,28 @@ export class MapDocument implements MapView {
    * palette.add has no inverse (palette entries are append-only).
    */
   applyOps(ops: readonly MapOp[]): MapOp[] {
+    return this.apply(ops).inverse;
+  }
+
+  /**
+   * Like applyOps, and also returns the ops as applied: object / token updates carry the rev
+   * they were based on (the value to send), adds carry the normalised value.
+   */
+  apply(ops: readonly MapOp[]): AppliedOps {
     const inverse: MapOp[] = [];
+    const applied: MapOp[] = [];
     try {
       for (const op of ops) {
-        const inv = this.applyOne(op);
-        if (inv !== null) inverse.push(inv);
+        const r = this.applyOne(op);
+        applied.push(r.op);
+        if (r.inverse !== null) inverse.push(r.inverse);
       }
     } catch (e) {
       // Roll back what was applied (inverse order), then rethrow.
-      for (let i = inverse.length - 1; i >= 0; i--) this.applyOne(inverse[i]!);
+      for (let i = inverse.length - 1; i >= 0; i--) this.applyOne(inverse[i]!, true);
       throw e;
     }
-    return inverse.reverse();
+    return { ops: applied, inverse: inverse.reverse() };
   }
 
   /** Index of an asset in the palette, and the palette.add op to emit when it is missing. */
@@ -294,6 +400,8 @@ export class MapDocument implements MapView {
       const event: ChunksChangedEvent = { layer, keys: [...keys] };
       for (const l of [...this.chunkListeners]) l(event);
     }
+    const scene = this.scene.takeEvent();
+    if (scene !== null) for (const l of [...this.sceneListeners]) l(scene);
   }
 
   // ---- Chunk (de)serialisation (12.2) ----------------------------------------------------
@@ -333,7 +441,12 @@ export class MapDocument implements MapView {
 
   // ---- Internals -------------------------------------------------------------------------
 
-  private applyOne(op: MapOp): MapOp | null {
+  private applyOne(op: MapOp, rollback = false): { op: MapOp; inverse: MapOp | null } {
+    if (isSceneOp(op)) return this.scene.apply(op, rollback);
+    return { op, inverse: this.applyTile(op) };
+  }
+
+  private applyTile(op: MapOp): MapOp | null {
     switch (op.type) {
       case 'tiles.set': {
         if (op.floor !== this.floor)
@@ -351,9 +464,13 @@ export class MapDocument implements MapView {
         return null;
       case 'map.meta': {
         const layers = op.layers === undefined ? undefined : validateLayers(op.layers);
-        const inverse: { type: 'map.meta'; layers?: readonly LayerDef[]; theme?: GridTheme } = {
-          type: 'map.meta',
-        };
+        const inverse: {
+          type: 'map.meta';
+          layers?: readonly LayerDef[];
+          theme?: GridTheme;
+          ambient?: AmbientPatch;
+        } = { type: 'map.meta' };
+        const ambient = op.ambient === undefined ? null : this.ambientChange(op.ambient);
         if (layers !== undefined) {
           inverse.layers = this._layers;
           this._layers = layers;
@@ -362,13 +479,28 @@ export class MapDocument implements MapView {
           inverse.theme = this._theme;
           this._theme = op.theme;
         }
-        if (layers === undefined && op.theme === undefined) return null;
-        this.markMeta();
+        if (ambient !== null) {
+          inverse.ambient = ambient.inverse;
+          this.scene.setAmbient(ambient.next);
+        }
+        if (layers === undefined && op.theme === undefined && ambient === null) return null;
+        if (layers !== undefined || op.theme !== undefined) this.markMeta();
         return inverse;
       }
       default:
         throw new MapOpError('unknown_op', `Unknown op ${(op as { type: string }).type}`);
     }
+  }
+
+  /** Next ambient and the inverse patch (previous values of the changed keys), or null. */
+  private ambientChange(patch: AmbientPatch): { next: Ambient; inverse: AmbientPatch } | null {
+    const cur = this.scene.ambient;
+    const next = ambientOf({ ...cur, ...patch });
+    const inverse: Record<string, unknown> = {};
+    for (const k of Object.keys(patch) as (keyof Ambient)[]) {
+      if (JSON.stringify(cur[k]) !== JSON.stringify(next[k])) inverse[k] = cur[k];
+    }
+    return Object.keys(inverse).length === 0 ? null : { next, inverse: inverse as AmbientPatch };
   }
 
   private addPalette(index: number, assetId: string, autotile: string | null): void {

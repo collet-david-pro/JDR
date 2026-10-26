@@ -5,7 +5,11 @@ import type {
   TileLayerId,
 } from '../../src/editor/contracts';
 import { MapDocument } from '../../src/editor/model/MapDocument';
-import type { ToolContext, ToolSettings } from '../../src/editor/tools/types';
+import {
+  DEFAULT_OBJECT_SETTINGS,
+  type ToolContext,
+  type ToolSettings,
+} from '../../src/editor/tools/types';
 import { createRng } from '../../src/editor/util/rng';
 import { TILE_LAYERS } from '../../src/formats/chunk-codec';
 
@@ -67,6 +71,7 @@ export function settings(overrides: Partial<ToolSettings> = {}): MutableSettings
     randomRotation: false,
     shapeKind: 'rect',
     shapeFilled: true,
+    ...DEFAULT_OBJECT_SETTINGS,
     ...overrides,
   };
 }

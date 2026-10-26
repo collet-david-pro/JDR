@@ -1,6 +1,6 @@
 import type { MapOp, TileCell } from '../../src/editor/contracts';
 import type { OpsTransport } from '../../src/editor/sync/OpsQueue';
-import type { MapOpsRequest, MapOpsResult } from '../../src/lib/types';
+import type { MapOpConflict, MapOpsRequest, MapOpsResult } from '../../src/lib/types';
 
 export class TransportFailure extends Error {
   constructor(
@@ -31,7 +31,7 @@ export class FakeOpsServer implements OpsTransport {
   applied = 0;
   modes: Mode[] = [];
   defaultMode: Mode = 'ok';
-  conflicts: unknown[] = [];
+  conflicts: MapOpConflict[] = [];
 
   send(body: MapOpsRequest, options: { keepalive: boolean }): Promise<MapOpsResult> {
     // Deep copy: the request must be what was sent, not a live object.

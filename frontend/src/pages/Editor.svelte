@@ -91,6 +91,7 @@
       gameName={game.name}
       {map}
       client={mapsClient()}
+      loadTokens={() => gamesClient().tokens(game?.id ?? gameId)}
       onreload={() => load(gameId, mapId)}
       {debug}
     />
