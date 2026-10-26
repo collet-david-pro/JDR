@@ -8,6 +8,9 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Games\Fields;
+use JDR\Maps\FogCodec;
+use JDR\Maps\ObjectRules;
+use JDR\Maps\TokenRules;
 
 /**
  * Stateless validation of POST /maps/{id}/ops (projet.md 11.4, contract P4b):
@@ -18,7 +21,15 @@ use JDR\Domain\Games\Fields;
  *   (variant/flags forced to 0);
  * - palette.add {index 1-4095, asset_id, autotile?: null | identifier};
  * - map.meta {name?, grid?: {width?, height?, cell_px?, unit_label?, unit_per_cell?}, layers?, theme?, ambient?}.
- * What depends on the map (map size, palette, floors, assets) is checked by OpsApplier.
+ * P5 ops (etapes/P05 "Contrat d'API P5"; rules in ObjectRules / TokenRules):
+ * - object.add {object: {uid, floor, type, layer, geometry, props, visibility, locked, sort_order, rev?}};
+ * - object.update {uid, rev, patch: {geometry?, props?, visibility?, layer?, locked?, sort_order?}}
+ *   (geometry / props are checked against the stored type by SceneApplier);
+ * - object.remove {uid}; maptoken.add {token: {uid, floor, token_id, x, y, rotation, scale, hidden,
+ *   light_override, rev?}}; maptoken.update {uid, rev, patch}; maptoken.remove {uid};
+ * - fog.reveal / fog.hide {floor, chunks: [[cx, cy, base64 raw deflate of 2 048 bytes], ...] (<= 200)}.
+ * Coordinates are checked here against the largest grid (400), against the map by SceneApplier.
+ * What depends on the map (map size, palette, floors, assets, tokens) is checked by OpsApplier.
  * Field errors: "ops" (required | invalid | too_many), "ops.<i>" / "ops.<i>.<key>[.<sub>]".
  */
 final class MapOpsInput
@@ -27,11 +38,21 @@ final class MapOpsInput
     public const MAX_CELLS = 5000;
     public const MAX_PALETTE = 4096;
     public const CLIENT_OP_ID_PATTERN = '/^[A-Za-z0-9._:-]{1,40}$/D';
+    public const MAX_FOG_CHUNKS = 200;
+    public const SCENE_OPS = ['object.add', 'object.update', 'object.remove', 'maptoken.add', 'maptoken.update', 'maptoken.remove', 'fog.reveal', 'fog.hide'];
 
     private const KEYS = [
         'tiles.set' => ['type', 'floor', 'layer', 'cells'],
         'palette.add' => ['type', 'index', 'asset_id', 'autotile'],
         'map.meta' => ['type', 'name', 'grid', 'layers', 'theme', 'ambient'],
+        'object.add' => ['type', 'object'],
+        'object.update' => ['type', 'uid', 'rev', 'patch'],
+        'object.remove' => ['type', 'uid'],
+        'maptoken.add' => ['type', 'token'],
+        'maptoken.update' => ['type', 'uid', 'rev', 'patch'],
+        'maptoken.remove' => ['type', 'uid'],
+        'fog.reveal' => ['type', 'floor', 'chunks'],
+        'fog.hide' => ['type', 'floor', 'chunks'],
     ];
 
     /**
@@ -90,7 +111,12 @@ final class MapOpsInput
             $parsed = match ($type) {
                 'tiles.set' => self::tiles($op, $field, $errors),
                 'palette.add' => self::palette($op, $field, $errors),
-                default => self::meta($op, $field, $errors),
+                'map.meta' => self::meta($op, $field, $errors),
+                'object.add' => self::objectAdd($op, $field, $errors),
+                'maptoken.add' => self::tokenAdd($op, $field, $errors),
+                'object.update', 'maptoken.update' => self::update($op, $field, $errors),
+                'object.remove', 'maptoken.remove' => self::remove($op, $field, $errors),
+                default => self::fog($op, $field, $errors),
             };
             if ($parsed !== null) {
                 $out[] = $parsed;
@@ -212,5 +238,144 @@ final class MapOpsInput
         }
 
         return count($errors) === $before ? $out : null;
+    }
+
+    /**
+     * @param array<string, mixed>  $op
+     * @param array<string, string> $errors
+     * @return array<string, mixed>|null
+     */
+    private static function objectAdd(array $op, string $field, array &$errors): ?array
+    {
+        if (!array_key_exists('object', $op)) {
+            $errors[$field . '.object'] = 'required';
+
+            return null;
+        }
+        $max = (float) MapInput::GRID_MAX;
+        $object = ObjectRules::object($op['object'], $field . '.object', $errors, $max, $max, Fields::id(...), true);
+
+        return $object === null ? null : ['type' => 'object.add', 'object' => $object];
+    }
+
+    /**
+     * @param array<string, mixed>  $op
+     * @param array<string, string> $errors
+     * @return array<string, mixed>|null
+     */
+    private static function tokenAdd(array $op, string $field, array &$errors): ?array
+    {
+        $f = $field . '.token';
+        if (!array_key_exists('token', $op)) {
+            $errors[$f] = 'required';
+
+            return null;
+        }
+        $t = Fields::object($op['token'], TokenRules::TOKEN_KEYS);
+        if ($t === null || $t === []) {
+            $errors[$f] = 'invalid';
+
+            return null;
+        }
+        $before = count($errors);
+        $uid = ObjectRules::uid($t, 'uid', $f . '.uid', $errors);
+        $floor = Fields::id($t['floor'] ?? null);
+        if ($floor === null) {
+            $errors[$f . '.floor'] = array_key_exists('floor', $t) ? 'invalid' : 'required';
+        }
+        $tokenId = Fields::id($t['token_id'] ?? null);
+        if ($tokenId === null) {
+            $errors[$f . '.token_id'] = array_key_exists('token_id', $t) ? 'invalid' : 'required';
+        }
+        if (array_key_exists('rev', $t) && Fields::int($t['rev'], 0, PHP_INT_MAX) === null) {
+            $errors[$f . '.rev'] = 'invalid';
+        }
+        $max = (float) MapInput::GRID_MAX;
+        $placement = TokenRules::placement($t, $f, $errors, $max, $max);
+        if (count($errors) !== $before || $placement === null) {
+            return null;
+        }
+
+        return ['type' => 'maptoken.add', 'token' => ['uid' => $uid, 'floor' => $floor, 'token_id' => $tokenId] + $placement];
+    }
+
+    /**
+     * object.update / maptoken.update.
+     *
+     * @param array<string, mixed>  $op
+     * @param array<string, string> $errors
+     * @return array<string, mixed>|null
+     */
+    private static function update(array $op, string $field, array &$errors): ?array
+    {
+        $before = count($errors);
+        $uid = ObjectRules::uid($op, 'uid', $field . '.uid', $errors);
+        $rev = Fields::int($op['rev'] ?? null, 0, PHP_INT_MAX);
+        if ($rev === null) {
+            $errors[$field . '.rev'] = array_key_exists('rev', $op) ? 'invalid' : 'required';
+        }
+        $max = (float) MapInput::GRID_MAX;
+        $patch = $op['type'] === 'object.update'
+            ? ObjectRules::patch($op['patch'] ?? null, $field . '.patch', $errors)
+            : TokenRules::patch($op['patch'] ?? null, $field . '.patch', $errors, $max, $max);
+
+        return count($errors) === $before && $patch !== null
+            ? ['type' => $op['type'], 'uid' => $uid, 'rev' => $rev, 'patch' => $patch]
+            : null;
+    }
+
+    /**
+     * object.remove / maptoken.remove.
+     *
+     * @param array<string, mixed>  $op
+     * @param array<string, string> $errors
+     * @return array<string, mixed>|null
+     */
+    private static function remove(array $op, string $field, array &$errors): ?array
+    {
+        $uid = ObjectRules::uid($op, 'uid', $field . '.uid', $errors);
+
+        return $uid === null ? null : ['type' => $op['type'], 'uid' => $uid];
+    }
+
+    /**
+     * fog.reveal / fog.hide: chunks decoded to raw 2 048-byte bitmaps.
+     *
+     * @param array<string, mixed>  $op
+     * @param array<string, string> $errors
+     * @return array<string, mixed>|null
+     */
+    private static function fog(array $op, string $field, array &$errors): ?array
+    {
+        $before = count($errors);
+        $floor = Fields::id($op['floor'] ?? null);
+        if ($floor === null) {
+            $errors[$field . '.floor'] = array_key_exists('floor', $op) ? 'invalid' : 'required';
+        }
+        $chunks = $op['chunks'] ?? null;
+        $out = [];
+        if (!is_array($chunks) || !array_is_list($chunks)) {
+            $errors[$field . '.chunks'] = $chunks === null ? 'required' : 'invalid';
+        } elseif (count($chunks) > self::MAX_FOG_CHUNKS) {
+            $errors[$field . '.chunks'] = 'too_many';
+        } else {
+            $maxChunk = (MapInput::GRID_MAX - 1) >> 5;
+            foreach ($chunks as $j => $chunk) {
+                $raw = null;
+                if (is_array($chunk) && array_is_list($chunk) && count($chunk) === 3) {
+                    [$cx, $cy, $data] = $chunk;
+                    $cx = Fields::int($cx, 0, $maxChunk);
+                    $cy = Fields::int($cy, 0, $maxChunk);
+                    $raw = $cx === null || $cy === null ? null : FogCodec::fromBase64($data);
+                }
+                if ($raw === null) {
+                    $errors[$field . '.chunks.' . $j] = 'invalid';
+                    break;
+                }
+                $out[] = [$cx, $cy, $raw];
+            }
+        }
+
+        return count($errors) === $before ? ['type' => $op['type'], 'floor' => $floor, 'chunks' => $out] : null;
     }
 }

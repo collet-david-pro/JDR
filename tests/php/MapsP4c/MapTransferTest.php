@@ -306,11 +306,16 @@ final class MapTransferTest extends MapsP4cTestCase
 
             return $d;
         }, 'chunks.f9', 'not_found'];
-        yield 'objects (P5)' => [static function (array $d): array {
+        yield 'incomplete object (P5)' => [static function (array $d): array {
             $d['objects'] = [['uid' => 'o1', 'type' => 'wall']];
 
             return $d;
-        }, 'objects', 'unsupported'];
+        }, 'objects.0.geometry', 'required'];
+        yield 'links (P9)' => [static function (array $d): array {
+            $d['links'] = [['from' => 'o1']];
+
+            return $d;
+        }, 'links', 'unsupported'];
         yield 'bad asset reference' => [static function (array $d): array {
             $d['palette'][2]['asset'] = 'https://evil.example/x.png';
 

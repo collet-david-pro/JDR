@@ -1,0 +1,417 @@
+{
+    "format": "jdr-map",
+    "format_version": 1,
+    "app_version": "0.5.0",
+    "name": "Crypte éclairée",
+    "kind": "battle",
+    "grid": {
+        "type": "square",
+        "cell_px": 70,
+        "width": 60,
+        "height": 40,
+        "unit_label": "ft",
+        "unit_per_cell": 5
+    },
+    "theme": "parchment",
+    "ambient": {
+        "darkness": 0.85,
+        "tint": "#223355",
+        "time_of_day": null,
+        "weather": {
+            "type": "none",
+            "intensity": 0
+        }
+    },
+    "palette": [
+        null,
+        {
+            "asset": "sha256:b77a0108f2dc2fb16a22a8ad95b03a69555c9485c220d00a7ef30be52150b8d7",
+            "name": "dalle_pierre_01",
+            "autotile": null
+        },
+        {
+            "asset": "sha256:63be17f935a62e7954428df084786c48a7754fc02223a4bedbfbcca756ed970e",
+            "name": "herbe",
+            "autotile": "grass"
+        },
+        {
+            "asset": "sha256:c9b12f5e43ffbe57f1befd178e207067f33e6862c64619af5fde3b405796263c",
+            "name": "eau",
+            "autotile": null
+        }
+    ],
+    "layers": [
+        {
+            "id": "ground",
+            "kind": "tiles",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "terrain",
+            "kind": "tiles",
+            "visible": true,
+            "locked": false,
+            "opacity": 0.8
+        },
+        {
+            "id": "decor",
+            "kind": "tiles",
+            "visible": false,
+            "locked": true,
+            "opacity": 1
+        },
+        {
+            "id": "walls",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "props",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "lighting",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "labels",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1
+        },
+        {
+            "id": "gm",
+            "kind": "objects",
+            "visible": true,
+            "locked": false,
+            "opacity": 1,
+            "gm_only": true
+        }
+    ],
+    "floors": [
+        {
+            "uid": "f1",
+            "level": 0,
+            "name": "Rez-de-chaussée"
+        },
+        {
+            "uid": "f2",
+            "level": -1,
+            "name": "Caveau"
+        }
+    ],
+    "chunks": {
+        "f1": {
+            "ground": {
+                "0:0": "7dGxFQAgCANRwNHs3H8gwSWu8D4vBVWKnJ0x8mWuOgv4ye6AuxPuLrjb/d2f3V+SJEn6yQU=",
+                "1:0": "7c+xDQAgDANBg2AyOvYfKExBmjvp5dr3jEC3mazX/rXdfwEAALoU"
+            },
+            "terrain": {
+                "0:0": "7dOhEQAgDATBBAx94ei/IJihhgyIXfPu3K+ZGUeLu8Bb54ijst+j9co+AADwtw0="
+            }
+        }
+    },
+    "fog": {
+        "f1": {
+            "0:0": "+////38GJPB/hPFHwSgYBaNgFIyCkQgA",
+            "1:1": "a2AYBaNgFIyCUTAKRsFIAwA="
+        }
+    },
+    "objects": [
+        {
+            "uid": "wall-room-1",
+            "floor": "f1",
+            "type": "wall",
+            "layer": "walls",
+            "geometry": {
+                "points": [
+                    [
+                        2,
+                        2
+                    ],
+                    [
+                        10,
+                        2
+                    ],
+                    [
+                        10,
+                        8
+                    ],
+                    [
+                        2,
+                        8
+                    ]
+                ],
+                "closed": true
+            },
+            "props": {
+                "kind": "stone",
+                "thickness": 0.15,
+                "blocks_vision": true,
+                "blocks_light": true,
+                "blocks_move": true,
+                "texture_asset": null,
+                "height": null
+            },
+            "visibility": "all",
+            "locked": false,
+            "sort_order": 0
+        },
+        {
+            "uid": "o1",
+            "floor": "f1",
+            "type": "wall",
+            "geometry": {
+                "points": [
+                    [
+                        10,
+                        8
+                    ],
+                    [
+                        20.5,
+                        8
+                    ],
+                    [
+                        20.5,
+                        14.25
+                    ]
+                ],
+                "closed": false
+            },
+            "props": {
+                "kind": "wood",
+                "thickness": 0.1,
+                "blocks_vision": true,
+                "blocks_light": false,
+                "blocks_move": true
+            },
+            "visibility": "all"
+        },
+        {
+            "uid": "door-1",
+            "floor": "f1",
+            "type": "door",
+            "layer": "walls",
+            "geometry": {
+                "a": [
+                    5,
+                    8
+                ],
+                "b": [
+                    6,
+                    8
+                ]
+            },
+            "props": {
+                "state": "closed",
+                "locked": true,
+                "secret": false,
+                "asset_open": null,
+                "asset_closed": null,
+                "swing": "a"
+            },
+            "visibility": "all",
+            "locked": false,
+            "sort_order": 1
+        },
+        {
+            "uid": "door-secret",
+            "floor": "f1",
+            "type": "door",
+            "layer": "walls",
+            "geometry": {
+                "a": [
+                    10,
+                    4
+                ],
+                "b": [
+                    10,
+                    5.5
+                ]
+            },
+            "props": {
+                "state": "closed",
+                "locked": false,
+                "secret": true,
+                "asset_open": null,
+                "asset_closed": null,
+                "swing": "slide"
+            },
+            "visibility": "all",
+            "locked": true,
+            "sort_order": 2
+        },
+        {
+            "uid": "window-1",
+            "floor": "f1",
+            "type": "window",
+            "layer": "walls",
+            "geometry": {
+                "a": [
+                    2,
+                    4
+                ],
+                "b": [
+                    2,
+                    6
+                ]
+            },
+            "props": {
+                "kind": "bars"
+            },
+            "visibility": "all",
+            "locked": false,
+            "sort_order": 3
+        },
+        {
+            "uid": "torch-1",
+            "floor": "f1",
+            "type": "light",
+            "layer": "lighting",
+            "geometry": {
+                "x": 6.5,
+                "y": 5
+            },
+            "props": {
+                "radius": 4,
+                "dim_radius": 8,
+                "color": "#ffaa33",
+                "intensity": 0.9,
+                "flicker": {
+                    "type": "torch",
+                    "amp": 0.2,
+                    "speed": 2.5
+                },
+                "cone": null,
+                "enabled": true,
+                "follows_token": null
+            },
+            "visibility": "all",
+            "locked": false,
+            "sort_order": 0
+        },
+        {
+            "uid": "spot-gm",
+            "floor": "f1",
+            "type": "light",
+            "layer": "gm",
+            "geometry": {
+                "x": 30,
+                "y": 20
+            },
+            "props": {
+                "radius": 2,
+                "dim_radius": 6.5,
+                "color": "#88ccff",
+                "intensity": 1,
+                "flicker": {
+                    "type": "none",
+                    "amp": 0,
+                    "speed": 1
+                },
+                "cone": {
+                    "angle": 60,
+                    "direction": 270
+                },
+                "enabled": false,
+                "follows_token": "tok-guard"
+            },
+            "visibility": "gm",
+            "locked": false,
+            "sort_order": 5
+        },
+        {
+            "uid": "crypt-wall",
+            "floor": "f2",
+            "type": "wall",
+            "layer": "walls",
+            "geometry": {
+                "points": [
+                    [
+                        0,
+                        0
+                    ],
+                    [
+                        60,
+                        40
+                    ]
+                ],
+                "closed": false
+            },
+            "props": {
+                "kind": "natural",
+                "thickness": 2,
+                "blocks_vision": false,
+                "blocks_light": true,
+                "blocks_move": false,
+                "texture_asset": null,
+                "height": 3.5
+            },
+            "visibility": "hidden_until_revealed",
+            "locked": false,
+            "sort_order": -3
+        }
+    ],
+    "notes": [],
+    "links": [],
+    "tokens_placed": [
+        {
+            "uid": "tok-guard",
+            "token": "ref:token:Garde",
+            "floor": "f1",
+            "x": 5,
+            "y": 5,
+            "rotation": 0,
+            "scale": 1,
+            "hidden": false,
+            "light_override": null
+        },
+        {
+            "uid": "tok-gob",
+            "token": "ref:token:Gobelin",
+            "floor": "f1",
+            "x": 12.5,
+            "y": 7.125,
+            "rotation": 90,
+            "scale": 1.5,
+            "hidden": true,
+            "light_override": {
+                "radius": 1,
+                "dim_radius": 2,
+                "color": "#ff0000",
+                "intensity": 0.5,
+                "flicker": true
+            }
+        },
+        {
+            "uid": "t1",
+            "token": "ref:token:Garde",
+            "floor": "f2",
+            "x": 59.5,
+            "y": 0.5,
+            "rotation": 359,
+            "scale": 0.25,
+            "hidden": false
+        }
+    ],
+    "generation": {
+        "generator": "dungeon-bsp",
+        "gen_version": 1,
+        "seed": "K7F2QM9X",
+        "params": {
+            "rooms": 8,
+            "corridor": "narrow"
+        }
+    }
+}

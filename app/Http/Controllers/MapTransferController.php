@@ -78,7 +78,7 @@ final class MapTransferController
     }
 
     /**
-     * POST /games/{id}/maps/import (multipart file, client_op_id?) -> 201 {map: Map, missing_assets: [{ref, name}]}
+     * POST /games/{id}/maps/import (multipart file, client_op_id?) -> 201 {map: Map, missing_assets: [{ref, name}], missing_tokens: [name]}
      */
     public function import(Request $request): Response
     {
@@ -123,6 +123,7 @@ final class MapTransferController
         return Response::ok([
             'map' => $this->presenter->full($result['map'], Input::apiBase($request, $this->config)),
             'missing_assets' => $result['missing_assets'],
+            'missing_tokens' => $result['missing_tokens'],
         ], [], 201);
     }
 

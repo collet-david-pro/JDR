@@ -11,8 +11,12 @@ use JDR\Domain\Games\Fields;
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
 use JDR\Domain\Maps\MapOpsInput;
+use JDR\Domain\Tokens\TokenInput;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\ChunkCodecException;
+use JDR\Maps\FogCodec;
+use JDR\Maps\ObjectRules;
+use JDR\Maps\TokenRules;
 
 /**
  * Strict validation of a map document (projet.md 12.1, format_version 1), hand-written
@@ -23,8 +27,13 @@ use JDR\Maps\ChunkCodecException;
  * outside the grid, flags 0-15. Unknown keys are refused everywhere; "__proto__", "constructor"
  * and "prototype" are refused anywhere (free-form generation.params included).
  *
- * P4 has no objects, notes, links, placed tokens nor fog: those keys are accepted only empty
- * ("unsupported" otherwise, nothing would be silently dropped).
+ * P5 (etapes/P05 "Contrat d'API P5"): objects (wall, door, window, light; ObjectRules, floor =
+ * floor uid of the document, no rev; layer / visibility / locked / sort_order and the reserved
+ * props may be omitted), tokens_placed ({uid, token: "ref:token:<name>", floor, x, y, rotation?,
+ * scale?, hidden?, light_override?}; TokenRules; internal documents may carry token_id) and fog
+ * ({<floor uid>: {"cx:cy": base64 raw deflate of 2 048 bytes}}, FogCodec) are validated; uids
+ * are unique per list ignoring case (like the database key). Notes and links (P9) are still
+ * accepted only empty ("unsupported" otherwise, nothing would be silently dropped).
  *
  * Older documents are migrated first (MapDocumentMigrator); newer ones are refused
  * (422 unsupported_format_version). Errors: 422 validation_failed, fields keyed by JSON path
@@ -37,8 +46,10 @@ use JDR\Maps\ChunkCodecException;
  * {format_version, name, kind, grid {type, cell_px, width, height, unit_label, unit_per_cell},
  *  theme, ambient, palette [null | {sha256, name, autotile, asset_id?}], layers,
  *  floors [{uid, level, name}], chunks [{floor (uid), layer, cx, cy, raw (4 104 bytes)}],
- *  generation null | {generator, gen_version, seed, params}}.
- * Raw chunks are canonical (empty cells all zero); empty chunks are dropped.
+ *  objects [ObjectRules object, floor = floor uid], tokens_placed [{uid, token (name), token_id?,
+ *  floor (uid), x, y, rotation, scale, hidden, light_override}], fog [{floor (uid), cx, cy, raw
+ *  (2 048 bytes)}], generation null | {generator, gen_version, seed, params}}.
+ * Raw chunks are canonical (empty cells all zero); empty tile and fog chunks are dropped.
  */
 final class MapDocumentValidator
 {
@@ -55,6 +66,7 @@ final class MapDocumentValidator
     public const FLOOR_UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const ASSET_REF_PATTERN = '/^sha256:([0-9a-fA-F]{64})$/D';
     public const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
+    public const TOKEN_REF_PATTERN = '/^ref:token:(.+)$/Ds';
 
     private const TOP_KEYS = [
         'format', 'format_version', 'app_version', 'name', 'kind', 'grid', 'theme', 'ambient', 'palette',
@@ -65,6 +77,7 @@ final class MapDocumentValidator
     private const PALETTE_KEYS = ['asset', 'name', 'autotile'];
     private const FLOOR_KEYS = ['uid', 'level', 'name'];
     private const GENERATION_KEYS = ['generator', 'gen_version', 'seed', 'params'];
+    private const TOKEN_KEYS = ['uid', 'token', 'floor', 'x', 'y', 'rotation', 'scale', 'hidden', 'light_override'];
 
     public function __construct(private MapDocumentMigrator $migrator = new MapDocumentMigrator())
     {
@@ -145,20 +158,25 @@ final class MapDocumentValidator
         $layers = MapInput::layers($doc['layers'], 'layers', $errors);
         $palette = $this->palette($doc['palette'], $internal, $errors);
         $floors = $this->floors($doc['floors'], $errors);
-        foreach (['objects', 'notes', 'links', 'tokens_placed'] as $key) {
+        foreach (['notes', 'links'] as $key) {
             if (array_key_exists($key, $doc) && $doc[$key] !== null && $doc[$key] !== []) {
                 $errors[$key] = is_array($doc[$key]) && array_is_list($doc[$key]) ? 'unsupported' : 'invalid';
             }
         }
-        if (array_key_exists('fog', $doc) && !self::isEmptyFog($doc['fog'])) {
-            $errors['fog'] = is_array($doc['fog']) ? 'unsupported' : 'invalid';
-        }
         $generation = array_key_exists('generation', $doc) ? $this->generation($doc['generation'], $errors) : null;
+        $objects = [];
+        $tokens = [];
+        if ($grid !== null && $floors !== null) {
+            $known = array_flip(array_column($floors, 'uid'));
+            $objects = $this->objects($doc['objects'] ?? null, $known, $grid, $errors);
+            $tokens = $this->tokens($doc['tokens_placed'] ?? null, $known, $grid, $internal, $errors);
+        }
         if ($errors !== []) {
             throw new ValidationException('', $errors);
         }
         assert($grid !== null && $palette !== null && $floors !== null && $layers !== null && $ambient !== null);
         $chunks = $this->chunks($doc['chunks'], $floors, $grid, count($palette));
+        $fog = $this->fog($doc['fog'] ?? null, $floors, $grid);
 
         return [
             'format_version' => $this->migrator->current(),
@@ -171,6 +189,9 @@ final class MapDocumentValidator
             'layers' => $layers,
             'floors' => $floors,
             'chunks' => $chunks,
+            'objects' => $objects,
+            'tokens_placed' => $tokens,
+            'fog' => $fog,
             'generation' => $generation,
         ];
     }
@@ -492,20 +513,174 @@ final class MapDocumentValidator
         return ['cx' => $cx, 'cy' => $cy, 'raw' => $empty ? '' : $raw];
     }
 
-    private static function isEmptyFog(mixed $fog): bool
+    /**
+     * @param array<string, int>    $known floor uids
+     * @param array<string, mixed>  $grid
+     * @param array<string, string> $errors
+     * @return list<array<string, mixed>>
+     */
+    private function objects(mixed $value, array $known, array $grid, array &$errors): array
     {
-        if ($fog === null || $fog === []) {
-            return true;
+        if ($value === null || $value === []) {
+            return [];
         }
-        if (!is_array($fog) || array_is_list($fog)) {
-            return false;
+        if (!is_array($value) || !array_is_list($value)) {
+            $errors['objects'] = 'invalid';
+
+            return [];
         }
-        foreach ($fog as $floor) {
-            if ($floor !== [] && $floor !== null) {
-                return false;
+        if (count($value) > ObjectRules::MAX_OBJECTS) {
+            $errors['objects'] = 'too_many';
+
+            return [];
+        }
+        $floorUid = static fn (mixed $v): ?string => is_string($v) && preg_match(self::FLOOR_UID_PATTERN, $v) === 1 ? $v : null;
+        $out = [];
+        $uids = [];
+        $before = count($errors);
+        foreach ($value as $i => $item) {
+            $field = 'objects.' . $i;
+            $object = ObjectRules::object($item, $field, $errors, (float) $grid['width'], (float) $grid['height'], $floorUid, false, true);
+            if ($object !== null) {
+                if (!isset($known[$object['floor']])) {
+                    $errors[$field . '.floor'] = 'not_found';
+                } elseif (isset($uids[strtolower($object['uid'])])) {
+                    $errors[$field . '.uid'] = 'duplicate';
+                } else {
+                    $uids[strtolower($object['uid'])] = true;
+                    $out[] = $object;
+                }
+            }
+            if (count($errors) - $before >= self::MAX_ERRORS) {
+                break;
             }
         }
 
-        return true;
+        return $out;
+    }
+
+    /**
+     * @param array<string, int>    $known floor uids
+     * @param array<string, mixed>  $grid
+     * @param array<string, string> $errors
+     * @return list<array<string, mixed>>
+     */
+    private function tokens(mixed $value, array $known, array $grid, bool $internal, array &$errors): array
+    {
+        if ($value === null || $value === []) {
+            return [];
+        }
+        if (!is_array($value) || !array_is_list($value)) {
+            $errors['tokens_placed'] = 'invalid';
+
+            return [];
+        }
+        if (count($value) > TokenRules::MAX_TOKENS) {
+            $errors['tokens_placed'] = 'too_many';
+
+            return [];
+        }
+        $keys = $internal ? [...self::TOKEN_KEYS, 'token_id'] : self::TOKEN_KEYS;
+        $out = [];
+        $uids = [];
+        $before = count($errors);
+        foreach ($value as $i => $item) {
+            $field = 'tokens_placed.' . $i;
+            $t = Fields::object($item, $keys);
+            if ($t === null || $t === []) {
+                $errors[$field] = 'invalid';
+            } else {
+                $start = count($errors);
+                $uid = ObjectRules::uid($t, 'uid', $field . '.uid', $errors);
+                if ($uid !== null && isset($uids[strtolower($uid)])) {
+                    $errors[$field . '.uid'] = 'duplicate';
+                }
+                $name = null;
+                $ref = $t['token'] ?? null;
+                if (!is_string($ref) || preg_match(self::TOKEN_REF_PATTERN, $ref, $m) !== 1) {
+                    $errors[$field . '.token'] = array_key_exists('token', $t) ? 'invalid' : 'required';
+                } else {
+                    $name = Fields::text($m[1], PHP_INT_MAX);
+                    if ($name === null || $name === '' || $name !== $m[1]) {
+                        $errors[$field . '.token'] = 'invalid';
+                    } elseif (mb_strlen($name, 'UTF-8') > TokenInput::NAME_MAX) {
+                        $errors[$field . '.token'] = 'too_long';
+                    }
+                }
+                $floor = $t['floor'] ?? null;
+                if (!is_string($floor) || preg_match(self::FLOOR_UID_PATTERN, $floor) !== 1) {
+                    $errors[$field . '.floor'] = array_key_exists('floor', $t) ? 'invalid' : 'required';
+                } elseif (!isset($known[$floor])) {
+                    $errors[$field . '.floor'] = 'not_found';
+                }
+                $tokenId = array_key_exists('token_id', $t) ? Fields::id($t['token_id']) : null;
+                if (array_key_exists('token_id', $t) && $tokenId === null) {
+                    $errors[$field . '.token_id'] = 'invalid';
+                }
+                $placement = TokenRules::placement($t, $field, $errors, (float) $grid['width'], (float) $grid['height'], true);
+                if (count($errors) === $start && $placement !== null) {
+                    $uids[strtolower((string) $uid)] = true;
+                    $out[] = ['uid' => $uid, 'token' => $name, 'token_id' => $tokenId, 'floor' => $floor] + $placement;
+                }
+            }
+            if (count($errors) - $before >= self::MAX_ERRORS) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Decodes and checks the fog chunks; all-zero chunks are dropped.
+     *
+     * @param list<array{uid: string, level: int, name: string}> $floors
+     * @param array<string, mixed>                               $grid
+     * @return list<array{floor: string, cx: int, cy: int, raw: string}>
+     * @throws ValidationException
+     */
+    private function fog(mixed $value, array $floors, array $grid): array
+    {
+        if ($value === null || $value === []) {
+            return [];
+        }
+        if (!is_array($value) || array_is_list($value)) {
+            throw new ValidationException('', ['fog' => 'invalid']);
+        }
+        $known = array_flip(array_column($floors, 'uid'));
+        $out = [];
+        foreach ($value as $uid => $blocks) {
+            $uid = (string) $uid;
+            $base = 'fog.' . $uid;
+            if (!isset($known[$uid])) {
+                throw new ValidationException('', [$base => 'not_found']);
+            }
+            if ($blocks === null || $blocks === []) {
+                continue;
+            }
+            if (!is_array($blocks) || array_is_list($blocks)) {
+                throw new ValidationException('', [$base => 'invalid']);
+            }
+            foreach ($blocks as $key => $data) {
+                $field = $base . '.' . $key;
+                if (preg_match('/^(\d{1,3}):(\d{1,3})$/D', (string) $key, $m) !== 1) {
+                    throw new ValidationException('', [$field => 'invalid']);
+                }
+                $cx = (int) $m[1];
+                $cy = (int) $m[2];
+                if ($cx * ChunkCodec::SIZE >= (int) $grid['width'] || $cy * ChunkCodec::SIZE >= (int) $grid['height']) {
+                    throw new ValidationException('', [$field => 'out_of_bounds']);
+                }
+                $raw = FogCodec::fromBase64($data);
+                if ($raw === null) {
+                    throw new ValidationException('', [$field => is_string($data) && strlen($data) > FogCodec::MAX_BASE64 ? 'too_large' : 'invalid']);
+                }
+                if (!FogCodec::isEmpty($raw)) {
+                    $out[] = ['floor' => $uid, 'cx' => $cx, 'cy' => $cy, 'raw' => $raw];
+                }
+            }
+        }
+
+        return $out;
     }
 }

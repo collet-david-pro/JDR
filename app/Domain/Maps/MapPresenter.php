@@ -14,11 +14,17 @@ use JDR\Domain\Support\Dates;
  * API representations "MapSummary" and "Map" (contract P4b). Only call for an editor of the
  * game (D8: palette URLs are signed for the GM / co-GMs only). thumb_url: signed URL of the
  * thumbnail (P4c, MapThumbnailService), null without thumbnail.
+ * P5: objects of every floor sorted by floor, sort_order, id, and placed tokens (GM view: nothing
+ * filtered; players get JDR\Maps\PlayerFilter in P6). notes stay empty until P9.
  */
 final class MapPresenter
 {
-    public function __construct(private MapRepository $maps, private AssetUrls $urls, private MapThumbnailService $thumbs)
-    {
+    public function __construct(
+        private MapRepository $maps,
+        private AssetUrls $urls,
+        private MapThumbnailService $thumbs,
+        private MapSceneRepository $scene,
+    ) {
     }
 
     /**
@@ -71,9 +77,9 @@ final class MapPresenter
             'layers' => $map->layers,
             'floors' => $this->maps->floors($map->id),
             'format_version' => $map->formatVersion,
-            'objects' => [],
+            'objects' => $this->scene->objects($map->id),
             'notes' => [],
-            'tokens_placed' => [],
+            'tokens_placed' => $this->scene->tokens($map->id),
         ];
     }
 

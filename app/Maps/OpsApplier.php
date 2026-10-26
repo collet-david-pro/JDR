@@ -19,9 +19,12 @@ use JDR\Domain\Maps\MapInput;
  * - map.meta: name, grid, layers, theme, ambient; a width/height change is refused (409) when
  *   base_revision != revision; shrinking clears the cells left outside the map.
  *
+ * - P5 ops (object.*, maptoken.*, fog.*): SceneApplier (conflicts collected per op; a shrink of
+ *   the map also removes the objects / tokens / fog left outside).
+ *
  * Asset reference deltas (cells per asset of the palette) are counted exactly, cell by cell.
  * The caller persists the dirty chunks, the deltas and the changed columns in the same
- * transaction.
+ * transaction (objects, tokens and fog are written by SceneApplier through its SceneStore).
  */
 final class OpsApplier
 {
@@ -31,31 +34,66 @@ final class OpsApplier
     /** @var array<int, int> asset_id => cell delta */
     private array $deltas = [];
 
+    private ?SceneApplier $scene;
+
     /**
      * @param \Closure(int): bool $canUseAsset may the editor put this asset on the map
+     * @param SceneStore|null     $sceneStore  objects / placed tokens / fog of the map (P5 ops)
      */
     public function __construct(
         private MapState $state,
         private ChunkStore $store,
         private \Closure $canUseAsset,
+        ?SceneStore $sceneStore = null,
     ) {
+        $this->scene = $sceneStore === null ? null : new SceneApplier($state, $sceneStore);
     }
 
     /**
      * @param list<array<string, mixed>> $ops normalized by MapOpsInput::ops()
+     * @return int ops applied (conflicting ops and no-op removes excluded)
      * @throws ValidationException|ConflictException
      */
-    public function apply(array $ops, int $baseRevision): void
+    public function apply(array $ops, int $baseRevision): int
     {
         $this->preload($ops);
+        $this->scene?->preload($ops);
+        $applied = 0;
         foreach ($ops as $i => $op) {
             $field = 'ops.' . $i;
-            match ($op['type']) {
-                'tiles.set' => $this->tiles($op, $field),
-                'palette.add' => $this->palette($op, $field),
-                default => $this->meta($op, $field, $baseRevision),
-            };
+            switch ($op['type']) {
+                case 'tiles.set':
+                    $this->tiles($op, $field);
+                    break;
+                case 'palette.add':
+                    $this->palette($op, $field);
+                    break;
+                case 'map.meta':
+                    $this->meta($op, $field, $baseRevision);
+                    break;
+                default:
+                    if ($this->scene === null) {
+                        throw new \LogicException('No scene store for ' . $op['type']);
+                    }
+                    if (!$this->scene->apply($op, $i)) {
+                        continue 2;
+                    }
+            }
+            $applied++;
         }
+        $this->scene?->flush();
+
+        return $applied;
+    }
+
+    /**
+     * Object / placed-token ops rejected individually (SceneApplier::conflicts()).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function conflicts(): array
+    {
+        return $this->scene?->conflicts() ?? [];
     }
 
     /**
@@ -187,6 +225,7 @@ final class OpsApplier
             }
             if ($width < $s->width || $height < $s->height) {
                 $this->shrink($width, $height);
+                $this->scene?->shrink($width, $height);
             }
             $s->width = $width;
             $s->height = $height;

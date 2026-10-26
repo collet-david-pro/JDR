@@ -18,7 +18,8 @@ use JDR\Maps\ChunkCodec;
 /**
  * Maps of a game (contract P4b): list (folders, order, trash), create (one floor "level 0" and
  * the default layers), update, trash / restore, full duplication (floors, chunks, palette,
- * asset references), binary chunk reads. Rights: MapPolicy (GM / co-GM).
+ * asset references; P5: objects, placed tokens and fog), binary chunk reads. Rights: MapPolicy
+ * (GM / co-GM).
  */
 final class MapService
 {
@@ -30,6 +31,7 @@ final class MapService
         private MapPolicy $policy,
         private GamePolicy $games,
         private I18n $i18n,
+        private MapSceneRepository $scene,
     ) {
     }
 
@@ -126,7 +128,8 @@ final class MapService
     }
 
     /**
-     * Full copy (floors, chunks, palette, layers, ambient, asset references), revision 0,
+     * Full copy (floors, chunks, palette, layers, ambient, asset references, objects, placed
+     * tokens, fog; objects and tokens back to rev 1), revision 0,
      * named "<name> (copie)" unless a name is given.
      *
      * @param array<array-key, mixed> $body {name?}
@@ -167,6 +170,7 @@ final class MapService
             foreach ($this->maps->floors($source->id) as $floor) {
                 $floorId = $this->maps->insertFloor($id, $floor['level'], $floor['name'], $floor['sort_order']);
                 $this->maps->copyChunks($source->id, $floor['id'], $id, $floorId);
+                $this->scene->copyFloor($source->id, $floor['id'], $id, $floorId);
             }
             $this->maps->copyRefs($source->id, $id);
 

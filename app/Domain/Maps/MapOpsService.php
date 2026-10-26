@@ -14,7 +14,9 @@ use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
+use JDR\Maps\ObjectRules;
 use JDR\Maps\OpsApplier;
+use JDR\Maps\TokenRules;
 
 /**
  * POST /maps/{id}/ops (projet.md 11.4 points 1-4 and 6, contract P4b; events = P6):
@@ -25,6 +27,10 @@ use JDR\Maps\OpsApplier;
  *    changed columns + revision + 1 + updated_at, response remembered in processed_ops;
  * 6. response {revision, applied, conflicts: []}.
  * P4c: an auto version snapshot may be taken in the same transaction (MapVersionService::afterOps).
+ * P5: object / placed-token / fog ops (SceneApplier through MapSceneStore); conflicting ops are
+ * listed in conflicts [{op_index, kind, uid, reason, current}] and not applied; the revision
+ * moves (+ 1) only when at least one op was applied. The response is remembered with its
+ * conflicts.
  * A replayed client_op_id of another user or another map is refused (422 already_used).
  */
 final class MapOpsService
@@ -35,6 +41,7 @@ final class MapOpsService
         private AssetRepository $assets,
         private AssetPolicy $assetPolicy,
         private MapVersionService $versions,
+        private MapSceneRepository $scene,
     ) {
     }
 
@@ -63,7 +70,7 @@ final class MapOpsService
             return $allowed[$assetId];
         };
 
-        return $this->maps->db()->transaction(function () use ($user, $map, $ops, $envelope, $clientOpId, $canUse): array {
+        return $this->maps->db()->transaction(function () use ($user, $map, $game, $ops, $envelope, $clientOpId, $canUse): array {
             $locked = $this->maps->findForUpdate($map->id);
             if ($locked === null || $locked->deletedAt !== null) {
                 throw new NotFoundException();
@@ -90,8 +97,21 @@ final class MapOpsService
                 $locked->layers,
                 array_map(static fn (array $f): int => $f['id'], $this->maps->floors($locked->id)),
             );
-            $applier = new OpsApplier($state, new MapChunkStore($this->maps, $locked->id), $canUse);
-            $applier->apply($ops, $envelope['base_revision']);
+            $applier = new OpsApplier(
+                $state,
+                new MapChunkStore($this->maps, $locked->id),
+                $canUse,
+                new MapSceneStore($this->scene, $locked->id, $game->id),
+            );
+            $applied = $applier->apply($ops, $envelope['base_revision']);
+            $conflicts = $applier->conflicts();
+            if ($applied === 0) {
+                // Only conflicts / no-op removes: nothing changed, the revision stays.
+                $response = ['revision' => $locked->revision, 'applied' => 0, 'conflicts' => $conflicts];
+                $this->remember($clientOpId, $user, $locked->id, $response);
+
+                return $response;
+            }
 
             $revision = $locked->revision + 1;
             foreach ($applier->dirtyChunks() as $chunk) {
@@ -110,18 +130,26 @@ final class MapOpsService
             $this->maps->update($locked->id, $state->changedColumns(), true);
             $this->versions->afterOps($locked, $revision, $user->id);
 
-            $response = ['revision' => $revision, 'applied' => count($ops), 'conflicts' => []];
-            try {
-                $this->maps->rememberProcessed($clientOpId, $user->id, ['map_id' => $locked->id] + $response);
-            } catch (\PDOException $e) {
-                if ((string) $e->getCode() !== '23000') {
-                    throw $e;
-                }
-                throw new ValidationException('', ['client_op_id' => 'already_used']);
-            }
+            $response = ['revision' => $revision, 'applied' => $applied, 'conflicts' => $conflicts];
+            $this->remember($clientOpId, $user, $locked->id, $response);
 
             return $response;
         });
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function remember(string $clientOpId, User $user, int $mapId, array $response): void
+    {
+        try {
+            $this->maps->rememberProcessed($clientOpId, $user->id, ['map_id' => $mapId] + $response);
+        } catch (\PDOException $e) {
+            if ((string) $e->getCode() !== '23000') {
+                throw $e;
+            }
+            throw new ValidationException('', ['client_op_id' => 'already_used']);
+        }
     }
 
     /**
@@ -145,7 +173,39 @@ final class MapOpsService
         return [
             'revision' => $r['revision'],
             'applied' => $r['applied'],
-            'conflicts' => is_array($r['conflicts'] ?? null) ? array_values($r['conflicts']) : [],
+            'conflicts' => is_array($r['conflicts'] ?? null) ? array_map(self::storedConflict(...), array_values($r['conflicts'])) : [],
+        ];
+    }
+
+    /**
+     * Conflict read back from processed_ops (MySQL JSON reorders keys): canonical key order.
+     *
+     * @return array<string, mixed>
+     */
+    private static function storedConflict(mixed $c): array
+    {
+        $c = is_array($c) ? $c : [];
+        $current = $c['current'] ?? null;
+        if (is_array($current)) {
+            if (($c['kind'] ?? null) === 'object') {
+                $current = ObjectRules::canonical($current);
+            } else {
+                $ordered = [];
+                foreach (TokenRules::TOKEN_KEYS as $key) {
+                    if (array_key_exists($key, $current)) {
+                        $ordered[$key] = $key === 'light_override' ? TokenRules::canonicalLight($current[$key]) : $current[$key];
+                    }
+                }
+                $current = $ordered;
+            }
+        }
+
+        return [
+            'op_index' => $c['op_index'] ?? null,
+            'kind' => $c['kind'] ?? null,
+            'uid' => $c['uid'] ?? null,
+            'reason' => $c['reason'] ?? null,
+            'current' => $current,
         ];
     }
 }

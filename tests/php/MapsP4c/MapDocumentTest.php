@@ -50,7 +50,7 @@ final class MapDocumentTest extends TestCase
         $doc = (new MapDocumentValidator())->validate(self::fixture());
 
         self::assertSame(
-            ['format_version', 'name', 'kind', 'grid', 'theme', 'ambient', 'palette', 'layers', 'floors', 'chunks', 'generation'],
+            ['format_version', 'name', 'kind', 'grid', 'theme', 'ambient', 'palette', 'layers', 'floors', 'chunks', 'objects', 'tokens_placed', 'fog', 'generation'],
             array_keys($doc),
         );
         self::assertSame(1, $doc['format_version']);
@@ -171,11 +171,16 @@ final class MapDocumentTest extends TestCase
 
                 return $d;
             }, ['generation.seed' => 'invalid']],
-            ['fog (P5)', static function (array $d): array {
+            ['fog block (P5)', static function (array $d): array {
                 $d['fog'] = ['f1' => ['0:0' => 'AAAA']];
 
                 return $d;
-            }, ['fog' => 'unsupported']],
+            }, ['fog.f1.0:0' => 'invalid']],
+            ['notes (P9)', static function (array $d): array {
+                $d['notes'] = [['uid' => 'n1']];
+
+                return $d;
+            }, ['notes' => 'unsupported']],
             ['missing chunks', static function (array $d): array {
                 unset($d['chunks']);
 

@@ -10,16 +10,19 @@ use JDR\Core\Db;
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
 use JDR\Domain\Maps\MapRepository;
+use JDR\Domain\Maps\MapSceneRepository;
 
 /**
  * Builds the map document (projet.md 12.1, format_version 1) from the database: grid, theme,
  * ambient, palette ("sha256:<hex>" + asset name + autotile; null for an empty slot or an asset
  * row that no longer exists), layers, floors (uid "f1", "f2"... in floor order), chunks in base64
- * (stored raw-deflate bytes) by floor uid / layer / "cx:cy", generation. P4 has no fog, objects,
- * notes, links nor placed tokens: empty.
+ * (stored raw-deflate bytes) by floor uid / layer / "cx:cy", generation. P5: fog (floor uid =>
+ * "cx:cy" => base64 raw deflate), objects (API form without rev, floor = floor uid) and placed
+ * tokens ({uid, token: "ref:token:<name>", floor, x, y, rotation, scale, hidden,
+ * light_override}). Notes and links (P9): empty.
  *
- * Internal documents (version snapshots) also carry the palette asset_id, so that a restore
- * finds the exact asset again on this server.
+ * Internal documents (version snapshots) also carry the palette asset_id and the token_id of
+ * the placed tokens, so that a restore finds the exact asset / token again on this server.
  *
  * Call inside a transaction when a consistent read matters (snapshots, export).
  */
@@ -27,7 +30,7 @@ final class MapDocumentBuilder
 {
     public const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR;
 
-    public function __construct(private MapRepository $maps, private Db $db)
+    public function __construct(private MapRepository $maps, private Db $db, private MapSceneRepository $scene)
     {
     }
 
@@ -79,11 +82,11 @@ final class MapDocumentBuilder
             'layers' => $map->layers,
             'floors' => $docFloors,
             'chunks' => $chunks === [] ? new \stdClass() : $chunks,
-            'fog' => new \stdClass(),
-            'objects' => [],
+            'fog' => $this->fog($map->id, $uids),
+            'objects' => $this->objects($map->id, $uids),
             'notes' => [],
             'links' => [],
-            'tokens_placed' => [],
+            'tokens_placed' => $this->tokens($map->id, $uids, $internal),
             'generation' => $this->generation($map->id),
         ];
     }
@@ -148,6 +151,74 @@ final class MapDocumentBuilder
             $item = ['asset' => 'sha256:' . $asset['sha256'], 'name' => $asset['name'], 'autotile' => $entry['autotile'] ?? null];
             if ($internal) {
                 $item['asset_id'] = $entry['asset_id'];
+            }
+            $out[] = $item;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, string> $uids floor id => floor uid
+     */
+    private function fog(int $mapId, array $uids): object|array
+    {
+        $fog = [];
+        foreach ($this->scene->allFog($mapId) as $chunk) {
+            $uid = $uids[$chunk['floor_id']] ?? null;
+            if ($uid !== null) {
+                $fog[$uid][$chunk['cx'] . ':' . $chunk['cy']] = base64_encode($chunk['data']);
+            }
+        }
+
+        return $fog === [] ? new \stdClass() : $fog;
+    }
+
+    /**
+     * @param array<int, string> $uids floor id => floor uid
+     * @return list<array<string, mixed>>
+     */
+    private function objects(int $mapId, array $uids): array
+    {
+        $out = [];
+        foreach ($this->scene->objects($mapId) as $object) {
+            $uid = $uids[(int) $object['floor']] ?? null;
+            if ($uid === null) {
+                continue;
+            }
+            $object['floor'] = $uid;
+            unset($object['rev']);
+            $out[] = $object;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, string> $uids floor id => floor uid
+     * @return list<array<string, mixed>>
+     */
+    private function tokens(int $mapId, array $uids, bool $internal): array
+    {
+        $out = [];
+        foreach ($this->scene->tokensWithNames($mapId) as ['token' => $t, 'name' => $name]) {
+            $uid = $uids[(int) $t['floor']] ?? null;
+            if ($uid === null) {
+                continue;
+            }
+            $item = [
+                'uid' => $t['uid'],
+                'token' => 'ref:token:' . $name,
+                'floor' => $uid,
+                'x' => $t['x'],
+                'y' => $t['y'],
+                'rotation' => $t['rotation'],
+                'scale' => $t['scale'],
+                'hidden' => $t['hidden'],
+                'light_override' => $t['light_override'],
+            ];
+            if ($internal) {
+                $item['token_id'] = $t['token_id'];
             }
             $out[] = $item;
         }

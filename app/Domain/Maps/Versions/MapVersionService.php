@@ -30,7 +30,9 @@ use JDR\Maps\Document\PaletteResolver;
  *   creation) is more than 5 min old and the map changed since;
  * - manual: on request, with an optional label;
  * - pre_restore: the current state, just before a restore.
- * Snapshot = internal map document (12.1, palette with asset_id; no fog in P4), JSON gzipped.
+ * Snapshot = internal map document (12.1, palette with asset_id, placed tokens with token_id;
+ * P5: objects, placed tokens and fog included), JSON gzipped. A restored placed token whose
+ * definition is gone (and no live token of the game has its name) is dropped.
  * Restoring writes the snapshot over the map in a NEW revision (history is never rewritten),
  * map_asset_refs recomputed; idempotent by client_op_id (processed_ops).
  */
@@ -123,7 +125,8 @@ final class MapVersionService
                 }
             }
             $this->snapshot($locked, 'pre_restore', null, $user->id);
-            $revision = $this->writer->replace($locked, $doc, $this->resolvePalette($doc['palette'], $user->id));
+            $tokens = $this->writer->resolveTokens((int) $locked->gameId, $doc['tokens_placed'], true);
+            $revision = $this->writer->replace($locked, $doc, $this->resolvePalette($doc['palette'], $user->id), $tokens['ids']);
             if ($clientOpId !== null) {
                 try {
                     $this->maps->rememberProcessed($clientOpId, $user->id, [

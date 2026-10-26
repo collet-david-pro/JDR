@@ -43,7 +43,9 @@ use JDR\Zip\ZipReader;
  *    written; client_op_id remembered. Any failure rolls everything back (files placed by the
  *    asset imports are deleted). A quota overflow fails the import (413 quota_exceeded);
  * 3. unresolved references (absent, or refused by the image pipeline) are reported in
- *    missing_assets [{ref, name}]: their palette index is kept, empty.
+ *    missing_assets [{ref, name}]: their palette index is kept, empty;
+ * 4. P5: placed tokens are resolved by name among the live tokens of the game (first by id);
+ *    the others are not imported and their names are listed in missing_tokens.
  */
 final class MapImportService
 {
@@ -73,7 +75,7 @@ final class MapImportService
     /**
      * Result of an already processed import with this client_op_id, null when new.
      *
-     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>}|null
+     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>, missing_tokens: list<string>}|null
      * @throws ValidationException already_used | NotFoundException imported map gone
      */
     public function replay(User $user, Game $game, string $clientOpId): ?array
@@ -92,13 +94,17 @@ final class MapImportService
             throw new NotFoundException();
         }
 
-        return ['map' => $map, 'missing_assets' => array_values($r['missing_assets'])];
+        return [
+            'map' => $map,
+            'missing_assets' => array_values($r['missing_assets']),
+            'missing_tokens' => is_array($r['missing_tokens'] ?? null) ? array_values($r['missing_tokens']) : [],
+        ];
     }
 
     /**
      * Imports the file at $path (in storage/tmp; deleted by the caller).
      *
-     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>}
+     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>, missing_tokens: list<string>}
      */
     public function import(User $user, Game $game, string $path, ?string $clientOpId): array
     {
@@ -138,7 +144,7 @@ final class MapImportService
     /**
      * @param array<string, mixed>   $doc   normalized document
      * @param array<string, ZipEntry> $files sha256 => ZIP entry
-     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>}
+     * @return array{map: Map, missing_assets: list<array{ref: string, name: string}>, missing_tokens: list<string>}
      */
     private function write(User $user, Game $game, array $doc, ?ZipReader $reader, array $files, ?string $clientOpId): array
     {
@@ -180,17 +186,19 @@ final class MapImportService
                     $palette[] = $item;
                 }
                 $missing = array_values($missing);
-                $mapId = $this->writer->create($game->id, $user->id, null, $doc, $palette);
+                $tokens = $this->writer->resolveTokens($game->id, $doc['tokens_placed'], false);
+                $mapId = $this->writer->create($game->id, $user->id, null, $doc, $palette, $tokens['ids']);
                 if ($clientOpId !== null) {
                     $this->remember($user, $clientOpId, [
                         'kind' => self::REPLAY_KIND,
                         'game_id' => $game->id,
                         'map_id' => $mapId,
                         'missing_assets' => $missing,
+                        'missing_tokens' => $tokens['missing'],
                     ]);
                 }
 
-                return ['map_id' => $mapId, 'missing_assets' => $missing];
+                return ['map_id' => $mapId, 'missing_assets' => $missing, 'missing_tokens' => $tokens['missing']];
             } catch (\Throwable $e) {
                 foreach ($created as $asset) {
                     $this->storage->deleteFiles($asset->uuid, $asset->ext);
@@ -202,6 +210,7 @@ final class MapImportService
         return [
             'map' => $this->maps->find($result['map_id']) ?? throw new \RuntimeException('Map lost after import.'),
             'missing_assets' => $result['missing_assets'],
+            'missing_tokens' => $result['missing_tokens'],
         ];
     }
 
