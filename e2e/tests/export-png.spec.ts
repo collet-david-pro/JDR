@@ -475,6 +475,10 @@ test("exported pixels match the editor preview", async ({
     await clickAt(page, fx, fy);
   }
   await expectSaved(page);
+  // P5: the GM view veils the unexplored fog; the export below has no fog nor lighting, so
+  // the preview compared with it is the plain view (same options).
+  await page.getByTestId("view-fog").uncheck();
+  await page.getByTestId("view-lighting").uncheck();
   // Pointer away (no brush preview), let the engine settle, capture the preview.
   await page.mouse.move(1, 1);
   await page.waitForTimeout(500);
