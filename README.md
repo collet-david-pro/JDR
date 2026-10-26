@@ -6,7 +6,7 @@ Ce n'est **pas un VTT de règles** : ni dés, ni initiative, ni fiches, ni point
 
 Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé classique ou auto-hébergement, Apache ou Nginx) : installation par simple envoi des fichiers puis `install.php`, aucune extension exotique, aucun démon, aucun Composer en production.
 
-> **État : en développement — version 0.1.0 (non publiée).** Les phases 0 à 5 de la feuille de route sont terminées (voir ci-dessous et [CHANGELOG.md](CHANGELOG.md)). Pas encore prêt pour la production.
+> **État : en développement — version 0.1.0 (non publiée).** Les phases 0 à 6 de la feuille de route sont terminées (voir ci-dessous et [CHANGELOG.md](CHANGELOG.md)). Pas encore prêt pour la production.
 
 ## Ce qui fonctionne aujourd'hui
 
@@ -22,6 +22,7 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
 - **Murs, lumière, vision et brouillard** : outils Mur (`W`, polyligne ou pièce, aimantation), Porte/fenêtre (`D`, posée sur un mur qu'elle découpe ; portes ouvertes/fermées, verrouillées, secrètes), Lumière (`L`, préréglages torche, lanterne, bougie, feu de camp, lumière magique ; couleur, vacillement, cônes), Token (`K`), Révéler/masquer (`F`, pinceau, rectangle ou pièce entière).
   - Lumière et vision **arrêtées par les murs** (calcul dans un worker), ambiance (obscurité, teinte, cycle jour/nuit), ombres portées.
   - **Brouillard de guerre** explorable et enregistré ; vue **« comme le joueur »** (un token ou tous les PJ) ; panneaux Propriétés, Tokens et Ambiance.
+- **Séances** : code de séance, lobby et préchargement, console MJ (joueurs, affectations, tokens, révéler, ambiance, notes, maps), vue joueur (vision, murs infranchissables, exploration), pause, textes à lire, expulsion ; temps réel SSE → long polling → polling avec bascule automatique, un seul flux par navigateur, rattrapage sans doublon ; brouillard strict et filtrage anti-fuite côté serveur.
 - Interface en français, thème clair/sombre/automatique et plusieurs styles d'interface (moderne, fantasy, science-fiction).
 
 ## Feuille de route
@@ -34,7 +35,7 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
 | P3 | Parties, membres, tokens, rencontres | ✅ |
 | P4 | Éditeur de maps (moteur, outils, persistance hors ligne, versions, import/export, export PNG) | ✅ |
 | P5 | Murs, portes, fenêtres, lumières, vision des tokens, brouillard de guerre | ✅ |
-| P6 | Séances de jeu en temps réel (code de séance, lobby, synchronisation) | à venir |
+| P6 | Séances de jeu en temps réel (code de séance, lobby, synchronisation) | ✅ |
 | P7 | Mode présentiel : écrans de projection appairés, échelle réelle | à venir |
 | P8 | Génération procédurale (donjons, grottes, extérieurs, villages, textures) | à venir |
 | P9 | Outils MJ avancés (étages, notes, liens entre maps, co-édition…) | à venir |
@@ -92,6 +93,7 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 
 - [docs/installation.md](docs/installation.md) — installation et dépannage
 - [docs/nginx.md](docs/nginx.md) — configuration Nginx (dont le flux temps réel)
+- [docs/realtime.md](docs/realtime.md) — temps réel des séances (SSE, long polling, polling)
 - [docs/architecture.md](docs/architecture.md) — architecture et décisions techniques
 - [dev/README.md](dev/README.md) — environnement de développement et tests
 

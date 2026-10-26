@@ -83,5 +83,17 @@ curl -i https://jdr.example.org/config.php                    # 403 ou 404
 curl -i https://jdr.example.org/app/bootstrap.php             # 403 ou 404
 curl -i https://jdr.example.org/storage/index.php             # 403 ou 404
 curl -i https://jdr.example.org/migrations/0001_initial.sql   # 403 ou 404
-curl -N https://jdr.example.org/api/v1/stream?channels=…      # (connecté) les ": ping" arrivent toutes les 10 s
+curl -N -H 'Cookie: jdr_sid=…' 'https://jdr.example.org/api/v1/stream?channels=session:1'   # voir ci-dessous
 ```
+
+## Vérifier le flux temps réel
+
+Le temps réel d'une séance repose sur `GET /api/v1/stream` (SSE). Pour vérifier que rien ne le met en tampon, se connecter dans le navigateur, copier la valeur du cookie `jdr_sid` (outils de développement, onglet Stockage) et lancer :
+
+```bash
+curl -N -H 'Cookie: jdr_sid=VALEUR' 'https://jdr.example.org/api/v1/stream?channels=session:ID'
+```
+
+`ID` est l'identifiant d'une séance dont on est le MJ ou un joueur (visible dans l'URL `/sessions/ID`). Attendu : un bloc de remplissage (commentaire de 2 Ko), `retry: 1500` et un premier `event: ping` **immédiatement** ; un nouveau `event: ping` toutes les 10 s ; la connexion se termine d'elle-même après 25 s (le navigateur se reconnecte). Les événements de la séance (`event: session.state`, `event: maptoken.moved`…) apparaissent au moment où le MJ agit.
+
+Symptôme d'un tampon : rien ne s'affiche pendant environ 25 s, puis tout arrive d'un coup à la fin de la réponse. Les joueurs ne sont pas bloqués : après 5 s de silence leur navigateur bascule en long polling, puis en polling si besoin (indicateur réseau de la vue joueur, `docs/realtime.md`). C'est normal mais moins réactif : désactiver `proxy_buffering` / `fastcgi_buffering` pour `/api/v1/stream` (exemple ci-dessus) ou le tampon du proxy en amont.
