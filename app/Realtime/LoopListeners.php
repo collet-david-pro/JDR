@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Container;
 use JDR\Core\Logger;
+use JDR\Domain\Sessions\PresenceService;
 
 /**
  * The LoopListener services called by the real-time loops. CLASSES lists the services resolved
@@ -17,7 +18,7 @@ use JDR\Core\Logger;
 final class LoopListeners
 {
     /** @var list<class-string<LoopListener>> */
-    public const CLASSES = [];
+    public const CLASSES = [PresenceService::class];
 
     /** @var list<LoopListener>|null */
     private ?array $listeners = null;

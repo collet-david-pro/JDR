@@ -66,7 +66,7 @@ final class GameRightsMatrixTest extends GamesTestCase
         }
 
         return match ($pattern) {
-            '/games/{id:\d+}', '/games/{id:\d+}/members', '/games/{id:\d+}/tokens' => 200,
+            '/games/{id:\d+}', '/games/{id:\d+}/members', '/games/{id:\d+}/tokens', '/games/{id:\d+}/sessions' => 200, // sessions: his own only (P6b)
             default => 403, // GET /tokens/{id} (not the owner), GET /games/{id}/encounters
         };
     }

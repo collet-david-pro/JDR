@@ -70,7 +70,11 @@
     "invalid_pack": "Ce pack d'assets est invalide ou dangereux (archive ZIP incorrecte).",
     "job_expired": "Ce traitement a expiré : ses fichiers ont été supprimés. Relancez-le.",
     "unsupported_format_version": "Ce fichier de map vient d'une version plus récente du site : mettez le site à jour pour l'importer.",
-    "invalid_map_file": "Ce fichier n'est pas une map valide (JSON ou archive ZIP exportée depuis le site)."
+    "invalid_map_file": "Ce fichier n'est pas une map valide (JSON ou archive ZIP exportée depuis le site).",
+    "session_exists": "Une séance est déjà ouverte pour cette partie.",
+    "invalid_transition": "Cette action n'est pas possible dans l'état actuel de la séance.",
+    "session_not_running": "La séance n'est pas en cours.",
+    "kicked": "Vous avez été exclu de cette séance."
   },
   "pages": {
     "not_found": {

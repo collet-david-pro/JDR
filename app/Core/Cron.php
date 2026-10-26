@@ -13,6 +13,7 @@ use JDR\Domain\Maps\MapHousekeeping;
 use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Auth\PasswordResets;
+use JDR\Domain\Sessions\SessionHousekeeping;
 use JDR\Domain\Settings\Settings;
 use JDR\Realtime\EventPurger;
 
@@ -125,6 +126,8 @@ final class Cron
             ),
             'map_thumbs' => static fn (): int => $c->get(MapThumbnailService::class)->purgeOrphans(),
             'events' => static fn (): int => $c->get(EventPurger::class)->purge(),
+            'presence' => static fn (): int => $c->get(SessionHousekeeping::class)->sweepPresence(),
+            'sessions' => static fn (): int => $c->get(SessionHousekeeping::class)->purgeEnded(),
         ];
     }
 }
