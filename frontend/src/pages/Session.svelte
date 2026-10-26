@@ -1,17 +1,18 @@
 <script lang="ts">
   import Forbidden from './Forbidden.svelte';
   import NotFound from './NotFound.svelte';
+  import PlayerSession from '../components/play/PlayerSession.svelte';
   import SessionConsole from '../components/sessions/SessionConsole.svelte';
   import { ApiError } from '../lib/api';
   import { describeError } from '../lib/errors';
   import { t } from '../lib/i18n';
   import type { PageProps } from '../lib/page';
-  import { href, services, sessionsClient } from '../lib/services';
+  import { services, sessionsClient } from '../lib/services';
   import type { Session } from '../lib/sessions';
 
   /**
-   * Session page (/sessions/:id). The GM (and co-GM) get the console; the player view (lobby,
-   * game view) arrives with P6f.
+   * Session page (/sessions/:id). The GM (and co-GM) get the console; the players get the lobby and the game
+   * view (components/play).
    */
   let { params }: PageProps = $props();
   const { auth } = services();
@@ -63,12 +64,7 @@
     <SessionConsole sessionId={session.id} gameId={session.game_id} {userId} />
   {/key}
 {:else}
-  <section class="card stack" data-testid="session-player">
-    <h1>{session.name}</h1>
-    <p class="muted">{t('sessions.player.soon')}</p>
-    <p>
-      <a href={href(`/games/${encodeURIComponent(session.game_id)}`)}>{t('sessions.player.back')}</a
-      >
-    </p>
-  </section>
+  {#key session.id}
+    <PlayerSession sessionId={session.id} gameId={session.game_id} {userId} />
+  {/key}
 {/if}

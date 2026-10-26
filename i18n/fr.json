@@ -1741,7 +1741,6 @@
       "resume": "Séances à reprendre"
     },
     "player": {
-      "soon": "Vue joueur : P6f",
       "back": "Retour à la partie",
       "join_current": "Rejoindre la séance en cours"
     },
@@ -1853,6 +1852,56 @@
       "unavailable": "La liste des maps est indisponible.",
       "confirm_title": "Changer de map ?",
       "confirm_text": "Tous les joueurs passent sur la nouvelle map."
+    }
+  },
+  "play": {
+    "leave": "Quitter la séance",
+    "blocked_by_wall": "Bloqué par un mur",
+    "lobby": {
+      "players": "Joueurs",
+      "you": "vous",
+      "ready_state": "Prêt",
+      "not_ready": "Pas prêt",
+      "tokens": "Vos tokens",
+      "no_tokens": "Aucun token ne vous est affecté pour l'instant.",
+      "token_unknown": "Token",
+      "preload": "Préchargement de la map",
+      "preload_progress": "{done} / {total} ressources",
+      "preload_done": "Ressources prêtes",
+      "preload_errors": "{count} ressource(s) n'ont pas pu être chargées.",
+      "preload_failed": "Impossible de préparer la map.",
+      "ready": "Je suis prêt",
+      "waiting_gm": "En attente du MJ…",
+      "no_map": "Le MJ n'a pas encore choisi de map."
+    },
+    "view": {
+      "map_label": "Map de la séance",
+      "follow": "Suivre le MJ",
+      "center": "Centrer sur mon token"
+    },
+    "pause": {
+      "title": "Séance en pause",
+      "hint": "La séance reprendra dès que le MJ la relancera."
+    },
+    "read_aloud": {
+      "title": "Message du MJ"
+    },
+    "kicked": {
+      "title": "Vous avez été retiré de la séance",
+      "text": "Le MJ vous a retiré de cette séance.",
+      "home": "Retour à l'accueil"
+    },
+    "ended": {
+      "title": "Séance terminée"
+    },
+    "network": {
+      "online": "Connecté",
+      "reconnecting": "Reconnexion…",
+      "offline": "Hors ligne",
+      "mode": "Transport : {mode}",
+      "mode_sse": "temps réel (SSE)",
+      "mode_longpoll": "long polling",
+      "mode_poll": "interrogation régulière"
     }
   }
 }
