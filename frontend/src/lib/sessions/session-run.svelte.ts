@@ -7,6 +7,7 @@
  */
 import type { ChunkKey } from '../../editor/contracts';
 import type { SyncClient } from '../realtime/types';
+import type { BlockedMove } from './action-sender';
 import type { SessionEffect } from './effects';
 import { SceneHost, type SessionScene, type TileSource } from './scene';
 import { SessionSync, type SessionApi } from './session-sync';
@@ -30,6 +31,8 @@ export interface SessionRunOptions {
   readonly visible?: () => readonly ChunkKey[] | undefined;
   /** Error shown to the user (refused action, partial loading...). */
   readonly onProblem?: (error: unknown) => void;
+  /** A token.move was refused by a wall (D8): the token was brought back (player view). */
+  readonly onBlocked?: (move: BlockedMove) => void;
 }
 
 export class SessionRun {
@@ -44,6 +47,8 @@ export class SessionRun {
   readAloud = $state.raw<ReadAloud | null>(null);
   /** The server asked the clients to reload (server.notice reload). */
   reloadAsked = $state(false);
+  /** Counts the `reload.preload` effects (player: the map changed, preload again). */
+  preloadAsked = $state(0);
 
   readonly sync: SessionSync;
   private readonly host: SceneHost;
@@ -75,6 +80,7 @@ export class SessionRun {
       onState: (state) => this.apply(state),
       onEffect: (effect) => this.effect(effect),
       onError: (error) => o.onProblem?.(error),
+      ...(o.onBlocked === undefined ? {} : { onBlocked: o.onBlocked }),
     });
   }
 
@@ -120,6 +126,9 @@ export class SessionRun {
       case 'fog':
       case 'reload.chunks':
         this.host.effect(effect);
+        return;
+      case 'reload.preload':
+        this.preloadAsked += 1;
         return;
       case 'read_aloud':
         this.readAloud = { eventId: effect.eventId, title: effect.title, body: effect.body };

@@ -62,6 +62,7 @@ export class SessionScene {
   private definitions: SessionState['definitions'] | null = null;
   private ambient: SessionState['ambient'] | undefined;
   private readonly frozen = new Set<string>();
+  private readonly role: SessionState['role'];
   private abort = new AbortController();
   private disposed = false;
 
@@ -69,6 +70,7 @@ export class SessionScene {
     const map = state.map;
     if (map === null) throw new Error('SessionScene needs a map');
     this.mapId = map.id;
+    this.role = state.role;
     this.floor = floor;
     this.mapRevision = map.revision;
     this.doc = new MapDocument({
@@ -80,7 +82,10 @@ export class SessionScene {
       ...(state.ambient === null ? {} : { ambient: state.ambient }),
     });
     this.ambient = state.ambient;
-    this.doc.loadScene(Object.values(state.objects), Object.values(state.tokens));
+    this.doc.loadScene(
+      Object.values(state.objects).map((o) => this.shown(o)),
+      Object.values(state.tokens),
+    );
     this.objects = state.objects;
     this.tokens = state.tokens;
     this.sync(state);
@@ -111,7 +116,7 @@ export class SessionScene {
       for (const [uid, value] of Object.entries(state.objects)) {
         if (previous[uid] === value) continue;
         if (value.floor === this.floor || previous[uid]?.floor === this.floor) {
-          this.safely(() => this.doc.replaceObject(uid, value));
+          this.safely(() => this.doc.replaceObject(uid, this.shown(value)));
         }
       }
       for (const uid of Object.keys(previous)) {
@@ -150,6 +155,16 @@ export class SessionScene {
     }
   }
 
+  /**
+   * The server sends a secret door to a player only once revealed (an unrevealed one comes as a
+   * wall): a door received by a player is a real door, not the wall `props.secret` makes of it
+   * in the vision of the editor's "player view".
+   */
+  private shown(object: MapObject): MapObject {
+    if (this.role !== 'player' || object.type !== 'door' || !object.props.secret) return object;
+    return { ...object, props: { ...object.props, secret: false } };
+  }
+
   /** An invalid value from the server must not stop the other updates. */
   private safely(change: () => void): void {
     try {
@@ -172,6 +187,14 @@ export class SessionScene {
   /** The drag ended: the state is applied again for this token at the next sync. */
   release(uid: string): void {
     this.frozen.delete(uid);
+  }
+
+  /** A move was refused: shows the token where the server has it. */
+  revert(uid: string): void {
+    this.frozen.delete(uid);
+    const server = this.tokens[uid];
+    if (server === undefined || this.disposed) return;
+    this.safely(() => this.doc.replaceToken(uid, server));
   }
 
   /** The placed token at `uid` as the document shows it (preview included). */
