@@ -14,6 +14,7 @@ use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Settings\Settings;
+use JDR\Realtime\EventPurger;
 
 /**
  * Housekeeping tasks (projet.md 6.5): real cron (cron.php?key=<cron_key>) or pseudo-cron
@@ -123,6 +124,7 @@ final class Cron
                 $c->get(Settings::class)->int('versions_retention'),
             ),
             'map_thumbs' => static fn (): int => $c->get(MapThumbnailService::class)->purgeOrphans(),
+            'events' => static fn (): int => $c->get(EventPurger::class)->purge(),
         ];
     }
 }

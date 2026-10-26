@@ -284,6 +284,17 @@
       },
       "client_op_id": {
         "already_used": "Cette opération a déjà été utilisée pour autre chose : rechargez puis réessayez."
+      },
+      "channels": {
+        "required": "Indiquez au moins un canal.",
+        "invalid": "Canal invalide (attendu : session:<id> ou map:<id>).",
+        "too_many": "4 canaux au maximum par connexion."
+      },
+      "since": {
+        "invalid": "Position d'événement invalide."
+      },
+      "wait": {
+        "invalid": "Attente invalide (0 à 20 secondes)."
       }
     },
     "not_ready": "Le traitement n'est pas terminé.",
