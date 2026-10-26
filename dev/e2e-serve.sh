@@ -4,7 +4,7 @@
 # 1. copies the deliverable into a temporary folder (never the dev checkout: no config.php,
 #    no .git, no frontend/, no e2e/, storage/ reduced to its skeleton);
 # 2. (re)creates a blank database (DROP + CREATE: never point it at jdr_dev or jdr_test);
-# 3. runs PHP_CLI_SERVER_WORKERS=8 php -S 127.0.0.1:$E2E_PORT index.php in the copy;
+# 3. runs PHP_CLI_SERVER_WORKERS=16 php -S 127.0.0.1:$E2E_PORT index.php in the copy;
 # 4. on exit (SIGTERM from Playwright, Ctrl+C), stops PHP, deletes the copy and drops the database.
 #
 # The front must be built beforehand (cd frontend && npm run build).
@@ -92,6 +92,6 @@ printf '%s\n' "$SITE" > "$LOG_DIR/site-$PORT.path"
 echo "e2e-serve: http://127.0.0.1:$PORT  site=$SITE  db=$E2E_DB_NAME  log=$LOG" >&2
 
 cd "$SITE"
-PHP_CLI_SERVER_WORKERS=8 php -d display_errors=0 -d log_errors=1 -S "127.0.0.1:$PORT" index.php > "$LOG" 2>&1 &
+PHP_CLI_SERVER_WORKERS=16 php -d display_errors=0 -d log_errors=1 -S "127.0.0.1:$PORT" index.php > "$LOG" 2>&1 &
 PHP_PID=$!
 wait "$PHP_PID"
