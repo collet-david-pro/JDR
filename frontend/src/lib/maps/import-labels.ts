@@ -69,6 +69,8 @@ export function issueText(issue: MapDocumentIssue, t: Translate = defaultT): str
     case 'bad_flags':
     case 'bad_block':
       return t('games.maps.import.issues.bad_block', { path });
+    case 'below_radius':
+      return t('games.maps.import.issues.below_radius', { path });
   }
 }
 
@@ -83,6 +85,7 @@ export function serverIssueCode(code: string): MapDocumentIssueCode {
     case 'bad_flags':
     case 'too_long':
     case 'too_many':
+    case 'below_radius':
       return code;
     case 'too_small':
     case 'too_large':
@@ -99,6 +102,11 @@ export function serverIssueCode(code: string): MapDocumentIssueCode {
     default:
       return 'pattern'; // invalid and future codes: "valeur non autorisée"
   }
+}
+
+/** Report of the placed tokens that the server could not attach to a token of the game (P5). */
+export function missingTokensText(names: readonly string[], t: Translate = defaultT): string {
+  return t('games.maps.import.missing_tokens', { count: names.length });
 }
 
 export interface ImportFailure {

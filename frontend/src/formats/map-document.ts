@@ -4,13 +4,15 @@
  * hand-written validation (no schema library: projet.md 4.3), runs the format migrations
  * (`migrate_vN_to_vN+1`, none while the format is at version 1) and checks the tile blocks.
  *
- * The rules are those of the server (app/Maps/Document/MapDocumentValidator.php): unknown keys
- * are refused, the content that comes with later phases (objects, notes, links, placed tokens,
- * fog) must be empty in P4. The server stays the authority (it validates again on import); the
- * client validation lets the import dialog explain a bad file before uploading it.
+ * The rules are those of the server (app/Maps/Document/MapDocumentValidator.php, ObjectRules,
+ * TokenRules): unknown keys are refused; P5 objects (wall, door, window, light), placed tokens
+ * and fog are validated; notes and links (P9) must be empty. The server stays the authority (it
+ * validates again on import); the client validation lets the import dialog explain a bad file
+ * before uploading it.
  */
 import { CHUNK_SIZE, type TileLayerId } from '../editor/contracts';
 import { CELL_STRIDE, ChunkCodecError, decodeChunk, TILE_LAYERS } from './chunk-codec';
+import { decodeFog, FogCodecError, isFogEmpty } from './fog-codec';
 
 export const MAP_DOCUMENT_FORMAT = 'jdr-map';
 export const CURRENT_FORMAT_VERSION = 1;
@@ -85,8 +87,87 @@ const PALETTE_KEYS = ['asset', 'name', 'autotile'];
 const LAYER_KEYS = ['id', 'kind', 'visible', 'locked', 'opacity', 'gm_only'];
 const FLOOR_KEYS = ['uid', 'level', 'name'];
 const GENERATION_KEYS = ['generator', 'gen_version', 'seed', 'params'];
-/** Content of later phases: must be null or empty in P4 (`unsupported` otherwise). */
-export const LATER_LISTS = ['objects', 'notes', 'links', 'tokens_placed'] as const;
+/** Content of later phases (P9): must be null or empty (`unsupported` otherwise). */
+export const LATER_LISTS = ['notes', 'links'] as const;
+
+/* ---- P5 content (etapes/P05 "Contrat d'API P5", same bounds as the server) ------------- */
+
+export const OBJECT_TYPES = ['wall', 'door', 'window', 'light'] as const;
+export const OBJECT_VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'] as const;
+export const WALL_KINDS = ['stone', 'brick', 'wood', 'metal', 'natural', 'invisible'] as const;
+export const DOOR_STATES = ['open', 'closed'] as const;
+export const DOOR_SWINGS = ['a', 'b', 'slide'] as const;
+export const WINDOW_KINDS = ['glass', 'bars', 'opening'] as const;
+export const FLICKER_TYPES = ['none', 'torch', 'pulse'] as const;
+export const OBJECTS_MAX = 20_000;
+export const TOKENS_PLACED_MAX = 2_000;
+export const WALL_POINTS_MIN = 2;
+export const WALL_POINTS_MAX = 1_000;
+export const SORT_ORDER_MAX = 1_000_000;
+export const LIGHT_RADIUS_MAX = 100;
+/** Token definition light (P3 TokenInput): radii 0–1000 cells. */
+export const TOKEN_LIGHT_RADIUS_MAX = 1_000;
+export const TOKEN_NAME_MAX = 80;
+export const FOG_BASE64_MAX = 4096;
+export const OBJECT_UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
+export const TOKEN_REF_PATTERN = /^ref:token:([\s\S]+)$/;
+/** Members of a document object (no rev); layer, visibility, locked, sort_order may be omitted. */
+const OBJECT_KEYS = [
+  'uid',
+  'floor',
+  'type',
+  'layer',
+  'geometry',
+  'props',
+  'visibility',
+  'locked',
+  'sort_order',
+];
+const OBJECT_OPTIONAL = ['layer', 'visibility', 'locked', 'sort_order'];
+const GEOMETRY_KEYS: Readonly<Record<(typeof OBJECT_TYPES)[number], readonly string[]>> = {
+  wall: ['points', 'closed'],
+  door: ['a', 'b'],
+  window: ['a', 'b'],
+  light: ['x', 'y'],
+};
+const PROPS_KEYS: Readonly<Record<(typeof OBJECT_TYPES)[number], readonly string[]>> = {
+  wall: [
+    'kind',
+    'thickness',
+    'blocks_vision',
+    'blocks_light',
+    'blocks_move',
+    'texture_asset',
+    'height',
+  ],
+  door: ['state', 'locked', 'secret', 'asset_open', 'asset_closed', 'swing'],
+  window: ['kind'],
+  light: [
+    'radius',
+    'dim_radius',
+    'color',
+    'intensity',
+    'flicker',
+    'cone',
+    'enabled',
+    'follows_token',
+  ],
+};
+/** Reserved props (P9 textures) that a document may omit: null. */
+const PROPS_OPTIONAL = ['texture_asset', 'height', 'asset_open', 'asset_closed'];
+const TOKEN_KEYS = [
+  'uid',
+  'token',
+  'floor',
+  'x',
+  'y',
+  'rotation',
+  'scale',
+  'hidden',
+  'light_override',
+];
+const TOKEN_OPTIONAL = ['rotation', 'scale', 'hidden', 'light_override'];
+const TOKEN_LIGHT_KEYS = ['radius', 'dim_radius', 'color', 'intensity', 'flicker'];
 
 /* ---- Document types (format_version 1) ------------------------------------------------- */
 
@@ -137,13 +218,44 @@ export interface MapDocumentV1 {
   readonly layers: readonly MapDocumentLayer[];
   readonly floors: readonly MapDocumentFloor[];
   readonly chunks: Readonly<Record<string, Readonly<Partial<Record<TileLayerId, BlockMap>>>>>;
-  /** Empty in P4. */
-  readonly fog?: Readonly<Record<string, unknown>> | null;
-  readonly objects?: readonly never[] | null;
+  /** Floor uid → "cx:cy" → base64 raw-deflate fog bitmap (projet.md 12.3). */
+  readonly fog?:
+    Readonly<Record<string, BlockMap | readonly never[] | null>> | readonly never[] | null;
+  readonly objects?: readonly MapDocumentObject[] | null;
   readonly notes?: readonly never[] | null;
   readonly links?: readonly never[] | null;
-  readonly tokens_placed?: readonly never[] | null;
+  readonly tokens_placed?: readonly MapDocumentPlacedToken[] | null;
   readonly generation?: Readonly<Record<string, unknown>> | null;
+}
+
+/**
+ * Object of a document: the editor object (contracts.ts MapObject) without `rev`, `floor` = floor
+ * uid of the document; layer, visibility, locked, sort_order and the reserved props may be
+ * omitted (12.1 example).
+ */
+export interface MapDocumentObject {
+  readonly uid: string;
+  readonly floor: string;
+  readonly type: (typeof OBJECT_TYPES)[number];
+  readonly layer?: (typeof OBJECT_LAYER_IDS)[number];
+  readonly geometry: Readonly<Record<string, unknown>>;
+  readonly props: Readonly<Record<string, unknown>>;
+  readonly visibility?: (typeof OBJECT_VISIBILITIES)[number];
+  readonly locked?: boolean;
+  readonly sort_order?: number;
+}
+
+/** Placed token of a document: definition by name ("ref:token:<name>"). */
+export interface MapDocumentPlacedToken {
+  readonly uid: string;
+  readonly token: string;
+  readonly floor: string;
+  readonly x: number;
+  readonly y: number;
+  readonly rotation?: number;
+  readonly scale?: number;
+  readonly hidden?: boolean;
+  readonly light_override?: Readonly<Record<string, unknown>> | null;
 }
 
 /* ---- Validation ------------------------------------------------------------------------ */
@@ -164,7 +276,8 @@ export type MapDocumentIssueCode =
   | 'unknown_layer'
   | 'out_of_bounds'
   | 'bad_flags'
-  | 'bad_block';
+  | 'bad_block'
+  | 'below_radius';
 
 export interface MapDocumentIssue {
   /** JSON path, e.g. "grid.width", "palette.3.asset", "chunks.f1.ground.0:0". */
@@ -524,17 +637,339 @@ function checkChunks(
   }
 }
 
-/** Empty fog: null, {} / [] or floors that are all empty. */
-function isEmptyFog(v: unknown): boolean {
-  if (v === null) return true;
-  if (Array.isArray(v)) return v.length === 0;
-  if (!isObj(v)) return false;
-  return Object.values(v).every(
-    (floor) =>
-      floor === null ||
-      (Array.isArray(floor) && floor.length === 0) ||
-      (isObj(floor) && Object.keys(floor).length === 0),
-  );
+/* ---- P5 content --------------------------------------------------------------------- */
+
+interface Size {
+  readonly width: number;
+  readonly height: number;
+}
+
+/** Member check of an object whose keys are all required unless listed in `optional`. */
+function members(
+  c: Collector,
+  v: Obj,
+  keys: readonly string[],
+  optional: readonly string[],
+  path: string,
+): boolean {
+  c.keys(v, keys, path);
+  let ok = true;
+  for (const key of keys) {
+    if (optional.includes(key)) continue;
+    if (!Object.hasOwn(v, key) || v[key] === undefined) {
+      c.add(join(path, key), 'required');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function checkUid(c: Collector, v: unknown, path: string): v is string {
+  if (typeof v !== 'string') {
+    c.add(path, 'type');
+    return false;
+  }
+  if (!OBJECT_UID_PATTERN.test(v)) {
+    c.add(path, 'pattern');
+    return false;
+  }
+  return true;
+}
+
+function checkFloorRef(c: Collector, v: unknown, path: string, floors: ReadonlySet<string>): void {
+  if (typeof v !== 'string') c.add(path, 'type');
+  else if (!FLOOR_UID_PATTERN.test(v)) c.add(path, 'pattern');
+  else if (!floors.has(v)) c.add(path, 'unknown_floor');
+}
+
+function checkPoint(c: Collector, v: unknown, path: string, size: Size): v is [number, number] {
+  if (!Array.isArray(v) || v.length !== 2) {
+    c.add(path, 'type');
+    return false;
+  }
+  return c.number(v[0], path, 0, size.width) && c.number(v[1], path, 0, size.height);
+}
+
+function checkColor(c: Collector, v: unknown, path: string): void {
+  if (typeof v !== 'string') c.add(path, 'type');
+  else if (!COLOR_PATTERN.test(v)) c.add(path, 'pattern');
+}
+
+function checkGeometry(
+  c: Collector,
+  type: (typeof OBJECT_TYPES)[number],
+  v: unknown,
+  path: string,
+  size: Size,
+): void {
+  if (!isObj(v)) {
+    c.add(path, 'type');
+    return;
+  }
+  if (!members(c, v, GEOMETRY_KEYS[type], [], path)) return;
+  if (type === 'wall') {
+    const points = v['points'];
+    if (!Array.isArray(points)) c.add(`${path}.points`, 'type');
+    else if (points.length < WALL_POINTS_MIN) c.add(`${path}.points`, 'range');
+    else if (points.length > WALL_POINTS_MAX) c.add(`${path}.points`, 'too_many');
+    else {
+      for (let k = 0; k < points.length && !c.full; k++) {
+        if (!checkPoint(c, points[k], `${path}.points.${k}`, size)) break;
+      }
+    }
+    c.boolean(v['closed'], `${path}.closed`);
+  } else if (type === 'light') {
+    c.number(v['x'], `${path}.x`, 0, size.width);
+    c.number(v['y'], `${path}.y`, 0, size.height);
+  } else {
+    const a = v['a'];
+    const b = v['b'];
+    if (checkPoint(c, a, `${path}.a`, size) && checkPoint(c, b, `${path}.b`, size)) {
+      const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (length < 0.1 - 1e-9 || length > 20 + 1e-9) c.add(path, 'range');
+    }
+  }
+}
+
+function checkFlicker(c: Collector, v: unknown, path: string): void {
+  if (!isObj(v)) {
+    c.add(path, 'type');
+    return;
+  }
+  if (!members(c, v, ['type', 'amp', 'speed'], [], path)) return;
+  c.oneOf(v['type'], FLICKER_TYPES, `${path}.type`);
+  c.number(v['amp'], `${path}.amp`, 0, 1);
+  c.number(v['speed'], `${path}.speed`, 0.1, 10);
+}
+
+function checkCone(c: Collector, v: unknown, path: string): void {
+  if (v === null) return;
+  if (!isObj(v)) {
+    c.add(path, 'type');
+    return;
+  }
+  if (!members(c, v, ['angle', 'direction'], [], path)) return;
+  c.number(v['angle'], `${path}.angle`, 1, 359);
+  c.number(v['direction'], `${path}.direction`, 0, 360);
+}
+
+function checkProps(
+  c: Collector,
+  type: (typeof OBJECT_TYPES)[number],
+  v: unknown,
+  path: string,
+): void {
+  if (!isObj(v)) {
+    c.add(path, 'type');
+    return;
+  }
+  if (!members(c, v, PROPS_KEYS[type], PROPS_OPTIONAL, path)) return;
+  const p = (key: string): string => `${path}.${key}`;
+  const reserved = (key: string): void => {
+    if (Object.hasOwn(v, key) && v[key] !== null) c.add(p(key), 'const');
+  };
+  switch (type) {
+    case 'wall':
+      c.oneOf(v['kind'], WALL_KINDS, p('kind'));
+      c.number(v['thickness'], p('thickness'), 0.05, 2);
+      c.boolean(v['blocks_vision'], p('blocks_vision'));
+      c.boolean(v['blocks_light'], p('blocks_light'));
+      c.boolean(v['blocks_move'], p('blocks_move'));
+      reserved('texture_asset');
+      c.optional(v, 'height', (x, q) => x === null || c.number(x, q, 0, 20), p('height'));
+      break;
+    case 'door':
+      c.oneOf(v['state'], DOOR_STATES, p('state'));
+      c.boolean(v['locked'], p('locked'));
+      c.boolean(v['secret'], p('secret'));
+      reserved('asset_open');
+      reserved('asset_closed');
+      c.oneOf(v['swing'], DOOR_SWINGS, p('swing'));
+      break;
+    case 'window':
+      c.oneOf(v['kind'], WINDOW_KINDS, p('kind'));
+      break;
+    case 'light': {
+      const radius = c.number(v['radius'], p('radius'), 0, LIGHT_RADIUS_MAX);
+      const dim = c.number(v['dim_radius'], p('dim_radius'), 0, LIGHT_RADIUS_MAX);
+      if (radius && dim && (v['dim_radius'] as number) < (v['radius'] as number)) {
+        c.add(p('dim_radius'), 'below_radius');
+      }
+      checkColor(c, v['color'], p('color'));
+      c.number(v['intensity'], p('intensity'), 0, 1);
+      checkFlicker(c, v['flicker'], p('flicker'));
+      checkCone(c, v['cone'], p('cone'));
+      c.boolean(v['enabled'], p('enabled'));
+      if (v['follows_token'] !== null) checkUid(c, v['follows_token'], p('follows_token'));
+      break;
+    }
+  }
+}
+
+function checkObjects(
+  c: Collector,
+  v: unknown,
+  floors: ReadonlySet<string>,
+  size: Size | null,
+): void {
+  if (v === null) return;
+  if (!Array.isArray(v)) {
+    c.add('objects', 'type');
+    return;
+  }
+  if (v.length > OBJECTS_MAX) {
+    c.add('objects', 'too_many');
+    return;
+  }
+  const uids = new Set<string>();
+  for (let i = 0; i < v.length && !c.full; i++) {
+    const object: unknown = v[i];
+    const path = `objects.${i}`;
+    if (!isObj(object) || Object.keys(object).length === 0) {
+      c.add(path, 'type');
+      continue;
+    }
+    if (!members(c, object, OBJECT_KEYS, OBJECT_OPTIONAL, path)) continue;
+    if (checkUid(c, object['uid'], `${path}.uid`)) {
+      const key = object['uid'].toLowerCase();
+      if (uids.has(key)) c.add(`${path}.uid`, 'duplicate');
+      uids.add(key);
+    }
+    checkFloorRef(c, object['floor'], `${path}.floor`, floors);
+    c.optional(object, 'layer', (x, q) => c.oneOf(x, OBJECT_LAYER_IDS, q), `${path}.layer`);
+    c.optional(
+      object,
+      'visibility',
+      (x, q) => c.oneOf(x, OBJECT_VISIBILITIES, q),
+      `${path}.visibility`,
+    );
+    c.optional(object, 'locked', (x, q) => c.boolean(x, q), `${path}.locked`);
+    c.optional(
+      object,
+      'sort_order',
+      (x, q) => c.number(x, q, -SORT_ORDER_MAX, SORT_ORDER_MAX, true),
+      `${path}.sort_order`,
+    );
+    const type = object['type'];
+    if (!c.oneOf(type, OBJECT_TYPES, `${path}.type`)) continue;
+    const t = type as (typeof OBJECT_TYPES)[number];
+    if (size !== null) checkGeometry(c, t, object['geometry'], `${path}.geometry`, size);
+    checkProps(c, t, object['props'], `${path}.props`);
+  }
+}
+
+function checkTokenLight(c: Collector, v: unknown, path: string): void {
+  if (v === null) return;
+  if (!isObj(v)) {
+    c.add(path, 'type');
+    return;
+  }
+  if (!members(c, v, TOKEN_LIGHT_KEYS, [], path)) return;
+  const radius = c.number(v['radius'], `${path}.radius`, 0, TOKEN_LIGHT_RADIUS_MAX);
+  const dim = c.number(v['dim_radius'], `${path}.dim_radius`, 0, TOKEN_LIGHT_RADIUS_MAX);
+  if (radius && dim && (v['dim_radius'] as number) < (v['radius'] as number)) {
+    c.add(`${path}.dim_radius`, 'below_radius');
+  }
+  checkColor(c, v['color'], `${path}.color`);
+  c.number(v['intensity'], `${path}.intensity`, 0, 1);
+  c.boolean(v['flicker'], `${path}.flicker`);
+}
+
+function checkTokenRef(c: Collector, v: unknown, path: string): void {
+  if (typeof v !== 'string') {
+    c.add(path, 'type');
+    return;
+  }
+  const m = TOKEN_REF_PATTERN.exec(v);
+  // eslint-disable-next-line no-control-regex -- control characters are refused in names
+  if (m === null || m[1]!.trim() !== m[1] || /[\u0000-\u001f\u007f]/.test(m[1]!)) {
+    c.add(path, 'pattern');
+  } else if (charLength(m[1]!) > TOKEN_NAME_MAX) {
+    c.add(path, 'too_long');
+  }
+}
+
+function checkPlacedTokens(
+  c: Collector,
+  v: unknown,
+  floors: ReadonlySet<string>,
+  size: Size | null,
+): void {
+  if (v === null) return;
+  if (!Array.isArray(v)) {
+    c.add('tokens_placed', 'type');
+    return;
+  }
+  if (v.length > TOKENS_PLACED_MAX) {
+    c.add('tokens_placed', 'too_many');
+    return;
+  }
+  const uids = new Set<string>();
+  for (let i = 0; i < v.length && !c.full; i++) {
+    const token: unknown = v[i];
+    const path = `tokens_placed.${i}`;
+    if (!isObj(token) || Object.keys(token).length === 0) {
+      c.add(path, 'type');
+      continue;
+    }
+    if (!members(c, token, TOKEN_KEYS, TOKEN_OPTIONAL, path)) continue;
+    if (checkUid(c, token['uid'], `${path}.uid`)) {
+      const key = token['uid'].toLowerCase();
+      if (uids.has(key)) c.add(`${path}.uid`, 'duplicate');
+      uids.add(key);
+    }
+    checkTokenRef(c, token['token'], `${path}.token`);
+    checkFloorRef(c, token['floor'], `${path}.floor`, floors);
+    if (size !== null) {
+      c.number(token['x'], `${path}.x`, 0, size.width);
+      c.number(token['y'], `${path}.y`, 0, size.height);
+    }
+    c.optional(token, 'rotation', (x, q) => c.number(x, q, 0, 359, true), `${path}.rotation`);
+    c.optional(token, 'scale', (x, q) => c.number(x, q, 0.25, 4), `${path}.scale`);
+    c.optional(token, 'hidden', (x, q) => c.boolean(x, q), `${path}.hidden`);
+    c.optional(
+      token,
+      'light_override',
+      (x, q) => checkTokenLight(c, x, q),
+      `${path}.light_override`,
+    );
+  }
+}
+
+function checkFog(c: Collector, v: unknown, floors: ReadonlySet<string>, size: Size | null): void {
+  if (v === null || (Array.isArray(v) && v.length === 0)) return;
+  if (!isObj(v)) {
+    c.add('fog', 'type');
+    return;
+  }
+  for (const [floor, blocks] of Object.entries(v)) {
+    const path = `fog.${floor}`;
+    if (!floors.has(floor)) {
+      c.add(path, 'unknown_floor');
+      continue;
+    }
+    if (blocks === null || (Array.isArray(blocks) && blocks.length === 0)) continue;
+    if (!isObj(blocks)) {
+      c.add(path, 'type');
+      continue;
+    }
+    for (const [key, data] of Object.entries(blocks)) {
+      if (c.full) return;
+      const p = `${path}.${key}`;
+      const m = BLOCK_KEY_PATTERN.exec(key);
+      if (m === null) c.add(p, 'pattern');
+      else if (
+        size !== null &&
+        (Number(m[1]) >= blocksAlong(size.width) || Number(m[2]) >= blocksAlong(size.height))
+      ) {
+        c.add(p, 'out_of_bounds');
+      } else if (typeof data !== 'string') c.add(p, 'type');
+      else if (data.length > FOG_BASE64_MAX) c.add(p, 'too_long');
+      else if (data === '' || data.length % 4 !== 0 || !BASE64_PATTERN.test(data)) {
+        c.add(p, 'pattern');
+      }
+    }
+  }
 }
 
 function checkGeneration(c: Collector, v: unknown): void {
@@ -606,6 +1041,9 @@ export function validateMapDocument(value: unknown): MapDocumentValidation {
   const floors = floorsValue === undefined ? new Set<string>() : checkFloors(c, floorsValue);
   const chunks = c.required(value, 'chunks', 'chunks');
   if (chunks !== undefined) checkChunks(c, chunks, floors, size);
+  c.optional(value, 'objects', (x) => checkObjects(c, x, floors, size), 'objects');
+  c.optional(value, 'tokens_placed', (x) => checkPlacedTokens(c, x, floors, size), 'tokens_placed');
+  c.optional(value, 'fog', (x) => checkFog(c, x, floors, size), 'fog');
   for (const key of LATER_LISTS) {
     c.optional(
       value,
@@ -618,15 +1056,6 @@ export function validateMapDocument(value: unknown): MapDocumentValidation {
       key,
     );
   }
-  c.optional(
-    value,
-    'fog',
-    (x, p) => {
-      if (isEmptyFog(x)) return;
-      c.add(p, isObj(x) || Array.isArray(x) ? 'unsupported' : 'type');
-    },
-    'fog',
-  );
   c.optional(value, 'generation', (x) => checkGeneration(c, x), 'generation');
   if (c.issues.length > 0) return { ok: false, issues: c.issues };
   return { ok: true, doc: value as unknown as MapDocumentV1, issues: [] };
@@ -647,26 +1076,30 @@ export interface BlockCheck {
   readonly blocks: number;
   /** Non-empty cells over every tile layer. */
   readonly cells: number;
+  /** Non-empty fog blocks (P5). */
+  readonly fogBlocks: number;
   readonly issues: readonly MapDocumentIssue[];
 }
 
 /**
  * Decodes every tile block of a valid document (projet.md 12.2 controls: decompressed size,
  * magic, version, layer of the header, palette index < palette length; as on the server, a
- * painted cell outside the grid is `out_of_bounds` and reserved flag bits are `bad_flags`).
+ * painted cell outside the grid is `out_of_bounds` and reserved flag bits are `bad_flags`) and
+ * every fog block (12.3: raw deflate of exactly 2 048 bytes, else `bad_block`).
  */
 export async function checkMapDocumentBlocks(doc: MapDocumentV1): Promise<BlockCheck> {
   const c = new Collector();
   const { width, height } = doc.grid;
   let blocks = 0;
   let cells = 0;
+  let fogBlocks = 0;
   for (const [floor, layers] of Object.entries(doc.chunks)) {
     if (!isObj(layers)) continue;
     for (const layer of TILE_LAYERS) {
       const map = layers[layer];
       if (!isObj(map)) continue;
       for (const [key, data] of Object.entries(map)) {
-        if (c.full) return { blocks, cells, issues: c.issues };
+        if (c.full) return { blocks, cells, fogBlocks, issues: c.issues };
         const path = `chunks.${floor}.${layer}.${key}`;
         let decoded;
         try {
@@ -698,7 +1131,21 @@ export async function checkMapDocumentBlocks(doc: MapDocumentV1): Promise<BlockC
       }
     }
   }
-  return { blocks, cells, issues: c.issues };
+  const fog = isObj(doc.fog) ? doc.fog : {};
+  for (const [floor, map] of Object.entries(fog)) {
+    if (!isObj(map)) continue;
+    for (const [key, data] of Object.entries(map)) {
+      if (c.full) return { blocks, cells, fogBlocks, issues: c.issues };
+      try {
+        const bits = await decodeFog(base64ToBytes(data as string));
+        if (!isFogEmpty(bits)) fogBlocks++;
+      } catch (error) {
+        if (!(error instanceof FogCodecError) && !(error instanceof DOMException)) throw error;
+        c.add(`fog.${floor}.${key}`, 'bad_block');
+      }
+    }
+  }
+  return { blocks, cells, fogBlocks, issues: c.issues };
 }
 
 /** Distinct asset references of a document (palette; object assets come with P5). */

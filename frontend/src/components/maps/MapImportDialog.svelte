@@ -3,13 +3,19 @@
   import Modal from '../Modal.svelte';
   import { formatBytes } from '../../lib/format';
   import { t } from '../../lib/i18n';
-  import { importErrorText, importFailure, issueText } from '../../lib/maps/import-labels';
+  import {
+    importErrorText,
+    importFailure,
+    issueText,
+    missingTokensText,
+  } from '../../lib/maps/import-labels';
   import type { MapImportModel } from '../../lib/maps/map-import.svelte';
   import type { MapDetail, MapImportResult } from '../../lib/types';
 
   /**
    * Map import (Maps tab, P4c): JSON document or ZIP with images; preview checked in the
-   * browser, upload progress, report of the assets the server could not resolve.
+   * browser, upload progress, report of the assets the server could not resolve and (P5) of the
+   * placed tokens whose definition is missing in the game.
    */
   interface Props {
     open: boolean;
@@ -99,7 +105,14 @@
           {/if}
         </dd>
         <dt>{t('games.maps.import.preview.content')}</dt>
-        <dd>{t('games.maps.import.preview.cells', { count: p.cells })}</dd>
+        <dd data-testid="map-import-content">
+          {t('games.maps.import.preview.cells', { count: p.cells })}
+          · {t('games.maps.import.preview.objects', { count: p.objects })}
+          · {t('games.maps.import.preview.tokens', { count: p.tokens })}
+          {#if p.fogBlocks > 0}
+            · {t('games.maps.import.preview.fog')}
+          {/if}
+        </dd>
         {#if p.formatVersion !== 1}
           <dt>{t('games.maps.import.preview.format')}</dt>
           <dd>{t('games.maps.import.preview.migrated', { version: p.formatVersion })}</dd>
@@ -160,6 +173,19 @@
                   {asset.name === '' ? t('games.maps.import.unnamed') : asset.name}
                   <code class="muted">{asset.ref.slice(0, 19)}…</code>
                 </li>
+              {/each}
+            </ul>
+          </div>
+        </div>
+      {/if}
+      {#if (r.missing_tokens ?? []).length > 0}
+        {@const names = r.missing_tokens ?? []}
+        <div class="alert alert-warning" data-testid="map-import-missing-tokens">
+          <div class="stack">
+            <span>{missingTokensText(names)}</span>
+            <ul class="small issues">
+              {#each names as name (name)}
+                <li>{name}</li>
               {/each}
             </ul>
           </div>

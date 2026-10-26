@@ -81,9 +81,21 @@ describe('readMapFile', () => {
       bundledAssets: 0,
       blocks: 3,
       cells: 5,
+      objects: 0,
+      tokens: 0,
+      fogBlocks: 0,
     });
     // Leading spaces and a BOM are accepted, whatever the file name.
     expect((await readMapFile(new Blob(['﻿  ' + text]), 'x.txt')).name).toBe('Crypte oubliée');
+  });
+
+  it('counts the P5 content (objects, placed tokens, fog blocks)', async () => {
+    const p5 = readFileSync(
+      fileURLToPath(new URL('../../../tests/fixtures/maps/v1-p5-sample.json', import.meta.url)),
+      'utf8',
+    );
+    const preview = await readMapFile(new Blob([p5]), 'crypte.json');
+    expect(preview).toMatchObject({ objects: 8, tokens: 3, fogBlocks: 2, cells: 351 });
   });
 
   it('previews a ZIP (stored or deflated map.json) and counts the bundled images', async () => {

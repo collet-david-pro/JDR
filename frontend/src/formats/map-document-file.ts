@@ -62,6 +62,10 @@ export interface MapFilePreview {
   readonly blocks: number;
   /** Non-empty cells (all tile layers). */
   readonly cells: number;
+  /** P5: objects (walls, doors, windows, lights), placed tokens, non-empty fog blocks. */
+  readonly objects: number;
+  readonly tokens: number;
+  readonly fogBlocks: number;
 }
 
 /* ---- ZIP ------------------------------------------------------------------------------ */
@@ -232,5 +236,8 @@ export async function readMapFile(file: Blob, fileName: string): Promise<MapFile
     bundledAssets,
     blocks: blocks.blocks,
     cells: blocks.cells,
+    objects: doc.objects?.length ?? 0,
+    tokens: doc.tokens_placed?.length ?? 0,
+    fogBlocks: blocks.fogBlocks,
   };
 }

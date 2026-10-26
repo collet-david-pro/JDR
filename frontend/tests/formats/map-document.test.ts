@@ -161,11 +161,12 @@ describe('map document validation (format_version 1)', () => {
       'floors.1.level:duplicate',
     ],
     ['ambient.tint', null, 'ambient.tint:type'],
-    ['objects', [{ uid: 'o1' }], 'objects:unsupported'],
+    // P5 content is validated (tests/formats/map-document-p5.test.ts); P9 content stays empty.
+    ['objects', [{ uid: 'o1' }], 'objects.0.floor:required'],
     ['notes', [{ uid: 'n1' }], 'notes:unsupported'],
     ['links', [{}], 'links:unsupported'],
-    ['tokens_placed', [{ uid: 't1' }], 'tokens_placed:unsupported'],
-    ['fog', { f1: { '0:0': 'AAAA' } }, 'fog:unsupported'],
+    ['tokens_placed', [{ uid: 't1' }], 'tokens_placed.0.token:required'],
+    ['fog', { f9: { '0:0': 'AAAA' } }, 'fog.f9:unknown_floor'],
     ['fog', 'x', 'fog:type'],
     [
       'generation',
@@ -267,7 +268,12 @@ describe('tile blocks of a document', () => {
   it('decodes the blocks and counts the painted cells', async () => {
     const result = validateMapDocument(fixture());
     if (!result.ok) throw new Error('fixture invalid');
-    expect(await checkMapDocumentBlocks(result.doc)).toEqual({ blocks: 3, cells: 5, issues: [] });
+    expect(await checkMapDocumentBlocks(result.doc)).toEqual({
+      blocks: 3,
+      cells: 5,
+      fogBlocks: 0,
+      issues: [],
+    });
   });
 
   it('reports blocks with a wrong layer, a bad palette index or bad data', async () => {
