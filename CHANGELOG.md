@@ -6,9 +6,10 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [0.1.0] - Unreleased
 
-Phases 0 à 4 de la feuille de route.
+Phases 0 à 5 de la feuille de route.
 
 ### Added
+- **Murs, lumière, vision et brouillard (phase 5)** : murs, portes (ouvrables, verrouillées, secrètes) et fenêtres, lumières (rayons, couleur, vacillement, cônes) et tokens posés sur la map ; vision et éclairage arrêtés par les murs (calcul dans un worker, jointures étanches) ; ambiance (obscurité, teinte, cycle jour/nuit), ombres portées ; brouillard explorable enregistré sur le serveur, outil Révéler/masquer (pinceau, rectangle, pièce) ; vue « comme le joueur » ; panneaux Propriétés, Tokens et Ambiance ; conflits d'édition résolus objet par objet ; export PNG avec objets, tokens, éclairage et brouillard optionnels ; export/import JSON et versions incluant objets, tokens et brouillard.
 - **Éditeur de maps (phase 4)** : moteur de rendu PixiJS (WebGPU, repli WebGL2) avec tuiles par blocs, caméra, thèmes de grille et calques ; outils pinceau, gomme, remplissage, formes, sélection, pipette, règle ; annuler/rétablir ; raccourcis clavier et trackpad ; API des maps (opérations transactionnelles, blocs binaires, idempotence) ; enregistrement automatique avec file d'opérations hors ligne (IndexedDB) ; onglet Maps (dossiers, duplication, corbeille) ; historique de versions restaurable ; export/import JSON et ZIP ; miniatures ; export PNG en flux (haute résolution, mode impression, annulation).
 - **Parties (phase 3)** : parties (archivage, corbeille), membres et co-MJ, définitions de tokens (vision, lumière), rencontres préparées, cloisonnement strict des données entre parties.
 - **Bibliothèque d'images (phase 2)** : import sécurisé (type réel, dimensions, animations GIF/WebP, fichiers piégés refusés, ré-encodage, miniatures), quotas atomiques, déduplication, liens de fichiers signés, catégories, tags, favoris, bibliothèque générale, packs ZIP, tâches de fond par tranches.
