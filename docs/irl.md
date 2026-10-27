@@ -48,7 +48,7 @@ En pause, l'écran affiche un fond uni ou une **image avec texte** (éditeur « 
 
 ## Plusieurs écrans
 
-Jusqu'à **8 écrans** par séance, chacun avec ses réglages. À la fin d'une séance, ses écrans sont **réutilisables** : « Rattacher » un écran déjà appairé à une nouvelle séance de la même partie, sans nouveau code (la console le propose dans un bandeau, « Tout rattacher » pour tous).
+Jusqu'à **8 écrans** par séance, chacun avec ses réglages. À la fin d'une séance, ses écrans sont **révoqués automatiquement** (pas de réutilisation) : ils reviennent aussitôt au formulaire d'appairage, et un nouvel écran se crée dans la séance suivante.
 
 ## Écran toujours allumé
 
@@ -70,7 +70,7 @@ Touche **M**, ou **appui long de 2 s dans un coin** : calibrer, rotation, miroir
 
 | Côté | Point d'accès |
 |---|---|
-| MJ | `POST /api/v1/sessions/{id}/displays {name}` (écran + code), `GET /sessions/{id}/displays` (`displays`, `reusable`), `PATCH /displays/{id} {name?, settings?}`, `DELETE /displays/{id}`, `POST /displays/{id}/regenerate-code`, `POST /sessions/{id}/displays/{displayId}/attach` |
+| MJ | `POST /api/v1/sessions/{id}/displays {name}` (écran + code), `GET /sessions/{id}/displays` (`displays`), `PATCH /displays/{id} {name?, settings?}`, `DELETE /displays/{id}`, `POST /displays/{id}/regenerate-code` |
 | Écran | `POST /display/pair {code}`, `GET\|PATCH /display/me?as=display`, `POST /display/unpair?as=display` |
 | Lecture écran | `GET /events` et `/stream` (`channels=session:{id}`), `/sessions/{id}/snapshot`, `/sessions/{id}/preload`, `/maps/{id}/chunks`, `/maps/{id}/fog`, tous avec `?as=display` |
 
