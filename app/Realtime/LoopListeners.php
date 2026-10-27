@@ -8,17 +8,19 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Container;
 use JDR\Core\Logger;
+use JDR\Domain\Displays\DisplayWatch;
 use JDR\Domain\Sessions\PresenceService;
 
 /**
  * The LoopListener services called by the real-time loops. CLASSES lists the services resolved
- * from the container (P6b adds JDR\Domain\Sessions\PresenceService); add() registers more
+ * from the container (P6b adds JDR\Domain\Sessions\PresenceService, P7b the screen revalidation
+ * JDR\Domain\Displays\DisplayWatch); add() registers more
  * (tests). A listener that throws is logged and ignored: presence never breaks a stream.
  */
 final class LoopListeners
 {
     /** @var list<class-string<LoopListener>> */
-    public const CLASSES = [PresenceService::class];
+    public const CLASSES = [PresenceService::class, DisplayWatch::class];
 
     /** @var list<LoopListener>|null */
     private ?array $listeners = null;

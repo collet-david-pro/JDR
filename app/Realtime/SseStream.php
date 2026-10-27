@@ -20,7 +20,9 @@ use JDR\Core\Response;
  *   comments and the client uses pings to detect a buffering proxy);
  * - voluntary end after 25 s (the browser reconnects with Last-Event-ID);
  * - since < purge mark (at opening or later) => "event: events_gone" + data {"channel": …}
- *   for each channel, then end.
+ *   for each channel, then end;
+ * - a subscription closed by a LoopListener (P7b: screen revoked, moved, session ended): the
+ *   events left are written, then end (the reconnection gets 401 / 404 / 409).
  */
 final class SseStream
 {
@@ -68,7 +70,8 @@ final class SseStream
         $first = true;
         while (!$out->aborted()) {
             $this->listeners->tick($sub, $this->timer->now());
-            if ($first || $watch->shouldRead()) {
+            $closed = $sub->isClosed();
+            if ($first || $closed || $watch->shouldRead()) {
                 try {
                     // A backlog left by the round limit is read again at the next tick.
                     [$since, $first] = $this->drain($sub, $since, $out);
@@ -82,7 +85,7 @@ final class SseStream
                 }
             }
             $now = $this->timer->now();
-            if ($now >= $deadline) {
+            if ($closed || $now >= $deadline) {
                 break;
             }
             if ($now - $lastPing >= self::PING_S) {

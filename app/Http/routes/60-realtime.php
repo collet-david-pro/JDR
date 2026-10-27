@@ -10,9 +10,10 @@ use JDR\Http\Controllers\RealtimeController;
 /*
  * Real time (projet.md 10, contract P6a): long / short polling and SSE.
  * session_close: the session is released before waiting (projet.md 6.4), like /admin/diagnostic/sse.
+ * display: with ?as=display, the projection screen of the jdr_display cookie (P7b D7).
  */
 return static function (Router $r): void {
-    $long = ['auth' => true, 'session_close' => true];
+    $long = ['auth' => true, 'session_close' => true, 'display' => true];
 
     $r->get('/events', [RealtimeController::class, 'events'], $long);
     $r->get('/stream', [RealtimeController::class, 'stream'], $long);

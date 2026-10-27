@@ -7,6 +7,7 @@ namespace JDR\Realtime;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
+use JDR\Core\Errors\ConflictException;
 use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
@@ -20,6 +21,9 @@ use JDR\Domain\Games\Game;
  * - map:{id}: GM / co-GM of the game of the map (role gm); a player member => 403; anyone else,
  *   an unknown map, a map outside a game or in the trash => 404.
  * At most 4 distinct channels per request (422 otherwise). One query per channel.
+ * A projection screen (authorizeDisplay(), P7b D7) reads the channel of its own session only (role
+ * display): another session => 404, a map channel => 403, its session ended => 409
+ * session_not_running (the screen waits for a new session: GET /display/me).
  */
 final class ChannelAuthorizer
 {
@@ -72,6 +76,43 @@ final class ChannelAuthorizer
         }
 
         return new Subscription($userId, $grants);
+    }
+
+    /**
+     * The subscription of a projection screen of session $sessionId (P7b D7).
+     *
+     * @param list<string> $channels valid channel names (see parse())
+     * @throws NotFoundException|ForbiddenException|ConflictException on the first channel refused
+     */
+    public function authorizeDisplay(int $displayId, int $sessionId, array $channels, ?string $ip = null, ?string $userAgent = null): Subscription
+    {
+        if ($channels === [] || count($channels) > Channel::MAX_PER_REQUEST) {
+            throw new ValidationException('', ['channels' => $channels === [] ? 'required' : 'too_many']);
+        }
+        $grants = [];
+        foreach ($channels as $channel) {
+            [$kind, $id] = Channel::parse($channel) ?? throw new ValidationException('', ['channels' => 'invalid']);
+            if ($kind !== Channel::SESSION) {
+                throw new ForbiddenException();
+            }
+            if ($id !== $sessionId) {
+                throw new NotFoundException();
+            }
+            $row = $this->db->fetchOne(
+                'SELECT s.`game_id`, s.`state`, g.`deleted_at` FROM ' . $this->db->t('play_sessions') . ' s '
+                . 'JOIN ' . $this->db->t('games') . ' g ON g.`id` = s.`game_id` WHERE s.`id` = ?',
+                [$id],
+            );
+            if ($row === null || $row['deleted_at'] !== null) {
+                throw new NotFoundException();
+            }
+            if ($row['state'] === 'ended') {
+                throw new ConflictException('', ['state' => 'ended'], 'session_not_running');
+            }
+            $grants[] = new ChannelGrant($channel, Channel::SESSION, $id, (int) $row['game_id'], Audience::ROLE_DISPLAY);
+        }
+
+        return new Subscription(null, $grants, $displayId, $ip, $userAgent);
     }
 
     private function sessionGrant(int $userId, string $channel, int $sessionId): ChannelGrant

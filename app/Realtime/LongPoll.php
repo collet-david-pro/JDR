@@ -39,7 +39,7 @@ final class LongPoll
         $start = $this->timer->now();
         $this->listeners->tick($sub, $start);
         $result = $this->reader->read($sub, $since);
-        if ($result->events !== [] || $wait === 0) {
+        if ($result->events !== [] || $wait === 0 || $sub->isClosed()) {
             return $result;
         }
         $deadline = $start + $wait;
@@ -51,6 +51,9 @@ final class LongPoll
                 }
                 $this->timer->sleep((int) min(self::TICK_US, ceil(($deadline - $now) * 1_000_000)));
                 $this->listeners->tick($sub, $this->timer->now());
+                if ($sub->isClosed()) {
+                    return $this->reader->read($sub, $result->lastId);
+                }
                 if (!$watch->shouldRead()) {
                     continue;
                 }
