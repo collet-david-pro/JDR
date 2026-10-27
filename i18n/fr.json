@@ -78,8 +78,7 @@
     "display_unpaired": "Cet écran n'est plus appairé : saisissez un nouveau code.",
     "display_code_invalid": "Code d'appairage invalide ou expiré.",
     "display_limit": "Cette séance a déjà 8 écrans : supprimez-en un avant d'en ajouter.",
-    "display_not_pending": "Cet écran est déjà appairé : il n'a plus de code.",
-    "display_not_reusable": "Cet écran ne peut pas être réutilisé dans cette séance."
+    "display_not_pending": "Cet écran est déjà appairé : il n'a plus de code."
   },
   "pages": {
     "not_found": {
@@ -1881,12 +1880,6 @@
       "add_placeholder": "Table, Salon…",
       "add": "Ajouter un écran",
       "empty": "Aucun écran pour cette séance.",
-      "reusable": {
-        "one": "{count} écran de la séance précédente",
-        "other": "{count} écrans de la séance précédente"
-      },
-      "attach": "Rattacher",
-      "attach_all": "Tout rattacher",
       "qr_label": "QR code d'appairage",
       "expires_in": "Expire dans {time}",
       "expired": "Code expiré.",

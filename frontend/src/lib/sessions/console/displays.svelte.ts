@@ -17,7 +17,7 @@ export const REFRESH_MS = 15_000;
 
 export type DisplaysApi = Pick<
   DisplaysClient,
-  'create' | 'list' | 'update' | 'remove' | 'regenerateCode' | 'attach'
+  'create' | 'list' | 'update' | 'remove' | 'regenerateCode'
 >;
 
 export interface DisplaysModelOptions {
@@ -33,7 +33,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export class DisplaysModel {
   displays = $state.raw<readonly DisplayInfo[]>([]);
-  reusable = $state.raw<readonly DisplayInfo[]>([]);
   loaded = $state(false);
   /** Pairing codes received on creation / regeneration, by screen id. */
   pairings = $state.raw<Readonly<Record<string, PairingInfo>>>({});
@@ -72,7 +71,6 @@ export class DisplaysModel {
       const list = await this.o.api.list(this.o.sessionId, controller.signal);
       if (this.stopped || token !== this.token) return;
       this.displays = list.displays;
-      this.reusable = list.reusable;
       this.loaded = true;
       this.dropStalePairings();
     } catch (error) {
@@ -127,27 +125,6 @@ export class DisplaysModel {
     const updated = await this.o.api.regenerateCode(id);
     this.upsert(updated);
     return updated;
-  }
-
-  async attach(id: string): Promise<DisplayInfo> {
-    const attached = await this.o.api.attach(this.o.sessionId, id);
-    this.reusable = this.reusable.filter((d) => d.id !== id);
-    this.upsert(attached);
-    return attached;
-  }
-
-  /** Attaches every reusable screen; resolves with the first error (the others still go on). */
-  async attachAll(): Promise<unknown> {
-    let failure: unknown = null;
-    for (const d of [...this.reusable]) {
-      try {
-        await this.attach(d.id);
-      } catch (error) {
-        failure ??= error;
-      }
-    }
-    await this.refresh();
-    return failure;
   }
 
   private upsert(info: DisplayInfo): void {

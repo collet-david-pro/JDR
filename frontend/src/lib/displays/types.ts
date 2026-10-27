@@ -56,8 +56,6 @@ export interface DisplayInfo {
 
 export interface DisplayList {
   readonly displays: readonly DisplayInfo[];
-  /** Screens of the game's other sessions that can be attached to this one. */
-  readonly reusable: readonly DisplayInfo[];
 }
 
 /** Partial settings the GM may change (PATCH /displays/{id}). */

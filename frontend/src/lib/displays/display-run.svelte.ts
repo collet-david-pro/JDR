@@ -7,7 +7,7 @@
  * - any 401 `display_unpaired`, or `display.revoked` with its own id ⇒ `unpaired`, all stops;
  * - `display.updated` with its own id ⇒ settings updated (another id: ignored);
  * - `session.state` → `ended`, or a refused stream (409 `session_not_running`) ⇒ `waiting`, the
- *   stream is closed; an attached session (seen by the next `/display/me`) starts again;
+ *   stream is closed (defensive fallback: ending a session revokes its screens, P7g);
  * - 404 (screen moved to another session) ⇒ `/display/me` read again, new session followed;
  * - `409 session_paused` of the snapshot ⇒ state built from `/display/me` (SessionSync does it).
  *

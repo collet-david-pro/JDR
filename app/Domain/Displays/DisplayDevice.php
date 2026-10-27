@@ -178,6 +178,8 @@ final class DisplayDevice
                 'camera' => $session->camera,
                 'pause_screen' => $this->presenter->pauseScreen($session->pauseScreen, $apiBase),
             ],
+            // 'waiting' is only a defensive fallback: ending a session revokes its screens (P7g), so a
+            // screen normally never reads an ended session (race between the end and this read).
             'status' => $session->state === Session::ENDED ? 'waiting' : $session->state,
             'last_event_id' => (string) $head,
         ];

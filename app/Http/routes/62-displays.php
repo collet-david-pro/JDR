@@ -18,7 +18,6 @@ return static function (Router $r): void {
 
     $r->post($session . '/displays', [DisplaysController::class, 'create'], $auth);
     $r->get($session . '/displays', [DisplaysController::class, 'index'], $auth);
-    $r->post($session . '/displays/{displayId:\d+}/attach', [DisplaysController::class, 'attach'], $auth);
     $r->patch('/displays/{id:\d+}', [DisplaysController::class, 'update'], $auth);
     $r->delete('/displays/{id:\d+}', [DisplaysController::class, 'destroy'], $auth);
     $r->post('/displays/{id:\d+}/regenerate-code', [DisplaysController::class, 'regenerateCode'], $auth);

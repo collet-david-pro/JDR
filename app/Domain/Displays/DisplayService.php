@@ -19,7 +19,7 @@ use JDR\Domain\Users\User;
 
 /**
  * Projection screens seen by the GM and co-GMs (contract P7a): creation with a pairing code,
- * list, rename / settings, revocation, new code, reuse of a screen of an ended session.
+ * list, rename / settings, revocation, new code.
  * Rights: SessionAccess::requireGm on the session of the screen (player 403, non-member 404).
  */
 final class DisplayService
@@ -65,15 +65,14 @@ final class DisplayService
     }
 
     /**
-     * @return array{displays: list<array<string, mixed>>, reusable: list<array<string, mixed>>}
+     * @return array{displays: list<array<string, mixed>>}
      */
     public function list(User $user, int $sessionId): array
     {
-        $ctx = $this->access->requireGm($user, $sessionId);
+        $this->access->requireGm($user, $sessionId);
 
         return [
             'displays' => array_map($this->presenter->one(...), $this->displays->listForSession($sessionId)),
-            'reusable' => array_map($this->presenter->one(...), $this->displays->reusable($ctx->session->gameId, $sessionId)),
         ];
     }
 
@@ -132,34 +131,6 @@ final class DisplayService
             $this->displays->update($display->id, ['pairing_code_hash' => $hash, 'pairing_expires_at' => $this->expiry()]);
 
             return $this->presenter->one($this->displays->find($display->id) ?? $display, $code);
-        });
-    }
-
-    /**
-     * Moves an active screen of an ended session of the same game to the open session $sessionId.
-     *
-     * @return array<string, mixed>
-     */
-    public function attach(User $user, int $sessionId, int $displayId): array
-    {
-        $this->access->requireGm($user, $sessionId);
-
-        return $this->displays->db()->transaction(function () use ($user, $sessionId, $displayId): array {
-            $target = $this->lockOpenSession($sessionId);
-            $display = $this->displays->find($displayId, true);
-            $source = $display === null ? null : $this->sessions->find($display->sessionId);
-            if ($display === null || $source === null || $source->gameId !== $target->gameId) {
-                throw new NotFoundException();
-            }
-            if (!$display->isActive() || !$source->isEnded()) {
-                throw new ConflictException('', [], 'display_not_reusable');
-            }
-            $this->requireRoom($sessionId);
-            $this->displays->update($display->id, ['session_id' => $sessionId]);
-            $moved = $this->displays->find($display->id) ?? $display;
-            $this->events->updated($moved, $user->id);
-
-            return $this->presenter->one($moved);
         });
     }
 

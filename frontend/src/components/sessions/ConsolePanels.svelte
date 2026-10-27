@@ -71,12 +71,7 @@
         tabindex={current === panel ? 0 : -1}
         data-testid={`panel-tab-${panel}`}
         onclick={() => (current = panel)}
-        onkeydown={(event) => keydown(event, index)}
-        >{label(panel)}{#if panel === 'displays' && props.displays.reusable.length > 0}<span
-            class="dot"
-            data-testid="panel-tab-displays-reusable"
-            title={t('sessions.displays.reusable', { count: props.displays.reusable.length })}
-          ></span>{/if}</button
+        onkeydown={(event) => keydown(event, index)}>{label(panel)}</button
       >
     {/each}
   </div>
@@ -130,14 +125,6 @@
     border-bottom-color: var(--color-primary);
     color: var(--color-primary);
     font-weight: var(--font-weight-medium);
-  }
-  .dot {
-    display: inline-block;
-    width: 0.5rem;
-    height: 0.5rem;
-    margin-left: var(--space-1);
-    border-radius: 50%;
-    background: var(--color-primary);
   }
   .body {
     min-height: 0;

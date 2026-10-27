@@ -29,7 +29,7 @@ final class DisplaysController
     }
 
     /**
-     * GET /sessions/{id}/displays -> {displays, reusable}
+     * GET /sessions/{id}/displays -> {displays}
      */
     public function index(Request $request): Response
     {
@@ -60,18 +60,6 @@ final class DisplaysController
     public function regenerateCode(Request $request): Response
     {
         return Response::ok($this->displays->regenerateCode(CurrentUser::require($request), self::id($request)));
-    }
-
-    /**
-     * POST /sessions/{id}/displays/{displayId}/attach -> Display (404 | 409 display_not_reusable | display_limit)
-     */
-    public function attach(Request $request): Response
-    {
-        return Response::ok($this->displays->attach(
-            CurrentUser::require($request),
-            self::id($request),
-            (int) $request->param('displayId'),
-        ));
     }
 
     private static function id(Request $request): int

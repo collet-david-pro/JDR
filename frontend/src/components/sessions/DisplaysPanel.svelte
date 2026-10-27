@@ -8,7 +8,7 @@
 
   /**
    * Console panel "Écrans": add a projection screen (code + QR), presence, settings, view
-   * lock, revocation, and reuse of the screens of a finished session.
+   * lock, revocation (screens are revoked automatically when the session ends).
    */
   let { run, displays, currentView }: PanelProps = $props();
   const uid = $props.id();
@@ -30,51 +30,11 @@
       busy = false;
     }
   }
-
-  async function attach(id: string | null): Promise<void> {
-    busy = true;
-    try {
-      const failure =
-        id === null ? await displays.attachAll() : await displays.attach(id).then(() => null);
-      if (failure !== null) toasts.show('error', sessionProblem(failure));
-    } catch (error) {
-      toasts.show('error', sessionProblem(error));
-    } finally {
-      busy = false;
-    }
-  }
 </script>
 
 <section class="panel" aria-labelledby={`${uid}-title`} data-testid="displays-panel">
   <h2 id={`${uid}-title`}>{t('sessions.displays.title')}</h2>
   <p class="small muted">{t('sessions.displays.intro')}</p>
-
-  {#if displays.reusable.length > 0 && !ended}
-    <div class="alert alert-warning reuse" role="status" data-testid="displays-reusable">
-      <span>{t('sessions.displays.reusable', { count: displays.reusable.length })}</span>
-      <button
-        type="button"
-        class="button button-small"
-        disabled={busy}
-        data-testid="displays-attach-all"
-        onclick={() => attach(null)}>{t('sessions.displays.attach_all')}</button
-      >
-      <ul class="small">
-        {#each displays.reusable as d (d.id)}
-          <li>
-            {d.name}
-            <button
-              type="button"
-              class="button button-small"
-              disabled={busy}
-              data-testid={`displays-attach-${d.id}`}
-              onclick={() => attach(d.id)}>{t('sessions.displays.attach')}</button
-            >
-          </li>
-        {/each}
-      </ul>
-    </div>
-  {/if}
 
   {#if !ended}
     <form class="add" onsubmit={add}>
@@ -132,15 +92,5 @@
     gap: var(--space-3);
     margin: 0;
     padding: 0;
-  }
-  .reuse {
-    display: grid;
-    gap: var(--space-2);
-    justify-items: start;
-    margin: 0;
-  }
-  .reuse ul {
-    margin: 0;
-    padding-left: var(--space-4);
   }
 </style>

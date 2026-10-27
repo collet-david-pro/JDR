@@ -92,20 +92,6 @@ final class DisplayRepository
     }
 
     /**
-     * Active screens of the ended sessions of a game (most recently seen first), except those of $exceptSessionId.
-     *
-     * @return list<Display>
-     */
-    public function reusable(int $gameId, int $exceptSessionId): array
-    {
-        return $this->many(
-            "d.`state` = 'active' AND s.`state` = 'ended' AND s.`game_id` = ? AND d.`session_id` <> ? "
-            . 'ORDER BY COALESCE(d.`last_seen_at`, d.`paired_at`) DESC, d.`id` DESC LIMIT 50',
-            [$gameId, $exceptSessionId],
-        );
-    }
-
-    /**
      * Pending screens whose code has not expired, site wide: [display id, code hash].
      *
      * @return list<array{id: int, hash: string}>

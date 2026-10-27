@@ -12,6 +12,7 @@ use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
+use JDR\Domain\Displays\DisplayCleanup;
 use JDR\Domain\Games\GamePolicy;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Users\User;
@@ -40,6 +41,7 @@ final class SessionService
         private AssetPolicy $assetPolicy,
         private CodeGenerator $codes,
         private Clock $clock,
+        private DisplayCleanup $displayCleanup,
     ) {
     }
 
@@ -161,6 +163,10 @@ final class SessionService
             }
             $this->sessions->update($session->id, $fields);
             $this->events->state($this->sessions->find($session->id) ?? $session, $user->id, $opId);
+            if ($action === 'end') {
+                // P7g: the screens do not survive the session (session.state first, then display.revoked).
+                $this->displayCleanup->revokeAllOf($session->id, $user->id);
+            }
 
             return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
         });
