@@ -23,6 +23,7 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
   - Lumière et vision **arrêtées par les murs** (calcul dans un worker), ambiance (obscurité, teinte, cycle jour/nuit), ombres portées.
   - **Brouillard de guerre** explorable et enregistré ; vue **« comme le joueur »** (un token ou tous les PJ) ; panneaux Propriétés, Tokens et Ambiance.
 - **Séances** : code de séance, lobby et préchargement, console MJ (joueurs, affectations, tokens, révéler, ambiance, notes, maps), vue joueur (vision, murs infranchissables, exploration), pause, textes à lire, expulsion ; temps réel SSE → long polling → polling avec bascule automatique, un seul flux par navigateur, rattrapage sans doublon ; brouillard strict et filtrage anti-fuite côté serveur.
+- **Mode présentiel** : écrans de projection appairés par code ou QR sans compte, vue de table filtrée côté serveur, échelle réelle (25 mm par case, calibrage à la diagonale ou à la règle), rotation et miroir, pilotage de la caméra et verrou de vue, pause et textes à lire, jusqu'à 8 écrans, écran toujours allumé, révocation immédiate ([docs/irl.md](docs/irl.md)).
 - Interface en français, thème clair/sombre/automatique et plusieurs styles d'interface (moderne, fantasy, science-fiction).
 
 ## Feuille de route
@@ -36,7 +37,7 @@ Conçu pour un **hébergement PHP/MySQL sans dépendance serveur** (mutualisé c
 | P4 | Éditeur de maps (moteur, outils, persistance hors ligne, versions, import/export, export PNG) | ✅ |
 | P5 | Murs, portes, fenêtres, lumières, vision des tokens, brouillard de guerre | ✅ |
 | P6 | Séances de jeu en temps réel (code de séance, lobby, synchronisation) | ✅ |
-| P7 | Mode présentiel : écrans de projection appairés, échelle réelle | à venir |
+| P7 | Mode présentiel : écrans de projection appairés, échelle réelle | ✅ |
 | P8 | Génération procédurale (donjons, grottes, extérieurs, villages, textures) | à venir |
 | P9 | Outils MJ avancés (étages, notes, liens entre maps, co-édition…) | à venir |
 | P10 | Durcissement : sécurité, performances, accessibilité, sauvegardes, mises à jour (`update.php`) | à venir |
@@ -94,6 +95,7 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 - [docs/installation.md](docs/installation.md) — installation et dépannage
 - [docs/nginx.md](docs/nginx.md) — configuration Nginx (dont le flux temps réel)
 - [docs/realtime.md](docs/realtime.md) — temps réel des séances (SSE, long polling, polling)
+- [docs/irl.md](docs/irl.md) — mode présentiel (écrans de projection, calibrage, sécurité)
 - [docs/architecture.md](docs/architecture.md) — architecture et décisions techniques
 - [dev/README.md](dev/README.md) — environnement de développement et tests
 
