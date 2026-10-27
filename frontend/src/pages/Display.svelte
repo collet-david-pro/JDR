@@ -1,9 +1,9 @@
 <script lang="ts">
-  import PagePlaceholder from '../components/PagePlaceholder.svelte';
+  import DisplayScreen from '../components/display/DisplayScreen.svelte';
   import type { PageProps } from '../lib/page';
 
-  let { params }: PageProps = $props();
+  /** Public projection screen (no account): pairing, then the table view of the session. */
+  let { query }: PageProps = $props();
 </script>
 
-<!-- Provisional page: delivered in phase P7. -->
-<PagePlaceholder titleKey="pages.display.title" phase="P7" {params} />
+<DisplayScreen {query} />

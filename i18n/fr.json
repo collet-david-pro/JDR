@@ -1908,5 +1908,61 @@
       "mode_longpoll": "long polling",
       "mode_poll": "interrogation régulière"
     }
+  },
+  "display": {
+    "fullscreen": "Plein écran",
+    "pair": {
+      "title": "Appairer cet écran",
+      "label": "Code d'appairage (6 chiffres)",
+      "submit": "Appairer",
+      "help": "Le code s'affiche dans la console du MJ, panneau Écrans.",
+      "error_code": "Code invalide ou expiré",
+      "error_rate": "Trop d'essais, réessayez dans une minute",
+      "error_generic": "Appairage impossible, réessayez"
+    },
+    "lobby": {
+      "title": "La séance va commencer"
+    },
+    "waiting": {
+      "title": "En attente de la prochaine séance"
+    },
+    "pause": {
+      "default": "Séance en pause"
+    },
+    "wake": {
+      "banner": "Désactivez la mise en veille de cet appareil",
+      "label": "Écran maintenu allumé",
+      "active": "oui",
+      "video": "oui (vidéo)",
+      "unsupported": "non pris en charge",
+      "idle": "inactif"
+    },
+    "menu": {
+      "calibrate": "Calibrage",
+      "rotation": "Rotation",
+      "mirror": "Miroir",
+      "fullscreen_exit": "Quitter le plein écran",
+      "range_low": "Échelle hors limites : les cases sont plus grandes que demandé (zoom minimal atteint).",
+      "range_high": "Échelle hors limites : les cases sont plus petites que demandé (zoom maximal atteint).",
+      "unpair": "Quitter (désappairer)",
+      "unpair_confirm": "Désappairer cet écran ?",
+      "unpair_do": "Désappairer",
+      "close": "Fermer",
+      "save_error": "Réglage non enregistré, réessayez."
+    },
+    "cal": {
+      "title": "Calibrage de l'écran",
+      "tab_diagonal": "Diagonale",
+      "tab_ruler": "Règle",
+      "diagonal_label": "Diagonale de l'écran (pouces)",
+      "diagonal_invalid": "Saisissez une diagonale entre 5 et 300 pouces.",
+      "ruler_help": "Ajustez le trait pour qu'il mesure exactement 10 cm.",
+      "ruler_length": "Longueur du trait",
+      "unknown": "Échelle inconnue",
+      "result": "{value} px/mm",
+      "cell": "Une case : {mm} mm",
+      "save": "Enregistrer",
+      "reset": "Réinitialiser"
+    }
   }
 }
