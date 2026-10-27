@@ -328,3 +328,22 @@ export async function appliedId(page: Page): Promise<bigint> {
 }
 
 export const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+export interface DisplayRef {
+  id: string;
+  code: string;
+}
+
+/** P7: creates a projection screen on a session (the GM); returns its id and pairing code. */
+export async function createDisplay(gm: Actor, sessionId: string, name = 'Écran salon'): Promise<DisplayRef> {
+  const d = await ok(
+    await gm.request.post(`/api/v1/sessions/${sessionId}/displays`, { headers: gm.headers, data: { name } }),
+  );
+  return { id: d.id as string, code: String(d.pairing.code) };
+}
+
+/** P7: revokes a projection screen. */
+export async function deleteDisplay(gm: Actor, displayId: string): Promise<void> {
+  const res = await gm.request.delete(`/api/v1/displays/${displayId}`, { headers: gm.headers });
+  expect(res.ok(), `DELETE display -> ${res.status()}`).toBeTruthy();
+}
