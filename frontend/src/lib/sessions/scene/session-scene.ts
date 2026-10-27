@@ -161,7 +161,7 @@ export class SessionScene {
    * in the vision of the editor's "player view".
    */
   private shown(object: MapObject): MapObject {
-    if (this.role !== 'player' || object.type !== 'door' || !object.props.secret) return object;
+    if (this.role === 'gm' || object.type !== 'door' || !object.props.secret) return object;
     return { ...object, props: { ...object.props, secret: false } };
   }
 

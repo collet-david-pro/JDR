@@ -1,13 +1,13 @@
 /**
  * Payloads of the events of the catalogue (etapes/P06 "Catalogue" and "P6c terminé").
- * `view` marks the D4 events: "gm" = complete version, "player" = filtered version; a GM client
- * ignores the "player" ones (it reads every audience).
+ * `view` marks the D4 events: "gm" = complete version, "player" / "display" = filtered versions; a GM
+ * client ignores the "player" and "display" ones (it reads every audience).
  */
 import type { FogChunkWire, MapObject, PlacedToken } from '../../editor/contracts';
 import type { WireMapOp } from '../types';
 import type { PauseScreen, SessionCamera, SessionStatus, WireAmbient } from './types';
 
-export type EventView = 'gm' | 'player';
+export type EventView = 'gm' | 'player' | 'display';
 
 export interface ViewTag {
   readonly view?: EventView;

@@ -6,8 +6,9 @@
  * Rules:
  * - an event whose id is ≤ `state.lastEventId` was already applied (or is in the snapshot):
  *   nothing changes (same state object, no effect) ⇒ replays are harmless;
- * - a GM reads every audience: events tagged `payload.view === "player"` are ignored (and the
- *   GM never receives "gm" ones from a player's point of view, ignored too);
+ * - a GM reads every audience: events tagged `payload.view === "player"` or `"display"` are
+ *   ignored; a player ignores "gm" and "display" ones; a screen applies only "display" ones
+ *   and the events without `view`;
  * - unknown types only move the cursor.
  */
 import type { MapObject, PlacedToken } from '../../editor/contracts';
@@ -61,11 +62,22 @@ export function advanceCursor(state: SessionState, id: string): SessionState {
     : state;
 }
 
+/**
+ * Whether an event tagged `view` is meant for another audience. The GM ignores the player and
+ * display versions, a player the GM and display ones, a screen everything but the display ones
+ * (events without `view` are for everybody).
+ */
+function isForeign(role: SessionState['role'], view: unknown): boolean {
+  if (role === 'gm') return view === 'player' || view === 'display';
+  if (role === 'player') return view === 'gm' || view === 'display';
+  return view !== undefined && view !== 'display';
+}
+
 export function applyEvent(state: SessionState, e: WireEvent): Reduction {
   if (!isEventId(e.id) || compareIds(e.id, state.lastEventId) <= 0) return same(state);
   const p = rec(e.payload);
   const view = p['view'];
-  const foreign = state.role === 'gm' ? view === 'player' : view === 'gm';
+  const foreign = isForeign(state.role, view);
   const handler = foreign ? undefined : HANDLERS[e.type];
   const out = handler?.(state, e, p) ?? same(state);
   return { state: { ...out.state, lastEventId: e.id }, effects: out.effects };
@@ -98,8 +110,9 @@ const onState: Handler = (s, _e, p) => {
   });
   const effects: SessionEffect[] = [];
   const entersRunning = x.state === 'running' && s.session.state !== 'running';
-  // D5: a player was cut off from the map events while paused (and had no map in the lobby).
-  if (s.role === 'player' && entersRunning) {
+  // D5: a player (or a screen) was cut off from the map events while paused (and had no map in
+  // the lobby).
+  if (s.role !== 'gm' && entersRunning) {
     effects.push(reload(s.session.state === 'paused' ? 'resumed' : 'started'));
   } else if (mapChanged && x.state !== 'ended') {
     effects.push(reload('map_changed'));

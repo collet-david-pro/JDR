@@ -6,7 +6,7 @@ import type { Ambient, FogChunkWire } from '../../editor/contracts';
 import type { MapDetail, MapAmbient, Token } from '../types';
 
 export type SessionStatus = 'lobby' | 'running' | 'paused' | 'ended';
-export type SessionRole = 'gm' | 'player';
+export type SessionRole = 'gm' | 'player' | 'display';
 export type PlayerStatus = 'connected' | 'disconnected' | 'kicked';
 
 export interface SessionPlayer {
@@ -39,6 +39,8 @@ export interface SessionCamera {
 export interface PauseScreen {
   readonly asset_id: string | null;
   readonly text: string | null;
+  /** Signed URL of the image (absent in a `session.state` event: read /display/me again). */
+  readonly url?: string | null;
 }
 
 /** "Objet séance" (the code is only given to the GM / co-GMs). */
@@ -111,6 +113,8 @@ export interface SessionSnapshot {
   readonly fog: { readonly floor: string | null; readonly chunks: readonly FogChunkWire[] };
   /** Uids of the revealed objects. */
   readonly revealed: readonly string[];
+  /** Placed-token uids the table sees through (projection screen only, D5). */
+  readonly viewers?: readonly string[];
   readonly last_event_id: string;
 }
 

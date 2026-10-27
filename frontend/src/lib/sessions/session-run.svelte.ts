@@ -6,7 +6,7 @@
  * `state` and `scene` are raw values: never read their content through a $state proxy.
  */
 import type { ChunkKey } from '../../editor/contracts';
-import type { SyncClient } from '../realtime/types';
+import type { SyncClient, WireEvent } from '../realtime/types';
 import type { BlockedMove } from './action-sender';
 import type { SessionEffect } from './effects';
 import { SceneHost, type SessionScene, type TileSource } from './scene';
@@ -29,6 +29,8 @@ export interface SessionRunOptions {
   readonly tiles: TileSource;
   /** Blocks of the engine camera to load first. */
   readonly visible?: () => readonly ChunkKey[] | undefined;
+  /** Raw events of the subscription (see SessionSyncOptions.onEvent). */
+  readonly onEvent?: (event: WireEvent) => void;
   /** Error shown to the user (refused action, partial loading...). */
   readonly onProblem?: (error: unknown) => void;
   /** A token.move was refused by a wall (D8): the token was brought back (player view). */
@@ -80,6 +82,7 @@ export class SessionRun {
       onState: (state) => this.apply(state),
       onEffect: (effect) => this.effect(effect),
       onError: (error) => o.onProblem?.(error),
+      ...(o.onEvent === undefined ? {} : { onEvent: o.onEvent }),
       ...(o.onBlocked === undefined ? {} : { onBlocked: o.onBlocked }),
     });
   }

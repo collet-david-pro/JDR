@@ -9,7 +9,7 @@
  * - `reload.snapshot` effects and 410 (`onGone`) reload the snapshot (coalesced: one request at
  *   a time, one more when asked meanwhile); the new subscription is made before the old one is
  *   dropped, so the stream is not interrupted and events after the snapshot are replayed;
- * - a player cannot read the snapshot while paused (409 session_paused): the state is then built
+ * - a player (or a projection screen) cannot read the snapshot while paused (409 session_paused): the state is then built
  *   from the session header and the next `session.state` → running reloads it (D5).
  */
 import { ApiError } from '../api';
@@ -67,6 +67,11 @@ export interface SessionSyncOptions {
   readonly sync: SyncClient;
   readonly onState: (state: SessionState) => void;
   readonly onEffect?: (effect: SessionEffect, state: SessionState) => void;
+  /**
+   * Every event of the subscription, before the reducer (events the reducer ignores included,
+   * and the ones replayed after a reload). A projection screen reads its own `display.*` events.
+   */
+  readonly onEvent?: (event: WireEvent) => void;
   /** Snapshot failures that will not be retried, and refused actions. */
   readonly onError?: (error: unknown) => void;
   /** A token.move was refused by a wall: the position was already corrected in the state. */
@@ -224,6 +229,7 @@ export class SessionSync {
   private onEvent(e: WireEvent): void {
     const before = this.current;
     if (before === null || this.stopped) return;
+    this.o.onEvent?.(e);
     const { state, effects } = applyEvent(before, e);
     this.current = state;
     recordTestEvent(e.id, state);
