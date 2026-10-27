@@ -36,6 +36,7 @@
     "vitest": "4.1.12"
   },
   "dependencies": {
-    "pixi.js": "8.22.0"
+    "pixi.js": "8.22.0",
+    "uqr": "0.1.3"
   }
 }
