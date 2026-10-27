@@ -26,6 +26,9 @@ export const EVENT_TYPES = [
   'map.ops',
   'map.ops.public',
   'server.notice',
+  'display.paired',
+  'display.updated',
+  'display.revoked',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

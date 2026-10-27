@@ -369,6 +369,16 @@ describe('objects, fog, ambient, camera, notes', () => {
     const notice = apply(player(), 'server.notice', { kind: 'maintenance', message: 'bientôt' });
     expect(notice.effects).toEqual([{ kind: 'notice', notice: 'maintenance', message: 'bientôt' }]);
   });
+
+  it('display.* events are left to the raw event hook (no state change, no effect)', () => {
+    const before = player();
+    for (const type of ['display.paired', 'display.updated', 'display.revoked']) {
+      const r = apply(before, type, { display_id: '5' });
+      expect(r.state.session).toBe(before.session);
+      expect(r.state.tokens).toBe(before.tokens);
+      expect(r.effects).toEqual([]);
+    }
+  });
 });
 
 describe('map content events', () => {
