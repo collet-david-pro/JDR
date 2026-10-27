@@ -2,14 +2,24 @@
   import { onMount } from 'svelte';
   import { t } from '../../lib/i18n';
   import type { SyncStatus } from '../../lib/realtime/types';
+  import type { SyncClient } from '../../lib/realtime/types';
   import { syncClient } from '../../lib/services';
 
-  /** Network indicator of the player view: connected, reconnecting or offline; the transport in the tooltip. */
-  let status = $state.raw<SyncStatus>(syncClient().status);
+  /**
+   * Network indicator of the player view: connected, reconnecting or offline; the transport in the
+   * tooltip. `client` defaults to the user's sync client (a projection screen passes its own).
+   */
+  interface Props {
+    client?: SyncClient;
+  }
+  let { client }: Props = $props();
+
+  const source = (): SyncClient => client ?? syncClient();
+  let status = $state.raw<SyncStatus>(source().status);
 
   onMount(() => {
-    status = syncClient().status;
-    return syncClient().onStatus((next) => (status = { ...next }));
+    status = source().status;
+    return source().onStatus((next) => (status = { ...next }));
   });
 
   const kind = $derived(
