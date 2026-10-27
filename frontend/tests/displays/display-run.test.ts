@@ -23,8 +23,16 @@ class FakeSync implements SyncClient {
     return () => undefined;
   }
   setActivity(): void {}
-  onStatus(): () => void {
-    return () => undefined;
+  listeners: Array<(s: SyncStatus) => void> = [];
+  onStatus(cb: (s: SyncStatus) => void): () => void {
+    this.listeners.push(cb);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== cb);
+    };
+  }
+  setState(state: SyncStatus['state']): void {
+    this.status = { ...this.status, state };
+    for (const l of this.listeners) l(this.status);
   }
   close(): void {}
   /** Delivers an event to the latest subscription. */
@@ -199,6 +207,19 @@ describe('DisplayRun: pairing and records', () => {
 });
 
 describe('DisplayRun: events', () => {
+  it('reads /display/me when the stream drops: a revoked screen goes unpaired (401)', async () => {
+    const t = setup();
+    await t.run.start();
+    await flush();
+    expect(t.run.status).toBe('running');
+    t.next = err(401, 'display_unpaired');
+    t.sync.setState('reconnecting');
+    await flush();
+    expect(t.run.status).toBe('unpaired');
+    t.run.stop();
+    expect(t.sync.listeners).toHaveLength(0);
+  });
+
   it('goes unpaired on display.revoked with its own id, ignores another', async () => {
     const t = setup();
     await t.run.start();

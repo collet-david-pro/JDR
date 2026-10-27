@@ -109,6 +109,7 @@ export class DisplayRun {
   private runSession: string | null = null;
   private stopped = false;
   private pollTimer: unknown = null;
+  private offStatus: (() => void) | null = null;
   private noteTimer: unknown = null;
   private refreshing: Promise<void> | null = null;
   private lastEvent = '0';
@@ -123,12 +124,20 @@ export class DisplayRun {
   /** Reads the screen's record and follows its session. Resolves once the first answer is in. */
   start(): Promise<void> {
     this.stopped = false;
+    // The stream hides a 401 (revoked screen) behind its reconnections: when it loses the
+    // connection, `/display/me` tells at once whether the screen is still paired (P7d).
+    this.offStatus ??= this.o.sync.onStatus((status) => {
+      if (this.stopped || this.me === null) return;
+      if (status.state === 'reconnecting' || status.state === 'offline') void this.refresh();
+    });
     return this.refresh();
   }
 
   /** Stops everything for good (page closed). */
   stop(): void {
     this.stopped = true;
+    this.offStatus?.();
+    this.offStatus = null;
     this.cancelPoll();
     this.dropRun();
     this.clearNote();
