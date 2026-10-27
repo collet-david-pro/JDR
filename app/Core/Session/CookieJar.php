@@ -15,7 +15,7 @@ interface CookieJar
 {
     /**
      * Sets (or, with $expires in the past and an empty value, deletes) a cookie.
-     * Always HttpOnly and SameSite=Lax.
+     * Always HttpOnly; SameSite=Lax unless $sameSite says otherwise (the display cookie is Strict).
      */
-    public function set(string $name, string $value, int $expires, string $path, bool $secure): void;
+    public function set(string $name, string $value, int $expires, string $path, bool $secure, string $sameSite = 'Lax'): void;
 }

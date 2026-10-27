@@ -8,7 +8,7 @@ defined('JDR_BOOT') || exit;
 
 final class NativeCookieJar implements CookieJar
 {
-    public function set(string $name, string $value, int $expires, string $path, bool $secure): void
+    public function set(string $name, string $value, int $expires, string $path, bool $secure, string $sameSite = 'Lax'): void
     {
         if (headers_sent()) {
             return;
@@ -18,7 +18,7 @@ final class NativeCookieJar implements CookieJar
             'path' => $path,
             'secure' => $secure,
             'httponly' => true,
-            'samesite' => 'Lax',
+            'samesite' => $sameSite,
         ]);
     }
 }
