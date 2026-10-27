@@ -186,14 +186,16 @@ final class SessionLifecycleTest extends SessionsTestCase
         self::assertSame([], $this->kinds($before), 'a rename is not an event');
 
         $s = self::data($this->ok($w['gm']->patch($path, ['pause_screen' => ['text' => "Pause\nCafé"]])));
-        self::assertSame(['asset_id' => null, 'text' => "Pause\nCafé"], $s['pause_screen']);
+        self::assertSame(['asset_id' => null, 'text' => "Pause\nCafé", 'url' => null], $s['pause_screen']);
         self::assertSame('Renommée', $s['name']);
         self::assertSame(['session.state/all'], $this->kinds($before));
         self::assertEquals(['asset_id' => null, 'text' => "Pause\nCafé"], $this->events($before)[0]['payload']['pause_screen']);
 
         $asset = $this->uploadOk($w['gm'], 'valid_png_opaque.png', ['kind' => 'background']);
         $s = self::data($this->ok($w['gm']->patch($path, ['pause_screen' => ['asset_id' => $asset['id'], 'text' => null]])));
-        self::assertSame(['asset_id' => $asset['id'], 'text' => null], $s['pause_screen']);
+        self::assertSame(['asset_id', 'text', 'url'], array_keys($s['pause_screen']));
+        self::assertSame([$asset['id'], null], [$s['pause_screen']['asset_id'], $s['pause_screen']['text']]);
+        self::assertStringContainsString('/files/' . $asset['uuid'], (string) $s['pause_screen']['url'], 'P7b D11: signed URL');
 
         self::assertFieldErrors($w['gm']->patch($path, ['pause_screen' => ['asset_id' => '9999']]), ['pause_screen.asset_id' => 'not_found']);
         self::assertFieldErrors($w['gm']->patch($path, ['pause_screen' => ['text' => str_repeat('x', 2001)]]), ['pause_screen.text' => 'too_long']);

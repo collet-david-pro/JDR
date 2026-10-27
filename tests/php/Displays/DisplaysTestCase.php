@@ -6,13 +6,14 @@ namespace JDR\Tests\Displays;
 
 use JDR\Core\Response;
 use JDR\Tests\Api\ApiClient;
-use JDR\Tests\Sessions\SessionsTestCase;
+use JDR\Tests\SessionsActions\ActionsTestCase;
 
 /**
  * Tests of the projection screens (P7a): arena() of the sessions plus screen clients (an
- * ApiClient without login, which keeps the jdr_display cookie) and helpers.
+ * ApiClient without login, which keeps the jdr_display cookie) and helpers. P7b: the session
+ * actions helpers (ActionsTestCase) for the table view.
  */
-abstract class DisplaysTestCase extends SessionsTestCase
+abstract class DisplaysTestCase extends ActionsTestCase
 {
     private int $screenIp = 0;
 
@@ -60,5 +61,13 @@ abstract class DisplaysTestCase extends SessionsTestCase
     protected function setDisplay(string $id, string $column, mixed $value): void
     {
         $this->db->execute('UPDATE ' . $this->db->t('session_displays') . ' SET `' . $column . '` = ? WHERE `id` = ?', [$value, (int) $id]);
+    }
+
+    /**
+     * GET of a signed URL given by the API (apiBase "/api/v1" in the tests).
+     */
+    protected function fetchUrl(ApiClient $client, string $url): Response
+    {
+        return $client->get((string) preg_replace('#^.*?/api/v1#', '', $url));
     }
 }

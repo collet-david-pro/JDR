@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JDR\Tests\Security;
 
+use JDR\Domain\Sessions\EventFanout;
 use JDR\Domain\Sessions\EventTypes;
 use JDR\Tests\Api\ApiClient;
 use JDR\Tests\SessionsActions\ActionsTestCase;
@@ -20,6 +21,11 @@ use PHPUnit\Framework\Attributes\DataProvider;
  * them), no "layer": "gm", "secret": true, "hidden": true, "visibility": "gm", no block outside
  * the scope, the secret door only ever as a wall. A non-member gets 404 everywhere, a kicked
  * player 403.
+ * P7b: the "table" (projection screen paired before the session, ?as=display) is walked the same
+ * way (events since 0, snapshot, preload, chunks, fog) with the hidden content forbidden and, under
+ * fog_strict, what is outside the union of the viewers' scopes; it never gets session.code,
+ * map.ops, player.*, display.paired nor a "player" / "gm" version. A screen of another session
+ * gets 404 everywhere, a revoked screen 401.
  */
 final class LeakTest extends ActionsTestCase
 {
@@ -34,6 +40,7 @@ final class LeakTest extends ActionsTestCase
             'fog_strict' => [['fog_strict' => true, 'players_see_other_pcs' => true]],
             'fog_strict_off' => [['fog_strict' => false, 'players_see_other_pcs' => true]],
             'own_pcs_only' => [['fog_strict' => false, 'players_see_other_pcs' => false]],
+            'strict_own_pcs_only' => [['fog_strict' => true, 'players_see_other_pcs' => false]],
         ];
     }
 
@@ -66,6 +73,23 @@ final class LeakTest extends ActionsTestCase
             self::assertArrayHasKey($type, $received, $type . ': the players get their version');
         }
 
+        // 2b. What the table (projection screen) reads from the event log.
+        $table = [];
+        foreach ($this->receivedAsDisplay($w['table'], $w['channel']) as $event) {
+            $table[$event['type']] = true;
+            $this->inspect($rules, 'table', 'event #' . $event['id'] . ' ' . $event['type'], $event, (int) $event['id']);
+            self::assertNotContains($event['payload']['view'] ?? null, [EventFanout::VIEW_PLAYER, EventFanout::VIEW_GM], 'table: ' . $event['type']);
+            self::assertStringStartsNotWith('player.', $event['type'], 'table: player events');
+        }
+        foreach ([EventTypes::SESSION_CODE, EventTypes::MAP_OPS, EventTypes::DISPLAY_PAIRED] as $gmOnly) {
+            self::assertArrayNotHasKey($gmOnly, $table, 'table: ' . $gmOnly);
+        }
+        foreach ([EventTypes::TOKEN_MOVED, EventTypes::TOKEN_ADDED, EventTypes::TOKEN_REMOVED, EventTypes::OBJECT_REVEALED, EventTypes::DOOR_TOGGLED,
+            EventTypes::LIGHT_CHANGED, EventTypes::FOG_UPDATED, EventTypes::MAP_OPS_PUBLIC, EventTypes::CAMERA_MOVED] as $type) {
+            self::assertArrayHasKey($type, $table, $type . ': the table gets its version');
+        }
+        self::assertSame(403, $w['table']->get('/events?as=display&channels=map:' . $w['big'])->status(), 'map channel: GM only');
+
         // 3. Snapshots, preload, chunks, fog at the end (the mid-session ones were checked by playWholeSession()).
         $this->inspectReads($w, $rules, 'end');
 
@@ -82,24 +106,31 @@ final class LeakTest extends ActionsTestCase
     protected function inspectReads(array $w, array $rules, string $when): void
     {
         $at = $this->head();
-        foreach (['bob', 'dan'] as $who) {
+        foreach (['bob', 'dan', 'table'] as $who) {
             /** @var ApiClient $client */
             $client = $w[$who];
-            $snapshot = self::data($this->ok($client->get('/sessions/' . $w['session'] . '/snapshot')));
+            $as = static fn (string $path): string => $who === 'table' ? $path . (str_contains($path, '?') ? '&' : '?') . 'as=display' : $path;
+            $snapshot = self::data($this->ok($client->get($as('/sessions/' . $w['session'] . '/snapshot'))));
+            if ($who === 'table') {
+                self::assertArrayNotHasKey('code', $snapshot['session'], $when . ' table: no code');
+                self::assertSame([], $snapshot['session']['players'], $when . ' table: no players');
+                self::assertSame('display', $snapshot['session']['role']);
+                self::assertContains('t-free', $snapshot['viewers'], $when . ' table: a free PC is a viewer');
+            }
             $this->inspect($rules, $who, $when . ' snapshot', $snapshot, $at);
             foreach ($snapshot['fog']['chunks'] as [$cx, $cy]) {
                 $this->inspectBlock($rules, $who, $when . ' snapshot fog', (int) $snapshot['fog']['floor'], $cx, $cy, $at);
             }
-            $preload = self::data($this->ok($client->get('/sessions/' . $w['session'] . '/preload')));
+            $preload = self::data($this->ok($client->get($as('/sessions/' . $w['session'] . '/preload'))));
             $this->inspect($rules, $who, $when . ' preload', $preload, $at);
             foreach ($rules['assets'][$who] ?? [] as $assetId) {
                 self::assertNotContains($assetId, array_column($preload['assets'], 'id'), $when . ' preload ' . $who);
             }
-            $fog = self::data($this->ok($client->get('/maps/' . $w['big'] . '/fog?floor=' . $w['bigFloor'])));
+            $fog = self::data($this->ok($client->get($as('/maps/' . $w['big'] . '/fog?floor=' . $w['bigFloor']))));
             foreach ($fog['chunks'] as [$cx, $cy]) {
                 $this->inspectBlock($rules, $who, $when . ' fog', (int) $w['bigFloor'], $cx, $cy, $at);
             }
-            $chunks = $this->ok($client->get('/maps/' . $w['big'] . '/chunks?floor=' . $w['bigFloor']));
+            $chunks = $this->ok($client->get($as('/maps/' . $w['big'] . '/chunks?floor=' . $w['bigFloor'])));
             foreach (self::parseChunks($chunks->body()) as $c) {
                 $this->inspectBlock($rules, $who, $when . ' chunks', (int) $w['bigFloor'], $c['cx'], $c['cy'], $at);
             }
@@ -123,6 +154,40 @@ final class LeakTest extends ActionsTestCase
         foreach ([$base . '/snapshot', $base . '/preload', '/events?channels=' . $w['channel']] as $path) {
             self::assertSame(403, $w['kim']->get($path)->status(), 'kicked ' . $path);
         }
+        // P7b: a screen of another session (404) and a revoked screen (401) read nothing.
+        $screenReads = [$base . '/snapshot?as=display', $base . '/preload?as=display', '/maps/' . $w['big'] . '/chunks?floor=' . $w['bigFloor'] . '&as=display',
+            '/maps/' . $w['big'] . '/fog?floor=' . $w['bigFloor'] . '&as=display', '/events?as=display&channels=' . $w['channel'], '/stream?as=display&channels=' . $w['channel']];
+        foreach ([['otherScreen', 404], ['revokedScreen', 401]] as [$who, $status]) {
+            foreach ($screenReads as $path) {
+                $r = $w[$who]->get($path);
+                self::assertSame($status, $r->status(), $who . ' ' . $path);
+                self::assertStringNotContainsString('wall', $r->body());
+            }
+        }
+        // The table reaches no other route (no user: 401).
+        foreach ([$base . '?as=display', '/maps/' . $w['big'] . '?as=display', '/maps/' . $w['big'] . '/objects?floor=' . $w['bigFloor'] . '&as=display'] as $path) {
+            self::assertSame(401, $w['table']->get($path)->status(), 'table ' . $path);
+        }
+    }
+
+    /**
+     * Events a projection screen reads (GET /events?as=display, wait=0) since 0.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function receivedAsDisplay(ApiClient $client, string $channels): array
+    {
+        $out = [];
+        $since = 0;
+        do {
+            $data = self::data($this->ok($client->get('/events?as=display&channels=' . rawurlencode($channels) . '&since=' . $since . '&wait=0')));
+            foreach ($data['events'] as $e) {
+                $out[] = $e;
+            }
+            $since = (int) $data['last_id'];
+        } while (count($data['events']) === 500);
+
+        return $out;
     }
 
     /**

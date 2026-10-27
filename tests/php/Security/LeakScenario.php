@@ -14,6 +14,9 @@ namespace JDR\Tests\Security;
  * revealed (hidden-keep) and one revealed in the middle (hidden-vis), a secret door, hidden
  * tokens (t-dragon, t-shade, t-lurk) and one revealed (t-ghost), a light on the gm layer, a
  * visible light following the hidden dragon.
+ * P7b: a free PC (t-free, "Errant", kind pc, unassigned) near (40, 150) -> blocks 0..1:4..5, a
+ * table viewer (D5) seen by no player under fog_strict; the projection screen "table" is paired
+ * before the session starts; a screen of another session and a revoked screen read nothing.
  */
 trait LeakScenario
 {
@@ -31,6 +34,7 @@ trait LeakScenario
         $base = '/sessions/' . $s;
         $spectre = $this->newToken($gm, $w['game'], ['name' => 'Spectre', 'kind' => 'monster']);
         $shade = $this->newToken($gm, $w['game'], ['name' => 'Ombre', 'kind' => 'monster']);
+        $free = $this->newToken($gm, $w['game'], ['name' => 'Errant', 'kind' => 'pc']);
         $goblinDef = (string) $this->db->fetchValue('SELECT `token_id` FROM ' . $this->db->t('map_tokens') . " WHERE `uid` = 't-goblin'");
         $dragonDef = (string) $this->db->fetchValue('SELECT `token_id` FROM ' . $this->db->t('map_tokens') . " WHERE `uid` = 't-dragon'");
         $light = static fn (string $uid, float $x, float $y, array $over = []): array => array_replace([
@@ -49,9 +53,11 @@ trait LeakScenario
             self::placedToken('t-ghost', $f, (string) $spectre['id'], 6, 8, ['hidden' => true]),
             self::placedToken('t-shade', $f, (string) $shade['id'], 4, 8, ['hidden' => true]),
             self::placedToken('t-dan-near', $f, $goblinDef, 101, 103),
+            self::placedToken('t-free', $f, (string) $free['id'], 40, 150),
         ]);
         $this->opsOk($gm, $w['big'], [['type' => 'maptoken.update', 'uid' => 't-dwarf', 'rev' => 1, 'patch' => ['x' => 100, 'y' => 100]]]);
         $this->setSettings($w, $settings);
+        $w['table'] = $this->pairScreen($gm, $s, '198.18.7.2');
         $this->startSession($w);
 
         $this->ok($w['bob']->post($base . '/ready', ['ready' => true]), 204);
@@ -91,7 +97,28 @@ trait LeakScenario
         $this->playDisplays($w);
         $this->store()->serverNotice('maintenance', 'Redémarrage');
 
+        // A screen of another game's session, and a revoked screen of this one.
+        $otherGame = (string) $this->newGame($gm)['id'];
+        $other = self::data($this->ok($gm->post('/games/' . $otherGame . '/sessions', ['name' => 'Autre']), 201));
+        $w['otherScreen'] = $this->pairScreen($gm, (string) $other['id'], '198.18.7.3');
+        $w['revokedScreen'] = $this->pairScreen($gm, $s, '198.18.7.4', $revokedId);
+        $this->ok($gm->delete('/displays/' . $revokedId), 204);
+
         return $w;
+    }
+
+    /**
+     * A projection screen paired to the session (P7b).
+     */
+    protected function pairScreen(\JDR\Tests\Api\ApiClient $gm, string $sessionId, string $ip, ?string &$displayId = null): \JDR\Tests\Api\ApiClient
+    {
+        $display = self::data($this->ok($gm->post('/sessions/' . $sessionId . '/displays', ['name' => 'Écran ' . $ip]), 201));
+        $displayId = (string) $display['id'];
+        $screen = $this->client($ip);
+        $this->ok($screen->get('/auth/me'));
+        $this->ok($screen->post('/display/pair', ['code' => $display['pairing']['code']]));
+
+        return $screen;
     }
 
     /**
@@ -120,13 +147,14 @@ trait LeakScenario
     protected function rules(array $w, array $settings): array
     {
         $both = ['bob', 'dan'];
+        $all = ['bob', 'dan', 'table'];
         $ever = PHP_INT_MAX;
         $needles = [];
         foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre'] as $uid) {
-            $needles[] = [$both, $uid, $ever];
+            $needles[] = [$all, $uid, $ever];
         }
         foreach (['hidden-vis', 't-ghost', 'Spectre'] as $uid) {
-            $needles[] = [$both, $uid, $w['revealed_at']];
+            $needles[] = [$all, $uid, $w['revealed_at']];
         }
         $blocks = [];
         $assets = [];
@@ -135,7 +163,10 @@ trait LeakScenario
                 $needles[] = [['bob'], $uid, $ever];
             }
             foreach (['wall-far', 't-goblin-far'] as $uid) {
-                $needles[] = [['dan'], $uid, $ever];
+                $needles[] = [['dan', 'table'], $uid, $ever];
+            }
+            foreach (['t-free', 'Errant'] as $uid) {
+                $needles[] = [$both, $uid, $ever];
             }
             foreach (['wall-near', 'door-plain', 'door-secret', 'torch', 'wall-new', 't-rat', 't-elf', 't-goblin', 'Elfe'] as $uid) {
                 $needles[] = [['dan'], $uid, $w['explored_at']];
@@ -143,10 +174,11 @@ trait LeakScenario
             foreach ([[2, 2], [2, 3], [3, 2], [3, 3]] as [$cx, $cy]) {
                 $blocks[] = [['bob'], $cx, $cy, $ever];
             }
-            $blocks[] = [$both, 4, 4, $ever];
-            $blocks[] = [$both, 5, 5, $ever];
+            $blocks[] = [$all, 4, 4, $ever];
+            $blocks[] = [$all, 5, 5, $ever];
             $blocks[] = [['dan'], 0, 0, $w['explored_at']];
             $assets['bob'] = [$w['b']['id']];
+            $assets['table'] = [$w['b']['id']];
         }
         if (!$settings['players_see_other_pcs']) {
             $needles[] = [['bob'], 't-dwarf', $ever];
