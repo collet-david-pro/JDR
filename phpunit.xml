@@ -21,6 +21,7 @@
     </source>
     <php>
         <ini name="error_reporting" value="-1"/>
+        <ini name="memory_limit" value="512M"/>
         <env name="JDR_TEST_DB_HOST" value="127.0.0.1" force="false"/>
         <env name="JDR_TEST_DB_PORT" value="3306" force="false"/>
         <env name="JDR_TEST_DB_NAME" value="jdr_test" force="false"/>
