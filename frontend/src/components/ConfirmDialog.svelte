@@ -13,6 +13,8 @@
     busy?: boolean;
     /** Disables the confirm button (e.g. password not typed yet). */
     confirmDisabled?: boolean;
+    /** `data-testid` of the confirm button. */
+    confirmTestId?: string;
     /** Extra content (a password field, an error...). */
     children?: Snippet;
     onconfirm: () => void;
@@ -26,6 +28,7 @@
     danger = false,
     busy = false,
     confirmDisabled = false,
+    confirmTestId,
     children,
     onconfirm,
   }: Props = $props();
@@ -51,6 +54,7 @@
         variant={danger ? 'danger' : 'primary'}
         loading={busy}
         disabled={confirmDisabled}
+        data-testid={confirmTestId}
       >
         {confirmLabel}
       </Button>
