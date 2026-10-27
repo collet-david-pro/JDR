@@ -96,6 +96,8 @@ export interface ApiClientOptions {
   readonly onMaintenance?: (error: ApiError) => void;
   /** Fetches a fresh CSRF token (and calls setCsrfToken) after a 403 csrf_invalid. */
   readonly refreshCsrf?: () => Promise<void>;
+  /** Query parameters added to every URL (`url()` and every request); call parameters win. */
+  readonly defaultQuery?: QueryParams;
   /** Injectable for tests. */
   readonly sleep?: (ms: number) => Promise<void>;
 }
@@ -148,6 +150,7 @@ export class ApiClient {
   private readonly onMaintenance: ((error: ApiError) => void) | undefined;
   private readonly refreshCsrf: (() => Promise<void>) | undefined;
   private readonly sleep: (ms: number) => Promise<void>;
+  private readonly defaultQuery: QueryParams | undefined;
   private csrf: string | null;
 
   constructor(options: ApiClientOptions) {
@@ -161,6 +164,7 @@ export class ApiClient {
     this.onMaintenance = options.onMaintenance;
     this.refreshCsrf = options.refreshCsrf;
     this.sleep = options.sleep ?? defaultSleep;
+    this.defaultQuery = options.defaultQuery;
     this.csrf = options.csrfToken ?? null;
   }
 
@@ -173,7 +177,11 @@ export class ApiClient {
   }
 
   url(path: string, query?: QueryParams): string {
-    return buildApiUrl(this.baseUrl, path, query);
+    return buildApiUrl(
+      this.baseUrl,
+      path,
+      this.defaultQuery === undefined ? query : { ...this.defaultQuery, ...query },
+    );
   }
 
   /**

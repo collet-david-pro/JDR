@@ -46,6 +46,12 @@ export interface SyncDeps {
   /** Identifies the server in the memorised mode (several installations on one origin). */
   serverKey: string;
   tabId: string;
+  /**
+   * Name of the Web Locks lock and of the BroadcastChannel shared by the tabs of one stream
+   * (default `jdr-sync`). A projection screen uses its own so that it never shares the stream
+   * of the user's tabs.
+   */
+  name?: string;
   now(): number;
   setTimeout(fn: () => void, ms: number): unknown;
   clearTimeout(handle: unknown): void;
@@ -90,6 +96,7 @@ export function resolveDeps(options: SyncClientOptions): SyncDeps {
     storage: pick('storage', storage),
     serverKey: pick('serverKey', typeof location === 'undefined' ? 'server' : location.origin),
     tabId: pick('tabId', randomId()),
+    ...(options.name === undefined ? {} : { name: options.name }),
     now: pick('now', () => Date.now()),
     setTimeout: pick('setTimeout', (fn, ms) => setTimeout(fn, ms)),
     clearTimeout: pick('clearTimeout', (h) => clearTimeout(h as ReturnType<typeof setTimeout>)),

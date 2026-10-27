@@ -87,7 +87,7 @@ export class SyncClientImpl implements SyncClient {
 
   constructor(private readonly deps: SyncDeps) {
     const useTabs = deps.locks !== null && deps.broadcast !== null;
-    this.bc = useTabs ? (deps.broadcast?.(CHANNEL_NAME) ?? null) : null;
+    this.bc = useTabs ? (deps.broadcast?.(deps.name ?? CHANNEL_NAME) ?? null) : null;
     if (this.bc === null || deps.locks === null) {
       this.becomeLeader();
       return;
@@ -161,7 +161,7 @@ export class SyncClientImpl implements SyncClient {
 
   private acquire(locks: NonNullable<SyncDeps['locks']>): void {
     locks
-      .request(LOCK_NAME, () => {
+      .request(this.deps.name ?? LOCK_NAME, () => {
         return new Promise<void>((resolve) => {
           if (this.closed) {
             resolve();
