@@ -74,7 +74,12 @@
     "session_exists": "Une séance est déjà ouverte pour cette partie.",
     "invalid_transition": "Cette action n'est pas possible dans l'état actuel de la séance.",
     "session_not_running": "La séance n'est pas en cours.",
-    "kicked": "Vous avez été exclu de cette séance."
+    "kicked": "Vous avez été exclu de cette séance.",
+    "display_unpaired": "Cet écran n'est plus appairé : saisissez un nouveau code.",
+    "display_code_invalid": "Code d'appairage invalide ou expiré.",
+    "display_limit": "Cette séance a déjà 8 écrans : supprimez-en un avant d'en ajouter.",
+    "display_not_pending": "Cet écran est déjà appairé : il n'a plus de code.",
+    "display_not_reusable": "Cet écran ne peut pas être réutilisé dans cette séance."
   },
   "pages": {
     "not_found": {

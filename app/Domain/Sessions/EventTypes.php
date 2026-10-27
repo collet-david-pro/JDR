@@ -34,6 +34,9 @@ final class EventTypes
     public const MAP_OPS = 'map.ops';
     public const MAP_OPS_PUBLIC = 'map.ops.public';
     public const SERVER_NOTICE = 'server.notice';
+    public const DISPLAY_PAIRED = 'display.paired';
+    public const DISPLAY_UPDATED = 'display.updated';
+    public const DISPLAY_REVOKED = 'display.revoked';
 
     public const ALL = [
         self::SESSION_STATE,
@@ -58,6 +61,9 @@ final class EventTypes
         self::MAP_OPS,
         self::MAP_OPS_PUBLIC,
         self::SERVER_NOTICE,
+        self::DISPLAY_PAIRED,
+        self::DISPLAY_UPDATED,
+        self::DISPLAY_REVOKED,
     ];
 
     /** Types merged by D3 (the previous event of the same key, less than 1 s old, is deleted). */

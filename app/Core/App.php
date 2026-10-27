@@ -15,6 +15,7 @@ use JDR\Domain\Assets\AssetUserData;
 use JDR\Domain\Assets\ImageProcessor;
 use JDR\Domain\Assets\PipelineImageProcessor;
 use JDR\Domain\Auth\Authenticator;
+use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Games\GameUserData;
 use JDR\Domain\Maps\MapUserData;
 use JDR\Domain\Settings\SecretBox;
@@ -169,6 +170,7 @@ final class App
         $c->set(Auth::class, static fn (Container $c): Auth => new Auth(
             static fn (): ?Authenticator => $config === null ? null : $c->get(Authenticator::class),
             $c->get(Logger::class),
+            static fn (): ?DisplayAuth => $config === null ? null : $c->get(DisplayAuth::class),
         ));
         $c->set(RateLimit::class, static fn (Container $c): RateLimit => new RateLimit(
             static fn (): RateLimiter => $c->get(RateLimiter::class),
