@@ -88,9 +88,26 @@ trait LeakScenario
         $this->ok($gm->post($base . '/resume'));
         $w['explored_at'] = $this->head();
         $this->actOk($w['bob'], $s, [['type' => 'fog.reveal', 'floor' => $f, 'chunks' => [[0, 0, self::b64(str_repeat("\xff", 2048))]]]]);
+        $this->playDisplays($w);
         $this->store()->serverNotice('maintenance', 'Redémarrage');
 
         return $w;
+    }
+
+    /**
+     * P7a: a projection screen is created, paired, changed and revoked (display.* events: gm / displays only).
+     *
+     * @param array<string, mixed> $w
+     */
+    protected function playDisplays(array $w): void
+    {
+        $gm = $w['gm'];
+        $display = self::data($this->ok($gm->post('/sessions/' . $w['session'] . '/displays', ['name' => 'Table']), 201));
+        $screen = $this->client('198.18.7.1');
+        $this->ok($screen->get('/auth/me'));
+        $this->ok($screen->post('/display/pair', ['code' => $display['pairing']['code']]));
+        $this->ok($gm->patch('/displays/' . $display['id'], ['settings' => ['mirror' => true]]));
+        $this->ok($screen->post('/display/unpair?as=display'), 204);
     }
 
     /**

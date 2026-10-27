@@ -58,7 +58,7 @@ final class LeakTest extends ActionsTestCase
             }
             self::assertSame(403, $w[$who]->get('/events?channels=map:' . $w['big'])->status(), 'map channel: GM only');
         }
-        foreach ([EventTypes::SESSION_CODE, EventTypes::MAP_OPS] as $gmOnly) {
+        foreach ([EventTypes::SESSION_CODE, EventTypes::MAP_OPS, EventTypes::DISPLAY_PAIRED, EventTypes::DISPLAY_UPDATED, EventTypes::DISPLAY_REVOKED] as $gmOnly) {
             self::assertArrayNotHasKey($gmOnly, $received);
         }
         foreach ([EventTypes::TOKEN_MOVED, EventTypes::TOKEN_ADDED, EventTypes::TOKEN_REMOVED, EventTypes::OBJECT_REVEALED,
