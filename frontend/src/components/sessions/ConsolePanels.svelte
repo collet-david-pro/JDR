@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import AmbiancePanel from './AmbiancePanel.svelte';
+  import DisplaysPanel from './DisplaysPanel.svelte';
   import MapsPanel from './MapsPanel.svelte';
   import NotesPanel from './NotesPanel.svelte';
   import PlayersPanel from './PlayersPanel.svelte';
@@ -12,8 +13,7 @@
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
 
   /**
-   * Side panels of the console (WAI-ARIA tabs): Players, Tokens, Reveal, Ambiance, Notes, Maps.
-   * (The "Screens" panel arrives with P7.)
+   * Side panels of the console (WAI-ARIA tabs): Players, Tokens, Reveal, Ambiance, Notes, Maps, Screens.
    */
   interface Props extends PanelProps {
     tool: ConsoleTool;
@@ -21,7 +21,7 @@
   }
 
   let props: Props = $props();
-  const PANELS = ['players', 'tokens', 'reveal', 'ambiance', 'notes', 'maps'] as const;
+  const PANELS = ['players', 'tokens', 'reveal', 'ambiance', 'notes', 'maps', 'displays'] as const;
   type PanelId = (typeof PANELS)[number];
   const uid = $props.id();
   let current = $state<PanelId>('players');
@@ -42,6 +42,8 @@
         return t('sessions.panels.notes');
       case 'maps':
         return t('sessions.panels.maps');
+      case 'displays':
+        return t('sessions.panels.displays');
     }
   }
 
@@ -69,7 +71,12 @@
         tabindex={current === panel ? 0 : -1}
         data-testid={`panel-tab-${panel}`}
         onclick={() => (current = panel)}
-        onkeydown={(event) => keydown(event, index)}>{label(panel)}</button
+        onkeydown={(event) => keydown(event, index)}
+        >{label(panel)}{#if panel === 'displays' && props.displays.reusable.length > 0}<span
+            class="dot"
+            data-testid="panel-tab-displays-reusable"
+            title={t('sessions.displays.reusable', { count: props.displays.reusable.length })}
+          ></span>{/if}</button
       >
     {/each}
   </div>
@@ -90,8 +97,10 @@
       <AmbiancePanel {...props} />
     {:else if current === 'notes'}
       <NotesPanel {...props} />
-    {:else}
+    {:else if current === 'maps'}
       <MapsPanel {...props} />
+    {:else}
+      <DisplaysPanel {...props} />
     {/if}
   </div>
 </div>
@@ -121,6 +130,14 @@
     border-bottom-color: var(--color-primary);
     color: var(--color-primary);
     font-weight: var(--font-weight-medium);
+  }
+  .dot {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-left: var(--space-1);
+    border-radius: 50%;
+    background: var(--color-primary);
   }
   .body {
     min-height: 0;

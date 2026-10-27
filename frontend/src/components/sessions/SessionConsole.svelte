@@ -6,6 +6,8 @@
   import type { Overlay } from '../../editor/contracts';
   import { newObjectUid } from '../../editor/util/uid';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
+  import { DisplaysClient } from '../../lib/displays/displays-client';
+  import type { ViewLock } from '../../lib/displays/types';
   import { t } from '../../lib/i18n';
   import { mapsClient } from '../../lib/maps/service';
   import { services, sessionsClient, syncClient } from '../../lib/services';
@@ -14,6 +16,9 @@
     type ConsoleTool,
     type Selection,
   } from '../../lib/sessions/console/console-input';
+  import { consoleViewers } from '../../lib/sessions/console/displays-logic';
+  import { DisplaysModel } from '../../lib/sessions/console/displays.svelte';
+  import { bindEngineToScreens, gmView } from '../../lib/sessions/console/engine-bindings.svelte';
   import { addTokenOp, newPlacedToken, sendMapOps } from '../../lib/sessions/console/map-ops';
   import { sessionProblem } from '../../lib/sessions/labels';
   import { SessionRun } from '../../lib/sessions/session-run.svelte';
@@ -35,6 +40,13 @@
   let { sessionId, gameId, userId }: Props = $props();
   const { router } = services();
 
+  // svelte-ignore state_referenced_locally
+  const displays = new DisplaysModel({
+    sessionId,
+    api: new DisplaysClient(services().api),
+    onError: (error) => console.warn(error),
+  });
+
   // The page mounts a new console for another session: the initial props are kept.
   // svelte-ignore state_referenced_locally
   const run = new SessionRun({
@@ -43,6 +55,7 @@
     api: sessionsClient(),
     sync: syncClient(),
     tiles: mapsClient(),
+    onEvent: (event) => displays.onEvent(event),
     onProblem: (error) => toasts.show('error', sessionProblem(error)),
   });
   const vision = createVisionService();
@@ -53,6 +66,10 @@
   let tool = $state.raw<ConsoleTool>({ kind: 'select' });
   let selection = $state.raw<Selection | null>(null);
   let toolOverlay: Overlay | null = null;
+  let broadcasting = $state(false);
+  const tableViewerIds = $derived(
+    consoleViewers(run.state, run.scene?.floor ?? null, displays.activeCount),
+  );
 
   const input = new ConsoleInput({
     scene: () => run.scene,
@@ -145,8 +162,17 @@
     ]).then((ok) => ok && toasts.success(t('sessions.console.view_shared')));
   }
 
+  /** Engine camera and current floor, as a view lock ("Lock here" of a screen). */
+  function currentView(): ViewLock | null {
+    const scene = run.scene;
+    if (engine === null || scene === null) return null;
+    const { x, y, zoom } = engine.camera.get();
+    return { x, y, zoom: Math.min(8, Math.max(0.1, zoom)), floor_id: scene.floor };
+  }
+
   onMount(() => {
     void run.start();
+    displays.start();
     const hidden = (): void => run.setHidden(document.hidden);
     const online = (): void => run.sync.actions.resume();
     document.addEventListener('visibilitychange', hidden);
@@ -155,6 +181,7 @@
       document.removeEventListener('visibilitychange', hidden);
       window.removeEventListener('online', online);
       input.cancel();
+      displays.stop();
       run.stop();
       vision.destroy();
     };
@@ -201,9 +228,17 @@
     }
     e.setMap(scene.doc);
     e.setScene(scene.doc);
-    e.setView({ mode: 'gm', viewers: [], lighting: true, fog: true, shadows: true });
+    e.setView(gmView(untrack(() => tableViewerIds)));
     const off = e.onPointer((event) => input.handle(event));
     return () => off();
+  });
+
+  bindEngineToScreens({
+    engine: () => engine,
+    run,
+    viewers: () => tableViewerIds,
+    broadcasting: () => broadcasting,
+    send,
   });
 
   // Selection that no longer exists.
@@ -260,7 +295,13 @@
     </div>
   {:else}
     <div class="top">
-      <ConsoleHeader {run} {gameId} onshare={share} />
+      <ConsoleHeader
+        {run}
+        {gameId}
+        onshare={share}
+        {broadcasting}
+        onbroadcast={(on) => (broadcasting = on)}
+      />
       {#if run.reloadAsked}
         <div class="alert alert-warning row" role="status" data-testid="reload-notice">
           <span>{t('sessions.console.reload_asked')}</span>
@@ -280,6 +321,7 @@
         data-testid="console-viewport"
         data-state={engineState}
         data-scene={run.scene === null ? 'none' : 'ready'}
+        data-table-viewers={[...tableViewerIds].sort().join(',')}
       ></div>
       {#if engineState === 'unsupported'}
         <div class="state"><EngineUnsupported /></div>
@@ -293,7 +335,16 @@
     </div>
 
     <aside class="side" aria-label={t('sessions.panels.label')}>
-      <ConsolePanels {run} {gameId} {send} {selection} {tool} ontool={setTool} />
+      <ConsolePanels
+        {run}
+        {gameId}
+        {send}
+        {selection}
+        {displays}
+        {currentView}
+        {tool}
+        ontool={setTool}
+      />
     </aside>
   {/if}
 </div>

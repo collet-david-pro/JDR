@@ -1766,7 +1766,13 @@
       "no_map": "Aucune map n'est choisie : ouvrez l'onglet Maps pour en choisir une.",
       "kicked": "Vous n'avez plus accès à cette séance.",
       "reload_asked": "Le serveur demande de recharger la page.",
-      "note_shown": "Note affichée aux joueurs : {title}"
+      "note_shown": "Note affichée aux joueurs : {title}",
+      "broadcast_camera": "Diffuser ma caméra",
+      "pause_screen": "Écran de pause…",
+      "regenerate_code": "Régénérer le code",
+      "regenerate_title": "Régénérer le code de la séance ?",
+      "regenerate_text": "L'ancien code ne fonctionnera plus.",
+      "code_regenerated": "Nouveau code de séance."
     },
     "panels": {
       "label": "Panneaux de la console",
@@ -1775,7 +1781,8 @@
       "reveal": "Révéler",
       "ambiance": "Ambiance",
       "notes": "Notes",
-      "maps": "Maps"
+      "maps": "Maps",
+      "displays": "Écrans"
     },
     "players": {
       "title": "Joueurs",
@@ -1857,6 +1864,64 @@
       "unavailable": "La liste des maps est indisponible.",
       "confirm_title": "Changer de map ?",
       "confirm_text": "Tous les joueurs passent sur la nouvelle map."
+    },
+    "pause_screen": {
+      "title": "Écran de pause",
+      "text": "Texte affiché pendant la pause",
+      "pick": "Choisir une image",
+      "no_image": "Aucune image.",
+      "remove_image": "Retirer l'image",
+      "image_invalid": "Cette image ne peut pas être utilisée.",
+      "saved": "Écran de pause enregistré."
+    },
+    "displays": {
+      "title": "Écrans de projection",
+      "intro": "Un écran affiche la table sans compte : ouvrez le lien ou scannez le QR code sur la tablette ou le téléviseur.",
+      "add_name": "Nom du nouvel écran",
+      "add_placeholder": "Table, Salon…",
+      "add": "Ajouter un écran",
+      "empty": "Aucun écran pour cette séance.",
+      "reusable": {
+        "one": "{count} écran de la séance précédente",
+        "other": "{count} écrans de la séance précédente"
+      },
+      "attach": "Rattacher",
+      "attach_all": "Tout rattacher",
+      "qr_label": "QR code d'appairage",
+      "expires_in": "Expire dans {time}",
+      "expired": "Code expiré.",
+      "no_code": "Le code n'est plus affiché.",
+      "new_code": "Nouveau code",
+      "state_active": "Appairé",
+      "state_pending": "En attente",
+      "online": "En ligne",
+      "offline": "Hors ligne",
+      "seen_never": "Jamais vu",
+      "seen_now": "Vu à l'instant",
+      "seen_seconds": "Vu il y a {n} s",
+      "seen_minutes": "Vu il y a {n} min",
+      "seen_hours": "Vu il y a {n} h",
+      "seen_days": "Vu il y a {n} j",
+      "name": "Nom",
+      "diagonal": "Diagonale (pouces)",
+      "diagonal_hint": "Vide : écran non calibré (5 à 300).",
+      "mm_per_cell": "Millimètres par case (5 à 100)",
+      "rotation": "Rotation",
+      "mirror": "Miroir",
+      "show_tokens": "Afficher les tokens",
+      "follow_camera": "Suivre la caméra du MJ",
+      "invalid_field": "Valeur invalide.",
+      "saved": "Réglages enregistrés.",
+      "calibration": "Calibrage : {value} px/mm",
+      "not_calibrated": "Pas de calibrage à la règle.",
+      "clear_calibration": "Effacer le calibrage",
+      "view_free": "Vue libre",
+      "view_locked": "Vue verrouillée",
+      "lock_here": "Verrouiller ici",
+      "unlock": "Déverrouiller",
+      "revoke": "Révoquer",
+      "revoke_title": "Révoquer cet écran ?",
+      "revoke_text": "« {name} » reviendra à la page d'appairage."
     }
   },
   "play": {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PauseScreenDialog from './PauseScreenDialog.svelte';
   import ConfirmDialog from '../ConfirmDialog.svelte';
   import { copyText } from '../../lib/clipboard';
   import { t } from '../../lib/i18n';
@@ -16,14 +17,20 @@
     run: SessionRun;
     gameId: string;
     onshare: (follow: boolean) => void;
+    /** "Broadcast my camera" (continuous sending) is on. */
+    broadcasting: boolean;
+    onbroadcast: (on: boolean) => void;
   }
 
-  let { run, gameId, onshare }: Props = $props();
+  let { run, gameId, onshare, broadcasting, onbroadcast }: Props = $props();
   const session = $derived(run.state?.session ?? null);
   const code = $derived(session?.code === undefined ? '' : formatSessionCode(session.code));
   let busy = $state<Transition | null>(null);
   let endOpen = $state(false);
   let follow = $state(false);
+  let pauseOpen = $state(false);
+  let regenOpen = $state(false);
+  let regenBusy = $state(false);
 
   async function go(action: Transition): Promise<void> {
     if (session === null) return;
@@ -36,6 +43,21 @@
       toasts.show('error', sessionProblem(error));
     } finally {
       busy = null;
+    }
+  }
+
+  async function regenerate(): Promise<void> {
+    if (session === null) return;
+    regenBusy = true;
+    try {
+      await sessionsClient().regenerateCode(session.id);
+      regenOpen = false;
+      await run.reload();
+      toasts.success(t('sessions.console.code_regenerated'));
+    } catch (error) {
+      toasts.show('error', sessionProblem(error));
+    } finally {
+      regenBusy = false;
     }
   }
 
@@ -65,6 +87,12 @@
           class="button button-small"
           data-testid="session-code-copy"
           onclick={copy}>{t('common.copy')}</button
+        >
+        <button
+          type="button"
+          class="button button-small"
+          data-testid="console-regenerate-code"
+          onclick={() => (regenOpen = true)}>{t('sessions.console.regenerate_code')}</button
         >
       </div>
     {/if}
@@ -114,6 +142,22 @@
           data-testid="share-view"
           onclick={() => onshare(follow)}>{t('sessions.console.share_view')}</button
         >
+        <label class="check small">
+          <input
+            type="checkbox"
+            checked={broadcasting}
+            data-testid="console-broadcast-camera"
+            data-on={broadcasting ? 'true' : 'false'}
+            onchange={(e) => onbroadcast(e.currentTarget.checked)}
+          />
+          {t('sessions.console.broadcast_camera')}
+        </label>
+        <button
+          type="button"
+          class="button"
+          data-testid="console-pause-screen"
+          onclick={() => (pauseOpen = true)}>{t('sessions.console.pause_screen')}</button
+        >
       {/if}
     </div>
   </header>
@@ -127,6 +171,16 @@
     busy={busy === 'end'}
     onconfirm={() => go('end')}
   />
+  <ConfirmDialog
+    bind:open={regenOpen}
+    title={t('sessions.console.regenerate_title')}
+    message={t('sessions.console.regenerate_text')}
+    confirmLabel={t('sessions.console.regenerate_code')}
+    confirmTestId="console-regenerate-confirm"
+    busy={regenBusy}
+    onconfirm={regenerate}
+  />
+  <PauseScreenDialog bind:open={pauseOpen} {run} />
 {/if}
 
 <style>
