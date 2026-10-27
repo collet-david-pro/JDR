@@ -578,6 +578,11 @@ export interface ViewOptions {
   readonly fog: boolean;
   /** Shadows cast by walls (14.2, 8 nearest lights); forced off in performance mode. */
   readonly shadows: boolean;
+  /**
+   * Whether the placed tokens are drawn (default true). false (projection screen without
+   * tokens): none is drawn, the vision of `viewers` is computed all the same.
+   */
+  readonly tokens?: boolean;
 }
 
 /** Polygon in cells: x0, y0, x1, y1, … (simple, star-shaped around its source). */

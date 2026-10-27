@@ -55,6 +55,7 @@ export class TokensRenderer {
   private mode: ViewMode = 'gm';
   private cellPx = 70;
   private filter: ((token: PlacedToken) => boolean) | null = null;
+  private enabled = true;
   private destroyed = false;
 
   /** `onChange` is called when an image finished loading (a frame is needed). */
@@ -73,6 +74,13 @@ export class TokensRenderer {
   setMode(mode: ViewMode): void {
     if (mode === this.mode) return;
     this.mode = mode;
+    this.refreshVisibility();
+  }
+
+  /** false: no token is drawn (projection screen without tokens). */
+  setEnabled(enabled: boolean): void {
+    if (enabled === this.enabled) return;
+    this.enabled = enabled;
     this.refreshVisibility();
   }
 
@@ -143,7 +151,8 @@ export class TokensRenderer {
   }
 
   private applyVisibility(e: Entry): void {
-    const shown = tokenShown(e.token, this.mode) && (this.filter?.(e.token) ?? true);
+    const shown =
+      this.enabled && tokenShown(e.token, this.mode) && (this.filter?.(e.token) ?? true);
     e.root.visible = shown;
     e.root.alpha = tokenAlpha(e.token, this.mode);
   }

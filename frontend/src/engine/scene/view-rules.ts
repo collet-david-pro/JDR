@@ -47,13 +47,20 @@ export function mergeView(current: ViewOptions, patch: Partial<ViewOptions>): Vi
       ? [...new Set(patch.viewers.filter((v) => typeof v === 'string' && v !== ''))]
       : current.viewers;
   const bool = (v: boolean | undefined, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
-  return {
+  const base = {
     mode,
     viewers,
     lighting: bool(patch.lighting, current.lighting),
     fog: bool(patch.fog, current.fog),
     shadows: bool(patch.shadows, current.shadows),
   };
+  // `tokens` is only present when false (absent = drawn).
+  return bool(patch.tokens, current.tokens !== false) ? base : { ...base, tokens: false };
+}
+
+/** Whether the placed tokens are drawn in this view. */
+export function tokensDrawn(view: ViewOptions): boolean {
+  return view.tokens !== false;
 }
 
 export function viewsEqual(a: ViewOptions, b: ViewOptions): boolean {
@@ -62,6 +69,7 @@ export function viewsEqual(a: ViewOptions, b: ViewOptions): boolean {
     a.lighting === b.lighting &&
     a.fog === b.fog &&
     a.shadows === b.shadows &&
+    tokensDrawn(a) === tokensDrawn(b) &&
     a.viewers.length === b.viewers.length &&
     a.viewers.every((v, i) => b.viewers[i] === v)
   );

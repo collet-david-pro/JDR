@@ -26,6 +26,7 @@ import {
   objectShown,
   tokenAlpha,
   tokenShown,
+  tokensDrawn,
   viewerKind,
   viewsEqual,
 } from '../../src/engine/scene/view-rules';
@@ -50,6 +51,17 @@ describe('view options', () => {
     expect(bad).toEqual(v);
     expect(viewsEqual(v, mergeView(v, {}))).toBe(true);
     expect(viewsEqual(v, mergeView(v, { fog: false }))).toBe(false);
+  });
+
+  it('draws the tokens unless `tokens` is false (the vision is still computed)', () => {
+    expect(tokensDrawn(DEFAULT_VIEW)).toBe(true);
+    const off = mergeView({ ...DEFAULT_VIEW, mode: 'display', viewers: ['t'] }, { tokens: false });
+    expect(off.tokens).toBe(false);
+    expect(tokensDrawn(off)).toBe(false);
+    expect(needsVisibility(off)).toBe(true);
+    expect(viewsEqual(off, mergeView(off, {}))).toBe(true);
+    expect(viewsEqual(off, mergeView(off, { tokens: true }))).toBe(false);
+    expect(mergeView(off, { tokens: true })).not.toHaveProperty('tokens');
   });
 
   it('computes the visibility in player / display views and when exploring', () => {

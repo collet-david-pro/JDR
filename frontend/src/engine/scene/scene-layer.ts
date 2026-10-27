@@ -45,6 +45,7 @@ import {
   isPlayerLike,
   mergeView,
   needsVisibility,
+  tokensDrawn,
   viewerKind,
   viewsEqual,
 } from './view-rules';
@@ -233,6 +234,7 @@ export class SceneLayer {
       this.dirty.lights = true;
       this.gizmosDirty = true;
     }
+    this.tokens.setEnabled(tokensDrawn(next));
     if (prev.mode !== next.mode || prev.fog !== next.fog) this.resetFog();
     const viewersChanged =
       prev.viewers.length !== next.viewers.length ||
