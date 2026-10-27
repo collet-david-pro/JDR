@@ -5,11 +5,13 @@ import {
   createGame,
   createMap,
   createSession,
+  createDisplay,
   createTokenDef,
   openUser,
   placeOp,
   postOps,
   startSession,
+  transition,
   uid,
   watchErrors,
 } from "../helpers/sessions";
@@ -116,6 +118,39 @@ test("GM adds, drives and revokes a projection screen", async ({ browser }) => {
     await gm.page.getByTestId(`display-revoke-confirm-${id}`).click();
     await expect(screen.getByTestId("display-pair-form")).toBeVisible({ timeout: 5_000 });
     await expect(gm.page.getByTestId(`display-item-${id}`)).toHaveCount(0);
+  } finally {
+    await context.close();
+    await gm.context?.close();
+  }
+});
+
+test("ending the session revokes its screens", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const gm = await openUser(browser, "gm-end-screens");
+  const gameId = await createGame(gm, []);
+  const map = await createMap(gm, gameId);
+  const session = await createSession(gm, gameId, map.id);
+  await startSession(gm, session.id);
+  const display = await createDisplay(gm, session.id);
+
+  const context = await browser.newContext({ baseURL: main.baseURL, locale: "fr-FR" });
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, "wakeLock", {
+      configurable: true,
+      value: {
+        request: async () => ({ released: false, release: async () => undefined, addEventListener: () => undefined }),
+      },
+    });
+  });
+  const screen = await context.newPage();
+  try {
+    await screen.goto(`/display?c=${display.code}`);
+    await expect(screen.getByTestId("display-page")).toHaveAttribute("data-status", "running", { timeout: 30_000 });
+
+    expect(await transition(gm, session.id, "end")).toBe(200);
+    await expect(screen.getByTestId("display-pair-form")).toBeVisible({ timeout: 5_000 });
+    const me = await context.request.get("/api/v1/display/me?as=display");
+    expect(me.status()).toBe(401);
   } finally {
     await context.close();
     await gm.context?.close();

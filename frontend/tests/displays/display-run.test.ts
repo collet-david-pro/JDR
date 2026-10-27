@@ -300,7 +300,7 @@ describe('DisplayRun: events', () => {
 });
 
 describe('DisplayRun: session life', () => {
-  it('waits when the session ends, then follows the attached one', async () => {
+  it('waits when the session ends, then follows another session if the screen is moved', async () => {
     const t = setup();
     await t.run.start();
     await flush();
@@ -319,7 +319,7 @@ describe('DisplayRun: session life', () => {
     await t.fire(ME_POLL_WAITING_MS);
     expect(t.run.status).toBe('waiting');
     expect(t.delays()).toEqual([ME_POLL_WAITING_MS]);
-    // the GM attached the screen to another session
+    // the screen is now followed on another session (defensive case)
     t.next = meOf({}, { id: '13', current_map_id: '40' });
     await t.fire(ME_POLL_WAITING_MS);
     expect(t.run.status).toBe('running');

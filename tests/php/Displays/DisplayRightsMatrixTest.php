@@ -24,7 +24,6 @@ final class DisplayRightsMatrixTest extends DisplaysTestCase
             'patch' => ['patch', 200],
             'delete' => ['delete', 204],
             'regenerate' => ['regenerate', 200],
-            'attach' => ['attach', 409],
         ];
     }
 
@@ -74,7 +73,6 @@ final class DisplayRightsMatrixTest extends DisplaysTestCase
             'patch' => $client->patch('/displays/' . $id, ['name' => 'Renamed']),
             'delete' => $client->delete('/displays/' . $id),
             'regenerate' => $client->post('/displays/' . $id . '/regenerate-code'),
-            'attach' => $client->post('/sessions/' . $s . '/displays/' . $id . '/attach'),
         };
         self::assertSame($expected, $r->status(), $endpoint . ' / ' . $actor . ' ' . $r->body());
         if ($expected !== $gmStatus) {

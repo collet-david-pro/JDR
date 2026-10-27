@@ -35,10 +35,10 @@ const info = (id: string, over: Partial<DisplayInfo> = {}): DisplayInfo => ({
   ...over,
 });
 
-function fakeApi(initial: DisplayInfo[] = [], reusable: DisplayInfo[] = []) {
+function fakeApi(initial: DisplayInfo[] = []) {
   let list = initial;
   const api = {
-    list: vi.fn(async () => ({ displays: list, reusable })),
+    list: vi.fn(async () => ({ displays: list })),
     create: vi.fn(async (_s: string, name: string) =>
       info('9', { name, state: 'pending', pairing: pairing() }),
     ),
@@ -49,7 +49,6 @@ function fakeApi(initial: DisplayInfo[] = [], reusable: DisplayInfo[] = []) {
     regenerateCode: vi.fn(async (id: string) =>
       info(id, { state: 'pending', pairing: pairing('111222') }),
     ),
-    attach: vi.fn(async (_s: string, id: string) => info(id)),
   };
   return {
     api: api as unknown as DisplaysApi & typeof api,
@@ -65,14 +64,14 @@ const model = (api: DisplaysApi, onError = vi.fn()) =>
 
 describe('DisplaysModel', () => {
   it('loads the list and counts the active screens', async () => {
-    const { api } = fakeApi([info('1'), info('2', { state: 'pending' })], [info('7')]);
+    const { api } = fakeApi([info('1'), info('2', { state: 'pending' })]);
     const m = model(api);
     m.start();
     await vi.advanceTimersByTimeAsync(0);
     expect(m.loaded).toBe(true);
     expect(m.displays.map((d) => d.id)).toEqual(['1', '2']);
     expect(m.activeCount).toBe(1);
-    expect(m.reusable.map((d) => d.id)).toEqual(['7']);
+    expect('reusable' in m).toBe(false);
     m.stop();
   });
 
@@ -151,23 +150,6 @@ describe('DisplaysModel', () => {
     expect(api.remove).toHaveBeenCalledWith('2');
     expect(m.displays).toHaveLength(0);
     expect(m.pairings['2']).toBeUndefined();
-    m.stop();
-  });
-
-  it('reuses the screens of the previous session, one by one or all', async () => {
-    const { api } = fakeApi([], [info('7'), info('8')]);
-    const m = model(api);
-    m.start();
-    await vi.advanceTimersByTimeAsync(0);
-    await m.attach('7');
-    expect(api.attach).toHaveBeenCalledWith('12', '7');
-    expect(m.reusable.map((d) => d.id)).toEqual(['8']);
-    expect(m.displays.map((d) => d.id)).toContain('7');
-    api.attach.mockRejectedValueOnce(
-      new ApiError({ status: 409, code: 'display_not_reusable', message: 'x' }),
-    );
-    const failure = await m.attachAll();
-    expect((failure as ApiError).code).toBe('display_not_reusable');
     m.stop();
   });
 

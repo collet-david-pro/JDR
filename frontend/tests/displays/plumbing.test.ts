@@ -204,28 +204,26 @@ describe('DisplaysClient (GM)', () => {
     const info = { id: '9', pairing: null };
     const f = fakeFetch({
       'POST /sessions/12/displays': () => ok(info, 201),
-      'GET /sessions/12/displays': () => ok({ displays: [info], reusable: [] }),
+      'GET /sessions/12/displays': () => ok({ displays: [info] }),
       'PATCH /displays/9': () => ok(info),
       'DELETE /displays/9': () => new Response(null, { status: 204 }),
       'POST /displays/9/regenerate-code': () => ok(info),
-      'POST /sessions/12/displays/9/attach': () => ok(info),
     });
     const client = new DisplaysClient(
       new ApiClient({ baseUrl: '/api/v1', fetch: f.fetch, csrfToken: 'c' }),
     );
     await client.create('12', 'Table');
     expect((await client.list('12')).displays).toHaveLength(1);
+    expect('attach' in client).toBe(false);
     await client.update('9', { name: 'Salon', settings: { mirror: true } });
     await client.remove('9');
     await client.regenerateCode('9');
-    await client.attach('12', '9');
     expect(f.calls.map((c) => `${c.method} ${c.url.pathname.replace('/api/v1', '')}`)).toEqual([
       'POST /sessions/12/displays',
       'GET /sessions/12/displays',
       'PATCH /displays/9',
       'DELETE /displays/9',
       'POST /displays/9/regenerate-code',
-      'POST /sessions/12/displays/9/attach',
     ]);
     expect(f.calls[0]!.body).toEqual({ name: 'Table' });
     expect(f.calls[2]!.body).toEqual({ name: 'Salon', settings: { mirror: true } });

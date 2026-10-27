@@ -118,7 +118,8 @@ final class DisplayPairingTest extends DisplaysTestCase
         // The route is "only": the screen is identified with or without as=display.
         self::assertSame($d['id'], self::data($this->ok($screen->get('/display/me')))['id']);
 
-        $this->ok($w['gm']->post('/sessions/' . $w['session'] . '/end'));
+        // Ending through the API revokes the screen (P7g): the defensive 'waiting' status is forced in the DB.
+        $this->setState($w['session'], 'ended');
         $ended = self::data($this->ok($screen->get('/display/me?as=display')));
         self::assertSame('ended', $ended['session']['state']);
         self::assertSame('waiting', $ended['status']);

@@ -230,7 +230,7 @@ final class DisplayTableViewTest extends DisplaysTestCase
             self::assertSame('session_paused', self::errorCode($r));
         }
 
-        $this->ok($w['gm']->post('/sessions/' . $s . '/end'));
+        $this->setState($s, 'ended'); // forced: the API end would revoke the screen (P7g)
         self::assertNull(self::data($this->ok($screen->get('/sessions/' . $s . '/snapshot?as=display')))['map']);
         $r = $screen->get('/sessions/' . $s . '/preload?as=display');
         self::assertSame(409, $r->status());

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JDR\Tests\Displays;
 
 /**
- * GM side: creation, limit, new code, revocation, reuse of a screen of an ended session.
+ * GM side: creation, limit, new code, revocation, revocation of every screen when the session ends.
  */
 final class DisplayManageTest extends DisplaysTestCase
 {
@@ -37,7 +37,7 @@ final class DisplayManageTest extends DisplaysTestCase
 
         $list = self::data($this->ok($w['gm']->get('/sessions/' . $w['session'] . '/displays')));
         self::assertSame([$d['id'], $co['id']], array_column($list['displays'], 'id'));
-        self::assertSame([], $list['reusable']);
+        self::assertArrayNotHasKey('reusable', $list);
         self::assertNull($list['displays'][0]['pairing']);
     }
 
@@ -116,62 +116,67 @@ final class DisplayManageTest extends DisplaysTestCase
         self::assertSame(404, $w['gm']->delete('/displays/' . $d['id'])->status());
     }
 
-    public function testReuseOfAScreenOfAnEndedSession(): void
+    public function testEndingTheSessionRevokesEveryScreen(): void
     {
         $w = $this->arena();
         [$screen, $d] = $this->pairedScreen($w['gm'], $w['session']);
         $pending = $this->makeDisplay($w['gm'], $w['session'], 'Pas appairé');
-        $this->ok($w['gm']->post('/sessions/' . $w['session'] . '/end'));
-
-        $b = self::data($this->ok($w['gm']->post('/games/' . $w['game'] . '/sessions', ['name' => 'B', 'map_id' => $w['map']]), 201));
-        $list = self::data($this->ok($w['gm']->get('/sessions/' . $b['id'] . '/displays')));
-        self::assertSame([], $list['displays']);
-        self::assertSame([$d['id']], array_column($list['reusable'], 'id'), 'only the active one');
-
-        // Not reusable: pending, or unknown.
-        $r = $w['gm']->post('/sessions/' . $b['id'] . '/displays/' . $pending['id'] . '/attach');
-        self::assertSame(409, $r->status());
-        self::assertSame('display_not_reusable', $this->errorCode($r));
-        self::assertSame(404, $w['gm']->post('/sessions/' . $b['id'] . '/displays/999999/attach')->status());
-        self::assertSame(403, $w['bob']->post('/sessions/' . $b['id'] . '/displays/' . $d['id'] . '/attach')->status());
-
+        $this->ok($screen->get('/display/me?as=display'));
         $head = $this->head();
-        $moved = self::data($this->ok($w['co']->post('/sessions/' . $b['id'] . '/displays/' . $d['id'] . '/attach')));
-        self::assertSame((string) $b['id'], $moved['session_id']);
-        self::assertSame(['display.updated/gm', 'display.updated/displays'], $this->kinds($head));
-        foreach ($this->events($head) as $e) {
-            self::assertSame('session:' . $b['id'], $e['channel']);
-        }
-        $me = self::data($this->ok($screen->get('/display/me?as=display')));
-        self::assertSame((string) $b['id'], $me['session']['id']);
-        self::assertSame('lobby', $me['status']);
+        $this->ok($w['gm']->post('/sessions/' . $w['session'] . '/end', ['client_op_id' => 'end-1']));
 
-        // Already attached to an open session: no longer reusable.
-        $r = $w['gm']->post('/sessions/' . $b['id'] . '/displays/' . $d['id'] . '/attach');
-        self::assertSame(409, $r->status());
-        self::assertSame('display_not_reusable', $this->errorCode($r));
+        self::assertSame(0, $this->rows('session_displays'));
+        self::assertNull($this->displayRow($d['id']));
+        self::assertNull($this->displayRow($pending['id']));
+        $kinds = $this->kinds($head);
+        $revoked = array_values(array_filter($kinds, static fn (string $k): bool => str_starts_with($k, 'display.revoked')));
+        self::assertSame(
+            ['display.revoked/gm', 'display.revoked/displays', 'display.revoked/gm', 'display.revoked/displays'],
+            $revoked,
+        );
+        $lastState = max(array_keys(array_filter($kinds, static fn (string $k): bool => str_starts_with($k, 'session.state'))));
+        self::assertGreaterThan($lastState, array_search('display.revoked/gm', $kinds, true), 'session.state first');
+
+        $r = $screen->get('/display/me?as=display');
+        self::assertSame(401, $r->status());
+        self::assertSame('display_unpaired', $this->errorCode($r));
+
+        $list = self::data($this->ok($w['gm']->get('/sessions/' . $w['session'] . '/displays')));
+        self::assertSame(['displays' => []], $list);
+
+        // Replayed end (same client_op_id): no second event.
+        $again = $this->head();
+        $this->ok($w['gm']->post('/sessions/' . $w['session'] . '/end', ['client_op_id' => 'end-1']));
+        self::assertSame([], $this->kinds($again));
     }
 
-    public function testReuseIsLimitedToTheSameGameAndTheLimit(): void
+    public function testAttachRouteIsGone(): void
     {
         $w = $this->arena();
         [, $d] = $this->pairedScreen($w['gm'], $w['session']);
-        $this->ok($w['gm']->post('/sessions/' . $w['session'] . '/end'));
+        $r = $w['gm']->post('/sessions/' . $w['session'] . '/displays/' . $d['id'] . '/attach');
+        self::assertContains($r->status(), [404, 405]);
+    }
 
-        // Another game of the same GM.
-        $game2 = (string) $this->newGame($w['gm'], 'Autre')['id'];
-        $map2 = $this->newMap($w['gm'], $game2);
-        $s2 = self::data($this->ok($w['gm']->post('/games/' . $game2 . '/sessions', ['map_id' => $map2['id']]), 201));
-        self::assertSame([], self::data($this->ok($w['gm']->get('/sessions/' . $s2['id'] . '/displays')))['reusable']);
-        self::assertSame(404, $w['gm']->post('/sessions/' . $s2['id'] . '/displays/' . $d['id'] . '/attach')->status());
+    public function testMigrationDeletesScreensOfEndedSessionsOnly(): void
+    {
+        $w = $this->arena();
+        [, $d] = $this->pairedScreen($w['gm'], $w['session']);
+        $sessions = $this->db->t('play_sessions');
+        $this->db->execute("UPDATE $sessions SET `state` = 'ended' WHERE `id` = ?", [(int) $w['session']]);
+        $sql = (string) preg_replace('/^\s*--.*$/m', '', (string) file_get_contents(self::migrationsDir() . '/0004_revoke_ended_displays.sql'));
+        $sql = trim(str_replace(
+            ['`{{prefix}}session_displays`', '`{{prefix}}play_sessions`'],
+            [$this->db->t('session_displays'), $sessions],
+            $sql,
+        ));
+        $this->db->execute($sql);
+        self::assertNull($this->displayRow($d['id']));
 
-        // 8 screens already in the target.
-        $b = self::data($this->ok($w['gm']->post('/games/' . $w['game'] . '/sessions', ['map_id' => $w['map']]), 201));
-        for ($i = 1; $i <= 8; $i++) {
-            $this->makeDisplay($w['gm'], (string) $b['id'], 'E' . $i);
-        }
-        $r = $w['gm']->post('/sessions/' . $b['id'] . '/displays/' . $d['id'] . '/attach');
-        self::assertSame(409, $r->status());
-        self::assertSame('display_limit', $this->errorCode($r));
+        $this->db->execute("UPDATE $sessions SET `state` = 'lobby' WHERE `id` = ?", [(int) $w['session']]);
+        [, $d2] = $this->pairedScreen($w['gm'], $w['session']);
+        $this->db->execute("UPDATE $sessions SET `state` = 'running' WHERE `id` = ?", [(int) $w['session']]);
+        $this->db->execute($sql);
+        self::assertNotNull($this->displayRow($d2['id']), 'a running session keeps its screens');
     }
 }
