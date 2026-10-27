@@ -47,13 +47,13 @@ final class SessionService
      * @param array<array-key, mixed> $body {name?, map_id?, floor_id?, client_op_id?}
      * @return array<string, mixed> Session (role gm)
      */
-    public function create(User $user, int $gameId, array $body): array
+    public function create(User $user, int $gameId, array $body, string $apiBase): array
     {
         $game = $this->games->requireEdit($user, $gameId);
         $v = SessionInput::create($body);
         $opId = SessionOps::clientOpId($body);
 
-        return $this->ops->once($user, $opId, 'create:' . $game->id, function () use ($user, $game, $v, $opId): array {
+        return $this->ops->once($user, $opId, 'create:' . $game->id, function () use ($user, $game, $v, $opId, $apiBase): array {
             $this->sessions->lockGame($game->id);
             $open = $this->sessions->openSessionId($game->id);
             if ($open !== null) {
@@ -69,7 +69,7 @@ final class SessionService
             $session = $this->sessions->find($id) ?? throw new \RuntimeException('Session lost after insert.');
             $this->events->state($session, $user->id, $opId);
 
-            return $this->presenter->one($this->access->resolve($user, $id));
+            return $this->presenter->one($this->access->resolve($user, $id), $apiBase);
         });
     }
 
@@ -79,7 +79,7 @@ final class SessionService
      * @param array<string, mixed> $query cursor (id of the last session of the previous page), limit
      * @return array{0: list<array<string, mixed>>, 1: ?string} [sessions, next cursor]
      */
-    public function list(User $user, int $gameId, array $query): array
+    public function list(User $user, int $gameId, array $query, string $apiBase): array
     {
         $game = $this->games->requireView($user, $gameId);
         $limit = $this->limit($query['limit'] ?? null);
@@ -100,22 +100,22 @@ final class SessionService
             $game->isEditor() ? SessionContext::GM : SessionContext::PLAYER,
         );
 
-        return [$this->presenter->many($rows, $view), $next];
+        return [$this->presenter->many($rows, $view, $apiBase), $next];
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function show(User $user, int $sessionId): array
+    public function show(User $user, int $sessionId, string $apiBase): array
     {
-        return $this->presenter->one($this->access->resolve($user, $sessionId));
+        return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
     }
 
     /**
      * @param array<array-key, mixed> $body {name?, pause_screen?, client_op_id?}
      * @return array<string, mixed>
      */
-    public function update(User $user, int $sessionId, array $body): array
+    public function update(User $user, int $sessionId, array $body, string $apiBase): array
     {
         $ctx = $this->access->requireGm($user, $sessionId);
         $changes = SessionInput::patch($body);
@@ -124,7 +124,7 @@ final class SessionService
             $this->requirePauseAsset($user, $ctx, (int) $changes['pause_screen']['asset_id']);
         }
 
-        return $this->ops->once($user, $opId, 'patch:' . $sessionId, function () use ($user, $sessionId, $changes, $opId): array {
+        return $this->ops->once($user, $opId, 'patch:' . $sessionId, function () use ($user, $sessionId, $changes, $opId, $apiBase): array {
             $locked = $this->lock($sessionId);
             if ($changes !== []) {
                 $this->sessions->update($locked->id, $changes);
@@ -134,7 +134,7 @@ final class SessionService
                 $this->events->state($session, $user->id, $opId);
             }
 
-            return $this->presenter->one($this->access->resolve($user, $sessionId));
+            return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
         });
     }
 
@@ -144,12 +144,12 @@ final class SessionService
      * @param array<array-key, mixed> $body {client_op_id?}
      * @return array<string, mixed>
      */
-    public function transition(User $user, int $sessionId, string $action, array $body): array
+    public function transition(User $user, int $sessionId, string $action, array $body, string $apiBase): array
     {
         $this->access->requireGm($user, $sessionId);
         $opId = SessionOps::clientOpId($body);
 
-        return $this->ops->once($user, $opId, $action . ':' . $sessionId, function () use ($user, $sessionId, $action, $opId): array {
+        return $this->ops->once($user, $opId, $action . ':' . $sessionId, function () use ($user, $sessionId, $action, $opId, $apiBase): array {
             $session = $this->lock($sessionId);
             $next = $session->next($action) ?? throw new ConflictException('', ['state' => $session->state], 'invalid_transition');
             $fields = ['state' => $next];
@@ -162,7 +162,7 @@ final class SessionService
             $this->sessions->update($session->id, $fields);
             $this->events->state($this->sessions->find($session->id) ?? $session, $user->id, $opId);
 
-            return $this->presenter->one($this->access->resolve($user, $sessionId));
+            return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
         });
     }
 
@@ -190,13 +190,13 @@ final class SessionService
      * @param array<array-key, mixed> $body {map_id, floor_id?, client_op_id?}
      * @return array<string, mixed>
      */
-    public function changeMap(User $user, int $sessionId, array $body): array
+    public function changeMap(User $user, int $sessionId, array $body, string $apiBase): array
     {
         $ctx = $this->access->requireGm($user, $sessionId);
         $v = SessionInput::changeMap($body);
         $opId = SessionOps::clientOpId($body);
 
-        return $this->ops->once($user, $opId, 'map:' . $sessionId, function () use ($user, $ctx, $sessionId, $v, $opId): array {
+        return $this->ops->once($user, $opId, 'map:' . $sessionId, function () use ($user, $ctx, $sessionId, $v, $opId, $apiBase): array {
             $session = $this->lock($sessionId);
             $this->requireNotEnded($session);
             [$mapId, $floorId] = $this->mapAndFloor($ctx->session->gameId, $v['map_id'], $v['floor_id']);
@@ -204,7 +204,7 @@ final class SessionService
             $this->sessions->resetReady($session->id);
             $this->events->mapChanged($session->id, (int) $mapId, (int) $floorId, $user->id, $opId);
 
-            return $this->presenter->one($this->access->resolve($user, $sessionId));
+            return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
         });
     }
 

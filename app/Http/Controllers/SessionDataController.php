@@ -12,6 +12,7 @@ use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Domain\Assets\Input;
 use JDR\Domain\Auth\CurrentUser;
+use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Sessions\PreloadService;
 use JDR\Domain\Sessions\PresenceService;
@@ -20,7 +21,8 @@ use JDR\Domain\Sessions\SnapshotService;
 /**
  * What a client downloads to follow a session (contract P6): GET /sessions/{id}/preload and
  * /snapshot, and the presence heartbeat POST /presence {session_id}. A player gets the filtered
- * view (fog_strict, PlayerFilter), 409 session_paused in pause (D5).
+ * view (fog_strict, PlayerFilter), 409 session_paused in pause (D5). With ?as=display (P7b D7) the
+ * projection screen of its session gets the table view (TableView).
  */
 final class SessionDataController
 {
@@ -37,7 +39,12 @@ final class SessionDataController
      */
     public function preload(Request $request): Response
     {
-        return Response::ok($this->preload->preload(CurrentUser::require($request), (int) $request->param('id'), $this->apiBase($request)));
+        $display = DisplayAuth::of($request);
+        $id = (int) $request->param('id');
+
+        return Response::ok($display !== null
+            ? $this->preload->preloadForDisplay($display, $id, $this->apiBase($request))
+            : $this->preload->preload(CurrentUser::require($request), $id, $this->apiBase($request)));
     }
 
     /**
@@ -45,7 +52,12 @@ final class SessionDataController
      */
     public function snapshot(Request $request): Response
     {
-        return Response::ok($this->snapshot->snapshot(CurrentUser::require($request), (int) $request->param('id'), $this->apiBase($request)));
+        $display = DisplayAuth::of($request);
+        $id = (int) $request->param('id');
+
+        return Response::ok($display !== null
+            ? $this->snapshot->snapshotForDisplay($display, $id, $this->apiBase($request))
+            : $this->snapshot->snapshot(CurrentUser::require($request), $id, $this->apiBase($request)));
     }
 
     /**

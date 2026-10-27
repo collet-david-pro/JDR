@@ -20,7 +20,11 @@ final class SessionEvents
     {
     }
 
-    /** session.state (all): state, current map and floor, pause screen. */
+    /**
+     * session.state (all): state, current map and floor, pause screen. pause_screen stays
+     * {asset_id, text} without the signed URL (P7b D11): an event is stored and replayed while a
+     * URL expires; a client that needs the image reads GET /sessions/{id} or GET /display/me.
+     */
     public function state(Session $s, ?int $actor, ?string $opId): void
     {
         $this->record($s->id, 'session.state', Audience::ALL, [

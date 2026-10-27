@@ -14,6 +14,7 @@ use JDR\Core\I18n;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Games\GamePolicy;
 use JDR\Domain\Sessions\FogScope;
+use JDR\Domain\Displays\Display;
 use JDR\Domain\Sessions\PlayerMapAccess;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
@@ -194,16 +195,25 @@ final class MapService
      * @param array<string, mixed> $query floor, layers ("ground,terrain,decor"), cells ("cx:cy,...")
      * @return array{body: string, revision: int}
      */
-    public function chunks(User $user, int $mapId, array $query): array
+    public function chunks(User|Display $user, int $mapId, array $query): array
     {
         $scope = null;
-        try {
-            [$map] = $this->policy->requireEdit($user, $mapId);
-        } catch (ForbiddenException $denied) {
-            $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+        if ($user instanceof Display) {
+            // P7b D7: a projection screen reads the current map of its session, table scope.
+            $scope = $this->players->scopeForDisplay($user, $mapId);
             $map = $this->maps->find($mapId);
             if ($map === null || $map->deletedAt !== null) {
                 throw new NotFoundException();
+            }
+        } else {
+            try {
+                [$map] = $this->policy->requireEdit($user, $mapId);
+            } catch (ForbiddenException $denied) {
+                $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+                $map = $this->maps->find($mapId);
+                if ($map === null || $map->deletedAt !== null) {
+                    throw new NotFoundException();
+                }
             }
         }
         $floors = $this->maps->floors($map->id);

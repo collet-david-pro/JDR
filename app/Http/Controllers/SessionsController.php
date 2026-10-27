@@ -6,8 +6,10 @@ namespace JDR\Http\Controllers;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Core\Config;
 use JDR\Core\Request;
 use JDR\Core\Response;
+use JDR\Domain\Assets\Input;
 use JDR\Domain\Auth\CurrentUser;
 use JDR\Domain\Sessions\SessionPlayers;
 use JDR\Domain\Sessions\SessionService;
@@ -19,7 +21,7 @@ use JDR\Domain\Sessions\SessionService;
  */
 final class SessionsController
 {
-    public function __construct(private SessionService $sessions, private SessionPlayers $players)
+    public function __construct(private SessionService $sessions, private SessionPlayers $players, private ?Config $config = null)
     {
     }
 
@@ -28,7 +30,7 @@ final class SessionsController
      */
     public function create(Request $request): Response
     {
-        return Response::ok($this->sessions->create(CurrentUser::require($request), self::id($request), self::body($request)), [], 201);
+        return Response::ok($this->sessions->create(CurrentUser::require($request), self::id($request), self::body($request), $this->apiBase($request)), [], 201);
     }
 
     /**
@@ -36,7 +38,7 @@ final class SessionsController
      */
     public function index(Request $request): Response
     {
-        [$list, $next] = $this->sessions->list(CurrentUser::require($request), self::id($request), $request->query);
+        [$list, $next] = $this->sessions->list(CurrentUser::require($request), self::id($request), $request->query, $this->apiBase($request));
 
         return Response::ok($list, $next === null ? [] : ['next_cursor' => $next]);
     }
@@ -46,7 +48,7 @@ final class SessionsController
      */
     public function show(Request $request): Response
     {
-        return Response::ok($this->sessions->show(CurrentUser::require($request), self::id($request)));
+        return Response::ok($this->sessions->show(CurrentUser::require($request), self::id($request), $this->apiBase($request)));
     }
 
     /**
@@ -54,7 +56,7 @@ final class SessionsController
      */
     public function update(Request $request): Response
     {
-        return Response::ok($this->sessions->update(CurrentUser::require($request), self::id($request), self::body($request)));
+        return Response::ok($this->sessions->update(CurrentUser::require($request), self::id($request), self::body($request), $this->apiBase($request)));
     }
 
     /**
@@ -143,12 +145,17 @@ final class SessionsController
      */
     public function changeMap(Request $request): Response
     {
-        return Response::ok($this->sessions->changeMap(CurrentUser::require($request), self::id($request), self::body($request)));
+        return Response::ok($this->sessions->changeMap(CurrentUser::require($request), self::id($request), self::body($request), $this->apiBase($request)));
     }
 
     private function transition(Request $request, string $action): Response
     {
-        return Response::ok($this->sessions->transition(CurrentUser::require($request), self::id($request), $action, self::body($request)));
+        return Response::ok($this->sessions->transition(CurrentUser::require($request), self::id($request), $action, self::body($request), $this->apiBase($request)));
+    }
+
+    private function apiBase(Request $request): string
+    {
+        return Input::apiBase($request, $this->config);
     }
 
     private static function id(Request $request): int

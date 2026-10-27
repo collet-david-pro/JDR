@@ -6,10 +6,12 @@ namespace JDR\Http\Controllers;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Core\Config;
 use JDR\Core\Errors\UnauthenticatedException;
 use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Core\Session\CookieParams;
+use JDR\Domain\Assets\Input;
 use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Displays\DisplayDevice;
 
@@ -19,7 +21,7 @@ use JDR\Domain\Displays\DisplayDevice;
  */
 final class DisplayDeviceController
 {
-    public function __construct(private DisplayDevice $device)
+    public function __construct(private DisplayDevice $device, private ?Config $config = null)
     {
     }
 
@@ -28,7 +30,7 @@ final class DisplayDeviceController
      */
     public function pair(Request $request): Response
     {
-        return Response::ok($this->device->pair($request, self::body($request), self::params($request)));
+        return Response::ok($this->device->pair($request, self::body($request), self::params($request), $this->apiBase($request)));
     }
 
     /**
@@ -36,7 +38,7 @@ final class DisplayDeviceController
      */
     public function show(Request $request): Response
     {
-        return Response::ok($this->device->current($request, self::display($request), self::params($request)));
+        return Response::ok($this->device->current($request, self::display($request), self::params($request), $this->apiBase($request)));
     }
 
     /**
@@ -44,7 +46,7 @@ final class DisplayDeviceController
      */
     public function update(Request $request): Response
     {
-        return Response::ok($this->device->patch(self::display($request), self::body($request)));
+        return Response::ok($this->device->patch(self::display($request), self::body($request), $this->apiBase($request)));
     }
 
     /**
@@ -55,6 +57,11 @@ final class DisplayDeviceController
         $this->device->unpair(self::display($request), self::params($request));
 
         return Response::noContent();
+    }
+
+    private function apiBase(Request $request): string
+    {
+        return Input::apiBase($request, $this->config);
     }
 
     private static function display(Request $request): \JDR\Domain\Displays\Display

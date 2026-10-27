@@ -11,6 +11,7 @@ use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Domain\Assets\Input;
 use JDR\Domain\Auth\CurrentUser;
+use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Maps\MapOpsService;
 use JDR\Domain\Maps\MapPresenter;
 use JDR\Domain\Maps\MapService;
@@ -109,11 +110,12 @@ final class MapsController
 
     /**
      * GET /maps/{id}/chunks?floor=&layers=&cells= -> application/octet-stream, X-Map-Revision
-     * Also open to a player of a running session on this map, fog_strict blocks only (P6 D11).
+     * Also open to a player of a running session on this map, fog_strict blocks only (P6 D11),
+     * and to a projection screen of that session with ?as=display (table scope, P7b D7).
      */
     public function chunks(Request $request): Response
     {
-        $result = $this->maps->chunks(CurrentUser::require($request), self::id($request), $request->query);
+        $result = $this->maps->chunks(DisplayAuth::of($request) ?? CurrentUser::require($request), self::id($request), $request->query);
 
         return new Response($result['body'], 200, [
             'Content-Type' => 'application/octet-stream',

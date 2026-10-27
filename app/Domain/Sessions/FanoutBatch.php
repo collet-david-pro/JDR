@@ -25,12 +25,16 @@ use JDR\Realtime\Channel;
  * refreshScopes() sends what entered / left it: map.ops.public {objects, chunks: new blocks} and
  * maptoken.added / maptoken.removed. With fog_strict off, an event that is the same for every
  * player is written once for the audience "players".
+ * P7b D6: when the session has an active projection screen, the same versions are computed for the
+ * virtual player "table" (TableAudience: every table viewer is his, scope FogStrictScope::forTable)
+ * and written for the audience "displays" (payload.view = "display"); camera.moved too.
  */
 final class FanoutBatch
 {
     /** @var array<int, FogScope> by user id, scopes of the players before the pending changes */
     private array $scopes = [];
     private int $revision;
+    private ScopeDiff $diff;
 
     /**
      * @param list<int> $players non-kicked players of the session
@@ -45,8 +49,10 @@ final class FanoutBatch
         private array $players,
         private ?int $actor,
         private ?string $opId,
+        private ?TableAudience $table = null,
     ) {
         $this->revision = $map->revision;
+        $this->diff = new ScopeDiff($scene, $map);
         if ($this->restricted()) {
             $this->scopes = $this->scopeService->forUsers($ctx, $map->id, $players);
         }
@@ -74,10 +80,13 @@ final class FanoutBatch
         $this->emit($type, $this->running() ? Audience::ALL : Audience::GM, $payload);
     }
 
-    /** An event for the players ("players"), gm only while paused (D5). */
+    /** An event for the players ("players") and the screens ("displays"), gm only while paused (D5). */
     public function players(string $type, array $payload, bool $ephemeral = false): void
     {
         $this->emit($type, $this->running() ? Audience::PLAYERS : Audience::GM, $payload, null, $ephemeral);
+        if ($this->running()) {
+            $this->table?->raw($type, $payload, $ephemeral);
+        }
     }
 
     /** An event for everyone even while paused (note.read_aloud). */
@@ -94,10 +103,12 @@ final class FanoutBatch
      */
     public function token(?array $before, ?array $after, string $changedType): void
     {
-        $this->sight->tokenChanged((string) ($after['uid'] ?? $before['uid'] ?? ''), $after);
-        $this->dispatch(function (int $user, FogScope $scope) use ($before, $after, $changedType): array {
-            $vb = $before === null ? null : $this->sight->token($before, $user, $scope);
-            $va = $after === null ? null : $this->sight->token($after, $user, $scope);
+        $uid = (string) ($after['uid'] ?? $before['uid'] ?? '');
+        $this->sight->tokenChanged($uid, $after);
+        $this->table?->sight()->tokenChanged($uid, $after);
+        $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($before, $after, $changedType): array {
+            $vb = $before === null ? null : $sight->token($before, $user, $scope);
+            $va = $after === null ? null : $sight->token($after, $user, $scope);
             if ($vb === $va) {
                 return [];
             }
@@ -110,6 +121,9 @@ final class FanoutBatch
 
             return [[$changedType, $changedType === EventTypes::TOKEN_MOVED ? self::moved($va) : $va]];
         });
+        if ($this->table?->ownRefresh($before, $after) === true) {
+            $this->refreshTable();
+        }
     }
 
     /**
@@ -124,9 +138,9 @@ final class FanoutBatch
      */
     public function object(?array $before, array $after, string $type, \Closure $payload): void
     {
-        $this->dispatch(function (int $user, FogScope $scope) use ($before, $after, $type, $payload): array {
-            $vb = $before === null ? null : $this->sight->object($before, $scope);
-            $va = $this->sight->object($after, $scope);
+        $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($before, $after, $type, $payload): array {
+            $vb = $before === null ? null : $sight->object($before, $scope);
+            $va = $sight->object($after, $scope);
             if ($va === null || ($vb !== null && array_diff_key($va, ['rev' => 0]) === array_diff_key($vb, ['rev' => 0]))) {
                 return [];
             }
@@ -144,13 +158,14 @@ final class FanoutBatch
      */
     public function reveal(array $object): void
     {
-        $this->dispatch(function (int $user, FogScope $scope) use ($object): array {
-            $vb = $this->sight->object($object, $scope, false);
-            $va = $this->sight->object($object, $scope, true);
+        $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($object): array {
+            $vb = $sight->object($object, $scope, false);
+            $va = $sight->object($object, $scope, true);
 
             return $va === null || $va === $vb ? [] : [[EventTypes::OBJECT_REVEALED, $va]];
         });
         $this->sight->markRevealed((string) $object['uid']);
+        $this->table?->sight()->markRevealed((string) $object['uid']);
     }
 
     /**
@@ -161,12 +176,12 @@ final class FanoutBatch
      */
     public function mapOps(array $objects, array $blocks, bool $reload): void
     {
-        $this->dispatch(function (int $user, FogScope $scope) use ($objects, $blocks, $reload): array {
+        $this->dispatch(function (PlayerSight $sight, int $user, FogScope $scope) use ($objects, $blocks, $reload): array {
             $upsert = [];
             $remove = [];
             foreach ($objects as [$before, $after]) {
-                $vb = $before === null ? null : $this->sight->object($before, $scope);
-                $va = $after === null ? null : $this->sight->object($after, $scope);
+                $vb = $before === null ? null : $sight->object($before, $scope);
+                $va = $after === null ? null : $sight->object($after, $scope);
                 if ($va !== null && $va !== $vb) {
                     $upsert[] = $va;
                 } elseif ($va === null && $vb !== null) {
@@ -198,7 +213,7 @@ final class FanoutBatch
         if ($gm) {
             $this->gm(EventTypes::FOG_UPDATED, $base + ['chunks' => $wire($chunks)]);
         }
-        $this->dispatch(static function (int $user, FogScope $scope) use ($floorId, $chunks, $base, $wire): array {
+        $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($floorId, $chunks, $base, $wire): array {
             $mine = array_values(array_filter($chunks, static fn (array $c): bool => $scope->allowsBlock($floorId, $c[0], $c[1])));
 
             return $mine === [] ? [] : [[EventTypes::FOG_UPDATED, $base + ['chunks' => $wire($mine)]]];
@@ -207,11 +222,16 @@ final class FanoutBatch
 
     /**
      * Reads the scopes again (after a change of the assigned tokens or of the explored blocks)
-     * and sends to each player what entered or left his scope.
+     * and sends to each player (and to the table) what entered or left his scope.
      */
     public function refreshScopes(): void
     {
-        if (!$this->restricted()) {
+        if (!$this->ctx->fogStrict()) {
+            return;
+        }
+        $tokens = null;
+        $this->refreshTable($tokens);
+        if ($this->players === []) {
             return;
         }
         $old = $this->scopes;
@@ -220,35 +240,9 @@ final class FanoutBatch
         if (!$this->running()) {
             return;
         }
-        $tokens = null;
         foreach ($this->players as $user) {
-            [$added, $removed] = self::blockDiff($old[$user], $new[$user]);
-            if ($added === [] && $removed === []) {
-                continue;
-            }
-            $tokens ??= $this->scene->tokens($this->map->id);
-            $upsert = [];
-            $remove = [];
-            foreach ($this->objectsNear(array_merge($added, $removed)) as $object) {
-                $v0 = $this->sight->object($object, $old[$user]);
-                $v1 = $this->sight->object($object, $new[$user]);
-                if ($v1 !== null && $v0 === null) {
-                    $upsert[] = $v1;
-                } elseif ($v1 === null && $v0 !== null) {
-                    $remove[] = (string) $v0['uid'];
-                }
-            }
-            if ($upsert !== [] || $remove !== [] || $added !== []) {
-                $this->emit(EventTypes::MAP_OPS_PUBLIC, Audience::USER, $this->opsPayload($upsert, $remove, $added, false) + ['view' => EventFanout::VIEW_PLAYER], $user);
-            }
-            foreach ($tokens as $token) {
-                $t0 = $this->sight->token($token, $user, $old[$user]);
-                $t1 = $this->sight->token($token, $user, $new[$user]);
-                if ($t1 !== null && $t0 === null) {
-                    $this->emit(EventTypes::TOKEN_ADDED, Audience::USER, $t1 + ['view' => EventFanout::VIEW_PLAYER], $user);
-                } elseif ($t1 === null && $t0 !== null) {
-                    $this->emit(EventTypes::TOKEN_REMOVED, Audience::USER, ['uid' => (string) $t0['uid'], 'view' => EventFanout::VIEW_PLAYER], $user);
-                }
+            foreach ($this->diff->changes($this->sight, $user, $old[$user], $new[$user], $this->revision, $tokens) as [$type, $payload]) {
+                $this->emit($type, Audience::USER, $payload + ['view' => EventFanout::VIEW_PLAYER], $user);
             }
         }
     }
@@ -266,30 +260,49 @@ final class FanoutBatch
 
     // ---- Internals --------------------------------------------------------------------------
 
+    /**
+     * Reads the table scope again and sends to the screens what entered or left it.
+     *
+     * @param list<array<string, mixed>>|null $tokens placed tokens of the map (read once)
+     */
+    private function refreshTable(?array &$tokens = null): void
+    {
+        if ($this->table === null || !$this->ctx->fogStrict()) {
+            return;
+        }
+        [$old, $new] = $this->table->rescope();
+        if ($this->running()) {
+            $this->table->emit($this->diff->changes($this->table->sight(), TableView::USER, $old, $new, $this->revision, $tokens));
+        }
+    }
+
     private function restricted(): bool
     {
         return $this->ctx->fogStrict() && $this->players !== [];
     }
 
     /**
-     * Writes the player versions given by $eventsFor(user, scope) => [[type, payload], ...]
+     * Writes the player versions given by $eventsFor(sight, user, scope) => [[type, payload], ...]
      * (nothing while paused, D5). fog_strict off and the same events for every player: written
-     * once for the audience "players".
+     * once for the audience "players". The table version (P7b) is written for "displays".
      *
-     * @param \Closure(int, FogScope): list<array{0: string, 1: array<string, mixed>}> $eventsFor
+     * @param \Closure(PlayerSight, int, FogScope): list<array{0: string, 1: array<string, mixed>}> $eventsFor
      */
     private function dispatch(\Closure $eventsFor): void
     {
         if (!$this->running()) {
             return;
         }
+        if ($this->table !== null) {
+            $this->table->emit($eventsFor($this->table->sight(), TableView::USER, $this->table->scope()));
+        }
         $player = ['view' => EventFanout::VIEW_PLAYER];
         if (!$this->ctx->fogStrict()) {
             $open = FogScope::unrestricted();
-            $common = $eventsFor(0, $open);
+            $common = $eventsFor($this->sight, 0, $open);
             $own = [];
             foreach ($this->players as $user) {
-                $own[$user] = $eventsFor($user, $open);
+                $own[$user] = $eventsFor($this->sight, $user, $open);
             }
             if (array_filter($own, static fn (array $e): bool => $e !== $common) === []) {
                 foreach ($common as [$type, $payload]) {
@@ -307,7 +320,7 @@ final class FanoutBatch
             return;
         }
         foreach ($this->players as $user) {
-            foreach ($eventsFor($user, $this->scopes[$user] ?? FogScope::of([])) as [$type, $payload]) {
+            foreach ($eventsFor($this->sight, $user, $this->scopes[$user] ?? FogScope::of([])) as [$type, $payload]) {
                 $this->emit($type, Audience::USER, $payload + $player, $user);
             }
         }
@@ -321,59 +334,7 @@ final class FanoutBatch
      */
     private function opsPayload(array $upsert, array $remove, array $chunks, bool $reload): array
     {
-        return [
-            'map_id' => $this->map->id,
-            'revision' => $this->revision,
-            'objects' => ['upsert' => $upsert, 'remove' => $remove],
-            'chunks' => array_map(static fn (array $b): array => [(string) $b[0], $b[1], $b[2]], $chunks),
-            'reload' => $reload,
-        ];
-    }
-
-    /**
-     * Objects whose box touches one of the blocks [floor, cx, cy].
-     *
-     * @param list<array{0: int, 1: int, 2: int}> $blocks
-     * @return list<array<string, mixed>>
-     */
-    private function objectsNear(array $blocks): array
-    {
-        $boxes = [];
-        foreach ($blocks as [$floor, $cx, $cy]) {
-            $b = $boxes[$floor] ?? [INF, INF, -INF, -INF];
-            $boxes[$floor] = [min($b[0], $cx * 32), min($b[1], $cy * 32), max($b[2], $cx * 32 + 32), max($b[3], $cy * 32 + 32)];
-        }
-        $out = [];
-        foreach ($boxes as $floor => $box) {
-            foreach ($this->scene->objects($this->map->id, $floor, $box) as $object) {
-                $out[] = $object;
-            }
-        }
-
-        return $out;
-    }
-
-    /**
-     * Blocks [floor, cx, cy] allowed by $new only, and by $old only.
-     *
-     * @return array{0: list<array{0: int, 1: int, 2: int}>, 1: list<array{0: int, 1: int, 2: int}>}
-     */
-    private static function blockDiff(FogScope $old, FogScope $new): array
-    {
-        $set = static function (FogScope $s): array {
-            $out = [];
-            foreach ($s->floors() as $floor) {
-                foreach ($s->cells($floor) ?? [] as [$cx, $cy]) {
-                    $out[$floor . ':' . $cx . ':' . $cy] = [$floor, $cx, $cy];
-                }
-            }
-
-            return $out;
-        };
-        $a = $set($old);
-        $b = $set($new);
-
-        return [array_values(array_diff_key($b, $a)), array_values(array_diff_key($a, $b))];
+        return ScopeDiff::opsPayload($this->map->id, $this->revision, $upsert, $remove, $chunks, $reload);
     }
 
     /**

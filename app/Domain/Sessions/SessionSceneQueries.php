@@ -68,6 +68,53 @@ final class SessionSceneQueries
     }
 
     /**
+     * D5 (etapes P07b): placed tokens of a map seen through by the "table" (projection screens):
+     * not hidden, whose definition is assigned in the session (to any player) or is of kind "pc".
+     *
+     * @return list<array{uid: string, token_id: int, floor_id: int, x: float, y: float, vision: array<string, mixed>}>
+     */
+    public function tablePlaced(int $sessionId, int $mapId): array
+    {
+        $rows = $this->db->fetchAll(
+            'SELECT mt.`uid`, mt.`token_id`, mt.`floor_id`, mt.`x`, mt.`y`, t.`vision` FROM ' . $this->db->t('map_tokens') . ' mt '
+            . 'JOIN ' . $this->db->t('tokens') . ' t ON t.`id` = mt.`token_id` '
+            . 'LEFT JOIN ' . $this->db->t('token_assignments') . ' ta ON ta.`token_id` = mt.`token_id` AND ta.`session_id` = ? '
+            . "WHERE mt.`map_id` = ? AND mt.`hidden` = 0 AND (ta.`token_id` IS NOT NULL OR t.`kind` = 'pc') ORDER BY mt.`id`",
+            [$sessionId, $mapId],
+        );
+        $out = [];
+        foreach ($rows as $r) {
+            $vision = json_decode((string) $r['vision'], true);
+            $out[] = [
+                'uid' => (string) $r['uid'],
+                'token_id' => (int) $r['token_id'],
+                'floor_id' => (int) $r['floor_id'],
+                'x' => (float) $r['x'],
+                'y' => (float) $r['y'],
+                'vision' => is_array($vision) ? $vision : [],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * D5: token definitions of the game whose placed tokens are table viewers (assigned in the
+     * session, or of kind "pc").
+     *
+     * @return list<int>
+     */
+    public function tableDefinitions(int $sessionId, int $gameId): array
+    {
+        return array_map('intval', array_column($this->db->fetchAll(
+            'SELECT t.`id` FROM ' . $this->db->t('tokens') . ' t '
+            . 'LEFT JOIN ' . $this->db->t('token_assignments') . ' ta ON ta.`token_id` = t.`id` AND ta.`session_id` = ? '
+            . "WHERE t.`game_id` = ? AND (ta.`token_id` IS NOT NULL OR t.`kind` = 'pc')",
+            [$sessionId, $gameId],
+        ), 'id'));
+    }
+
+    /**
      * The open session (running or paused) of $userId, as a non-kicked player, whose current map
      * is $mapId; null when there is none.
      */

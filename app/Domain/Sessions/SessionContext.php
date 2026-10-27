@@ -8,11 +8,14 @@ defined('JDR_BOOT') || exit;
 
 /**
  * A session seen by one user (SessionAccess): its role there, and the settings of its game.
+ * Role display (P7b): a projection screen of the session (SessionAccess::resolveDisplay), which
+ * sees the "table" view (TableView): never GM rights.
  */
 final class SessionContext
 {
     public const GM = 'gm';
     public const PLAYER = 'player';
+    public const DISPLAY = 'display';
 
     /**
      * @param array<string, mixed> $gameSettings complete games.settings
@@ -28,6 +31,11 @@ final class SessionContext
     public function isGm(): bool
     {
         return $this->role === self::GM;
+    }
+
+    public function isDisplay(): bool
+    {
+        return $this->role === self::DISPLAY;
     }
 
     public function fogStrict(): bool

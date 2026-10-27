@@ -30,12 +30,17 @@ use JDR\Realtime\EventStore;
  *   lock of D1, so "id > since" stays safe. The previous event is found by a non-locking read and
  *   deleted by primary key (record locks only: no gap lock that would block the INSERT of a
  *   concurrent writer holding event_seq).
+ * - P7b D6: with at least one active projection screen in the session, the "table" version
+ *   (TableAudience, TableView) is also written for the audience "displays" (payload.view =
+ *   "display"); a GM or a player client ignores it.
  * The per-request logic is FanoutBatch (begin()).
  */
 final class EventFanout
 {
     public const VIEW_GM = 'gm';
     public const VIEW_PLAYER = 'player';
+    /** P7b D6: the version of the projection screens (audience "displays"). */
+    public const VIEW_DISPLAY = 'display';
     /** D3: window of the merge, in seconds. */
     public const MERGE_WINDOW = 1;
     private const MERGE_SCAN = 50;
@@ -48,6 +53,7 @@ final class EventFanout
         private PlayerView $view,
         private SessionRepository $sessions,
         private MapSceneRepository $scene,
+        private TableView $table,
     ) {
     }
 
@@ -72,16 +78,22 @@ final class EventFanout
             'SELECT `uid` FROM ' . $this->db->t('map_tokens') . ' WHERE `map_id` = ? AND `hidden` = 1',
             [$map->id],
         ), 'uid');
-        $sight = new PlayerSight(
-            $this->view,
-            $ctx,
-            $map,
-            $assignments,
-            array_fill_keys($this->scene->revealedUids($map->id), true),
-            array_fill_keys(array_map('strval', $hidden), true),
-        );
+        $revealed = array_fill_keys($this->scene->revealedUids($map->id), true);
+        $hiddenUids = array_fill_keys(array_map('strval', $hidden), true);
+        $sight = new PlayerSight($this->view, $ctx, $map, $assignments, $revealed, $hiddenUids);
 
-        return new FanoutBatch($this, $this->scopes, $sight, $this->scene, $ctx, $map, $players, $actor, $opId);
+        $table = null;
+        $screens = (int) $this->db->fetchValue(
+            'SELECT COUNT(*) FROM ' . $this->db->t('session_displays') . " WHERE `session_id` = ? AND `state` = 'active'",
+            [$ctx->session->id],
+        );
+        if ($screens > 0) {
+            $viewers = $this->table->assignments($ctx);
+            $tableSight = new PlayerSight($this->view, $ctx, $map, $viewers, $revealed, $hiddenUids);
+            $table = new TableAudience($this, $this->scopes, $tableSight, $ctx, $map->id, $viewers, $assignments, $actor, $opId);
+        }
+
+        return new FanoutBatch($this, $this->scopes, $sight, $this->scene, $ctx, $map, $players, $actor, $opId, $table);
     }
 
     /**

@@ -13,6 +13,7 @@ use JDR\Http\Controllers\SessionsController;
  * Sessions (projet.md 9.2, contract P6 "Endpoints séances"). Rights: SessionAccess / GamePolicy.
  * POST /sessions/{id}/actions (P6c): SessionActionsController, limited to 30 per second and per
  * user (projet.md 6.4). Joining is limited to 10 per minute and per user.
+ * preload and snapshot also serve a projection screen with ?as=display (option display, P7b D7).
  */
 return static function (Router $r): void {
     $auth = ['auth' => true];
@@ -36,7 +37,7 @@ return static function (Router $r): void {
     $r->post($session . '/change-map', [SessionsController::class, 'changeMap'], $auth);
     $r->post($session . '/actions', [SessionActionsController::class, 'apply'], $auth + ['rate' => 'actions']);
 
-    $r->get($session . '/preload', [SessionDataController::class, 'preload'], $auth);
-    $r->get($session . '/snapshot', [SessionDataController::class, 'snapshot'], $auth);
+    $r->get($session . '/preload', [SessionDataController::class, 'preload'], $auth + ['display' => true]);
+    $r->get($session . '/snapshot', [SessionDataController::class, 'snapshot'], $auth + ['display' => true]);
     $r->post('/presence', [SessionDataController::class, 'presence'], $auth);
 };

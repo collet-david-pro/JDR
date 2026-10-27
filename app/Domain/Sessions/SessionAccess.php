@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Errors\NotFoundException;
+use JDR\Domain\Displays\Display;
 use JDR\Domain\Games\Game;
 use JDR\Domain\Games\GameSettings;
 use JDR\Domain\Users\User;
@@ -18,6 +19,7 @@ use JDR\Domain\Users\User;
  * - player = session_players row whose status is not "kicked";
  * - another member of the game, or a kicked player: 403;
  * - anyone else, an unknown session or a game in the trash: 404 (existence never revealed).
+ * A projection screen (resolveDisplay, P7b D7) only reaches its own session (role display).
  */
 final class SessionAccess
 {
@@ -49,6 +51,25 @@ final class SessionAccess
         }
 
         throw new NotFoundException();
+    }
+
+    /**
+     * The session of a projection screen: role display; another session or a game in the trash: 404.
+     *
+     * @throws NotFoundException
+     */
+    public function resolveDisplay(Display $display, int $sessionId): SessionContext
+    {
+        if ($display->sessionId !== $sessionId) {
+            throw new NotFoundException();
+        }
+        $row = $this->sessions->accessRow($sessionId, 0);
+        if ($row === null || $row['game_deleted_at'] !== null) {
+            throw new NotFoundException();
+        }
+        $settings = GameSettings::fromJson($row['game_settings'] === null ? null : (string) $row['game_settings']);
+
+        return new SessionContext(Session::fromRow($row), (int) $row['gm_user_id'], $settings, SessionContext::DISPLAY);
     }
 
     /**

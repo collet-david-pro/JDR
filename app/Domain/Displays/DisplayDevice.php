@@ -13,6 +13,7 @@ use JDR\Core\Request;
 use JDR\Core\Session\CookieJar;
 use JDR\Core\Session\CookieParams;
 use JDR\Domain\Sessions\Session;
+use JDR\Domain\Sessions\SessionPresenter;
 use JDR\Domain\Sessions\SessionRepository;
 use JDR\Domain\Support\Dates;
 use JDR\Realtime\EventReader;
@@ -35,6 +36,7 @@ final class DisplayDevice
         private EventReader $reader,
         private CookieJar $cookies,
         private Clock $clock,
+        private SessionPresenter $presenter,
     ) {
     }
 
@@ -45,7 +47,7 @@ final class DisplayDevice
      * @return array{display: array<string, mixed>}
      * @throws ValidationException display_code_invalid (unknown, expired, used, malformed, ended session)
      */
-    public function pair(Request $request, array $body, CookieParams $params): array
+    public function pair(Request $request, array $body, CookieParams $params, string $apiBase): array
     {
         $code = PairingCode::normalize($body['code'] ?? null);
         if ($code === null) {
@@ -84,7 +86,7 @@ final class DisplayDevice
         });
         $this->setCookie($token, $params);
 
-        return ['display' => $this->me($display)];
+        return ['display' => $this->me($display, $apiBase)];
     }
 
     /**
@@ -92,7 +94,7 @@ final class DisplayDevice
      *
      * @return array<string, mixed> DisplayMe
      */
-    public function current(Request $request, Display $display, CookieParams $params): array
+    public function current(Request $request, Display $display, CookieParams $params, string $apiBase): array
     {
         $now = $this->clock->timestamp();
         $seen = Dates::timestamp($display->lastSeenAt);
@@ -110,7 +112,7 @@ final class DisplayDevice
             $this->setCookie($token, $params);
         }
 
-        return $this->me($display);
+        return $this->me($display, $apiBase);
     }
 
     /**
@@ -119,7 +121,7 @@ final class DisplayDevice
      * @param array<array-key, mixed> $body
      * @return array<string, mixed> DisplayMe
      */
-    public function patch(Display $display, array $body): array
+    public function patch(Display $display, array $body, string $apiBase): array
     {
         $patch = $body['settings'] ?? null;
         $updated = $this->displays->db()->transaction(function () use ($display, $patch): Display {
@@ -132,7 +134,7 @@ final class DisplayDevice
             return $new;
         });
 
-        return $this->me($updated);
+        return $this->me($updated, $apiBase);
     }
 
     /**
@@ -151,11 +153,12 @@ final class DisplayDevice
     }
 
     /**
-     * DisplayMe. Never the session code, the players or the assignments.
+     * DisplayMe. Never the session code, the players or the assignments. pause_screen carries the
+     * signed URL of its image (P7b D11).
      *
      * @return array<string, mixed>
      */
-    public function me(Display $display): array
+    public function me(Display $display, string $apiBase): array
     {
         $head = $this->reader->headId();
         $display = $this->displays->find($display->id) ?? $display;
@@ -173,7 +176,7 @@ final class DisplayDevice
                 'current_map_id' => $session->currentMapId,
                 'current_floor_id' => $session->currentFloorId,
                 'camera' => $session->camera,
-                'pause_screen' => $session->pauseScreen,
+                'pause_screen' => $this->presenter->pauseScreen($session->pauseScreen, $apiBase),
             ],
             'status' => $session->state === Session::ENDED ? 'waiting' : $session->state,
             'last_event_id' => (string) $head,

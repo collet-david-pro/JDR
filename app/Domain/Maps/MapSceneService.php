@@ -11,6 +11,7 @@ use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Maps\Versions\MapVersionService;
+use JDR\Domain\Displays\Display;
 use JDR\Domain\Sessions\PlayerMapAccess;
 use JDR\Domain\Users\User;
 
@@ -39,17 +40,26 @@ final class MapSceneService
      * @param array<string, mixed> $query
      * @return array{floor: string, chunks: list<array{0: int, 1: int, 2: string}>}
      */
-    public function fog(User $user, int $mapId, array $query): array
+    public function fog(User|Display $user, int $mapId, array $query): array
     {
         $scope = null;
-        try {
-            [$map] = $this->policy->requireEdit($user, $mapId);
-        } catch (ForbiddenException $denied) {
-            // D11: a player of a running session on this map reads the fog blocks of his fog_strict scope.
-            $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+        if ($user instanceof Display) {
+            // P7b D7: a projection screen reads the current map of its session, table scope.
+            $scope = $this->players->scopeForDisplay($user, $mapId);
             $map = $this->maps->find($mapId);
             if ($map === null || $map->deletedAt !== null) {
                 throw new NotFoundException();
+            }
+        } else {
+            try {
+                [$map] = $this->policy->requireEdit($user, $mapId);
+            } catch (ForbiddenException $denied) {
+                // D11: a player of a running session on this map reads the fog blocks of his fog_strict scope.
+                $scope = $this->players->scopeFor($user, $mapId) ?? throw $denied;
+                $map = $this->maps->find($mapId);
+                if ($map === null || $map->deletedAt !== null) {
+                    throw new NotFoundException();
+                }
             }
         }
         $floorId = $this->floor($map, $query);

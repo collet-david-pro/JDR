@@ -9,12 +9,14 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Domain\Auth\CurrentUser;
+use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Maps\MapSceneService;
 
 /**
  * P5 scene routes (etapes/P05 "Contrat d'API P5"): GET|DELETE /maps/{id}/fog?floor= and
  * GET /maps/{id}/objects?floor=&bbox=. Rights: MapPolicy (GM / co-GM; player 403; others 404),
- * except GET /maps/{id}/fog, also open to a player of a running session on this map (P6 D11, filtered).
+ * except GET /maps/{id}/fog, also open to a player of a running session on this map (P6 D11, filtered)
+ * and to a projection screen of that session with ?as=display (table scope, P7b D7).
  */
 final class MapSceneController
 {
@@ -27,7 +29,7 @@ final class MapSceneController
      */
     public function fog(Request $request): Response
     {
-        return Response::ok($this->scene->fog(CurrentUser::require($request), (int) $request->param('id'), $request->query));
+        return Response::ok($this->scene->fog(DisplayAuth::of($request) ?? CurrentUser::require($request), (int) $request->param('id'), $request->query));
     }
 
     /**
