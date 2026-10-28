@@ -4,11 +4,12 @@ Toutes les évolutions notables de ce projet sont consignées ici.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
-## [0.1.0] - Unreleased
+## [0.1.0-alpha.1] - 2026-10-28
 
-Phases 0 à 8 de la feuille de route.
+Première version publiée (alpha) : phases 0 à 8 de la feuille de route et module de mise à jour.
 
 ### Added
+- **Mise à jour depuis l'administration** : onglet « Mise à jour » qui vérifie les releases GitHub (canal stable ou pré-versions, empreintes `SHA256SUMS`), envoi par morceaux du zip de mise à jour téléchargé par l'administrateur, contrôle complet de l'archive (chemins, manifeste, empreintes, version, authenticité), puis `update.php` étape par étape : maintenance, sauvegarde SQL de la base, sauvegarde des fichiers remplacés, copie atomique, contrôle d'intégrité, migrations une par requête ; retour arrière automatique si la copie échoue, « Réessayer » ou « Restaurer » si une migration échoue ; reprise d'une mise à jour par FTP. Voir `docs/installation.md`.
 - **Génération procédurale (phase 8)** : générateurs déterministes de donjons (partition binaire, couloirs, boucles, portes et portes secrètes, salles typées), grottes (automate cellulaire, parois lissées), extérieurs (biomes, rivières, routes, ponts et gués) et villages (bâtiments rectangulaires ou en L, pièces, portes, fenêtres, mobilier, éléments urbains) ; décor posé par règles déclaratives sans jamais bloquer une porte ; génération dans une nouvelle map, la map actuelle (instantané `pre_generate`) ou une sélection (donjon, grotte) ; panneau Générer (`Maj+G`) avec préréglages, graine, aperçu, progression et annulation dans un worker, application en une seule commande ; réglages mémorisés avec la map ; textures raccordables enregistrables dans la bibliothèque (`source = generated`) ; pack de base de 39 images installé automatiquement (`GET /api/v1/procgen/pack`) ; empreintes de référence identiques dans Chromium, Firefox et WebKit, voir `docs/procgen.md`.
 - **Mode présentiel (phase 7)** : écrans de projection appairés par code ou QR sans compte (cookie dédié `jdr_display`), vue de table filtrée côté serveur, calibrage à la diagonale ou à la règle pour 25 mm par case, rotation et miroir, pilotage de la caméra et verrou de vue, pause et textes à lire, plusieurs écrans, révoqués automatiquement en fin de séance, Wake Lock avec repli vidéo, menu discret, révocation immédiate ; 8 critères vérifiés en E2E sur Chromium, Firefox et WebKit, voir `docs/irl.md`.
 - **Séances de jeu en temps réel (phase 6)** : code de séance à saisir sur `/join`, lobby (joueurs, token affecté, barre de préchargement, « prêt ») et préchargement, console MJ (joueurs, affectations, tokens, révéler, ambiance, notes, maps), vue joueur (vision, déplacement bloqué par les murs, exploration du brouillard), pause, textes à lire à voix haute et expulsion ; temps réel SSE puis long polling puis polling avec bascule automatique, un seul flux par navigateur (Web Locks), rattrapage sans doublon après une coupure ; `fog_strict` et filtrage anti-fuite côté serveur (tokens cachés, objets MJ, portes secrètes, `fog.reveal` limité à la vision) ; 9 critères de phase vérifiés par des tests E2E sur Chromium, Firefox et WebKit (voir `docs/realtime.md`).
@@ -27,4 +28,4 @@ Phases 0 à 8 de la feuille de route.
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
-[0.1.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0
+[0.1.0-alpha.1]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.1
