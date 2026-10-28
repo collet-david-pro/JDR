@@ -15,7 +15,7 @@ final class PackageRules
     public const MANIFEST = 'manifest.json';
 
     /** Files accepted at the root of the archive. */
-    public const ROOT_FILES = ['index.php', 'update.php', 'cron.php', '.htaccess', 'VERSION', 'CHANGELOG.md', 'sw.js', self::MANIFEST];
+    public const ROOT_FILES = ['index.php', 'update.php', 'cron.php', '.htaccess', 'VERSION', 'CHANGELOG.md', 'LICENSE.md', 'sw.js', self::MANIFEST];
 
     /** Directories accepted (recursively). */
     public const ROOT_DIRS = ['assets', 'app', 'migrations', 'i18n'];

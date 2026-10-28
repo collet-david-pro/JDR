@@ -32,6 +32,7 @@ const ROOT_FILES = [
   '.htaccess',
   'VERSION',
   'CHANGELOG.md',
+  'LICENSE.md',
   'sw.js',
 ];
 
