@@ -96,3 +96,22 @@ describe('connectOpenings at the corners', () => {
     for (const [x, y] of corners) expect(mask.get(x, y)).toBe(1);
   });
 });
+
+describe('connectOpenings regressions', () => {
+  it('never aims at a border goal it cannot reach', () => {
+    const openings: [number, number][] = [
+      [9, 0],
+      [11, 0],
+      [11, 2],
+      [0, 8],
+      [11, 7],
+    ];
+    for (const filled of [false, true]) {
+      const mask = new BitGrid(12, 12);
+      if (filled) rect(mask, 3, 4, 7, 9);
+      connectOpenings(mask, openings);
+      expect(components(mask, (v) => v !== 0).sizes.length).toBe(1);
+      for (const [x, y] of openings) expect(mask.get(x, y)).toBe(1);
+    }
+  });
+});

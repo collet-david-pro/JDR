@@ -33,9 +33,10 @@ export function zoneOpenings(zone: GenZone | undefined, w: number, h: number): [
 
 /**
  * Makes every opening floor and connects it to the floor network (the component of the first
- * floor cell in scan order, or of the first opening when there is no floor), carving 1-cell
- * corridors with A* that never run along the rectangle border (a corner opening steps along it
- * once to get inside). Returns the number of carved cells.
+ * floor cell in scan order; when there is no floor, the centre cell becomes floor), carving 1-cell
+ * corridors with A* towards the nearest connected cell off the border, never running along the
+ * rectangle border (a corner opening steps along it once to get inside). Returns the number of
+ * carved cells.
  */
 export function connectOpenings(
   mask: BitGrid,
@@ -64,7 +65,12 @@ export function connectOpenings(
     }
   };
   let carved = 0;
-  if (start >= 0) absorb(start % w, Math.floor(start / w));
+  if (start < 0) {
+    start = Math.floor(h / 2) * w + Math.floor(w / 2);
+    mask.data[start] = 1;
+    carved++;
+  }
+  absorb(start % w, Math.floor(start / w));
   const border = (x: number, y: number): boolean =>
     x === 0 || y === 0 || x === w - 1 || y === h - 1;
   for (const [ox, oy] of openings) {
@@ -73,17 +79,16 @@ export function connectOpenings(
       carved++;
     }
     if (connected[oy * w + ox] !== 0) continue;
-    if (start < 0) {
-      start = oy * w + ox;
-      absorb(ox, oy);
-      continue;
-    }
-    // Nearest connected cell (Manhattan distance, ties in scan order).
+    // Nearest connected cell off the border (a border goal may be unreachable: the border is
+    // closed), else any connected cell; Manhattan distance, ties in scan order.
     let goal = -1;
     let best = Infinity;
     for (let i = 0; i < connected.length; i++) {
       if (connected[i] === 0) continue;
-      const d = Math.abs((i % w) - ox) + Math.abs(Math.floor(i / w) - oy);
+      const d =
+        Math.abs((i % w) - ox) +
+        Math.abs(Math.floor(i / w) - oy) +
+        (border(i % w, Math.floor(i / w)) ? w + h : 0);
       if (d < best) {
         best = d;
         goal = i;
