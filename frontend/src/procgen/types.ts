@@ -63,6 +63,8 @@ export interface GenResult {
   stats: Record<string, number>;
 }
 export interface GenContext {
+  /** Seed of the run, to copy into GenResult.seed (the RNG is already derived from it). */
+  seed: string;
   rng: Rng;
   progress: (phase: string, done: number, total: number) => void;
   zone?: { width: number; height: number; openings: [number, number][] };

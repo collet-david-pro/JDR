@@ -92,7 +92,7 @@ export function runGenerator(
   };
   const result: GenResult = g.generate(
     params,
-    opts.zone === undefined ? { rng, progress } : { rng, progress, zone: opts.zone },
+    opts.zone === undefined ? { seed, rng, progress } : { seed, rng, progress, zone: opts.zone },
   );
   if (result.generator !== id || result.gen_version !== g.version || result.seed !== seed) {
     throw new Error('GenResult header does not match the run');
