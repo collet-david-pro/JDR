@@ -34,7 +34,8 @@ export function zoneOpenings(zone: GenZone | undefined, w: number, h: number): [
 /**
  * Makes every opening floor and connects it to the floor network (the component of the first
  * floor cell in scan order, or of the first opening when there is no floor), carving 1-cell
- * corridors with A* that never run along the rectangle border. Returns the number of carved cells.
+ * corridors with A* that never run along the rectangle border (a corner opening steps along it
+ * once to get inside). Returns the number of carved cells.
  */
 export function connectOpenings(
   mask: BitGrid,
@@ -88,6 +89,7 @@ export function connectOpenings(
         goal = i;
       }
     }
+    const corner = (ox === 0 || ox === w - 1) && (oy === 0 || oy === h - 1);
     const gx = goal % w;
     const gy = Math.floor(goal / w);
     const path = astar(
@@ -95,7 +97,11 @@ export function connectOpenings(
       h,
       (x, y) => {
         if ((x === ox && y === oy) || (x === gx && y === gy)) return 1;
-        if (border(x, y)) return isOpening[y * w + x] !== 0 ? 1 : Infinity;
+        if (border(x, y)) {
+          if (isOpening[y * w + x] !== 0) return 1;
+          // A corner opening only has border neighbours: let it step along the border once.
+          return corner && Math.abs(x - ox) + Math.abs(y - oy) === 1 ? 2 : Infinity;
+        }
         return mask.get(x, y) !== 0 ? 1 : 2;
       },
       [ox, oy],

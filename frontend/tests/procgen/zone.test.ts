@@ -80,3 +80,19 @@ describe('dropOpeningWalls', () => {
     expect(dropOpeningWalls(maskOutline(mask), [], 6, 4)).toEqual(maskOutline(mask));
   });
 });
+
+describe('connectOpenings at the corners', () => {
+  it('connects an opening in each corner', () => {
+    const mask = new BitGrid(10, 8);
+    rect(mask, 3, 3, 6, 5);
+    const corners: [number, number][] = [
+      [0, 0],
+      [9, 0],
+      [0, 7],
+      [9, 7],
+    ];
+    connectOpenings(mask, corners);
+    expect(components(mask, (v) => v !== 0).sizes.length).toBe(1);
+    for (const [x, y] of corners) expect(mask.get(x, y)).toBe(1);
+  });
+});
