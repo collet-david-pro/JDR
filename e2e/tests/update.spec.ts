@@ -34,7 +34,10 @@ test.describe('tab rendering (common server)', () => {
     await loginAsAdmin(page);
     await openUpdateTab(page);
     await expect(page.getByTestId('update-current')).toHaveText(repoVersion());
-    await expect(page.getByLabel('Canal de mise à jour')).toHaveValue('stable');
+    // Default channel: pre-releases while the installed version is itself a pre-release.
+    await expect(page.getByLabel('Canal de mise à jour')).toHaveValue(
+      repoVersion().includes('-') ? 'prerelease' : 'stable',
+    );
     await expect(page.getByRole('button', { name: 'Vérifier les mises à jour' })).toBeEnabled();
     await expect(fileInput(page)).toBeVisible();
     await expect(page.getByText(/Taille maximale : .*upload_max_filesize/)).toBeVisible();

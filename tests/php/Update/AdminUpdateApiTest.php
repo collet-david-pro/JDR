@@ -87,7 +87,8 @@ final class AdminUpdateApiTest extends ApiTestCase
         $data = $show->payload()['data'];
         self::assertSame(\APP_VERSION, $data['current']);
         self::assertSame(\REQUIRED_DB_VERSION, $data['required_db_version']);
-        self::assertSame('stable', $data['channel']);
+        // Default channel: pre-releases while the installed version is itself a pre-release.
+        self::assertSame(str_contains(\APP_VERSION, '-') ? 'prerelease' : 'stable', $data['channel']);
         self::assertNull($data['check']);
         self::assertNull($data['pending']);
         self::assertNull($data['run']);
@@ -169,6 +170,8 @@ final class AdminUpdateApiTest extends ApiTestCase
             FakeReleaseHttp::sumsUrl('v9.0.0') => new HttpResult(200, str_repeat('d', 64) . "  jdr-update-v9.0.0.zip\n"),
         ];
         $admin = $this->admin();
+        // Explicit channel: the default depends on the installed version (pre-release or not).
+        self::assertSame(200, $admin->patch('/admin/update', ['channel' => 'stable'])->status());
         $check = $admin->post('/admin/update/check', ['force' => true]);
         self::assertSame(200, $check->status(), $check->body());
         self::assertSame('9.0.0', $check->payload()['data']['latest']['version']);
