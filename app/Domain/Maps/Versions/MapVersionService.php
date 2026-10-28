@@ -40,6 +40,7 @@ final class MapVersionService
 {
     public const AUTO_INTERVAL_SECONDS = 300;
     public const LABEL_MAX = 120;
+    public const CLIENT_KINDS = ['manual', 'pre_generate'];
     public const KINDS = ['auto', 'manual', 'pre_restore', 'pre_generate', 'pre_update'];
     public const GZIP_LEVEL = 6;
     /** Decompressed size bound of a stored snapshot. */
@@ -72,7 +73,7 @@ final class MapVersionService
     }
 
     /**
-     * POST /maps/{id}/versions {label?} -> MapVersion (manual).
+     * POST /maps/{id}/versions {label?, kind?: manual|pre_generate} -> MapVersion.
      *
      * @param array<array-key, mixed> $body
      * @return array<string, mixed>
@@ -81,13 +82,17 @@ final class MapVersionService
     {
         [$map] = $this->policy->requireEdit($user, $mapId);
         $label = self::label($body['label'] ?? null);
-        $id = (int) $this->db->transaction(function () use ($map, $label, $user): int {
+        $kind = $body['kind'] ?? 'manual';
+        if (!is_string($kind) || !in_array($kind, self::CLIENT_KINDS, true)) {
+            throw new ValidationException('', ['kind' => 'invalid']);
+        }
+        $id = (int) $this->db->transaction(function () use ($map, $label, $user, $kind): int {
             $locked = $this->maps->findForUpdate($map->id);
             if ($locked === null || $locked->deletedAt !== null) {
                 throw new NotFoundException();
             }
 
-            return $this->snapshot($locked, 'manual', $label, $user->id);
+            return $this->snapshot($locked, $kind, $label, $user->id);
         });
 
         return self::present($this->versions->find($map->id, $id) ?? throw new \RuntimeException('Version lost after insert.'));

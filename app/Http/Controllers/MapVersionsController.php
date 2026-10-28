@@ -36,7 +36,7 @@ final class MapVersionsController
     }
 
     /**
-     * POST /maps/{id}/versions {label?} -> 201 MapVersion (manual)
+     * POST /maps/{id}/versions {label?, kind?: manual|pre_generate} -> 201 MapVersion
      */
     public function create(Request $request): Response
     {
