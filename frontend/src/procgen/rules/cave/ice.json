@@ -1,0 +1,28 @@
+{
+  "name": "cave/ice",
+  "torches": null,
+  "room_kinds": { "common": 6, "pool": 2, "crystal": 2, "bones": 1, "grove": 1 },
+  "kinds": {
+    "common": [
+      { "key": "decor.stalagmite", "density": 0.025, "place": "any" },
+      { "key": "decor.rock", "density": 0.015, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.012, "place": "any" }
+    ],
+    "pool": [
+      { "key": "terrain.water", "density": 0.2, "place": "center", "layer": "terrain" },
+      { "key": "decor.puddle", "density": 0.03, "place": "any" }
+    ],
+    "crystal": [
+      { "key": "decor.stalagmite", "density": 0.07, "place": "any" },
+      { "key": "decor.rock", "density": 0.02, "place": "wall" }
+    ],
+    "bones": [
+      { "key": "decor.rubble", "density": 0.04, "place": "any" },
+      { "key": "decor.chest", "count": [0, 1], "place": "wall", "rotate": "wall" }
+    ],
+    "grove": [
+      { "key": "decor.mushroom", "density": 0.04, "place": "any" },
+      { "key": "decor.stalagmite", "density": 0.02, "place": "any" }
+    ]
+  }
+}

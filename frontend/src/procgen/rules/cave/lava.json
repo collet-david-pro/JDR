@@ -1,0 +1,25 @@
+{
+  "name": "cave/lava",
+  "torches": null,
+  "room_kinds": { "common": 5, "lava_pool": 3, "crystal": 1, "bones": 1 },
+  "kinds": {
+    "common": [
+      { "key": "decor.stalagmite", "density": 0.02, "place": "any" },
+      { "key": "decor.rock", "density": 0.025, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.025, "place": "any" }
+    ],
+    "lava_pool": [
+      { "key": "terrain.lava", "density": 0.22, "place": "center", "layer": "terrain" },
+      { "key": "decor.rock", "density": 0.02, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.015, "place": "any" }
+    ],
+    "crystal": [
+      { "key": "decor.stalagmite", "density": 0.05, "place": "any" },
+      { "key": "decor.rock", "density": 0.02, "place": "wall" }
+    ],
+    "bones": [
+      { "key": "decor.rubble", "density": 0.05, "place": "any" },
+      { "key": "decor.chest", "count": [0, 1], "place": "wall", "rotate": "wall" }
+    ]
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "cave/rock",
+  "torches": null,
+  "room_kinds": { "common": 6, "pool": 2, "grove": 2, "crystal": 1, "bones": 1 },
+  "kinds": {
+    "common": [
+      { "key": "decor.stalagmite", "density": 0.02, "place": "any" },
+      { "key": "decor.rock", "density": 0.02, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.02, "place": "any" },
+      { "key": "decor.puddle", "density": 0.015, "place": "any" },
+      { "key": "decor.web", "density": 0.01, "place": "corner" }
+    ],
+    "pool": [
+      { "key": "terrain.water", "density": 0.18, "place": "center", "layer": "terrain" },
+      { "key": "decor.puddle", "density": 0.04, "place": "any" },
+      { "key": "decor.stalagmite", "density": 0.015, "place": "wall" }
+    ],
+    "grove": [
+      { "key": "decor.mushroom", "density": 0.06, "place": "any" },
+      { "key": "decor.bush", "density": 0.015, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.01, "place": "any" }
+    ],
+    "crystal": [
+      { "key": "decor.stalagmite", "density": 0.06, "place": "any" },
+      { "key": "decor.rock", "density": 0.02, "place": "wall" }
+    ],
+    "bones": [
+      { "key": "decor.rubble", "density": 0.05, "place": "any" },
+      { "key": "decor.web", "density": 0.03, "place": "corner" },
+      { "key": "decor.chest", "count": [0, 1], "place": "wall", "rotate": "wall" }
+    ]
+  }
+}
