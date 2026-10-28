@@ -28,6 +28,8 @@ export interface UploadFields {
   readonly category_id?: string | null;
   /** `general`: administrators only. */
   readonly scope?: AssetScope;
+  /** `generated`: file made by the app itself (procedural textures). Default `upload`. */
+  readonly source?: 'upload' | 'generated';
   readonly client_op_id?: string;
 }
 
@@ -138,6 +140,7 @@ export class AssetsClient {
       if (fields.name !== undefined && fields.name !== '') body.append('name', fields.name);
       if (fields.category_id) body.append('category_id', fields.category_id);
       if (fields.scope === 'general') body.append('scope', 'general');
+      if (fields.source === 'generated') body.append('source', 'generated');
       if (fields.client_op_id) body.append('client_op_id', fields.client_op_id);
       return body;
     };
