@@ -66,7 +66,8 @@ $hidden = static fn (string $action) => '<input type="hidden" name="_csrf" value
     document.getElementById('run-detail').textContent = run.progress.detail;
   }
   function step() {
-    fetch(form.action, {
+    // getAttribute: the form has a field named "action", which shadows form.action.
+    fetch(form.getAttribute('action'), {
       method: 'POST', credentials: 'same-origin', body: new URLSearchParams(new FormData(form)),
       headers: { Accept: 'application/json' }
     }).then(function (res) { return res.json(); }).then(function (data) {
