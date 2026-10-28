@@ -1,0 +1,76 @@
+{
+  "name": "dungeon/crypt",
+  "torches": { "spacing": 6, "place": "wall" },
+  "room_kinds": { "crypt": 5, "common": 2, "shrine": 2, "storage": 1 },
+  "kinds": {
+    "entrance": [{ "key": "decor.web", "count": [0, 2], "place": "corner" }],
+    "exit": [{ "key": "decor.rubble", "count": [0, 2], "place": "wall" }],
+    "crypt": [
+      {
+        "key": "decor.sarcophagus",
+        "density": 0.06,
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.sarcophagus", "count": [0, 1], "place": "center", "min_door_distance": 2 },
+      { "key": "decor.web", "count": [0, 3], "place": "corner" }
+    ],
+    "common": [
+      { "key": "decor.rubble", "density": 0.04, "place": "any" },
+      { "key": "decor.web", "count": [1, 2], "place": "corner" }
+    ],
+    "shrine": [
+      {
+        "key": "decor.altar",
+        "count": [1, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 3
+      },
+      { "key": "decor.lantern", "count": [1, 2], "place": "corner" },
+      { "key": "decor.rug", "count": [0, 1], "place": "center" }
+    ],
+    "storage": [
+      {
+        "key": "decor.crate",
+        "density": 0.06,
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.web", "count": [1, 2], "place": "corner" }
+    ],
+    "treasure": [
+      {
+        "key": "decor.chest",
+        "count": [1, 2],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      {
+        "key": "decor.sarcophagus",
+        "count": [0, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      }
+    ],
+    "boss": [
+      { "key": "decor.sarcophagus", "count": [1, 1], "place": "center", "min_door_distance": 3 },
+      {
+        "key": "decor.altar",
+        "count": [0, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 3
+      },
+      { "key": "decor.web", "count": [1, 3], "place": "corner" }
+    ],
+    "corridor": [
+      { "key": "decor.web", "density": 0.02, "place": "corner" },
+      { "key": "decor.rubble", "density": 0.01, "place": "any" }
+    ]
+  }
+}

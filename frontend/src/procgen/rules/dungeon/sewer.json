@@ -1,0 +1,58 @@
+{
+  "name": "dungeon/sewer",
+  "torches": { "spacing": 9, "place": "wall" },
+  "room_kinds": { "common": 5, "cistern": 3, "storage": 2 },
+  "kinds": {
+    "entrance": [{ "key": "decor.puddle", "count": [0, 2], "place": "any" }],
+    "exit": [{ "key": "decor.puddle", "count": [0, 2], "place": "any" }],
+    "common": [
+      { "key": "decor.puddle", "density": 0.05, "place": "any" },
+      { "key": "decor.mushroom", "density": 0.02, "place": "wall" },
+      { "key": "decor.rubble", "density": 0.02, "place": "any" }
+    ],
+    "cistern": [
+      {
+        "key": "terrain.water",
+        "density": 0.3,
+        "place": "center",
+        "layer": "terrain",
+        "min_door_distance": 2
+      },
+      { "key": "decor.mushroom", "count": [0, 3], "place": "corner" }
+    ],
+    "storage": [
+      {
+        "key": "decor.barrel",
+        "density": 0.06,
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.crate", "density": 0.04, "place": "corner", "min_door_distance": 2 }
+    ],
+    "treasure": [
+      {
+        "key": "decor.chest",
+        "count": [1, 2],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.puddle", "count": [0, 2], "place": "any" }
+    ],
+    "boss": [
+      {
+        "key": "terrain.water",
+        "density": 0.15,
+        "place": "any",
+        "layer": "terrain",
+        "min_door_distance": 2
+      },
+      { "key": "decor.rubble", "density": 0.03, "place": "any" }
+    ],
+    "corridor": [
+      { "key": "decor.puddle", "density": 0.04, "place": "any" },
+      { "key": "terrain.water", "density": 0.03, "place": "any", "layer": "terrain" }
+    ]
+  }
+}
