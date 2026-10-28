@@ -36,6 +36,10 @@
     ui.historyOpen = !ui.historyOpen;
     if (ui.historyOpen && !ui.panelsOpen) session.togglePanels();
   }
+  function toggleGenerate(): void {
+    ui.generateOpen = !ui.generateOpen;
+    if (ui.generateOpen && !ui.panelsOpen) session.togglePanels();
+  }
   const ui = $derived(session.ui);
 
   const undoText = $derived(
@@ -140,6 +144,14 @@
       aria-pressed={ui.historyOpen}
       data-testid="editor-history"
       onclick={toggleHistory}>{t('editor.versions.button')}</button
+    >
+    <button
+      type="button"
+      class="button button-small"
+      aria-pressed={ui.generateOpen}
+      title={t('editor.generate.button_title')}
+      data-testid="editor-generate"
+      onclick={toggleGenerate}>{t('editor.generate.button')}</button
     >
     {#if onexport}
       <ExportMenu busy={exporting} disabled={ui.save === null} {onexport} />

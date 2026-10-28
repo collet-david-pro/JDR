@@ -99,6 +99,8 @@ export function commandLabel(key: string): string {
       return t('editor.command.shape');
     case 'editor.command.layer':
       return t('editor.command.layer');
+    case 'editor.command.generate':
+      return t('editor.command.generate');
     case 'editor.command.layer_order':
       return t('editor.command.layer_order');
     case 'editor.command.theme':
@@ -198,6 +200,8 @@ export function shortcutDescription(action: ShortcutAction): string | null {
       return t('editor.help.zoom_fit');
     case 'snapshot':
       return t('editor.help.snapshot');
+    case 'generate':
+      return t('editor.shortcuts.generate');
     case 'pan.hold':
       return t('editor.help.pan_hold');
     case 'cancel':

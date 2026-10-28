@@ -1393,7 +1393,8 @@
       "edit_token": "modifier le token",
       "delete": "supprimer",
       "door_toggle": "ouvrir / fermer la porte",
-      "ambient": "ambiance"
+      "ambient": "ambiance",
+      "generate": "générer"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
@@ -1615,6 +1616,72 @@
       "fog_reset_message": "Tout le brouillard exploré de cet étage sera effacé. Cette action ne peut pas être annulée.",
       "fog_reset_confirm": "Réinitialiser",
       "fog_reset_done": "Brouillard réinitialisé."
+    },
+    "shortcuts": {
+      "generate": "Ouvrir le panneau Générer"
+    },
+    "generate": {
+      "button": "Générer",
+      "button_title": "Génération procédurale (Maj+G)",
+      "title": "Génération",
+      "close": "Fermer",
+      "tabs": "Génération et textures",
+      "tab_generate": "Générer",
+      "tab_textures": "Textures",
+      "generator": "Générateur",
+      "preset": "Préréglage",
+      "preset_custom": "Personnalisé",
+      "seed": "Graine",
+      "seed_roll": "Nouvelle graine au hasard",
+      "params": "Paramètres",
+      "target": "Cible",
+      "target_new": "Nouvelle map",
+      "target_map": "Map actuelle",
+      "target_selection": "Sélection",
+      "selection_needed": "Sélectionnez une zone de la map pour générer dans la sélection.",
+      "selection_unsupported": "Ce générateur ne peut pas remplir une sélection.",
+      "new_name": "Nom de la nouvelle map",
+      "new_map_default": "Map générée",
+      "width": "Largeur",
+      "height": "Hauteur",
+      "size_fixed": "Taille : {width} × {height} cases",
+      "slow_hint": "La génération peut prendre du temps.",
+      "running": "Génération en cours…",
+      "progress": "{phase} : {done}/{total}",
+      "progress_label": "Progression de la génération",
+      "cancel": "Annuler",
+      "cancel_unavailable": "Annulation indisponible sur ce navigateur.",
+      "preview_waiting": "L'aperçu apparaît dans un instant.",
+      "preview_alt": "Aperçu de la génération, {width} × {height} cases",
+      "duration": "{ms} ms",
+      "fingerprint": "Empreinte {print}",
+      "missing": "Éléments du jeu d'images absents : {keys}",
+      "error_zone_too_small": "La zone est trop petite : elle doit faire au moins 8 cases de côté.",
+      "error_failed": "La génération a échoué. {message}",
+      "ready": "Aperçu prêt.",
+      "apply": "Appliquer",
+      "applying": "Application…",
+      "applied": "Génération appliquée.",
+      "not_ready": "La map est en cours de chargement.",
+      "confirm_title": "Remplacer le contenu ?",
+      "confirm_message": "Le contenu de la map (tuiles, murs, portes, fenêtres, lumières) sera remplacé. Les tokens et le brouillard sont conservés. Un instantané est créé avant.",
+      "confirm_selection_message": "Le contenu de la sélection (tuiles, murs, portes, fenêtres, lumières) sera remplacé. Un instantané est créé avant.",
+      "confirm_action": "Remplacer",
+      "snapshot_label": "Avant génération ({generator}, {seed})",
+      "done": "Génération appliquée ({cells} cases, {objects} objets).",
+      "done_missing": "Génération appliquée ({cells} cases, {objects} objets). Éléments absents : {keys}."
+    },
+    "textures": {
+      "material": "Matière",
+      "palette": "Palette",
+      "size": "Taille",
+      "preview_alt": "Aperçu de la texture en mosaïque 3 × 3",
+      "preview_hint": "Mosaïque 3 × 3 : les bords se raccordent.",
+      "save": "Enregistrer dans ma bibliothèque",
+      "saving": "Enregistrement…",
+      "saved": "Texture enregistrée.",
+      "duplicate": "Cette texture est déjà dans votre bibliothèque.",
+      "library_link": "Ouvrir la bibliothèque"
     }
   },
   "maps": {
@@ -2021,6 +2088,103 @@
       "cell": "Une case : {mm} mm",
       "save": "Enregistrer",
       "reset": "Réinitialiser"
+    }
+  },
+  "procgen": {
+    "generators": {
+      "dungeon": "Donjon",
+      "cave": "Grotte",
+      "outdoor": "Extérieur",
+      "village": "Village"
+    },
+    "params": {
+      "rooms": "Salles",
+      "room_min": "Taille minimale des salles",
+      "room_max": "Taille maximale des salles",
+      "corridor": "Largeur des couloirs",
+      "loops": "Boucles",
+      "door_p": "Portes",
+      "secret_p": "Portes secrètes",
+      "theme": "Thème",
+      "decor": "Décor",
+      "fill": "Remplissage",
+      "iterations": "Itérations",
+      "smooth": "Lissage",
+      "connect": "Connexion des cavités",
+      "scale": "Échelle du relief",
+      "water": "Eau",
+      "rivers": "Rivières",
+      "roads": "Routes",
+      "forest": "Forêt",
+      "buildings": "Bâtiments",
+      "l_shape_p": "Bâtiments en L",
+      "interiors": "Intérieurs"
+    },
+    "options": {
+      "connect": {
+        "tunnel": "Tunnels",
+        "fill": "Remplir"
+      }
+    },
+    "presets": {
+      "dungeon": {
+        "small_crypt": "Petite crypte",
+        "large_dungeon": "Grand donjon",
+        "sewers": "Égouts",
+        "manor_cellar": "Cave de manoir"
+      },
+      "cave": {
+        "small_cave": "Petite grotte",
+        "ice_cavern": "Caverne glacée",
+        "lava_tubes": "Tunnels de lave",
+        "great_cavern": "Grande caverne"
+      },
+      "outdoor": {
+        "forest_river": "Forêt et rivière",
+        "crossroads": "Croisée des chemins",
+        "desert_oasis": "Oasis",
+        "winter_lake": "Lac gelé"
+      },
+      "village": {
+        "hamlet": "Hameau",
+        "village": "Village",
+        "town_square": "Place de bourg",
+        "farmstead": "Ferme"
+      }
+    },
+    "themes": {
+      "dungeon": {
+        "stone": "Pierre",
+        "crypt": "Crypte",
+        "sewer": "Égouts",
+        "wood": "Bois"
+      },
+      "cave": {
+        "rock": "Roche",
+        "ice": "Glace",
+        "lava": "Lave"
+      },
+      "outdoor": {
+        "temperate": "Tempéré",
+        "desert": "Désert",
+        "winter": "Hiver"
+      },
+      "village": {
+        "rural": "Rural",
+        "town": "Bourg"
+      }
+    },
+    "materials": {
+      "stone": "Pierre",
+      "flagstone": "Dalles",
+      "cobble": "Pavés",
+      "wood": "Bois",
+      "grass": "Herbe",
+      "dirt": "Terre",
+      "sand": "Sable",
+      "water": "Eau",
+      "lava": "Lave",
+      "ice": "Glace"
     }
   }
 }

@@ -37,6 +37,8 @@ export type ShortcutAction =
   | 'zoom.fit'
   /** Named snapshot (P4c, projet.md 15.3: Cmd/Ctrl+Shift+S). */
   | 'snapshot'
+  /** Shift+G: open the "Générer" panel (P8e2b). */
+  | 'generate'
   /** Space held: temporary hand tool (the UI handles keyup). */
   | 'pan.hold'
   | 'cancel';
@@ -110,6 +112,7 @@ export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   ...digitBindings(0, 'zoom.reset', true),
   ...digitBindings(1, 'zoom.fit', true),
   { action: 'snapshot', key: 's', mod: true, shift: true, alt: false },
+  { action: 'generate', key: 'g', shift: true, alt: false },
   { action: 'pan.hold', key: ' ', shift: false, alt: false },
   { action: 'cancel', key: 'Escape' },
 ] satisfies KeyBinding[]);

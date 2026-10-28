@@ -3,6 +3,7 @@
   import AmbientPanel from './AmbientPanel.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
+  import GeneratePanel from './GeneratePanel.svelte';
   import HelpDialog from './HelpDialog.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import LayersPanel from './LayersPanel.svelte';
@@ -45,10 +46,13 @@
   import { EditorSession } from '../../editor/ui/session';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
   import { t } from '../../lib/i18n';
+  import { applyHandoff } from '../../lib/procgen/handoff-apply';
+  import { loadPack } from '../../lib/procgen/pack';
+  import { services } from '../../lib/services';
   import type { MapsClient } from '../../lib/maps/maps-client';
   import { openMapStores } from '../../lib/persistence/map-stores';
   import { requestPersistentStorage } from '../../lib/persistence/idb';
-  import type { MapDetail, Token } from '../../lib/types';
+  import type { MapDetail, MapGeneration, Token } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
   import { createVisionService } from '../../vision/index';
 
@@ -68,6 +72,8 @@
       | 'sendOps'
       | 'versions'
       | 'createVersion'
+      | 'create'
+      | 'update'
       | 'restoreVersion'
       | 'exportFile'
       | 'putThumbnail'
@@ -204,6 +210,44 @@
       if (error instanceof PendingOpsError) toasts.show('error', t('editor.versions.pending_ops'));
       else toasts.error(error);
     }
+  }
+
+  // ---- Generation (P8e2b): a generation stashed by the panel for this new map -------------------
+  /** maps.generation as last known (the panel opens pre-filled with it). */
+  let storedGeneration = $state.raw<MapGeneration | null | undefined>(initial.map.generation);
+  const generationClient = {
+    create: (id: string, input: Parameters<MapsClient['create']>[1]) =>
+      initial.client.create(id, input),
+    createVersion: (id: string, label?: string | null, kind?: 'manual' | 'pre_generate') =>
+      initial.client.createVersion(id, label, kind),
+    update: async (id: string, patch: { generation: MapGeneration | null }) => {
+      const summary = await initial.client.update(id, patch);
+      storedGeneration = patch.generation;
+      return summary;
+    },
+  };
+  let handoffDone = false;
+  $effect(() => {
+    if (handoffDone || !ui.editable || ui.save === null) return;
+    handoffDone = true;
+    void applyHandoff({
+      mapId: initial.map.id,
+      session,
+      update: generationClient.update,
+      loadPack: () => loadPack(services().api),
+    })
+      .then((report) => {
+        if (report !== null)
+          toasts.success(
+            t('editor.generate.done', { cells: report.cells, objects: report.objects }),
+          );
+      })
+      .catch((error: unknown) => toasts.error(error));
+  });
+
+  function closeGenerate(): void {
+    ui.generateOpen = false;
+    document.querySelector<HTMLElement>('[data-testid="editor-generate"]')?.focus();
   }
 
   // ---- Export (P4c) ------------------------------------------------------------------------
@@ -393,6 +437,18 @@
           ready={ui.save !== null}
           onsnapshot={() => (ui.snapshotOpen = true)}
           onclose={() => (ui.historyOpen = false)}
+        />
+      {/if}
+      {#if ui.generateOpen}
+        <GeneratePanel
+          {session}
+          mapId={initial.map.id}
+          {gameId}
+          generation={storedGeneration}
+          client={generationClient}
+          settle={() => sync?.settle() ?? Promise.resolve(false)}
+          ready={ui.editable && ui.save !== null}
+          onclose={closeGenerate}
         />
       {/if}
       <PropertiesPanel {session} />

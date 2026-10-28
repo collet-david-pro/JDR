@@ -388,6 +388,10 @@ export class EditorSession {
       case 'snapshot':
         if (this.ui.save !== null) this.ui.snapshotOpen = true;
         break;
+      case 'generate':
+        this.ui.generateOpen = true;
+        this.ui.panelsOpen = true;
+        break;
       default:
         break;
     }
