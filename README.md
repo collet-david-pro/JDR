@@ -211,4 +211,12 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 
 ## Licence
 
-À définir.
+JDR est distribué sous la licence **[PolyForm Noncommercial 1.0.0](LICENSE.md)**.
+
+- **Gratuit pour tout usage non commercial** : vous pouvez l'installer, l'utiliser, le modifier et le redistribuer pour jouer, pour votre groupe, votre association, un établissement d'enseignement…
+- **Aucun usage commercial** : pas de vente, pas de service payant, pas d'exploitation à but lucratif, qu'il s'agisse du logiciel d'origine ou d'une version modifiée.
+- **Citation obligatoire** : toute copie, modifiée ou non, doit être accompagnée du texte de la licence et de la mention suivante :
+
+  > Required Notice: Copyright 2026 David COLLET (https://github.com/collet-david-pro/JDR)
+
+Pour un usage commercial, contactez l'auteur.
