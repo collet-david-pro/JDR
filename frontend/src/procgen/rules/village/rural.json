@@ -1,0 +1,144 @@
+{
+  "name": "village/rural",
+  "torches": { "spacing": 5, "place": "wall", "preset": "candle" },
+  "room_kinds": { "common": 1 },
+  "kinds": {
+    "common": [
+      { "key": "decor.chest", "count": [0, 1], "place": "corner", "min_door_distance": 2 }
+    ],
+    "tavern_hall": [
+      { "key": "decor.table", "count": [2, 4], "place": "center", "min_door_distance": 2 },
+      {
+        "key": "decor.chair",
+        "count": [4, 8],
+        "place": "any",
+        "min_door_distance": 2,
+        "rotate": "random"
+      },
+      {
+        "key": "decor.barrel",
+        "count": [1, 3],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.rug", "count": [0, 1], "place": "center", "min_door_distance": 2 }
+    ],
+    "kitchen": [
+      { "key": "decor.table", "count": [1, 1], "place": "center", "min_door_distance": 2 },
+      { "key": "decor.barrel", "count": [1, 2], "place": "corner", "min_door_distance": 2 },
+      {
+        "key": "decor.crate",
+        "count": [0, 2],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      }
+    ],
+    "bedroom": [
+      {
+        "key": "decor.bed",
+        "count": [1, 2],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.chest", "count": [0, 1], "place": "corner", "min_door_distance": 2 },
+      { "key": "decor.rug", "count": [0, 1], "place": "center", "min_door_distance": 2 }
+    ],
+    "living": [
+      { "key": "decor.table", "count": [1, 1], "place": "center", "min_door_distance": 2 },
+      {
+        "key": "decor.chair",
+        "count": [1, 3],
+        "place": "any",
+        "min_door_distance": 2,
+        "rotate": "random"
+      },
+      {
+        "key": "decor.chest",
+        "count": [0, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.rug", "count": [0, 1], "place": "center", "min_door_distance": 2 }
+    ],
+    "workshop": [
+      { "key": "decor.anvil", "count": [1, 1], "place": "center", "min_door_distance": 2 },
+      {
+        "key": "decor.crate",
+        "count": [1, 3],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.barrel", "count": [0, 2], "place": "corner", "min_door_distance": 2 }
+    ],
+    "nave": [
+      {
+        "key": "decor.altar",
+        "count": [1, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      {
+        "key": "decor.chair",
+        "count": [4, 8],
+        "place": "any",
+        "min_door_distance": 2,
+        "rotate": "random"
+      },
+      { "key": "decor.rug", "count": [0, 1], "place": "center", "min_door_distance": 2 }
+    ],
+    "vestry": [
+      {
+        "key": "decor.chest",
+        "count": [1, 1],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.table", "count": [0, 1], "place": "center", "min_door_distance": 2 }
+    ],
+    "storage": [
+      {
+        "key": "decor.crate",
+        "density": 0.1,
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.barrel", "density": 0.05, "place": "corner", "min_door_distance": 2 },
+      { "key": "decor.chest", "count": [0, 1], "place": "corner", "min_door_distance": 2 }
+    ],
+    "barn": [
+      {
+        "key": "decor.crate",
+        "count": [2, 4],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.barrel", "count": [1, 3], "place": "corner", "min_door_distance": 2 }
+    ],
+    "shop_floor": [
+      {
+        "key": "decor.table",
+        "count": [1, 2],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      {
+        "key": "decor.crate",
+        "count": [1, 3],
+        "place": "wall",
+        "rotate": "wall",
+        "min_door_distance": 2
+      },
+      { "key": "decor.barrel", "count": [0, 2], "place": "corner", "min_door_distance": 2 }
+    ]
+  }
+}
