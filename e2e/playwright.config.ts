@@ -1,12 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 import { main, noJs } from './helpers/env';
+import { updateSite } from './helpers/update-package';
 
 /**
  * E2E tests (projet.md 21). Two isolated servers (dev/e2e-serve.sh): a copy of the deliverable
  * and a blank database each, wiped when the run ends.
  * - main (8090): "setup" installs it through the browser, then each browser project runs the
  *   account and administration scenarios against it;
- * - no-js (8091): installed with JavaScript disabled.
+ * - no-js (8091): installed with JavaScript disabled;
+ * - update (8093): installed by update.spec.ts itself, which then updates it (maintenance).
  * One worker: the scenarios share server-wide state (registration mode, rate limits).
  *
  * Browsers: E2E_BROWSERS=chromium,firefox,webkit (default: all three).
@@ -56,7 +58,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  webServer: [server(main.port, main.dbName), server(noJs.port, noJs.dbName)],
+  webServer: [
+    server(main.port, main.dbName),
+    server(noJs.port, noJs.dbName),
+    server(updateSite.port, updateSite.dbName), // update.spec.ts: an update puts its site in maintenance
+  ],
   projects: [
     {
       name: 'setup',
@@ -65,7 +71,7 @@ export default defineConfig({
     },
     ...browsers.map((name) => ({
       name,
-      testMatch: /(auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|display|displays-gm|displays-criteria)\.spec\.ts/,
+      testMatch: /(auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },
     })),
