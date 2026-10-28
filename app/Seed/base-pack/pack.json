@@ -1,0 +1,452 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "key": "decor.altar",
+      "file": "decor.altar.png",
+      "name": "Autel",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "donjon",
+        "temple"
+      ],
+      "rgba_sha256": "d4351c862145824dfc3c604148287c2b71ceafb02360d3c369da3eb3fd174123"
+    },
+    {
+      "key": "decor.anvil",
+      "file": "decor.anvil.png",
+      "name": "Enclume",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "1ab22d0c9a87620d43fba3800b6d220dd08e1bd49b5ae1457a3d47303e087576"
+    },
+    {
+      "key": "decor.barrel",
+      "file": "decor.barrel.png",
+      "name": "Tonneau",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "608ceef08277728d896aa8f492e20722169632b86044242c2ec802aa527cbbeb"
+    },
+    {
+      "key": "decor.bed",
+      "file": "decor.bed.png",
+      "name": "Lit",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "b9eab39c81ac7e4d4a1d23eed1620a69e7ae2b90fc9480e81f747be9196108a9"
+    },
+    {
+      "key": "decor.bridge",
+      "file": "decor.bridge.png",
+      "name": "Pont",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "a6b1496a2465eacdf983503bac6c3c5c23152098c9b3be758eb4715d54529286"
+    },
+    {
+      "key": "decor.bush",
+      "file": "decor.bush.png",
+      "name": "Buisson",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "cfe3e3013e46319b37a65cedd31b8274ca4b11c2b0ea5a69d76330ba442b4e02"
+    },
+    {
+      "key": "decor.chair",
+      "file": "decor.chair.png",
+      "name": "Chaise",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "f740f1052429296a830bad3741ed1bd5c5a6d55899d198ffca44601be1d98919"
+    },
+    {
+      "key": "decor.chest",
+      "file": "decor.chest.png",
+      "name": "Coffre",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "ea1fb753cffec42e1aae81bbb0f09e12a149e72c4b87e4d49e833569b56925ae"
+    },
+    {
+      "key": "decor.crate",
+      "file": "decor.crate.png",
+      "name": "Caisse",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "c7d5e31baf8b60de1c1d607832b29229578c3bc7c81306759d17596650e71018"
+    },
+    {
+      "key": "decor.fence",
+      "file": "decor.fence.png",
+      "name": "Clôture",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "1523e6cadc0e52c122687ad65832dd44d07155cb51ec1a5ec2d087cd7a9bb09d"
+    },
+    {
+      "key": "decor.lantern",
+      "file": "decor.lantern.png",
+      "name": "Lanterne",
+      "category": "Lumières",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "38608876ff42da98a1fe6dc868d16acb9bfaf11f3d726cd5d0671b75eb0f1095"
+    },
+    {
+      "key": "decor.mushroom",
+      "file": "decor.mushroom.png",
+      "name": "Champignon",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "6a12f8a57d0f2bcb416de7cae1d939b9d53d52896a5989fd7f6fc64d1a342dd6"
+    },
+    {
+      "key": "decor.puddle",
+      "file": "decor.puddle.png",
+      "name": "Flaque",
+      "category": "Eau",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "619e528356ad20dd4803dc79990211f28213c257436e5d52991bbef868803ad2"
+    },
+    {
+      "key": "decor.rock",
+      "file": "decor.rock.png",
+      "name": "Rocher",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "4d7451273a4a1b9733a6f5f5b9b7a003b2a0fb79b8b42591f5014beb268260d3"
+    },
+    {
+      "key": "decor.rubble",
+      "file": "decor.rubble.png",
+      "name": "Gravats",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "7b58ddcd9354b70668b6474398ba759be0a19e53ffbaf6466af35a20235b9c81"
+    },
+    {
+      "key": "decor.rug",
+      "file": "decor.rug.png",
+      "name": "Tapis",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "7785deadc0df35f6d53386e47578ac6df473313fdbd60555df3a2ae0766e838a"
+    },
+    {
+      "key": "decor.sarcophagus",
+      "file": "decor.sarcophagus.png",
+      "name": "Sarcophage",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "donjon",
+        "crypte"
+      ],
+      "rgba_sha256": "f5e37f9eb00c97efcef7f480508a20bb9d34c26e760346df082a3a3e6cbc32da"
+    },
+    {
+      "key": "decor.stairs_down",
+      "file": "decor.stairs_down.png",
+      "name": "Escalier descendant",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "fa3944e3a1b4e3a4763f8407548163b9e437333008e1be6799c9398fab91c793"
+    },
+    {
+      "key": "decor.stairs_up",
+      "file": "decor.stairs_up.png",
+      "name": "Escalier montant",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "530c2f0a67567a6a288fce04bb8c765259adc3ad2af986dcc6e6032160838d73"
+    },
+    {
+      "key": "decor.stalagmite",
+      "file": "decor.stalagmite.png",
+      "name": "Stalagmite",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "caverne"
+      ],
+      "rgba_sha256": "ff048311331b481a6ad9bdd52bfe87c08587b187f629a8402a9dbf58e623186f"
+    },
+    {
+      "key": "decor.stall",
+      "file": "decor.stall.png",
+      "name": "Étal",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "ville",
+        "marché"
+      ],
+      "rgba_sha256": "63d663843e04dfca7d3911332481df86d313e85fa86049cec862e6b455a0455a"
+    },
+    {
+      "key": "decor.table",
+      "file": "decor.table.png",
+      "name": "Table",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "3c84dad2f57713d1ef24527513eec6a915a028bef7061ca75940a85e4d3b044e"
+    },
+    {
+      "key": "decor.tree",
+      "file": "decor.tree.png",
+      "name": "Arbre",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "extérieur",
+        "forêt"
+      ],
+      "rgba_sha256": "95a5fc3068f04482bad5be66579e3fe45c8d6edda49678d7c61f4fc53049f9d6"
+    },
+    {
+      "key": "decor.web",
+      "file": "decor.web.png",
+      "name": "Toile d’araignée",
+      "category": "Nature",
+      "kind": "tile",
+      "tags": [
+        "donjon",
+        "araignée"
+      ],
+      "rgba_sha256": "205ac85257cf84d3c0a5b5727fd91323b1234d9215360bd69e1a66ba7d4b74f6"
+    },
+    {
+      "key": "decor.well",
+      "file": "decor.well.png",
+      "name": "Puits",
+      "category": "Mobilier",
+      "kind": "tile",
+      "tags": [
+        "décor"
+      ],
+      "rgba_sha256": "b07f1590423b317befec77d4668acc4c5af633c0f9ebe0145ffb568433c0eaf8"
+    },
+    {
+      "key": "floor.cave",
+      "file": "floor.cave.png",
+      "name": "Sol de caverne",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "caverne",
+        "souterrain"
+      ],
+      "rgba_sha256": "2b9abbfed636e7f327af8810e4be01646d96cf5605a97a50e9308964e4555295"
+    },
+    {
+      "key": "floor.cobble",
+      "file": "floor.cobble.png",
+      "name": "Pavés",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "ville",
+        "pavés"
+      ],
+      "rgba_sha256": "d2091707ff156a85beccfe1e4c7dc1ec0858b268a1cd8f8574ded933eeb9c27c"
+    },
+    {
+      "key": "floor.dirt",
+      "file": "floor.dirt.png",
+      "name": "Terre",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "extérieur",
+        "chemin"
+      ],
+      "rgba_sha256": "072163049e8873e4e323fcf0d5b220a0db289169ba205c7d5a028ed07b668d0c"
+    },
+    {
+      "key": "floor.flagstone",
+      "file": "floor.flagstone.png",
+      "name": "Dalles",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "donjon",
+        "dalles"
+      ],
+      "rgba_sha256": "4392b513771afb2aac93ceb3442bb2ea269a8d27d89124d9fb478c11a2c8c5e5"
+    },
+    {
+      "key": "floor.grass",
+      "file": "floor.grass.png",
+      "name": "Herbe",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "extérieur",
+        "nature"
+      ],
+      "rgba_sha256": "0d04b84674a4164bbd35642a6dd4222514326cfa43720ce0576e1012f10d841f"
+    },
+    {
+      "key": "floor.ice",
+      "file": "floor.ice.png",
+      "name": "Glace",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "glace",
+        "froid"
+      ],
+      "rgba_sha256": "96079f17d1fc96ab45e1acb59e449e041fbd79e19791eebe649886a2371103e8"
+    },
+    {
+      "key": "floor.sand",
+      "file": "floor.sand.png",
+      "name": "Sable",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "désert",
+        "extérieur"
+      ],
+      "rgba_sha256": "f1a139593396d69855e7e32077f66cc7a28709aeed72cf29859719d64e351550"
+    },
+    {
+      "key": "floor.snow",
+      "file": "floor.snow.png",
+      "name": "Neige",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "neige",
+        "extérieur"
+      ],
+      "rgba_sha256": "569c0c61dfc69c86d30b49faa5c79b7612689ead489553a8f3a38a826183cc8a"
+    },
+    {
+      "key": "floor.stone",
+      "file": "floor.stone.png",
+      "name": "Pierre",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "donjon",
+        "pierre"
+      ],
+      "rgba_sha256": "a3fdf31e716fa18888ecbd8f6c35256cae270c6d8198d2a0ef12591f7e6bbc51"
+    },
+    {
+      "key": "floor.wood",
+      "file": "floor.wood.png",
+      "name": "Parquet",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "intérieur",
+        "taverne"
+      ],
+      "rgba_sha256": "e8a0ccc5ee08e18ff1f45cf2d40fa8fcca3aa4722da5176adcbde05250195f0c"
+    },
+    {
+      "key": "terrain.deep_water",
+      "file": "terrain.deep_water.png",
+      "name": "Eau profonde",
+      "category": "Eau",
+      "kind": "tile",
+      "tags": [
+        "eau",
+        "profond"
+      ],
+      "rgba_sha256": "80dbbbcef44025ff14195f209e2dc90915fb336c26c9c08397da4659e90bbfa9"
+    },
+    {
+      "key": "terrain.lava",
+      "file": "terrain.lava.png",
+      "name": "Lave",
+      "category": "Eau",
+      "kind": "tile",
+      "tags": [
+        "feu",
+        "danger"
+      ],
+      "rgba_sha256": "87c87ad06ac8b72cf1a179814d6f6f014b01af04deced413241b2a1616958541"
+    },
+    {
+      "key": "terrain.mud",
+      "file": "terrain.mud.png",
+      "name": "Boue",
+      "category": "Sols",
+      "kind": "tile",
+      "tags": [
+        "marais",
+        "boue"
+      ],
+      "rgba_sha256": "c4d8da318498c0cbf44270e0f3fbe5c2527e9cc1c3bbed08f99c9368794ad193"
+    },
+    {
+      "key": "terrain.water",
+      "file": "terrain.water.png",
+      "name": "Eau",
+      "category": "Eau",
+      "kind": "tile",
+      "tags": [
+        "eau"
+      ],
+      "rgba_sha256": "710eab248a28a30e13427717a69bd24d8c74ec88aaa88e8a7e90a05eda656791"
+    }
+  ]
+}
