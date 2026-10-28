@@ -1,5 +1,6 @@
 /** Dungeon generator v1 (§16.2): BSP rooms, corridors, doors, walls, stairs, typing, population. */
 import { chainSegments, maskOutline } from '../geometry';
+import { connectOpenings, dropOpeningWalls } from '../zone';
 import { bfsDistances, components } from '../grid';
 import { packKey } from '../pack-keys';
 import { populate, type PopulateRegion } from '../populate';
@@ -22,6 +23,7 @@ import { Carver } from './carve';
 import { findJunctions } from './doors';
 import { assignKinds } from './kinds';
 import { layoutDungeon } from './layout';
+import { openingDoors, setupZone } from './zone';
 import { DUNGEON_DEFAULTS, DUNGEON_PRESETS, validateDungeon, type DungeonParams } from './params';
 
 export type { DungeonParams } from './params';
@@ -53,8 +55,11 @@ export function dungeonRules(name: string): RuleSet {
 const LOCKABLE = new Set(['treasure', 'boss']);
 const PHASES = 10;
 
-function generate(p: DungeonParams, ctx: GenContext): GenResult {
+function generate(params: DungeonParams, ctx: GenContext): GenResult {
+  let p = params;
   const { rng } = ctx;
+  const zone = ctx.zone === undefined ? null : setupZone(p, ctx.zone);
+  if (zone !== null) p = zone.p;
   const W = p.width;
   const H = p.height;
   const theme = DUNGEON_THEMES[p.theme];
@@ -75,6 +80,9 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
   phase('connectivity');
   // Step 10 runs before the doors so that they see the final floor (no repair is expected).
   const repairs = carver.repair();
+  if (zone !== null) {
+    connectOpenings(floor, zone.openings);
+  }
   const passable = (x: number, y: number): boolean => floor.get(x, y) !== 0;
 
   phase('doors');
@@ -95,9 +103,23 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
     }
     return best;
   };
-  const entrance = farthest(bfsDistances(floor, passable, [centers[0]!]), -1);
+  let entrance: number;
+  if (zone !== null && zone.openings.length > 0) {
+    // Zone: no stairs; the room closest to the first opening plays the entrance role for typing.
+    const [ox, oy] = zone.openings[0]!;
+    entrance = 0;
+    let best = Infinity;
+    centers.forEach(([cx, cy], r) => {
+      const d = Math.abs(cx - ox) + Math.abs(cy - oy);
+      if (d < best) {
+        best = d;
+        entrance = r;
+      }
+    });
+  } else if (zone !== null) entrance = 0;
+  else entrance = farthest(bfsDistances(floor, passable, [centers[0]!]), -1);
   const distE = bfsDistances(floor, passable, [centers[entrance]!]);
-  const exit = farthest(distE, entrance);
+  const exit = n > 1 ? farthest(distE, entrance) : entrance;
 
   phase('kinds');
   const corridors = components(floor, (v, x, y) => v !== 0 && roomAt[y * W + x]! < 0);
@@ -113,6 +135,15 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
     ruleSet,
     rng: rng.fork('kinds'),
   });
+  if (zone !== null) {
+    // No stairs in a zone: the entrance room becomes common, the exit room a drawn kind.
+    kinds[entrance] = 'common';
+    if (exit !== entrance) {
+      const pool =
+        ruleSet.room_kinds.length > 0 ? ruleSet.room_kinds : [{ kind: 'common', weight: 1 }];
+      kinds[exit] = rng.fork('zone-exit').weighted(pool, (e) => e.weight).kind;
+    }
+  }
 
   const rd = rng.fork('doors');
   const doors: GenDoor[] = [];
@@ -125,7 +156,9 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
   }
 
   phase('walls');
-  const walls: GenWall[] = chainSegments(maskOutline(floor)).map((pl) => ({
+  const walls: GenWall[] = chainSegments(
+    zone === null ? maskOutline(floor) : dropOpeningWalls(maskOutline(floor), zone.openings, W, H),
+  ).map((pl) => ({
     points: pl.points.map(([x, y]): [number, number] => [x, y]),
     closed: pl.closed,
     kind: theme.wall_kind,
@@ -162,20 +195,23 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
   const pop = populate({
     floor,
     regions,
-    doors: junctions,
-    entrance: up,
+    doors: zone === null ? junctions : [...junctions, ...openingDoors(zone.openings, W, H)],
+    entrance: zone === null ? up : (zone.openings[0] ?? null),
     ruleSet,
     density: p.decor * 2,
     rng: rng.fork('populate'),
     blocking: (key) => packKey(key).blocking,
-    reserved: [up, down],
+    reserved: zone === null ? [up, down] : [],
     lightPreset: theme.torch,
   });
-  const decor: GenCell[] = [
-    { x: up[0], y: up[1], key: 'decor.stairs_up' },
-    { x: down[0], y: down[1], key: 'decor.stairs_down' },
-    ...pop.decor,
-  ];
+  const decor: GenCell[] =
+    zone === null
+      ? [
+          { x: up[0], y: up[1], key: 'decor.stairs_up' },
+          { x: down[0], y: down[1], key: 'decor.stairs_down' },
+          ...pop.decor,
+        ]
+      : pop.decor;
 
   phase('done');
   const rooms: GenRoom[] = lay.rooms.map((r, id) => ({
@@ -200,8 +236,8 @@ function generate(p: DungeonParams, ctx: GenContext): GenResult {
         windows: [],
         lights: pop.lights,
         rooms,
-        entrance: [up[0], up[1]],
-        exit: [down[0], down[1]],
+        entrance: zone === null ? [up[0], up[1]] : null,
+        exit: zone === null ? [down[0], down[1]] : null,
       },
     ],
     stats: {
