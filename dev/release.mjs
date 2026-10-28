@@ -3,7 +3,7 @@
 //
 //   node dev/release.mjs manifest   write manifest.json (SHA-256 of every shipped file)
 //   node dev/release.mjs package    regenerate manifest.json, then build
-//                                   dist/jdr-vX.Y.Z-full.zip and dist/jdr-update-vX.Y.Z.zip
+//                                   dist/jdr-vX.Y.Z-full.zip, dist/jdr-update-vX.Y.Z.zip and dist/SHA256SUMS
 //   node dev/release.mjs verify     recompute hashes and compare with manifest.json (exit 1 on drift)
 //
 // Options: --root <dir>  repository root (default: parent of this script's folder)
@@ -428,8 +428,14 @@ function packageRelease(root) {
   const update = full.filter((rel) => !isUpdateExcluded(rel));
   const dist = path.join(root, 'dist');
   fs.mkdirSync(dist, { recursive: true });
-  buildZip(root, path.join(dist, `jdr-v${manifest.version}-full.zip`), full);
-  buildZip(root, path.join(dist, `jdr-update-v${manifest.version}.zip`), update);
+  const names = [`jdr-v${manifest.version}-full.zip`, `jdr-update-v${manifest.version}.zip`];
+  buildZip(root, path.join(dist, names[0]), full);
+  buildZip(root, path.join(dist, names[1]), update);
+  // SHA256SUMS (sha256sum format): published with the release, read by the update check
+  // to tell an official archive from a modified one.
+  const sums = names.map((name) => `${sha256(fs.readFileSync(path.join(dist, name)))}  ${name}\n`).join('');
+  fs.writeFileSync(path.join(dist, 'SHA256SUMS'), sums);
+  console.log('dist/SHA256SUMS written');
 }
 
 // ---------------------------------------------------------------------------
