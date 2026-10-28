@@ -33,9 +33,42 @@ export default defineConfig(
     },
   },
   {
-    // Procedural generation (P8): deterministic code only (D1). To lift the trigonometry
-    // restriction for the texture renderer, add `ignores: ['src/procgen/textures/**']` here.
+    // Procedural generation (P8): no clock, no entropy anywhere under procgen (D1).
     files: ['src/procgen/**/*.ts'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'Math',
+          property: 'random',
+          message: 'Randomness comes from the seeded Rng (D1).',
+        },
+        { object: 'Date', property: 'now', message: 'Clock access is forbidden in procgen (D1).' },
+        {
+          object: 'performance',
+          property: 'now',
+          message: 'Clock access is forbidden in procgen (D1).',
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        { name: 'Date', message: 'Clock access is forbidden in procgen (D1).' },
+        { name: 'performance', message: 'Clock access is forbidden in procgen (D1).' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[property.name='getRandomValues']",
+          message: 'Randomness comes from the seeded Rng (D1).',
+        },
+      ],
+    },
+  },
+  {
+    // Procedural generation (P8), structure generators: portable maths only (D1). The texture
+    // and sprite renderers are exempt from this block only (they keep the block above).
+    files: ['src/procgen/**/*.ts'],
+    ignores: ['src/procgen/textures/**', 'src/procgen/sprites/**'],
     rules: {
       'no-restricted-properties': [
         'error',
@@ -71,11 +104,6 @@ export default defineConfig(
           property: 'now',
           message: 'Clock access is forbidden in procgen (D1).',
         },
-      ],
-      'no-restricted-globals': [
-        'error',
-        { name: 'Date', message: 'Clock access is forbidden in procgen (D1).' },
-        { name: 'performance', message: 'Clock access is forbidden in procgen (D1).' },
       ],
       'no-restricted-syntax': [
         'error',

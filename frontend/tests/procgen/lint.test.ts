@@ -32,6 +32,28 @@ describe('procgen lint guard', () => {
     expect(elsewhere!.messages).toEqual([]);
   }, 30000);
 
+  it('accepts trigonometry in textures/ and sprites/ but still refuses entropy and clock', async () => {
+    const eslint = new ESLint({ cwd });
+    for (const dir of ['textures', 'sprites']) {
+      const filePath = join(cwd, `src/procgen/${dir}/x.ts`);
+      const [trig] = await eslint.lintText(
+        'export const a = Math.sin(1) + Math.pow(2, 3) + 2 ** 2;\n',
+        { filePath },
+      );
+      expect(trig!.messages, dir).toEqual([]);
+      for (const code of [
+        'export const a = Math.random();',
+        'export const a = Date.now();',
+        'export const a = new Date();',
+        'export const a = performance.now();',
+        'export const a = (b: Uint8Array) => crypto.getRandomValues(b);',
+      ]) {
+        const [res] = await eslint.lintText(code, { filePath });
+        expect(res!.messages.length, `${dir}: ${code}`).toBeGreaterThan(0);
+      }
+    }
+  }, 30000);
+
   it('no procgen source uses a forbidden call (grep fallback)', () => {
     const dir = join(cwd, 'src/procgen');
     const re =
