@@ -132,7 +132,7 @@ final class AssetsController
     }
 
     /**
-     * POST /assets (multipart: file, kind, name?, category_id?, scope?, client_op_id?)
+     * POST /assets (multipart: file, kind, name?, category_id?, scope?, source? upload|generated, client_op_id?)
      * -> 201 Asset; duplicate -> 200 Asset + meta.duplicate.
      */
     public function create(Request $request): Response
@@ -153,6 +153,7 @@ final class AssetsController
         $kind = $v->in('kind', Asset::KINDS);
         $name = $v->string('name', false, 1, 120);
         $scope = $v->in('scope', [Asset::SCOPE_PERSONAL, Asset::SCOPE_GENERAL], false) ?? Asset::SCOPE_PERSONAL;
+        $source = $v->in('source', ['upload', 'generated'], false) ?? 'upload';
         $clientOpId = $v->string('client_op_id', false, 1, 40);
         $categoryId = null;
         try {
@@ -200,7 +201,7 @@ final class AssetsController
             $kind,
             $categoryId,
             [],
-            'upload',
+            $source,
         ));
         if ($clientOpId !== null) {
             $this->service->remember($user, $clientOpId, $result->asset, $result->duplicate);
