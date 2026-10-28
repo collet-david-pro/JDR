@@ -96,7 +96,8 @@
     },
     "maintenance": {
       "title": "Maintenance en cours",
-      "hint": "La page se rechargera d'elle-même quand le site sera de nouveau disponible."
+      "hint": "La page se rechargera d'elle-même quand le site sera de nouveau disponible.",
+      "update_link": "Administrateur : terminer la mise à jour"
     },
     "no_build": {
       "title": "Front-end non compilé",

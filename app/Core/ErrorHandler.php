@@ -7,6 +7,7 @@ namespace JDR\Core;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\HttpException;
+use JDR\Core\Errors\MaintenanceException;
 
 /**
  * Single error handler: PHP errors become exceptions, every exception becomes
@@ -111,6 +112,7 @@ final class ErrorHandler
             'message' => $message,
             'requestId' => $this->requestId,
             'basePath' => $basePath,
+            'updateUrl' => $e instanceof MaintenanceException && $e->updatePending ? $basePath . '/update.php' : null,
         ]), $status);
         foreach ($headers as $name => $value) {
             $response->withHeader($name, $value);

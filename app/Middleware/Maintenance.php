@@ -41,7 +41,7 @@ final class Maintenance implements Middleware
         }
         if ($this->status->needsMaintenance($this->requiredDbVersion)) {
             if (!$this->status->maintenanceFlagOnly($this->requiredDbVersion)) {
-                throw new MaintenanceException();
+                throw new MaintenanceException('', true);
             }
             $request->setAttribute('maintenance_flag', true);
         }

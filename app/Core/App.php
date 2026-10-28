@@ -282,9 +282,10 @@ final class App
         if ($this->config === null) {
             return Response::redirect($request->basePath . '/install.php');
         }
-        if ($this->container->get(SystemStatus::class)->needsMaintenance(\REQUIRED_DB_VERSION)) {
-            // TODO(P1): redirect a logged-in admin to update.php.
-            throw new MaintenanceException();
+        $status = $this->container->get(SystemStatus::class);
+        if ($status->needsMaintenance(\REQUIRED_DB_VERSION)) {
+            // Database behind the code: the 503 page links administrators to update.php.
+            throw new MaintenanceException('', !$status->maintenanceFlagOnly(\REQUIRED_DB_VERSION));
         }
 
         return $this->container->get(Shell::class)->render(
