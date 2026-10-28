@@ -1,0 +1,16 @@
+{
+  "name": "outdoor/desert",
+  "torches": null,
+  "room_kinds": { "common": 1 },
+  "kinds": {
+    "meadow": [
+      { "key": "decor.well", "count": [0, 1], "place": "center" },
+      { "key": "decor.rubble", "density": 0.004, "place": "any" }
+    ],
+    "woods": [{ "key": "decor.bush", "density": 0.004, "place": "any" }],
+    "rocky": [
+      { "key": "decor.rubble", "density": 0.01, "place": "any" },
+      { "key": "decor.stalagmite", "density": 0.004, "place": "any" }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "outdoor/temperate",
+  "torches": null,
+  "room_kinds": { "common": 1 },
+  "kinds": {
+    "meadow": [
+      { "key": "decor.well", "count": [0, 1], "place": "center" },
+      { "key": "decor.rubble", "density": 0.002, "place": "any" },
+      { "key": "decor.mushroom", "density": 0.002, "place": "any" }
+    ],
+    "woods": [
+      { "key": "decor.mushroom", "density": 0.006, "place": "any" },
+      { "key": "decor.rubble", "density": 0.002, "place": "any" },
+      { "key": "decor.web", "density": 0.001, "place": "any" }
+    ],
+    "rocky": [
+      { "key": "decor.rubble", "density": 0.008, "place": "any" },
+      { "key": "decor.stalagmite", "density": 0.003, "place": "any" }
+    ]
+  }
+}

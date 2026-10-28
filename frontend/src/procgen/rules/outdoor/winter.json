@@ -1,0 +1,19 @@
+{
+  "name": "outdoor/winter",
+  "torches": null,
+  "room_kinds": { "common": 1 },
+  "kinds": {
+    "meadow": [
+      { "key": "decor.rubble", "density": 0.003, "place": "any" },
+      { "key": "decor.well", "count": [0, 1], "place": "center" }
+    ],
+    "woods": [
+      { "key": "decor.mushroom", "density": 0.003, "place": "any" },
+      { "key": "decor.rubble", "density": 0.002, "place": "any" }
+    ],
+    "rocky": [
+      { "key": "decor.rubble", "density": 0.008, "place": "any" },
+      { "key": "decor.stalagmite", "density": 0.004, "place": "any" }
+    ]
+  }
+}
