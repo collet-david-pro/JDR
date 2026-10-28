@@ -10,6 +10,7 @@
   import AdminMigrations from './AdminMigrations.svelte';
   import AdminSettings from './AdminSettings.svelte';
   import AdminStats from './AdminStats.svelte';
+  import AdminUpdate from './AdminUpdate.svelte';
   import AdminUsers from './AdminUsers.svelte';
 
   let { params }: PageProps = $props();
@@ -23,6 +24,7 @@
     { slug: 'diagnostic', label: t('admin.tabs.diagnostic') },
     { slug: 'audit', label: t('admin.tabs.audit') },
     { slug: 'migrations', label: t('admin.tabs.migrations') },
+    { slug: 'update', label: t('admin.tabs.update') },
   ];
 
   const current = $derived((params['rest'] ?? '').replace(/\/+$/, ''));
@@ -60,6 +62,8 @@
       <AdminAudit />
     {:else if current === 'migrations'}
       <AdminMigrations />
+    {:else if current === 'update'}
+      <AdminUpdate />
     {:else}
       <NotFound />
     {/if}

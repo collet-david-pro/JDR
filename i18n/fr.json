@@ -78,7 +78,23 @@
     "display_unpaired": "Cet écran n'est plus appairé : saisissez un nouveau code.",
     "display_code_invalid": "Code d'appairage invalide ou expiré.",
     "display_limit": "Cette séance a déjà 8 écrans : supprimez-en un avant d'en ajouter.",
-    "display_not_pending": "Cet écran est déjà appairé : il n'a plus de code."
+    "display_not_pending": "Cet écran est déjà appairé : il n'a plus de code.",
+    "update": {
+      "too_large": "L'archive est trop volumineuse (100 Mo au maximum).",
+      "bad_offset": "L'envoi est désynchronisé : recommencez.",
+      "upload_incomplete": "L'envoi est incomplet ({received} octets reçus sur {size}).",
+      "upload_hash": "Le fichier reçu ne correspond pas à son empreinte : l'envoi a été altéré, recommencez.",
+      "invalid_zip": "Ce fichier n'est pas une archive zip valide.",
+      "unsafe_path": "L'archive contient un chemin refusé : {path}.",
+      "missing_manifest": "L'archive ne contient pas de manifeste (manifest.json) : ce n'est pas une archive de mise à jour.",
+      "file_hash": "Le fichier {path} est corrompu ou inattendu ({reason}).",
+      "not_newer": "La version {version} de l'archive n'est pas plus récente que la version installée ({current}).",
+      "hash_mismatch": "L'empreinte de l'archive ({actual}) ne correspond pas à l'empreinte officielle ({expected}).",
+      "run_in_progress": "Une mise à jour est déjà en cours.",
+      "unverified": "Cette archive n'est pas vérifiée : cochez la case de confirmation pour l'installer.",
+      "no_package": "Aucune archive en attente : envoyez-en une.",
+      "version_changed": "La version installée a changé depuis l'envoi : envoyez de nouveau l'archive."
+    }
   },
   "pages": {
     "not_found": {
@@ -553,7 +569,8 @@
       "diagnostic": "Diagnostic",
       "audit": "Journal d'audit",
       "migrations": "Migrations",
-      "library": "Bibliothèque générale"
+      "library": "Bibliothèque générale",
+      "update": "Mise à jour"
     },
     "stats": {
       "users": "Comptes",
@@ -709,6 +726,80 @@
       "checksum_ok": "Conforme",
       "checksum_bad": "Modifiée",
       "empty": "Aucune migration."
+    },
+    "update": {
+      "title": "Mise à jour du site",
+      "installed": "Version installée",
+      "db_version": "Base de données (actuelle / requise)",
+      "channel": "Canal de mise à jour",
+      "channel_stable": "Stable (versions publiées)",
+      "channel_prerelease": "Préversions (alpha, bêta)",
+      "check": {
+        "title": "Nouvelle version",
+        "button": "Vérifier les mises à jour",
+        "rate_limited": "Vérification trop fréquente : réessayez dans {seconds} s.",
+        "error_unreachable": "Impossible de joindre GitHub depuis le serveur : consultez la page des releases.",
+        "error_invalid_response": "La réponse de GitHub est illisible : consultez la page des releases.",
+        "releases_link": "Page des releases",
+        "available": "La version {version} est disponible.",
+        "published": "publiée le {date}",
+        "download": "Télécharger le zip de mise à jour",
+        "release_page": "Page de la release",
+        "up_to_date": "Vous avez la dernière version.",
+        "checked_at": "Dernière vérification : {date}"
+      },
+      "upload": {
+        "title": "Envoyer un zip de mise à jour",
+        "label": "Archive de mise à jour (.zip)",
+        "limits": "Taille maximale : {max}. Limites PHP du serveur : upload_max_filesize {upload}, post_max_size {post} (l'envoi se fait par petits morceaux).",
+        "hashing": "Calcul de l'empreinte du fichier…",
+        "progress": "Envoi en cours : {percent} %",
+        "checking": "Vérification de l'archive par le serveur…"
+      },
+      "summary": {
+        "title": "Récapitulatif de la mise à jour",
+        "versions": "Version {from} vers {to}.",
+        "verified": "Archive officielle (empreinte vérifiée).",
+        "unverified": "L'authenticité de cette archive n'a pas pu être vérifiée : elle ne correspond à aucune empreinte officielle connue.",
+        "confirm_unverified": "Je confirme installer une archive dont l'authenticité n'a pas pu être vérifiée",
+        "files_added": {
+          "zero": "Aucun fichier ajouté",
+          "one": "{count} fichier ajouté",
+          "other": "{count} fichiers ajoutés"
+        },
+        "files_changed": {
+          "zero": "Aucun fichier modifié",
+          "one": "{count} fichier modifié",
+          "other": "{count} fichiers modifiés"
+        },
+        "files_removed": {
+          "zero": "Aucun fichier supprimé",
+          "one": "{count} fichier supprimé",
+          "other": "{count} fichiers supprimés"
+        },
+        "truncated": "Seuls les {shown} premiers chemins sont listés.",
+        "migrations": "Migrations à appliquer",
+        "no_migrations": "Aucune migration.",
+        "maintenance": "Le site sera en maintenance pendant la mise à jour ; une sauvegarde de la base est faite avant.",
+        "install": "Installer",
+        "discard": "Abandonner"
+      },
+      "run": {
+        "title": "Une mise à jour est en cours ({from} vers {to}).",
+        "resume": "Reprendre",
+        "state_running": "État : en cours.",
+        "state_rolling_back": "État : retour arrière en cours.",
+        "state_restoring": "État : restauration en cours.",
+        "state_failed_migration": "État : une migration a échoué."
+      },
+      "file_hash_reason": {
+        "mismatch": "contenu différent de l'empreinte annoncée",
+        "unlisted": "fichier non listé dans le manifeste",
+        "missing": "fichier manquant"
+      },
+      "errors": {
+        "no_crypto": "Ce navigateur ne peut pas calculer l'empreinte du fichier (connexion HTTPS requise)."
+      }
     }
   },
   "asset_picker": {
