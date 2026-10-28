@@ -514,6 +514,16 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly notes: readonly unknown[];
   /** P5: placed tokens of every floor. */
   readonly tokens_placed: readonly PlacedToken[];
+  /** P8: how the map was generated (null = hand-made). */
+  readonly generation?: MapGeneration | null;
+}
+
+/** maps.generation (projet.md 12.1): reproducible with the same generator version and seed. */
+export interface MapGeneration {
+  readonly generator: string;
+  readonly gen_version: number;
+  readonly seed: string;
+  readonly params: Readonly<Record<string, unknown>>;
 }
 
 /** POST /games/{id}/maps */
@@ -534,6 +544,8 @@ export interface MapPatch {
   readonly name?: string;
   readonly folder?: string | null;
   readonly sort_order?: number;
+  /** P8: null clears it. */
+  readonly generation?: MapGeneration | null;
 }
 
 /** Op of POST /maps/{id}/ops, wire format (projet.md 11.4). */

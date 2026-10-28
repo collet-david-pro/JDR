@@ -200,9 +200,18 @@ export class MapsClient {
     return Array.isArray(data) ? data : [];
   }
 
-  /** Manual snapshot of the current server state. */
-  async createVersion(id: string, label: string | null = null): Promise<MapVersion> {
-    const body = label === null || label.trim() === '' ? {} : { label: label.trim() };
+  /**
+   * Snapshot of the current server state: `manual` (default) or `pre_generate` (taken before a
+   * generation replaces the map, P8).
+   */
+  async createVersion(
+    id: string,
+    label: string | null = null,
+    kind: 'manual' | 'pre_generate' = 'manual',
+  ): Promise<MapVersion> {
+    const body: { label?: string; kind?: string } =
+      label === null || label.trim() === '' ? {} : { label: label.trim() };
+    if (kind !== 'manual') body.kind = kind;
     return (
       await this.api.post<MapVersion>(`/maps/${seg(id)}/versions`, body, {
         timeoutMs: LONG_TIMEOUT_MS,
