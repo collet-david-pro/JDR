@@ -167,11 +167,26 @@ La clé est la valeur `cron_key` de `config.php` ; gardez-la secrète. En ligne 
 
 ## Mise à jour
 
-1. Sauvegarder (l'outil le fait aussi automatiquement avant de migrer).
-2. Envoyer le contenu de `jdr-update-vX.Y.Z.zip` **par-dessus** l'installation. Cette archive ne contient ni `config.php`, ni `storage/`, ni `install.php` : vos données ne sont pas touchées.
-3. Se connecter en administrateur : le site passe en maintenance et propose `update.php`, qui vérifie d'abord l'intégrité des fichiers envoyés (`manifest.json`), puis applique les migrations une par une.
+Deux voies, au choix. Dans les deux cas, l'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.php`, ni `storage/`, ni `install.php` : vos réglages, vos données et vos fichiers envoyés ne sont jamais touchés. Son empreinte officielle (SHA-256) est publiée dans le fichier `SHA256SUMS` de chaque release, ce qui permet au site de reconnaître une archive officielle.
 
-*À compléter (phase 10) : restauration d'une sauvegarde, échec d'une migration, retour arrière.*
+### 1. Depuis la console d'administration (recommandé)
+
+1. Connectez-vous en administrateur, puis ouvrez **Administration > Mise à jour**.
+2. Cliquez sur **Vérifier les mises à jour** : le site interroge GitHub et affiche la dernière version, ses notes et un lien **Télécharger le zip de mise à jour**. Si le serveur ne peut pas joindre GitHub, ouvrez la [page des releases](https://github.com/collet-david-pro/JDR/releases) depuis votre navigateur.
+3. Téléchargez le zip sur votre ordinateur (ne le décompressez pas), puis envoyez-le avec **Envoyer un zip de mise à jour**. L'envoi se fait par petits morceaux (100 Mo au maximum), indépendamment des limites `upload_max_filesize` et `post_max_size` de PHP.
+4. Vérifiez le récapitulatif (versions, fichiers ajoutés, modifiés ou supprimés, migrations, authenticité). Une archive dont l'empreinte n'a pas pu être comparée à l'empreinte officielle est signalée : vous devez cocher la case de confirmation pour l'installer.
+5. Cliquez sur **Installer** : la page `update.php` enchaîne la mise en maintenance du site, la sauvegarde de la base de données dans `storage/backups/` (fichier `.sql.gz`), la sauvegarde des fichiers remplacés, la copie des nouveaux fichiers, le contrôle d'intégrité puis les migrations. Gardez la page ouverte jusqu'à « Mise à jour terminée ».
+
+Si la copie des fichiers échoue, les fichiers précédents sont remis en place automatiquement. Si une migration échoue, le site reste en maintenance et `update.php` propose **Réessayer** (après avoir corrigé la cause, par exemple un droit manquant sur la base) ou **Restaurer** la version précédente à partir de la sauvegarde faite au début. Une mise à jour interrompue (fermeture de l'onglet, coupure) se reprend depuis l'onglet Mise à jour (bouton **Reprendre**) ou en rouvrant `update.php`.
+
+### 2. Par FTP
+
+1. Téléchargez `jdr-update-vX.Y.Z.zip`, décompressez-le et envoyez son contenu **par-dessus** l'installation.
+2. Ouvrez `update.php` à la racine du site et connectez-vous en administrateur : il termine la mise à jour (contrôle d'intégrité des fichiers envoyés grâce à `manifest.json`, sauvegarde de la base, migrations) comme décrit ci-dessus.
+
+Tant que la mise à jour n'est pas terminée, le site reste en maintenance si la base de données est en retard sur le code.
+
+La mise à jour automatique, sans téléchargement manuel du zip, viendra dans une version ultérieure.
 
 ## Développement local
 
