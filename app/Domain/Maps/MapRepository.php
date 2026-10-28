@@ -21,7 +21,7 @@ final class MapRepository
     /** Columns of maps that update() may write (JSON columns given as PHP values). */
     private const UPDATABLE = [
         'name', 'folder', 'sort_order', 'cell_px', 'width_cells', 'height_cells', 'unit_label',
-        'unit_per_cell', 'theme', 'ambient', 'palette', 'layers',
+        'unit_per_cell', 'theme', 'ambient', 'palette', 'layers', 'generation',
     ];
     private const JSON_COLUMNS = ['ambient', 'palette', 'layers'];
 
@@ -39,6 +39,29 @@ final class MapRepository
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]);
 
         return $row === null ? null : Map::fromRow($row);
+    }
+
+    /**
+     * Generation block of the map {generator, gen_version, seed, params} or null (params always an
+     * object, canonical key order: MySQL JSON columns do not keep it).
+     *
+     * @return array{generator: mixed, gen_version: mixed, seed: mixed, params: mixed}|null
+     */
+    public function generation(int $id): ?array
+    {
+        $json = $this->db->fetchValue('SELECT `generation` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]);
+        $data = is_string($json) ? json_decode($json, true) : null;
+        if (!is_array($data)) {
+            return null;
+        }
+        $params = $data['params'] ?? [];
+
+        return [
+            'generator' => $data['generator'] ?? null,
+            'gen_version' => $data['gen_version'] ?? null,
+            'seed' => $data['seed'] ?? null,
+            'params' => $params === [] || !is_array($params) ? new \stdClass() : $params,
+        ];
     }
 
     /**
@@ -113,7 +136,9 @@ final class MapRepository
             if (!in_array($column, self::UPDATABLE, true)) {
                 throw new \InvalidArgumentException('Column not updatable: ' . $column);
             }
-            if (in_array($column, self::JSON_COLUMNS, true)) {
+            if ($column === 'generation') {
+                $value = $value === null ? null : json_encode($value, self::JSON_FLAGS);
+            } elseif (in_array($column, self::JSON_COLUMNS, true)) {
                 $value = json_encode($value, self::JSON_FLAGS);
             } elseif ($column === 'unit_per_cell') {
                 $value = (string) $value;

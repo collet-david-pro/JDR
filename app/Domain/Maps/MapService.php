@@ -98,7 +98,7 @@ final class MapService
     }
 
     /**
-     * @param array<array-key, mixed> $body {name?, folder?|null, sort_order?}
+     * @param array<array-key, mixed> $body {name?, folder?|null, sort_order?, generation?|null}
      */
     public function update(User $user, int $mapId, array $body): Map
     {

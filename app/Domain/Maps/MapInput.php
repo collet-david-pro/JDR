@@ -9,6 +9,7 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Games\GameSettings;
+use JDR\Maps\Document\GenerationInput;
 
 /**
  * Validation of the map bodies (contract P4b) and of the map.meta op, plus the decoding of the
@@ -120,10 +121,10 @@ final class MapInput
     }
 
     /**
-     * PATCH /maps/{id} {name?, folder?|null, sort_order?}.
+     * PATCH /maps/{id} {name?, folder?|null, sort_order?, generation?|null}.
      *
      * @param array<array-key, mixed> $body
-     * @return array{name?: string, folder?: ?string, sort_order?: int}
+     * @return array{name?: string, folder?: ?string, sort_order?: int, generation?: ?array<string, mixed>}
      * @throws ValidationException
      */
     public static function patch(array $body): array
@@ -143,6 +144,9 @@ final class MapInput
             } else {
                 $changes['sort_order'] = (int) $sort;
             }
+        }
+        if (array_key_exists('generation', $body)) {
+            $changes['generation'] = GenerationInput::parse($body['generation'], $errors);
         }
         if ($errors !== []) {
             throw new ValidationException('', $errors);

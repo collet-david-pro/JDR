@@ -80,6 +80,7 @@ final class MapPresenter
             'objects' => $this->scene->objects($map->id),
             'notes' => [],
             'tokens_placed' => $this->scene->tokens($map->id),
+            'generation' => $this->maps->generation($map->id),
         ];
     }
 

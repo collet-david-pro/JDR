@@ -61,7 +61,7 @@ final class MapDocumentValidator
     public const LEVEL_MAX = 100;
     public const FLOOR_NAME_MAX = 60;
     public const MAX_CHUNK_BASE64 = 8192;
-    public const MAX_PARAMS_BYTES = 65536;
+    public const MAX_PARAMS_BYTES = GenerationInput::MAX_PARAMS_BYTES;
     public const MAX_ERRORS = 50;
     public const FLOOR_UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const ASSET_REF_PATTERN = '/^sha256:([0-9a-fA-F]{64})$/D';
@@ -76,7 +76,6 @@ final class MapDocumentValidator
     private const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per_cell'];
     private const PALETTE_KEYS = ['asset', 'name', 'autotile'];
     private const FLOOR_KEYS = ['uid', 'level', 'name'];
-    private const GENERATION_KEYS = ['generator', 'gen_version', 'seed', 'params'];
     private const TOKEN_KEYS = ['uid', 'token', 'floor', 'x', 'y', 'rotation', 'scale', 'hidden', 'light_override'];
 
     public function __construct(private MapDocumentMigrator $migrator = new MapDocumentMigrator())
@@ -163,7 +162,7 @@ final class MapDocumentValidator
                 $errors[$key] = is_array($doc[$key]) && array_is_list($doc[$key]) ? 'unsupported' : 'invalid';
             }
         }
-        $generation = array_key_exists('generation', $doc) ? $this->generation($doc['generation'], $errors) : null;
+        $generation = array_key_exists('generation', $doc) ? GenerationInput::parse($doc['generation'], $errors) : null;
         $objects = [];
         $tokens = [];
         if ($grid !== null && $floors !== null) {
@@ -375,47 +374,6 @@ final class MapDocumentValidator
         }
 
         return count($errors) === $before ? $out : null;
-    }
-
-    /**
-     * @param array<string, string> $errors
-     * @return array{generator: string, gen_version: int, seed: string, params: array<array-key, mixed>}|null
-     */
-    private function generation(mixed $value, array &$errors): ?array
-    {
-        if ($value === null) {
-            return null;
-        }
-        $g = Fields::object($value, self::GENERATION_KEYS);
-        if ($g === null) {
-            $errors['generation'] = 'invalid';
-
-            return null;
-        }
-        $before = count($errors);
-        $generator = $g['generator'] ?? null;
-        if (!is_string($generator) || preg_match('/^[a-z0-9][a-z0-9_.-]{0,39}$/D', $generator) !== 1) {
-            $errors['generation.generator'] = array_key_exists('generator', $g) ? 'invalid' : 'required';
-        }
-        $genVersion = Fields::int($g['gen_version'] ?? null, 1, 1000000);
-        if ($genVersion === null) {
-            $errors['generation.gen_version'] = array_key_exists('gen_version', $g) ? 'invalid' : 'required';
-        }
-        $seed = Fields::text($g['seed'] ?? null, 64);
-        if ($seed === null || $seed === '') {
-            $errors['generation.seed'] = array_key_exists('seed', $g) ? 'invalid' : 'required';
-        }
-        $params = $g['params'] ?? [];
-        if (!is_array($params) || ($params !== [] && array_is_list($params))) {
-            $errors['generation.params'] = 'invalid';
-        } elseif (strlen((string) json_encode($params)) > self::MAX_PARAMS_BYTES) {
-            $errors['generation.params'] = 'too_large';
-        }
-        if (count($errors) !== $before) {
-            return null;
-        }
-
-        return ['generator' => (string) $generator, 'gen_version' => (int) $genVersion, 'seed' => (string) $seed, 'params' => $params];
     }
 
     /**
