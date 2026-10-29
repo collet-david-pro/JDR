@@ -1,6 +1,8 @@
-# JDR
+# Clairvoie
 
-Outil web pour construire et projeter des cartes de jeu de rôle, en ligne ou autour de la table, sur un hébergement PHP/MySQL ordinaire.
+Outil web pour construire, révéler et projeter des cartes de jeu de rôle, en ligne ou autour de la table, sur un hébergement PHP/MySQL ordinaire.
+
+*Une clairvoie est une ouverture dans un mur qui laisse passer le regard : murs, lumière et vision sont au cœur de l'outil. Le dépôt et les archives gardent leur nom technique `JDR` / `jdr-…`.*
 
 [![Version](https://img.shields.io/github/v/release/collet-david-pro/JDR?include_prereleases&label=version)](https://github.com/collet-david-pro/JDR/releases)
 [![Licence](https://img.shields.io/badge/licence-PolyForm%20Noncommercial%201.0.0-blue)](LICENSE.md)
@@ -31,7 +33,7 @@ Outil web pour construire et projeter des cartes de jeu de rôle, en ligne ou au
 
 ### Le problème
 
-Un maître de jeu (MJ) prépare des cartes, puis doit les montrer à ses joueurs : à distance, sans leur révéler ce qu'ils ne doivent pas voir, ou en présentiel, à l'échelle des figurines. JDR répond à ce besoin : le MJ dessine ses maps, les range par partie et les projette.
+Un maître de jeu (MJ) prépare des cartes, puis doit les montrer à ses joueurs : à distance, sans leur révéler ce qu'ils ne doivent pas voir, ou en présentiel, à l'échelle des figurines. Clairvoie répond à ce besoin : le MJ dessine ses maps, les range par partie et les projette.
 
 ### Pour qui
 
@@ -42,7 +44,7 @@ Un maître de jeu (MJ) prépare des cartes, puis doit les montrer à ses joueurs
 
 ### Ce que l'outil n'est pas
 
-JDR n'est **pas un VTT de règles** : pas de dés, pas d'initiative, pas de fiches de personnage, pas de points de vie. L'outil sert à la carte, pas aux règles.
+Clairvoie n'est **pas un VTT de règles** : pas de dés, pas d'initiative, pas de fiches de personnage, pas de points de vie. L'outil sert à la carte, pas aux règles.
 
 ### Principes
 
@@ -177,7 +179,7 @@ Le pas à pas complet, y compris le flux temps réel direct, est dans [docs/yuno
 
 ### Mode sans réécriture
 
-Si `mod_rewrite` n'est pas disponible, JDR fonctionne quand même : l'API est appelée en `index.php?r=/api/v1/…` et les pages utilisent des adresses de la forme `https://votre-site/#/games/12`. Le mode est enregistré dans `config.php` (`'routing_mode' => 'query'`). Si la réécriture devient disponible plus tard, remplacez la valeur par `'rewrite'`.
+Si `mod_rewrite` n'est pas disponible, Clairvoie fonctionne quand même : l'API est appelée en `index.php?r=/api/v1/…` et les pages utilisent des adresses de la forme `https://votre-site/#/games/12`. Le mode est enregistré dans `config.php` (`'routing_mode' => 'query'`). Si la réécriture devient disponible plus tard, remplacez la valeur par `'rewrite'`.
 
 ### Tâches planifiées (facultatif)
 
@@ -416,7 +418,7 @@ Retirés du projet : traduction anglaise, co-édition en direct, carte du monde,
 
 ## Contribuer
 
-- **Signaler un défaut ou proposer une amélioration** : ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues). Indiquez la version de JDR, votre hébergement (ou votre serveur web et la version de PHP), votre navigateur, et les étapes pour reproduire le problème.
+- **Signaler un défaut ou proposer une amélioration** : ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues). Indiquez la version de Clairvoie, votre hébergement (ou votre serveur web et la version de PHP), votre navigateur, et les étapes pour reproduire le problème.
 - **Contribuer au code** : les contributions sont bienvenues, dans le respect de la [licence](#licence). Lisez d'abord [docs/architecture.md](docs/architecture.md) et [dev/README.md](dev/README.md).
 - **Conventions** :
   - messages de commit au format `type(scope): résumé`, en anglais ;
@@ -425,7 +427,7 @@ Retirés du projet : traduction anglaise, co-édition en direct, carte du monde,
 
 ## Licence
 
-JDR est distribué sous la licence **[PolyForm Noncommercial 1.0.0](LICENSE.md)**. Ce n'est pas une licence « open source » au sens de l'OSI : le code est public, mais l'usage commercial est exclu.
+Clairvoie est distribué sous la licence **[PolyForm Noncommercial 1.0.0](LICENSE.md)**. Ce n'est pas une licence « open source » au sens de l'OSI : le code est public, mais l'usage commercial est exclu.
 
 - **Gratuit pour tout usage non commercial** : vous pouvez l'installer, l'utiliser, le modifier et le redistribuer pour jouer, pour votre groupe, y compris pour une association, un établissement d'enseignement ou un organisme public.
 - **Aucun usage commercial** : pas de vente, pas de service payant, pas d'exploitation à but lucratif.
