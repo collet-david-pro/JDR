@@ -137,7 +137,8 @@ Les archives de mise à jour ne contiennent ni `config.php`, ni `storage/`, ni `
 | P9 | MJ en séance : étages et escaliers, liens entre maps, notes et épingles du MJ, zones de texte à lire, secrets et pièges, modèles de maps, palette de commandes (Cmd+K) | à venir |
 | P10 | Durcissement : revue de sécurité, accessibilité, performances et tests de charge, mise à jour automatique signée, sauvegarde et restauration, documentation d'exploitation | à venir |
 | P11 | Grille hexagonale (option) | à venir |
-| P12 | Tutoriels : aide intégrée au site et tutoriel | à venir |
+| P12 | Ajouts et retours d'expérience (demandes et défauts remontés à l'usage) | à venir |
+| P13 | Tutoriels : aide intégrée au site et tutoriel | à venir |
 
 Retirés du projet : traduction anglaise, co-édition en direct, carte du monde, WebSocket.
 
