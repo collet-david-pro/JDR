@@ -453,3 +453,7 @@ Le développement suit une méthode d'**orchestration** :
 - un journal par phase garde la trace des décisions, des écarts et des dettes techniques, ce qui permet de reprendre le travail d'une session à l'autre sans rien perdre.
 
 Cette façon de travailler n'enlève rien à l'exigence : chaque fonctionnalité a des critères d'acceptation vérifiés par des tests automatisés, et rien n'est poussé ni publié sans l'accord de l'auteur. Elle montre surtout qu'un passionné, avec une idée précise et de bons outils, peut aujourd'hui construire et maintenir seul un logiciel complet.
+
+---
+
+*P.-S. : même ce README a été rédigé par Claude Code. L'auteur s'est contenté de lui dire quoi écrire… ce qui, à bien y réfléchir, est exactement le rôle d'un maître de jeu : il décrit la scène, et quelqu'un d'autre lance les dés.* 🎲
