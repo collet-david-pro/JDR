@@ -418,12 +418,9 @@ Retirés du projet : traduction anglaise, co-édition en direct, carte du monde,
 
 ## Contribuer
 
-- **Signaler un défaut ou proposer une amélioration** : ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues). Indiquez la version de Clairvoie, votre hébergement (ou votre serveur web et la version de PHP), votre navigateur, et les étapes pour reproduire le problème.
-- **Contribuer au code** : les contributions sont bienvenues, dans le respect de la [licence](#licence). Lisez d'abord [docs/architecture.md](docs/architecture.md) et [dev/README.md](dev/README.md).
-- **Conventions** :
-  - messages de commit au format `type(scope): résumé`, en anglais ;
-  - tests à jour avec le code (PHPUnit, Vitest, Playwright) ;
-  - une migration déjà publiée ne se modifie jamais : ajoutez-en une nouvelle.
+- **Signaler un défaut ou proposer une idée** : ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues). Indiquez la version de Clairvoie, votre hébergement (ou votre serveur web et la version de PHP), votre navigateur, et les étapes pour reproduire le problème.
+- **Code** : le projet est développé par son auteur seul et **n'accepte pas de pull requests** (elles ne seront pas fusionnées). Vous êtes libre de **forker** le dépôt et de faire vivre votre propre version, dans le respect de la [licence](#licence) : usage non commercial uniquement, texte de la licence et mention « Required Notice » conservés.
+- Pour comprendre le code avant de le modifier : [docs/architecture.md](docs/architecture.md) et [dev/README.md](dev/README.md).
 
 ## Licence
 
