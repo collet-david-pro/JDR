@@ -33,14 +33,14 @@ final class PresenceTest extends SessionsTestCase
         );
     }
 
-    /** PresenceService whose clock runs $offset seconds ahead. */
-    private function presenceAt(int $offset): PresenceService
+    /** PresenceService whose clock runs $offset seconds after $from (default: now). */
+    private function presenceAt(int $offset, ?int $from = null): PresenceService
     {
         $c = $this->app->container();
 
         return new PresenceService(
             $this->appDb(),
-            Clock::at(gmdate('Y-m-d H:i:s', time() + $offset)),
+            Clock::at(gmdate('Y-m-d H:i:s', ($from ?? time()) + $offset)),
             $c->get(SessionRepository::class),
             $c->get(SessionEvents::class),
             $c->get(SessionAccess::class),
@@ -65,14 +65,16 @@ final class PresenceTest extends SessionsTestCase
     public function testSweepDisconnectsAfterSixtySeconds(): void
     {
         $w = $this->arena();
+        // Taken before Bob's last request: a slow run cannot eat the margin of the 59 s check.
+        $from = time();
         $this->ok($w['bob']->post('/sessions/' . $w['session'] . '/ready', ['ready' => true]), 204);
         $before = $this->head();
 
-        self::assertSame(0, $this->presenceAt(30)->sweep(), 'seen 30 s ago: still connected');
-        self::assertSame(0, $this->presenceAt(59)->sweep());
+        self::assertSame(0, $this->presenceAt(30, $from)->sweep(), 'seen 30 s ago: still connected');
+        self::assertSame(0, $this->presenceAt(59, $from)->sweep());
         self::assertSame('connected', $this->playerStatus($w['session'], 'Bob'));
 
-        self::assertSame(1, $this->presenceAt(90)->sweep(), 'Kim is kicked: only Bob');
+        self::assertSame(1, $this->presenceAt(90, $from)->sweep(), 'Kim is kicked: only Bob');
         self::assertSame('disconnected', $this->playerStatus($w['session'], 'Bob'));
         self::assertSame('kicked', $this->playerStatus($w['session'], 'Kim'));
         self::assertFalse($this->isReady($w['session'], 'Bob'), 'the ready flag is cleared');
@@ -82,7 +84,7 @@ final class PresenceTest extends SessionsTestCase
         self::assertNull($event['actor_user_id']);
         self::assertSame($w['channel'], $event['channel']);
 
-        self::assertSame(0, $this->presenceAt(200)->sweep(), 'already disconnected');
+        self::assertSame(0, $this->presenceAt(200, $from)->sweep(), 'already disconnected');
         self::assertSame(1, count($this->kinds($before)));
     }
 
