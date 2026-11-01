@@ -42,6 +42,7 @@ final class SessionService
         private CodeGenerator $codes,
         private Clock $clock,
         private DisplayCleanup $displayCleanup,
+        private SessionTravel $travel,
     ) {
     }
 
@@ -193,7 +194,11 @@ final class SessionService
     }
 
     /**
-     * @param array<array-key, mixed> $body {map_id, floor_id?, client_op_id?}
+     * POST /sessions/{id}/change-map (GM only, P9a1 D2): {map_id, floor_id? (id or uid), focus?, move_tokens?}.
+     * A change of MAP resets the ready flags (assets to preload); a change of floor alone does not.
+     * focus: the shared camera is centred there (camera.moved); move_tokens: SessionTravel.
+     *
+     * @param array<array-key, mixed> $body {map_id, floor_id?, focus?, move_tokens?, client_op_id?}
      * @return array<string, mixed>
      */
     public function changeMap(User $user, int $sessionId, array $body, string $apiBase): array
@@ -206,29 +211,43 @@ final class SessionService
             $session = $this->lock($sessionId);
             $this->requireNotEnded($session);
             [$mapId, $floorId] = $this->mapAndFloor($ctx->session->gameId, $v['map_id'], $v['floor_id']);
-            $this->sessions->update($session->id, ['current_map_id' => $mapId, 'current_floor_id' => $floorId]);
-            $this->sessions->resetReady($session->id);
-            $this->events->mapChanged($session->id, (int) $mapId, (int) $floorId, $user->id, $opId);
+            if ($v['move_tokens'] !== [] && $v['focus'] !== null) {
+                $ctx = $this->access->resolve($user, $sessionId);
+                $this->travel->moveTokens($ctx, $mapId, $floorId, $v['move_tokens'], (float) $v['focus'][0], (float) $v['focus'][1], $user->id, $opId);
+            }
+            $fields = ['current_map_id' => $mapId, 'current_floor_id' => $floorId];
+            $camera = null;
+            if ($v['focus'] !== null) {
+                $camera = ['x' => $v['focus'][0], 'y' => $v['focus'][1], 'zoom' => $session->camera['zoom'] ?? 1, 'floor_id' => $floorId, 'follow' => false];
+                $fields['camera'] = $camera;
+            }
+            $this->sessions->update($session->id, $fields);
+            if ($session->currentMapId !== $mapId) {
+                $this->sessions->resetReady($session->id);
+            }
+            $this->events->mapChanged($session->id, $mapId, $floorId, $user->id, $opId);
+            if ($camera !== null) {
+                $this->events->cameraMoved($session->id, $session->state === Session::RUNNING, $camera, $user->id, $opId);
+            }
 
             return $this->presenter->one($this->access->resolve($user, $sessionId), $apiBase);
         });
     }
 
     /**
-     * Map of the game (live) and one of its floors (the first one when $floorId is null).
+     * Map of the game (live) and one of its floors, given by id or uid (the first one when $floorRef is null).
      *
      * @return array{0: int, 1: int}
      * @throws ValidationException map_id / floor_id not_found
      */
-    private function mapAndFloor(int $gameId, int $mapId, ?int $floorId): array
+    private function mapAndFloor(int $gameId, int $mapId, int|string|null $floorRef): array
     {
         $map = $this->maps->find($mapId);
         if ($map === null || $map->gameId !== $gameId || $map->deletedAt !== null) {
             throw new ValidationException('', ['map_id' => 'not_found']);
         }
-        $floors = $this->maps->floors($map->id);
-        foreach ($floors as $floor) {
-            if ($floorId === null || $floor['id'] === $floorId) {
+        foreach ($this->maps->floors($map->id) as $floor) {
+            if ($floorRef === null || (is_int($floorRef) ? $floor['id'] === $floorRef : $floor['uid'] === $floorRef)) {
                 return [$map->id, $floor['id']];
             }
         }

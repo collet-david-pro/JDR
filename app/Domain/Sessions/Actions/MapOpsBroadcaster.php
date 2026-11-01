@@ -36,7 +36,7 @@ use JDR\Realtime\Channel;
  */
 final class MapOpsBroadcaster
 {
-    private const RELOAD_COLUMNS = ['name', 'cell_px', 'width_cells', 'height_cells', 'unit_label', 'unit_per_cell', 'theme', 'palette', 'layers'];
+    private const RELOAD_COLUMNS = ['name', 'cell_px', 'width_cells', 'height_cells', 'unit_label', 'unit_per_cell', 'theme', 'palette', 'layers', 'floors'];
 
     public function __construct(
         private Db $db,
@@ -78,8 +78,8 @@ final class MapOpsBroadcaster
                 default => null,
             };
             if ($op['type'] === 'fog.reveal' || $op['type'] === 'fog.hide') {
-                foreach ($op['chunks'] as [$cx, $cy]) {
-                    $fog[(int) $op['floor']][$cx . ':' . $cy] = [$cx, $cy];
+                foreach (is_int($op['floor']) ? $op['chunks'] : [] as [$cx, $cy]) {
+                    $fog[$op['floor']][$cx . ':' . $cy] = [$cx, $cy];
                 }
             }
         }

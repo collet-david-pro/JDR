@@ -145,6 +145,8 @@ final class SnapshotService
         $full['thumb_url'] = null;
         $full['objects'] = $objects;
         $full['tokens_placed'] = $placed;
+        // P9a: a player / screen knows the current floor only (not the other floors of the map).
+        $full['floors'] = array_values(array_filter($full['floors'], static fn (array $f): bool => $scope->allowsFloor($f['id'])));
         $full['palette'] = array_map(static function (?array $entry) use ($allowed): ?array {
             if ($entry === null) {
                 return null;

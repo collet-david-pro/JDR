@@ -56,6 +56,19 @@ trait LeakScenario
             self::placedToken('t-free', $f, (string) $free['id'], 40, 150),
         ]);
         $this->opsOk($gm, $w['big'], [['type' => 'maptoken.update', 'uid' => 't-dwarf', 'rev' => 1, 'patch' => ['x' => 100, 'y' => 100]]]);
+        // P9a: a second floor (never shown to players: the session stays on the first one), links of doors / stairs /
+        // portals (GM information), content on both floors.
+        $this->opsOk($gm, $w['big'], [['type' => 'floor.add', 'floor' => ['uid' => 'up', 'name' => 'Etage secret', 'level' => 1]]]);
+        $link = ['map_id' => $w['map'], 'floor' => null, 'x' => 3, 'y' => 3];
+        $stairs = ['type' => 'stairs', 'layer' => 'props', 'geometry' => ['x' => 4, 'y' => 6, 'w' => 2, 'h' => 1], 'visibility' => 'all', 'locked' => false, 'sort_order' => 0];
+        $this->fill($gm, $w['big'], [
+            self::wallObject('up-wall', 'up', [[2, 2], [9, 2]]),
+            ['uid' => 'stairs-vis', 'floor' => $f, 'props' => ['direction' => 'up', 'to_floor' => 'up', 'link' => $link]] + $stairs,
+            ['uid' => 'portal-vis', 'floor' => $f, 'type' => 'portal', 'layer' => 'props', 'geometry' => ['x' => 6.5, 'y' => 6],
+                'props' => ['icon' => 'portal', 'color' => '#8844ff', 'link' => $link], 'visibility' => 'all', 'locked' => false, 'sort_order' => 0],
+            self::doorObject('door-link', $f, [7, 7], [8, 7], false, ['props' => ['state' => 'closed', 'locked' => false, 'secret' => false,
+                'asset_open' => null, 'asset_closed' => null, 'swing' => 'a', 'link' => $link]]),
+        ], [self::placedToken('t-up', 'up', $goblinDef, 5, 5)]);
         $this->setSettings($w, $settings);
         $w['table'] = $this->pairScreen($gm, $s, '198.18.7.2');
         $this->startSession($w);
@@ -79,6 +92,8 @@ trait LeakScenario
             self::tiles($f, 'ground', [[4, 4, 1], [150, 151, 2]]),
             ['type' => 'maptoken.add', 'token' => self::placedToken('t-rat', $f, $goblinDef, 7, 12)],
             ['type' => 'maptoken.add', 'token' => self::placedToken('t-lurk', $f, $dragonDef, 8, 12, ['hidden' => true])],
+            ['type' => 'object.add', 'object' => self::wallObject('up-live', 'up', [[3, 14], [4, 14]])],
+            ['type' => 'maptoken.add', 'token' => self::placedToken('t-up-live', 'up', $goblinDef, 6, 14)],
         ]);
         $this->opsOk($gm, $w['big'], [['type' => 'maptoken.update', 'uid' => 't-rat', 'rev' => 1, 'patch' => ['x' => 8]]]);
         $this->opsOk($gm, $w['big'], [['type' => 'maptoken.remove', 'uid' => 't-rat'], ['type' => 'maptoken.update', 'uid' => 't-lurk', 'rev' => 1, 'patch' => ['x' => 9]]]);
@@ -150,7 +165,7 @@ trait LeakScenario
         $all = ['bob', 'dan', 'table'];
         $ever = PHP_INT_MAX;
         $needles = [];
-        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre'] as $uid) {
+        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre', 'up-wall', 'up-live', 't-up', 't-up-live', 'Etage secret'] as $uid) {
             $needles[] = [$all, $uid, $ever];
         }
         foreach (['hidden-vis', 't-ghost', 'Spectre'] as $uid) {

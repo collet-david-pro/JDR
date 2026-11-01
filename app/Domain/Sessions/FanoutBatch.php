@@ -298,7 +298,7 @@ final class FanoutBatch
         }
         $player = ['view' => EventFanout::VIEW_PLAYER];
         if (!$this->ctx->fogStrict()) {
-            $open = FogScope::unrestricted();
+            $open = FogScope::unrestricted($this->ctx->session->currentFloorId);
             $common = $eventsFor($this->sight, 0, $open);
             $own = [];
             foreach ($this->players as $user) {

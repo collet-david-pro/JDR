@@ -40,6 +40,9 @@ final class PlayerView
         $seeOthers = $ctx->setting('players_see_other_pcs');
         $out = [];
         foreach (PlayerFilter::tokens($placed) as $token) {
+            if (!$scope->allowsFloor((int) $token['floor'])) {
+                continue;
+            }
             $owner = $assignments[(int) $token['token_id']] ?? null;
             if ($owner !== $userId) {
                 if (!$seeOthers && $owner !== null) {
@@ -66,7 +69,10 @@ final class PlayerView
      */
     public function objects(array $objects, array $revealed, FogScope $scope, array $bboxes, array $hiddenTokens = []): array
     {
-        $out = PlayerFilter::objects($objects, $revealed, $hiddenTokens);
+        $out = array_values(array_filter(
+            PlayerFilter::objects($objects, $revealed, $hiddenTokens),
+            static fn (array $o): bool => $scope->allowsFloor((int) $o['floor']),
+        ));
         if (!$scope->isRestricted()) {
             return $out;
         }

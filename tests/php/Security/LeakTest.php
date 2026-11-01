@@ -232,6 +232,9 @@ final class LeakTest extends ActionsTestCase
         }
         $at_ = $where . ' (' . $who . ')';
         self::assertNotSame('gm', $node['layer'] ?? null, $at_ . ': layer gm');
+        if (isset($node['props']) && is_array($node['props'])) {
+            self::assertArrayNotHasKey('link', $node['props'], $at_ . ': a link (door / stairs / portal destination) is GM information');
+        }
         self::assertNotSame(true, $node['secret'] ?? null, $at_ . ': secret');
         self::assertNotSame(true, $node['hidden'] ?? null, $at_ . ': hidden');
         self::assertNotSame('gm', $node['visibility'] ?? null, $at_ . ': visibility gm');

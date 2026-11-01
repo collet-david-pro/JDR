@@ -34,7 +34,7 @@ final class FogStrictScope
     public function forUsers(SessionContext $ctx, int $mapId, array $userIds): array
     {
         if (!$ctx->fogStrict()) {
-            return array_fill_keys($userIds, FogScope::unrestricted());
+            return array_fill_keys($userIds, FogScope::unrestricted($ctx->session->currentFloorId));
         }
         $explored = $this->queries->fogBlocks($mapId);
         $byUser = array_fill_keys($userIds, $explored);
@@ -44,7 +44,9 @@ final class FogStrictScope
             }
         }
 
-        return array_map(static fn (array $blocks): FogScope => FogScope::of($blocks), $byUser);
+        $floor = $ctx->session->currentFloorId;
+
+        return array_map(static fn (array $blocks): FogScope => FogScope::of($blocks, $floor), $byUser);
     }
 
     /**
@@ -54,14 +56,14 @@ final class FogStrictScope
     public function forTable(SessionContext $ctx, int $mapId): FogScope
     {
         if (!$ctx->fogStrict()) {
-            return FogScope::unrestricted();
+            return FogScope::unrestricted($ctx->session->currentFloorId);
         }
         $blocks = $this->queries->fogBlocks($mapId);
         foreach ($this->queries->tablePlaced($ctx->session->id, $mapId) as $t) {
             self::widen($blocks, $t);
         }
 
-        return FogScope::of($blocks);
+        return FogScope::of($blocks, $ctx->session->currentFloorId);
     }
 
     /**

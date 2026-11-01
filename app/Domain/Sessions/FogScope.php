@@ -9,7 +9,8 @@ defined('JDR_BOOT') || exit;
 /**
  * What a player may receive of a map under fog_strict (projet.md 14.2, D4 / D11): a set of
  * 32 x 32 cell blocks per floor, or no restriction (fog_strict off). Pure value, built by
- * FogStrictScope.
+ * FogStrictScope. P9a: a scope may be locked on one floor (the current floor of the session): every
+ * other floor is refused (allowsFloor()), whatever the blocks.
  */
 final class FogScope
 {
@@ -20,21 +21,29 @@ final class FogScope
     /**
      * @param array<int, array<string, true>>|null $blocks floor id => ["cx:cy" => true]; null = unrestricted
      */
-    private function __construct(private ?array $blocks)
+    private function __construct(private ?array $blocks, private ?int $floor = null)
     {
     }
 
-    public static function unrestricted(): self
+    public static function unrestricted(?int $floorId = null): self
     {
-        return new self(null);
+        return new self(null, $floorId);
     }
 
     /**
      * @param array<int, array<string, true>> $blocks
      */
-    public static function of(array $blocks): self
+    public static function of(array $blocks, ?int $floorId = null): self
     {
-        return new self($blocks);
+        return new self($blocks, $floorId);
+    }
+
+    /**
+     * Is this floor the (only) floor the scope shows? Always true when the scope is not locked.
+     */
+    public function allowsFloor(int $floorId): bool
+    {
+        return $this->floor === null || $this->floor === $floorId;
     }
 
     public function isRestricted(): bool
@@ -44,13 +53,13 @@ final class FogScope
 
     public function allowsBlock(int $floorId, int $cx, int $cy): bool
     {
-        return $this->blocks === null || isset($this->blocks[$floorId][$cx . ':' . $cy]);
+        return $this->allowsFloor($floorId) && ($this->blocks === null || isset($this->blocks[$floorId][$cx . ':' . $cy]));
     }
 
     public function allowsPoint(int $floorId, float $x, float $y): bool
     {
-        return $this->blocks === null || ($x >= 0 && $y >= 0
-            && $this->allowsBlock($floorId, (int) floor($x / self::SIZE), (int) floor($y / self::SIZE)));
+        return $this->allowsFloor($floorId) && ($this->blocks === null || ($x >= 0 && $y >= 0
+            && $this->allowsBlock($floorId, (int) floor($x / self::SIZE), (int) floor($y / self::SIZE))));
     }
 
     /**
@@ -60,6 +69,9 @@ final class FogScope
      */
     public function allowsBox(int $floorId, array $box): bool
     {
+        if (!$this->allowsFloor($floorId)) {
+            return false;
+        }
         if ($this->blocks === null) {
             return true;
         }
@@ -102,6 +114,9 @@ final class FogScope
      */
     public function cells(int $floorId): ?array
     {
+        if (!$this->allowsFloor($floorId)) {
+            return [];
+        }
         if ($this->blocks === null) {
             return null;
         }
@@ -122,6 +137,9 @@ final class FogScope
      */
     public function filterCells(int $floorId, ?array $requested): ?array
     {
+        if (!$this->allowsFloor($floorId)) {
+            return [];
+        }
         if ($this->blocks === null) {
             return $requested;
         }
@@ -140,6 +158,9 @@ final class FogScope
      */
     public function floors(): array
     {
-        return $this->blocks === null ? [] : array_map('intval', array_keys(array_filter($this->blocks, static fn (array $b): bool => $b !== [])));
+        return $this->blocks === null ? [] : array_values(array_filter(
+            array_map('intval', array_keys(array_filter($this->blocks, static fn (array $b): bool => $b !== []))),
+            $this->allowsFloor(...),
+        ));
     }
 }

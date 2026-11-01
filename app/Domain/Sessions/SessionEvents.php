@@ -78,6 +78,21 @@ final class SessionEvents
     }
 
     /**
+     * camera.moved after a change of map with a focus (P9a1): players and screens while the session runs, the
+     * GM only otherwise (same audience rule as the camera.set action). Ephemeral, like the action.
+     *
+     * @param array<string, mixed> $camera {x, y, zoom, floor_id, follow}
+     */
+    public function cameraMoved(int $sessionId, bool $running, array $camera, ?int $actor, ?string $opId): void
+    {
+        $channel = Channel::session($sessionId);
+        $this->store->record($channel, 'camera.moved', $running ? Audience::PLAYERS : Audience::GM, $camera, null, $actor, $opId, true);
+        if ($running) {
+            $this->store->record($channel, 'camera.moved', Audience::DISPLAYS, $camera, null, $actor, $opId, true);
+        }
+    }
+
+    /**
      * @param array<string, mixed> $payload
      */
     private function record(int $sessionId, string $type, string $audience, array $payload, ?int $audienceUser, ?int $actor, ?string $opId): void
