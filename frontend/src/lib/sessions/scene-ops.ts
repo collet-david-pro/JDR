@@ -26,6 +26,10 @@ export function applyMapOps(
   let ambient = state.ambient;
   const effects: SessionEffect[] = [];
   const blocks = new Map<string, { floor: string; cx: number; cy: number }>();
+  // Ops designate a floor by its id or its uid (the editor sends uids); the replica keeps ids.
+  const floors = state.map?.floors ?? [];
+  const floorId = (ref: string): string =>
+    floors.find((f) => f.id === ref || f.uid === ref)?.id ?? ref;
   let reload = false;
   let editedObjects = false;
   let editedTokens = false;
@@ -47,7 +51,7 @@ export function applyMapOps(
   for (const op of ops) {
     switch (op.type) {
       case 'object.add':
-        objs()[op.object.uid] = { ...op.object, rev: 1 };
+        objs()[op.object.uid] = { ...op.object, floor: floorId(op.object.floor), rev: 1 };
         break;
       case 'object.update': {
         const current = objects[op.uid];
@@ -60,7 +64,7 @@ export function applyMapOps(
         if (op.uid in objects) delete objs()[op.uid];
         break;
       case 'maptoken.add':
-        toks()[op.token.uid] = { ...op.token, rev: 1 };
+        toks()[op.token.uid] = { ...op.token, floor: floorId(op.token.floor), rev: 1 };
         break;
       case 'maptoken.update': {
         const current = tokens[op.uid];
@@ -76,7 +80,8 @@ export function applyMapOps(
         for (const [x, y] of op.cells) {
           const cx = Math.floor((x ?? 0) / CHUNK_SIZE);
           const cy = Math.floor((y ?? 0) / CHUNK_SIZE);
-          blocks.set(`${op.floor}:${cx}:${cy}`, { floor: op.floor, cx, cy });
+          const floor = floorId(op.floor);
+          blocks.set(`${floor}:${cx}:${cy}`, { floor, cx, cy });
         }
         break;
       case 'fog.reveal':
@@ -84,7 +89,7 @@ export function applyMapOps(
         effects.push({
           kind: 'fog',
           mapId,
-          floorId: op.floor,
+          floorId: floorId(op.floor),
           op: op.type === 'fog.reveal' ? 'reveal' : 'hide',
           chunks: op.chunks,
         });
@@ -112,6 +117,12 @@ export function applyMapOps(
         break;
       }
       case 'palette.add':
+        reload = true;
+        break;
+      // Floors changed (added, renamed, re-levelled, deleted with its content): read the map again.
+      case 'floor.add':
+      case 'floor.update':
+      case 'floor.remove':
         reload = true;
         break;
     }

@@ -6,6 +6,7 @@
 import { ApiError, type ApiClient } from '../api';
 import { xhrUpload, type XhrFactory } from '../assets/xhr-upload';
 import type {
+  MapLinks,
   MapDetail,
   MapFogResult,
   MapImportResult,
@@ -104,6 +105,18 @@ export class MapsClient {
 
   async get(id: string, signal?: AbortSignal): Promise<MapDetail> {
     return (await this.api.get<MapDetail>(`/maps/${seg(id)}`, signal ? { signal } : {})).data;
+  }
+
+  /** Links of a map (GM): where its doors, stairs and portals lead, and which maps lead to it. */
+  async links(id: string, signal?: AbortSignal): Promise<MapLinks> {
+    const { data } = await this.api.get<MapLinks>(
+      `/maps/${seg(id)}/links`,
+      signal ? { signal } : {},
+    );
+    return {
+      outgoing: Array.isArray(data?.outgoing) ? data.outgoing : [],
+      incoming: Array.isArray(data?.incoming) ? data.incoming : [],
+    };
   }
 
   async update(id: string, patch: MapPatch): Promise<MapSummary> {

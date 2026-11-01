@@ -321,6 +321,8 @@
         data-testid="console-viewport"
         data-state={engineState}
         data-scene={run.scene === null ? 'none' : 'ready'}
+        data-map={run.scene?.mapId ?? ''}
+        data-floor={run.scene?.floor ?? ''}
         data-table-viewers={[...tableViewerIds].sort().join(',')}
       ></div>
       {#if engineState === 'unsupported'}

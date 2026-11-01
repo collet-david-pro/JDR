@@ -27,6 +27,16 @@ export interface WriteOptions {
 
 export type Transition = 'start' | 'pause' | 'resume' | 'end';
 
+/** Body of POST /sessions/{id}/change-map (P9a1); `move_tokens` needs `focus` (cells of the target map). */
+export interface ChangeMapBody {
+  readonly map_id: string;
+  /** Id or uid of a floor of the target map; absent = its first floor. */
+  readonly floor_id?: string;
+  readonly focus?: { readonly x: number; readonly y: number };
+  /** Uids of placed tokens of the shown floor (at most 100). */
+  readonly move_tokens?: readonly string[];
+}
+
 export class SessionsClient {
   constructor(private readonly api: ApiClient) {}
 
@@ -127,15 +137,14 @@ export class SessionsClient {
     await this.api.post<null>(`/sessions/${seg(id)}/ready`, body({ ready }, o), opts(o));
   }
 
-  async changeMap(
-    id: string,
-    mapId: string,
-    floorId?: string,
-    o: WriteOptions = {},
-  ): Promise<Session> {
-    const fields = floorId === undefined ? { map_id: mapId } : { map_id: mapId, floor_id: floorId };
+  /** POST /sessions/{id}/change-map: a map and a floor (id or uid), optionally a camera focus and tokens to carry. */
+  async changeMap(id: string, change: ChangeMapBody, o: WriteOptions = {}): Promise<Session> {
     return (
-      await this.api.post<Session>(`/sessions/${seg(id)}/change-map`, body(fields, o), opts(o))
+      await this.api.post<Session>(
+        `/sessions/${seg(id)}/change-map`,
+        body({ ...change }, o),
+        opts(o),
+      )
     ).data;
   }
 

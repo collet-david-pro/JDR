@@ -68,7 +68,10 @@ function bbox(o: MapObject): [number, number, number, number] {
       ];
     }
     case 'light':
+    case 'portal':
       return [o.geometry.x, o.geometry.y, o.geometry.x, o.geometry.y];
+    case 'stairs':
+      return [o.geometry.x, o.geometry.y, o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h];
   }
 }
 

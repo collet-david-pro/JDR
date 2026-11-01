@@ -4,6 +4,7 @@
   import DisplaysPanel from './DisplaysPanel.svelte';
   import MapsPanel from './MapsPanel.svelte';
   import NotesPanel from './NotesPanel.svelte';
+  import PassagesPanel from './PassagesPanel.svelte';
   import PlayersPanel from './PlayersPanel.svelte';
   import RevealPanel from './RevealPanel.svelte';
   import TokensPanel from './TokensPanel.svelte';
@@ -46,6 +47,14 @@
         return t('sessions.panels.displays');
     }
   }
+
+  // A stairs or a portal selected on the map opens the Maps tab, where the passages are taken.
+  $effect(() => {
+    const selected = props.selection;
+    if (selected === null || selected.kind !== 'object') return;
+    const type = props.run.state?.objects[selected.uid]?.type;
+    if (type === 'stairs' || type === 'portal') current = 'maps';
+  });
 
   async function keydown(event: KeyboardEvent, index: number): Promise<void> {
     const next = nextTabIndex(index, event.key, PANELS.length);
@@ -94,6 +103,7 @@
       <NotesPanel {...props} />
     {:else if current === 'maps'}
       <MapsPanel {...props} />
+      <PassagesPanel {...props} />
     {:else}
       <DisplaysPanel {...props} />
     {/if}

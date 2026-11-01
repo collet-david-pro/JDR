@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cameraText } from '../../lib/sessions/play/camera';
   import { onMount, untrack } from 'svelte';
   import NetworkIndicator from './NetworkIndicator.svelte';
   import EngineUnsupported from '../editor/EngineUnsupported.svelte';
@@ -27,11 +28,22 @@
   let engine = $state.raw<SceneEngine | null>(null);
   let engineState = $state<'loading' | 'ready' | 'unsupported' | 'error'>('loading');
   let zoom = $state(1);
+  /** Centre of the camera, for the E2E (data-camera). */
+  let camText = $state('');
   let followOn = $state(untrack(() => run.state?.session.camera?.follow ?? false));
   let follow: CameraFollow | null = null;
 
   const running = $derived(run.state?.session.state === 'running');
   const snap = $derived(run.state);
+  /** Placed tokens of the shown floor, `uid:x:y`, for the E2E. */
+  const placedText = $derived(
+    snap === null || run.scene === null
+      ? ''
+      : Object.values(snap.tokens)
+          .filter((tok) => tok.floor === run.scene?.floor)
+          .map((tok) => `${tok.uid}:${tok.x}:${tok.y}`)
+          .join(','),
+  );
   const viewerKey = $derived.by(() => {
     const s = run.state;
     const scene = run.scene;
@@ -157,9 +169,11 @@
       if (followOn && camera !== null) follow.apply(camera, scene.floor);
       else centerOnToken();
       zoom = e.camera.get().zoom;
+      camText = cameraText(e.camera.get());
       offs.push(
         e.onCamera((c) => {
           zoom = c.zoom;
+          camText = cameraText(c);
           follow?.moved(c);
         }),
       );
@@ -238,6 +252,10 @@
       data-testid="play-viewport"
       data-state={engineState}
       data-scene={run.scene === null ? 'none' : 'ready'}
+      data-map={run.scene?.mapId ?? ''}
+      data-floor={run.scene?.floor ?? ''}
+      data-placed={placedText}
+      data-camera={camText}
       data-zoom={zoom}
       data-cell-px={run.scene?.doc.grid.cellPx ?? ''}
       data-running={running}

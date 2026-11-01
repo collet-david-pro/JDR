@@ -204,6 +204,11 @@ const onMapChanged: Handler = (s, _e, p) => {
   const x = p as unknown as MapChangedPayload;
   const map = str(x.map_id);
   if (map === null) return null;
+  // Same map, another floor: the snapshot brings the floor. The scene stays meanwhile, the players keep their
+  // "ready" and do not preload again (the assets are those of the map).
+  if (map === s.session.current_map_id && s.map !== null) {
+    return { state: s, effects: [reload('map_changed')] };
+  }
   const state: SessionState = {
     ...withSession(s, {
       current_map_id: map,

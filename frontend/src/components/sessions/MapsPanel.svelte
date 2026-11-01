@@ -41,7 +41,10 @@
     if (snap === null) return;
     busy = true;
     try {
-      await sessionsClient().changeMap(snap.session.id, mapId, floorId);
+      await sessionsClient().changeMap(snap.session.id, {
+        map_id: mapId,
+        ...(floorId !== undefined ? { floor_id: floorId } : {}),
+      });
       confirmOpen = false;
       await run.reload();
     } catch (error) {

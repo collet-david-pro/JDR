@@ -505,7 +505,7 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly layers: readonly MapLayer[];
   readonly floors: readonly FloorInfo[];
   readonly format_version: number;
-  /** P5: objects of every floor (GM view: nothing filtered). Since P9a also stairs / portal (AnyMapObject). */
+  /** P5: objects of every floor (GM view: nothing filtered). Since P9a also stairs / portal (MapObject). */
   readonly objects: readonly MapObject[];
   readonly notes: readonly unknown[];
   /** P5: placed tokens of every floor. */
@@ -578,7 +578,10 @@ export type WireMapOp =
           | 'maptoken.update'
           | 'maptoken.remove'
           | 'fog.reveal'
-          | 'fog.hide';
+          | 'fog.hide'
+          | 'floor.add'
+          | 'floor.update'
+          | 'floor.remove';
       }
     >;
 
@@ -713,4 +716,29 @@ export interface ChangeMapBody {
   readonly focus?: { readonly x: number; readonly y: number };
   readonly move_tokens?: readonly string[];
   readonly client_op_id?: string;
+}
+
+/** One link out of a map (GET /maps/{id}/links): `floor` / `to.floor` are floor uids. */
+export interface MapLinkOut {
+  readonly object_uid: string;
+  readonly floor: string;
+  readonly to: {
+    readonly map_id: string;
+    readonly map_name: string;
+    readonly floor: string | null;
+    readonly floor_name: string | null;
+    readonly x: number | null;
+    readonly y: number | null;
+  };
+  readonly broken: boolean;
+}
+
+/** GET /maps/{id}/links (GM / co-GM). */
+export interface MapLinks {
+  readonly outgoing: readonly MapLinkOut[];
+  readonly incoming: readonly {
+    readonly map_id: string;
+    readonly map_name: string;
+    readonly object_uid: string;
+  }[];
 }

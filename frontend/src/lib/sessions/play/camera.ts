@@ -76,3 +76,8 @@ export class CameraFollow {
     this.setEnabled(false);
   }
 }
+
+/** Camera centre as `x,y` (one decimal) for the data-camera attribute the E2E reads. */
+export function cameraText(camera: { readonly x: number; readonly y: number }): string {
+  return `${camera.x.toFixed(1)},${camera.y.toFixed(1)}`;
+}

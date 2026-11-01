@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cameraText } from '../../lib/sessions/play/camera';
   import { untrack } from 'svelte';
   import EngineUnsupported from '../editor/EngineUnsupported.svelte';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
@@ -29,6 +30,8 @@
   let engine = $state.raw<SceneEngine | null>(null);
   let engineState = $state<'loading' | 'ready' | 'unsupported' | 'error'>('loading');
   let zoom = $state(1);
+  /** Centre of the camera, for the E2E (data-camera). */
+  let camText = $state('');
 
   const session = $derived(run.run);
   const scene = $derived(session?.scene ?? null);
@@ -120,6 +123,7 @@
       });
       e.camera.set({ x: f.x, y: f.y, zoom: f.zoom });
       zoom = e.camera.get().zoom;
+      camText = cameraText(e.camera.get());
       onrange(f.outOfRange);
     });
   });
@@ -127,9 +131,21 @@
   $effect(() => {
     const e = engine;
     if (e === null) return;
-    return e.onCamera((c) => (zoom = c.zoom));
+    return e.onCamera((c) => {
+      zoom = c.zoom;
+      camText = cameraText(c);
+    });
   });
 
+  /** Placed tokens of the shown floor, `uid:x:y`, for the E2E. */
+  const placedText = $derived(
+    session?.state == null || scene === null
+      ? ''
+      : Object.values(session.state.tokens)
+          .filter((tok) => tok.floor === scene?.floor)
+          .map((tok) => `${tok.uid}:${tok.x}:${tok.y}`)
+          .join(','),
+  );
   const cellPx = $derived(scene?.doc.grid.cellPx ?? null);
 </script>
 
@@ -139,6 +155,10 @@
   data-testid="display-viewport"
   data-state={engineState}
   data-scene={scene === null ? 'none' : 'ready'}
+  data-map={scene?.mapId ?? ''}
+  data-floor={scene?.floor ?? ''}
+  data-placed={placedText}
+  data-camera={camText}
   data-zoom={zoom}
   data-cell-px={cellPx ?? ''}
   data-cell-css-px={cellPx === null ? '' : cellPx * zoom}

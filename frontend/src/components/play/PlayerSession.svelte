@@ -78,9 +78,7 @@
   const session = $derived(snap?.session ?? null);
   const status = $derived(session?.state ?? null);
   const key = $derived(
-    session?.current_map_id == null
-      ? null
-      : `${session.current_map_id}:${session.current_floor_id ?? ''}:${run.preloadAsked}`,
+    session?.current_map_id == null ? null : `${session.current_map_id}:${run.preloadAsked}`,
   );
   const preloaded = $derived(key !== null && loadedKey === key && progress.status === 'done');
   const me = $derived(session?.players.find((p) => p.user_id === userId) ?? null);
