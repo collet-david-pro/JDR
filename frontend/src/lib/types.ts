@@ -2,7 +2,7 @@
  * API data types of phase P1 (etapes/P01 "Contrat d'API P1"). Identifiers are strings,
  * dates are ISO 8601 UTC strings.
  */
-import type { FogChunkWire, MapObject, MapOp, PlacedToken } from '../editor/contracts';
+import type { FloorInfo, FogChunkWire, MapObject, MapOp, PlacedToken } from '../editor/contracts';
 
 export type Role = 'user' | 'admin';
 export type UserStatus = 'active' | 'suspended';
@@ -493,12 +493,8 @@ export interface MapLayer {
   readonly gm_only?: boolean;
 }
 
-export interface MapFloor {
-  readonly id: string;
-  readonly level: number;
-  readonly name: string;
-  readonly sort_order: number;
-}
+/** P9a: a floor with its uid (see editor/contracts.ts). */
+export type MapFloor = FloorInfo;
 
 /** GET /maps/{id}, POST /games/{id}/maps, POST /maps/{id}/duplicate. */
 export interface MapDetail extends Omit<MapSummary, 'grid'> {
@@ -507,9 +503,9 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly ambient: MapAmbient;
   readonly palette: readonly (MapPaletteEntry | null)[];
   readonly layers: readonly MapLayer[];
-  readonly floors: readonly MapFloor[];
+  readonly floors: readonly FloorInfo[];
   readonly format_version: number;
-  /** P5: objects of every floor (GM view: nothing filtered). */
+  /** P5: objects of every floor (GM view: nothing filtered). Since P9a also stairs / portal (AnyMapObject). */
   readonly objects: readonly MapObject[];
   readonly notes: readonly unknown[];
   /** P5: placed tokens of every floor. */
@@ -674,4 +670,47 @@ export interface MapImportResult {
 /** Answer of PUT /maps/{id}/thumbnail. */
 export interface MapThumbnailResult {
   readonly thumb_url: string;
+}
+
+/** GET /maps/{id}/links (P9a, GM / co-GM). */
+export interface MapLinksOutgoing {
+  readonly object_uid: string;
+  /** Uid of the floor of the object. */
+  readonly floor: string;
+  readonly to: {
+    readonly map_id: string;
+    readonly map_name: string;
+    /** Uid of the target floor, null = first floor (or the target floor was removed). */
+    readonly floor: string | null;
+    readonly floor_name: string | null;
+    readonly x: number | null;
+    readonly y: number | null;
+  };
+  /** Target map in the trash, or target floor removed. */
+  readonly broken: boolean;
+}
+
+export interface MapLinksIncoming {
+  readonly map_id: string;
+  readonly map_name: string;
+  readonly object_uid: string;
+}
+
+export interface MapLinksResponse {
+  readonly outgoing: readonly MapLinksOutgoing[];
+  readonly incoming: readonly MapLinksIncoming[];
+}
+
+/**
+ * POST /sessions/{id}/change-map (GM only, P9a1). `floor_id`: id or uid (default: first floor). `focus`: shared camera
+ * centred there (camera.moved). `move_tokens`: uids of placed tokens of the map the session stands on, moved to the
+ * target map / floor around `focus` (needs `focus`; 422 `move_tokens.<i> = not_found` refuses the whole request).
+ * A change of map resets the players' ready flags; a change of floor alone does not. Answer: the Session.
+ */
+export interface ChangeMapBody {
+  readonly map_id: string;
+  readonly floor_id?: string;
+  readonly focus?: { readonly x: number; readonly y: number };
+  readonly move_tokens?: readonly string[];
+  readonly client_op_id?: string;
 }

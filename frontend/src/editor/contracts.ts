@@ -11,6 +11,16 @@
  * fog and ambient are read through a separate `SceneView` (MapView is unchanged); new ops,
  * overlays and engine methods (setScene, setView, onVisibility, performance mode), required
  * since the P5 integration.
+ *
+ * Revision 5 (P9a, etapes/P09a1-brief.md): floors have a client `uid` and are edited by ops
+ * (`floor.add|update|remove`); every `floor` field of an op (tiles.set, fog.*, object, maptoken) takes a floor id
+ * OR a floor uid (FloorRef); new object types `stairs` and `portal`; `link` (door, stairs, portal) to another map.
+ * Server answers always give floors as FloorInfo.
+ *
+ * Undo of `floor.remove` (D1): the server deletes the floor with ALL its content (tile chunks, objects, placed
+ * tokens, fog). The client reads that content BEFORE sending the op (GET /maps/{id}/chunks?floor=<id|uid> for each
+ * layer, the objects and placed tokens of the floor from its MapDetail, GET /maps/{id}/fog?floor=...) and undoes by
+ * sending floor.add + tiles.set / object.add / maptoken.add / fog.reveal for the same uid.
  */
 
 export const CHUNK_SIZE = 32;
@@ -301,6 +311,37 @@ export type MapOp =
       readonly chunks: readonly FogChunkWire[];
     };
 
+/** A floor designated by its numeric id (as a string) or by its uid (never all digits). */
+export type FloorRef = string;
+
+/** Floor as the server returns it (MapDetail.floors, in display order: sort_order, level). */
+export interface FloorInfo {
+  readonly id: string;
+  /** Client-generated, 1-21 chars of [A-Za-z0-9_-], not all digits; unique in the map. */
+  readonly uid: string;
+  /** -9..+9 (documents: -100..100), unique in the map. */
+  readonly level: number;
+  /** 1-60 chars. */
+  readonly name: string;
+  readonly sort_order: number;
+}
+
+/**
+ * P9a floor ops (D1, undoable). 10 floors at most; errors 422: `ops.<i>.floor.uid|level = taken`,
+ * `ops.<i>.floor = limit`, `ops.<i>.uid = not_found | last_floor`, `ops.<i>.patch.level = taken`.
+ */
+export type FloorOp =
+  | { readonly type: 'floor.add'; readonly floor: { readonly uid: string; readonly name: string; readonly level: number } }
+  | {
+      readonly type: 'floor.update';
+      readonly uid: string;
+      readonly patch: { readonly name?: string; readonly level?: number };
+    }
+  | { readonly type: 'floor.remove'; readonly uid: string };
+
+/** Every op the server accepts since P9a (P9a2 folds FloorOp into MapOp). */
+export type AnyMapOp = MapOp | FloorOp;
+
 /** Undoable command (15.1). inverseOps are recomputed against the current state on undo. */
 export interface Command {
   readonly label: string;
@@ -321,6 +362,27 @@ export type ObjectVisibility = 'all' | 'gm' | 'hidden_until_revealed';
 
 /** Object types of P5 (12.4); the other types arrive with P9 and are refused until then. */
 export type MapObjectType = 'wall' | 'door' | 'window' | 'light';
+
+/** Every object type the server knows since P9a (P9a2 folds stairs / portal into MapObjectType and MapObject). */
+export type MapObjectTypeP9 = MapObjectType | 'stairs' | 'portal';
+
+/**
+ * Where a door / stairs / portal leads (P9a). Normalized by the server: all four keys, floor = a floor UID of the
+ * target map (null = its first floor), x / y in cells of the target grid (null = no precise spot). GM-only information:
+ * players never receive `props.link`. Written by the GM: `map_id` must be a live map of the same game (422
+ * `...props.link.map_id = not_found`), `floor` a floor of it (`...props.link.floor = not_found`). Read side:
+ * `broken: true` when the target map is in the trash (or after an import that found no map of that name: then
+ * `map_id` is null, `map_name` keeps the hint). `map_name` only appears in documents / imported links.
+ */
+export interface Link {
+  /** Id of a map of the game, a string in answers (like every id); ops also accept a number. */
+  readonly map_id: string | null;
+  readonly floor: string | null;
+  readonly x: number | null;
+  readonly y: number | null;
+  readonly map_name?: string;
+  readonly broken?: true;
+}
 
 export type WallKind = 'stone' | 'brick' | 'wood' | 'metal' | 'natural' | 'invisible';
 
@@ -347,6 +409,8 @@ export interface DoorProps {
   readonly asset_closed: null;
   /** Hinge end of the open door: 'a' or 'b'; 'slide' = sliding / portcullis. */
   readonly swing: 'a' | 'b' | 'slide';
+  /** P9a: a door may lead to another map. Absent = no link. */
+  readonly link?: Link;
 }
 
 export interface WindowProps {
@@ -428,7 +492,45 @@ export interface LightObject extends ObjectBase {
   readonly props: LightProps;
 }
 
+export interface StairsProps {
+  readonly direction: 'up' | 'down';
+  /** Uid of a floor of the SAME map, other than the floor of the stairs (422 `props.to_floor = invalid`). */
+  readonly to_floor: string;
+  readonly link?: Link;
+}
+
+/** Stairs: cells x, y, w, h (integers, w and h 1-10); blocks neither vision, light nor movement. Layer 'props'. */
+export interface StairsObject extends ObjectBase {
+  readonly type: 'stairs';
+  readonly geometry: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
+  readonly props: StairsProps;
+}
+
+export type PortalIcon = 'portal' | 'door' | 'stairs' | 'ladder' | 'trapdoor';
+
+export interface PortalProps {
+  readonly icon: PortalIcon;
+  /** '#rrggbb'. */
+  readonly color: string;
+  /** 1-60 chars; absent = none. */
+  readonly label?: string;
+  readonly link: Link;
+}
+
+/** Portal: a point (cells, 3 decimals). Layer 'props'. */
+export interface PortalObject extends ObjectBase {
+  readonly type: 'portal';
+  readonly geometry: { readonly x: number; readonly y: number };
+  readonly props: PortalProps;
+}
+
 export type MapObject = WallObject | DoorObject | WindowObject | LightObject;
+
+/**
+ * Every object the server may send since P9a (GET /maps/{id}, objects of a floor). `MapObject` stays the P5 union so
+ * that the P5 editor code keeps compiling; P9a2 widens MapObject and removes this alias.
+ */
+export type AnyMapObject = MapObject | StairsObject | PortalObject;
 
 /** object.update patch: geometry and props replace the whole value (no deep merge). */
 export interface ObjectPatch {

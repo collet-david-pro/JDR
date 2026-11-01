@@ -43,7 +43,7 @@ export function makeMap(overrides: Partial<MapDetail> = {}): MapDetail {
       { id: 'walls', kind: 'objects', visible: true, locked: false, opacity: 1 },
       { id: 'gm', kind: 'objects', visible: true, locked: false, opacity: 1, gm_only: true },
     ],
-    floors: [{ id: '91', level: 0, name: 'Rez-de-chaussée', sort_order: 0 }],
+    floors: [{ id: '91', uid: 'f1', level: 0, name: 'Rez-de-chaussée', sort_order: 0 }],
     format_version: 1,
     objects: [],
     notes: [],

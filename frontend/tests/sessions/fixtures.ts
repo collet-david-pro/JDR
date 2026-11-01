@@ -103,7 +103,7 @@ export function mapDetail(overrides: Partial<MapDetail> = {}): MapDetail {
     },
     palette: [null],
     layers: [],
-    floors: [{ id: '35', level: 0, name: 'RdC', sort_order: 0 }],
+    floors: [{ id: '35', uid: 'f1', level: 0, name: 'RdC', sort_order: 0 }],
     format_version: 1,
     objects: [door('d1'), wall('w1')],
     notes: [],
