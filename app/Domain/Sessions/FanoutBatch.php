@@ -28,6 +28,9 @@ use JDR\Realtime\Channel;
  * P7b D6: when the session has an active projection screen, the same versions are computed for the
  * virtual player "table" (TableAudience: every table viewer is his, scope FogStrictScope::forTable)
  * and written for the audience "displays" (payload.view = "display"); camera.moved too.
+ * P9: the version of an object may depend on the notes its reader sees (PlayerSight), the comparison
+ * of dispatch() then writes it recipient by recipient; the contents of a note always are
+ * (eachRecipient(), NoteFanout).
  */
 final class FanoutBatch
 {
@@ -139,8 +142,8 @@ final class FanoutBatch
     public function object(?array $before, array $after, string $type, \Closure $payload): void
     {
         $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($before, $after, $type, $payload): array {
-            $vb = $before === null ? null : $sight->object($before, $scope);
-            $va = $sight->object($after, $scope);
+            $vb = $before === null ? null : $sight->object($before, $scope, null, $user);
+            $va = $sight->object($after, $scope, null, $user);
             if ($va === null || ($vb !== null && array_diff_key($va, ['rev' => 0]) === array_diff_key($vb, ['rev' => 0]))) {
                 return [];
             }
@@ -159,8 +162,8 @@ final class FanoutBatch
     public function reveal(array $object): void
     {
         $this->dispatch(static function (PlayerSight $sight, int $user, FogScope $scope) use ($object): array {
-            $vb = $sight->object($object, $scope, false);
-            $va = $sight->object($object, $scope, true);
+            $vb = $sight->object($object, $scope, false, $user);
+            $va = $sight->object($object, $scope, true, $user);
 
             return $va === null || $va === $vb ? [] : [[EventTypes::OBJECT_REVEALED, $va]];
         });
@@ -180,8 +183,8 @@ final class FanoutBatch
             $upsert = [];
             $remove = [];
             foreach ($objects as [$before, $after]) {
-                $vb = $before === null ? null : $sight->object($before, $scope);
-                $va = $after === null ? null : $sight->object($after, $scope);
+                $vb = $before === null ? null : $sight->object($before, $scope, null, $user);
+                $va = $after === null ? null : $sight->object($after, $scope, null, $user);
                 if ($va !== null && $va !== $vb) {
                     $upsert[] = $va;
                 } elseif ($va === null && $vb !== null) {
@@ -256,6 +259,78 @@ final class FanoutBatch
     public static function moved(array $token): array
     {
         return ['uid' => (string) $token['uid'], 'x' => $token['x'], 'y' => $token['y'], 'rotation' => $token['rotation'], 'floor' => (string) $token['floor']];
+    }
+
+    /**
+     * Events computed for each recipient and written for him alone, never merged for the audience
+     * "players" (note contents: someone joining later must not read them in the log). Nothing
+     * while paused (D5).
+     *
+     * @param \Closure(PlayerSight, int, FogScope): list<array{0: string, 1: array<string, mixed>}> $eventsFor
+     */
+    public function eachRecipient(\Closure $eventsFor): void
+    {
+        if (!$this->running()) {
+            return;
+        }
+        $this->table?->emit($eventsFor($this->table->sight(), TableView::USER, $this->table->scope()));
+        $open = FogScope::unrestricted();
+        foreach ($this->players as $user) {
+            $scope = $this->ctx->fogStrict() ? ($this->scopes[$user] ?? FogScope::of([])) : $open;
+            foreach ($eventsFor($this->sight, $user, $scope) as [$type, $payload]) {
+                $this->emit($type, Audience::USER, $payload + ['view' => EventFanout::VIEW_PLAYER], $user);
+            }
+        }
+    }
+
+    /**
+     * The visibility of the notes after a change.
+     */
+    public function setNotes(NoteVisibility $notes): void
+    {
+        $this->sight->setNotes($notes);
+        $this->table?->sight()->setNotes($notes);
+    }
+
+    /**
+     * secrets.reset: these revealed objects are hidden again. map.ops.public for the players whose
+     * version changes (the object disappears, a passage is a wall again).
+     *
+     * @param list<array<string, mixed>> $objects
+     */
+    public function unreveal(array $objects): void
+    {
+        $this->dispatch(function (PlayerSight $sight, int $user, FogScope $scope) use ($objects): array {
+            $upsert = [];
+            $remove = [];
+            foreach ($objects as $object) {
+                $vb = $sight->object($object, $scope, true, $user);
+                $va = $sight->object($object, $scope, false, $user);
+                if ($va !== null && $va !== $vb) {
+                    $upsert[] = $va;
+                } elseif ($va === null && $vb !== null) {
+                    $remove[] = (string) $vb['uid'];
+                }
+            }
+
+            return $upsert === [] && $remove === [] ? [] : [$this->opsEvent($upsert, $remove)];
+        });
+        foreach ($objects as $object) {
+            $this->sight->markHidden((string) $object['uid']);
+            $this->table?->sight()->markHidden((string) $object['uid']);
+        }
+    }
+
+    /**
+     * map.ops.public about objects only.
+     *
+     * @param list<array<string, mixed>> $upsert
+     * @param list<string>               $remove
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    public function opsEvent(array $upsert, array $remove): array
+    {
+        return [EventTypes::MAP_OPS_PUBLIC, $this->opsPayload($upsert, $remove, [], false)];
     }
 
     // ---- Internals --------------------------------------------------------------------------

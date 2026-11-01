@@ -41,6 +41,7 @@ abstract class ApiTestCase extends DbTestCase
         self::dropTestTables();
         $dir = self::makeMigrationsDir([
             '0001_initial.sql' => (string) file_get_contents(self::migrationsDir() . '/0001_initial.sql'),
+            '0006_notes_audience.php' => (string) file_get_contents(self::migrationsDir() . '/0006_notes_audience.php'),
         ]);
         try {
             (new Runner(self::newDb(), $dir))->runAll();

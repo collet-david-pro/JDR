@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Domain\Maps\Map;
 use JDR\Maps\ObjectRules;
+use JDR\Maps\ObjectRulesNotes;
 
 /**
  * The version of one placed token / object a player sees (PlayerView, PlayerFilter) under a
@@ -16,6 +17,9 @@ use JDR\Maps\ObjectRules;
  */
 final class PlayerSight
 {
+    /** Read at the first object that depends on a note (setNotes() after a change). */
+    private ?NoteVisibility $notes = null;
+
     /**
      * @param array<int, int>     $assignments  token definition id => user id
      * @param array<string, true> $revealed     uids of the revealed objects
@@ -43,9 +47,11 @@ final class PlayerSight
     /**
      * @param array<string, mixed> $object API form
      * @param bool|null            $revealed null = as stored
+     * @param int|null             $user     the reader (a player, TableView::USER); null = sees no note
+     * @param NoteVisibility|null  $notes    null = as stored (NoteFanout: before / after a change)
      * @return array<string, mixed>|null
      */
-    public function object(array $object, FogScope $scope, ?bool $revealed = null): ?array
+    public function object(array $object, FogScope $scope, ?bool $revealed = null, ?int $user = null, ?NoteVisibility $notes = null): ?array
     {
         $uid = (string) $object['uid'];
         $bboxes = $scope->isRestricted() ? [$uid => ObjectRules::bbox($object, $this->map->width, $this->map->height)] : [];
@@ -53,7 +59,21 @@ final class PlayerSight
         $follows = $object['props']['follows_token'] ?? null;
         $hidden = is_string($follows) && isset($this->hiddenTokens[$follows]) ? [$follows] : [];
 
-        return $this->view->objects([$object], $revealed ? [$uid] : [], $scope, $bboxes, $hidden)[0] ?? null;
+        $visible = $user !== null && ObjectRulesNotes::handles($object['type'] ?? null)
+            ? ($notes ?? $this->notes ??= $this->view->noteVisibility($this->map->id))->uidsFor($user)
+            : [];
+
+        return $this->view->objects([$object], $revealed ? [$uid] : [], $scope, $bboxes, $hidden, $visible)[0] ?? null;
+    }
+
+    public function setNotes(NoteVisibility $notes): void
+    {
+        $this->notes = $notes;
+    }
+
+    public function markHidden(string $uid): void
+    {
+        unset($this->revealed[$uid]);
     }
 
     public function markRevealed(string $uid): void

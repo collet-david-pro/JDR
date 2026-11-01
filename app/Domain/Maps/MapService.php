@@ -38,6 +38,7 @@ final class MapService
         private I18n $i18n,
         private MapSceneRepository $scene,
         private PlayerMapAccess $players,
+        private MapNotes $notes,
     ) {
     }
 
@@ -179,6 +180,7 @@ final class MapService
                 $this->scene->copyFloor($source->id, $floor['id'], $id, $floorId);
             }
             $this->maps->copyRefs($source->id, $id);
+            $this->notes->copy($source->id, $id);
 
             return $id;
         });

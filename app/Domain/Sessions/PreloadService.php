@@ -52,11 +52,11 @@ final class PreloadService
             return self::none();
         }
         if ($ctx->isGm()) {
-            return $this->result($ctx, $map, $this->scene->tokens($map->id), FogScope::unrestricted(), $apiBase);
+            return $this->result($ctx, $map, $this->scene->tokens($map->id), FogScope::unrestricted(), $apiBase, $this->view->noteAssetIds($map->id, null));
         }
         $scope = $this->scopes->forUser($ctx, $user->id, $map->id);
 
-        return $this->result($ctx, $map, $this->sight($ctx, $user->id, $this->assignments($ctx), $scope), $scope, $apiBase);
+        return $this->result($ctx, $map, $this->sight($ctx, $user->id, $this->assignments($ctx), $scope), $scope, $apiBase, $this->view->noteAssetIds($map->id, $user->id));
     }
 
     /**
@@ -74,7 +74,7 @@ final class PreloadService
         }
         $scope = $this->table->scope($ctx, $map->id);
 
-        return $this->result($ctx, $map, $this->sight($ctx, TableView::USER, $this->table->assignments($ctx), $scope), $scope, $apiBase);
+        return $this->result($ctx, $map, $this->sight($ctx, TableView::USER, $this->table->assignments($ctx), $scope), $scope, $apiBase, $this->view->noteAssetIds($map->id, TableView::USER));
     }
 
     /**
@@ -131,11 +131,12 @@ final class PreloadService
 
     /**
      * @param list<array<string, mixed>> $placed
+     * @param list<int>                  $noteAssets images of the notes the reader sees
      * @return array{map_id: int|null, floor_id: int|null, assets: list<array<string, mixed>>, total_bytes: int}
      */
-    private function result(SessionContext $ctx, Map $map, array $placed, FogScope $scope, string $apiBase): array
+    private function result(SessionContext $ctx, Map $map, array $placed, FogScope $scope, string $apiBase, array $noteAssets): array
     {
-        $rows = $this->queries->assets($this->assetIds($ctx, $map, $placed, $scope));
+        $rows = $this->queries->assets([...$this->assetIds($ctx, $map, $placed, $scope), ...$noteAssets]);
         ksort($rows);
         $total = 0;
         $out = [];

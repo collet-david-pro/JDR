@@ -31,6 +31,9 @@ final class EventTypes
     public const AMBIENT_CHANGED = 'ambient.changed';
     public const CAMERA_MOVED = 'camera.moved';
     public const NOTE_READ_ALOUD = 'note.read_aloud';
+    public const NOTE_SHARED = 'note.shared';
+    public const NOTE_HIDDEN = 'note.hidden';
+    public const ZONE_ENTERED = 'zone.entered';
     public const MAP_OPS = 'map.ops';
     public const MAP_OPS_PUBLIC = 'map.ops.public';
     public const SERVER_NOTICE = 'server.notice';
@@ -58,6 +61,9 @@ final class EventTypes
         self::AMBIENT_CHANGED,
         self::CAMERA_MOVED,
         self::NOTE_READ_ALOUD,
+        self::NOTE_SHARED,
+        self::NOTE_HIDDEN,
+        self::ZONE_ENTERED,
         self::MAP_OPS,
         self::MAP_OPS_PUBLIC,
         self::SERVER_NOTICE,

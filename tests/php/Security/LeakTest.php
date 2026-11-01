@@ -52,7 +52,7 @@ final class LeakTest extends ActionsTestCase
 
         // 1. Every event type is covered.
         $written = array_values(array_unique(array_column($this->events(), 'type')));
-        $missing = array_values(array_diff(EventTypes::ALL, $written));
+        $missing = array_values(array_diff(EventTypes::ALL, $written, LeakNotesTest::EVENT_TYPES));
         self::assertSame([], $missing, 'event types of EventTypes::ALL not provoked by the scenario: ' . implode(', ', $missing));
         self::assertSame([], array_values(array_diff($written, EventTypes::ALL)), 'type written but missing from EventTypes::ALL');
 

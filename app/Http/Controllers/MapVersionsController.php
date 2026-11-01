@@ -66,7 +66,7 @@ final class MapVersionsController
 
         return Response::ok([
             'revision' => $result['revision'],
-            'map' => $this->presenter->full($result['map'], Input::apiBase($request, $this->config)),
+            'map' => $this->presenter->full($result['map'], Input::apiBase($request, $this->config), true),
         ]);
     }
 }

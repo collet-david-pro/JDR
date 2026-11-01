@@ -111,7 +111,7 @@ final class SnapshotService
      */
     private function gm(SessionContext $ctx, Map $map, array $session, int $head, string $apiBase): array
     {
-        $full = $this->maps->full($map, $apiBase);
+        $full = $this->maps->full($map, $apiBase, true);
         $ids = array_map(static fn (array $t): int => (int) $t['token_id'], $full['tokens_placed']);
 
         return [
@@ -138,12 +138,13 @@ final class SnapshotService
         $revealed = $this->scene->revealedUids($map->id);
         $bboxes = $scope->isRestricted() ? $this->scene->bboxes($map->id) : [];
         $hidden = array_map(static fn (array $t): string => (string) $t['uid'], array_filter($full['tokens_placed'], static fn (array $t): bool => $t['hidden'] === true));
-        $objects = $this->view->objects($full['objects'], $revealed, $scope, $bboxes, array_values($hidden));
+        $objects = $this->view->objects($full['objects'], $revealed, $scope, $bboxes, array_values($hidden), $this->view->noteVisibility($map->id)->uidsFor($viewer));
         $placed = $this->view->tokens($ctx, $viewer, $full['tokens_placed'], $scope, $assigned);
         $allowed = array_flip($this->preload->assetIds($ctx, $map, $placed, $scope));
 
         $full['thumb_url'] = null;
         $full['objects'] = $objects;
+        $full['notes'] = $this->view->notes($map->id, $viewer);
         $full['tokens_placed'] = $placed;
         $full['palette'] = array_map(static function (?array $entry) use ($allowed): ?array {
             if ($entry === null) {

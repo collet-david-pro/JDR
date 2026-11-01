@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
 use JDR\Domain\Maps\Map;
+use JDR\Domain\Maps\MapNotes;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Maps\ChunkCodec;
@@ -32,7 +33,7 @@ use JDR\Maps\ObjectRules;
  */
 final class MapDocumentWriter
 {
-    public function __construct(private MapRepository $maps, private Db $db, private MapSceneRepository $scene)
+    public function __construct(private MapRepository $maps, private Db $db, private MapSceneRepository $scene, private MapNotes $notes)
     {
     }
 
@@ -194,6 +195,7 @@ final class MapDocumentWriter
         foreach ($doc['fog'] ?? [] as $chunk) {
             $this->scene->insertFog($mapId, $floorIds[$chunk['floor']], $chunk['cx'], $chunk['cy'], FogCodec::encode($chunk['raw']));
         }
+        $this->maps->applyRefDeltas($mapId, $this->notes->writeDocument($mapId, $doc));
     }
 
     /**

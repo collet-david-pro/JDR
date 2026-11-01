@@ -157,7 +157,8 @@ final class MapDocumentValidator
         $layers = MapInput::layers($doc['layers'], 'layers', $errors);
         $palette = $this->palette($doc['palette'], $internal, $errors);
         $floors = $this->floors($doc['floors'], $errors);
-        foreach (['notes', 'links'] as $key) {
+        $notes = MapDocumentNotes::parse($doc['notes'] ?? null, $internal, $errors);
+        foreach (['links'] as $key) {
             if (array_key_exists($key, $doc) && $doc[$key] !== null && $doc[$key] !== []) {
                 $errors[$key] = is_array($doc[$key]) && array_is_list($doc[$key]) ? 'unsupported' : 'invalid';
             }
@@ -167,7 +168,7 @@ final class MapDocumentValidator
         $tokens = [];
         if ($grid !== null && $floors !== null) {
             $known = array_flip(array_column($floors, 'uid'));
-            $objects = $this->objects($doc['objects'] ?? null, $known, $grid, $errors);
+            $objects = MapDocumentNotes::relink($this->objects($doc['objects'] ?? null, $known, $grid, $errors), $notes);
             $tokens = $this->tokens($doc['tokens_placed'] ?? null, $known, $grid, $internal, $errors);
         }
         if ($errors !== []) {
@@ -189,6 +190,7 @@ final class MapDocumentValidator
             'floors' => $floors,
             'chunks' => $chunks,
             'objects' => $objects,
+            'notes' => $notes,
             'tokens_placed' => $tokens,
             'fog' => $fog,
             'generation' => $generation,
@@ -498,6 +500,7 @@ final class MapDocumentValidator
         $before = count($errors);
         foreach ($value as $i => $item) {
             $field = 'objects.' . $i;
+            [$item, $revealedAt] = MapDocumentNotes::takeRevealed($item, $field, $errors);
             $object = ObjectRules::object($item, $field, $errors, (float) $grid['width'], (float) $grid['height'], $floorUid, false, true);
             if ($object !== null) {
                 if (!isset($known[$object['floor']])) {
@@ -506,7 +509,7 @@ final class MapDocumentValidator
                     $errors[$field . '.uid'] = 'duplicate';
                 } else {
                     $uids[strtolower($object['uid'])] = true;
-                    $out[] = $object;
+                    $out[] = $object + ($revealedAt === null ? [] : ['revealed_at' => $revealedAt]);
                 }
             }
             if (count($errors) - $before >= self::MAX_ERRORS) {

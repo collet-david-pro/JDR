@@ -24,7 +24,8 @@ use JDR\Maps\ObjectRules;
  * - fog.reveal / fog.hide {floor, chunks: [[cx, cy, base64 raw deflate of 2 048 bytes]] (1-200)};
  * - camera.set {x, y, zoom 0.1-8, floor_id?, follow?: bool};
  * - ambient.set {ambient: patch of map.meta ambient};
- * - note.show {title 1-120, body 0-4000 (multi-line)}.
+ * - note.show {title 1-120, body 0-4000 (multi-line)} or {note_uid};
+ * - note.share {note_uid, audience, users?}, secret.reveal {uid}, trap.reveal {uid} (NoteActions).
  */
 final class ActionInput
 {
@@ -44,7 +45,10 @@ final class ActionInput
         'fog.hide' => ['type', 'floor', 'chunks'],
         'camera.set' => ['type', 'x', 'y', 'zoom', 'floor_id', 'follow'],
         'ambient.set' => ['type', 'ambient'],
-        'note.show' => ['type', 'title', 'body'],
+        'note.show' => ['type', 'title', 'body', 'note_uid'],
+        'note.share' => ['type', 'note_uid', 'audience', 'users'],
+        'secret.reveal' => ['type', 'uid'],
+        'trap.reveal' => ['type', 'uid'],
         'light.toggle' => ['type', 'uid', 'enabled'],
     ];
 
@@ -109,7 +113,9 @@ final class ActionInput
             'fog.reveal', 'fog.hide' => self::fog($a, $field, $errors),
             'camera.set' => self::camera($a, $field, $errors),
             'ambient.set' => self::ambient($a, $field, $errors),
-            default => self::note($a, $field, $errors),
+            'note.share' => NoteActions::parseShare($a, $field, $errors),
+            'secret.reveal', 'trap.reveal' => ['uid' => self::uid($a, $field, $errors)],
+            default => array_key_exists('note_uid', $a) ? NoteActions::parseShow($a, $field, $errors) : self::note($a, $field, $errors),
         };
 
         return count($errors) === $before ? ['type' => $type] + $out : null;

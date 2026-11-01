@@ -121,7 +121,7 @@ final class MapTransferController
         }
 
         return Response::ok([
-            'map' => $this->presenter->full($result['map'], Input::apiBase($request, $this->config)),
+            'map' => $this->presenter->full($result['map'], Input::apiBase($request, $this->config), true),
             'missing_assets' => $result['missing_assets'],
             'missing_tokens' => $result['missing_tokens'],
         ], [], 201);

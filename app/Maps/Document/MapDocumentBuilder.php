@@ -9,6 +9,7 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Db;
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
+use JDR\Domain\Maps\MapNotes;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
 
@@ -30,7 +31,7 @@ final class MapDocumentBuilder
 {
     public const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR;
 
-    public function __construct(private MapRepository $maps, private Db $db, private MapSceneRepository $scene)
+    public function __construct(private MapRepository $maps, private Db $db, private MapSceneRepository $scene, private MapNotes $notes)
     {
     }
 
@@ -84,7 +85,7 @@ final class MapDocumentBuilder
             'chunks' => $chunks === [] ? new \stdClass() : $chunks,
             'fog' => $this->fog($map->id, $uids),
             'objects' => $this->objects($map->id, $uids),
-            'notes' => [],
+            'notes' => $this->notes->documentNotes($map->id, $internal),
             'links' => [],
             'tokens_placed' => $this->tokens($map->id, $uids, $internal),
             'generation' => $this->generation($map->id),
@@ -103,6 +104,9 @@ final class MapDocumentBuilder
             if ($entry !== null) {
                 $ids[$entry['asset_id']] = $entry['asset_id'];
             }
+        }
+        foreach ($this->notes->assetIds($map->id, null) as $noteAsset) {
+            $ids[$noteAsset] = $noteAsset;
         }
         $out = [];
         foreach (array_chunk(array_values($ids), 500) as $batch) {
@@ -181,6 +185,7 @@ final class MapDocumentBuilder
     private function objects(int $mapId, array $uids): array
     {
         $out = [];
+        $revealed = $this->notes->revealedTimes($mapId);
         foreach ($this->scene->objects($mapId) as $object) {
             $uid = $uids[(int) $object['floor']] ?? null;
             if ($uid === null) {
@@ -188,7 +193,7 @@ final class MapDocumentBuilder
             }
             $object['floor'] = $uid;
             unset($object['rev']);
-            $out[] = $object;
+            $out[] = $object + (isset($revealed[$object['uid']]) ? ['revealed_at' => $revealed[$object['uid']]] : []);
         }
 
         return $out;

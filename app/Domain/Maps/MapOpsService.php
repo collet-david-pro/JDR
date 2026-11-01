@@ -12,6 +12,7 @@ use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
+use JDR\Domain\Sessions\NoteFanout;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
@@ -48,6 +49,8 @@ final class MapOpsService
         private MapVersionService $versions,
         private MapSceneRepository $scene,
         private MapOpsBroadcaster $broadcaster,
+        private MapNotes $notes,
+        private NoteFanout $noteFanout,
     ) {
     }
 
@@ -104,11 +107,13 @@ final class MapOpsService
                 array_map(static fn (array $f): int => $f['id'], $this->maps->floors($locked->id)),
             );
             $capture = $this->broadcaster->prepare($locked, $user, $ops, $clientOpId);
+            $noteCapture = $capture === null ? null : $this->noteFanout->prepare($locked, $ops);
             $applier = new OpsApplier(
                 $state,
                 new MapChunkStore($this->maps, $locked->id),
                 $canUse,
                 new MapSceneStore($this->scene, $locked->id, $game->id),
+                new MapNotesOps($this->notes, $this->maps, $this->scene, $state, $locked->id, $game->id, $canUse),
             );
             $applied = $applier->apply($ops, $envelope['base_revision']);
             $conflicts = $applier->conflicts();
@@ -137,6 +142,9 @@ final class MapOpsService
             $this->maps->update($locked->id, $state->changedColumns(), true);
             $this->versions->afterOps($locked, $revision, $user->id);
             if ($capture !== null) {
+                if ($noteCapture !== null) {
+                    $this->noteFanout->emit($noteCapture, $capture['batches'], $revision);
+                }
                 $this->broadcaster->publish($capture, $revision, $envelope['ops'], $conflicts, $applier->dirtyChunks(), $state->changedColumns());
             }
 

@@ -12,6 +12,7 @@ use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
+use JDR\Domain\Sessions\SessionPlayers;
 use JDR\Domain\Tokens\TokenRepository;
 use JDR\Domain\Users\User;
 use JDR\Domain\Users\UserRepository;
@@ -30,6 +31,7 @@ final class GameService
         private TokenRepository $tokens,
         private AssetRepository $assets,
         private AssetPolicy $assetPolicy,
+        private SessionPlayers $sessionPlayers,
     ) {
     }
 
@@ -210,9 +212,10 @@ final class GameService
         if ($this->members->find($game->id, $userId) === null) {
             throw new NotFoundException();
         }
-        $this->db->transaction(function () use ($game, $userId): void {
+        $this->db->transaction(function () use ($game, $userId, $user): void {
             $this->members->remove($game->id, $userId);
             $this->tokens->clearOwner($game->id, $userId);
+            $this->sessionPlayers->leftGame($game->id, $userId, $user->id);
         });
     }
 
