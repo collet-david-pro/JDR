@@ -19,7 +19,7 @@ import { compactOps } from '../model/ops';
 export interface HistoryTarget {
   /** Applies ops atomically and returns their inverse (see MapDocument.applyOps). */
   applyOps(ops: readonly MapOp[]): MapOp[];
-  getCell(layer: TileLayerId, x: number, y: number): CellValue;
+  getCell(layer: TileLayerId, x: number, y: number, floor?: string): CellValue;
   /** Optional change counter: lets undo skip the co-editing check when nobody else wrote. */
   readonly revision?: number;
   /** P5: applies ops and returns them as applied (revs stamped) with their inverse. */
@@ -307,7 +307,7 @@ export class History {
       const cells = op.cells.filter((c) => {
         const w = m?.get(c[1] * 65536 + c[0]);
         if (w === undefined) return true;
-        const cur = this.target.getCell(op.layer, c[0], c[1]);
+        const cur = this.target.getCell(op.layer, c[0], c[1], op.floor);
         // An erased cell reads back with variant/flags 0 whatever was sent (packed as 0).
         const same = (cur.index === 0 ? 0 : pack(cur.index, cur.variant, cur.flags)) === w;
         if (!same) skipped++;

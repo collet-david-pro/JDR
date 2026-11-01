@@ -3,9 +3,11 @@ import { createFillTool } from './fill';
 import { createFogTool } from './fog';
 import { createLightTool } from './light';
 import { createPaintTool } from './paint';
+import { createPortalTool } from './portal';
 import { createHandTool, createPipetteTool, createRulerTool } from './pick';
 import { createSelectTool, type SelectTool } from './select';
 import { createShapeTool } from './shape';
+import { createStairsTool } from './stairs';
 import { createTokenTool } from './token';
 import type { Tool, ToolContext, ToolId } from './types';
 import { createWallTool } from './wall';
@@ -26,6 +28,8 @@ export function createTools(ctx: ToolContext): ToolSet {
     wall: createWallTool(ctx),
     door: createDoorTool(ctx),
     light: createLightTool(ctx),
+    stairs: createStairsTool(ctx),
+    portal: createPortalTool(ctx),
     token: createTokenTool(ctx),
     fog: createFogTool(ctx),
     pipette: createPipetteTool(ctx),

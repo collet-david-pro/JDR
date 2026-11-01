@@ -2,6 +2,7 @@
 import type {
   MapObjectType,
   ObjectVisibility,
+  PortalIcon,
   WallKind,
   WeatherType,
   WindowProps,
@@ -65,6 +66,21 @@ export function lightPresetLabel(id: LightPresetId): string {
   }
 }
 
+export function portalIconLabel(icon: PortalIcon): string {
+  switch (icon) {
+    case 'portal':
+      return t('editor.passage.icons.portal');
+    case 'door':
+      return t('editor.passage.icons.door');
+    case 'stairs':
+      return t('editor.passage.icons.stairs');
+    case 'ladder':
+      return t('editor.passage.icons.ladder');
+    case 'trapdoor':
+      return t('editor.passage.icons.trapdoor');
+  }
+}
+
 export function fogShapeLabel(shape: FogShape): string {
   switch (shape) {
     case 'brush':
@@ -86,6 +102,10 @@ export function objectTypeLabel(type: MapObjectType | 'token'): string {
       return t('editor.objects.types.window');
     case 'light':
       return t('editor.objects.types.light');
+    case 'stairs':
+      return t('editor.objects.types.stairs');
+    case 'portal':
+      return t('editor.objects.types.portal');
     case 'token':
       return t('editor.objects.types.token');
   }

@@ -52,6 +52,7 @@ class FakeSceneEngine implements EngineLike {
   }
   setGridTheme(): void {}
   setGridVisible(): void {}
+  setGhost(): void {}
   setOverlay(o: Overlay | null): void {
     this.overlay = o;
   }

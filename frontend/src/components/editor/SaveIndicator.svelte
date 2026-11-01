@@ -17,7 +17,7 @@
   const loading = $derived(session.ui.loading);
 </script>
 
-<span class="indicator" role="status" aria-live="polite">
+<span class="indicator" class:wide={status?.state === 'error'} role="status" aria-live="polite">
   {#if loading !== null}
     <span class="badge" data-testid="save-status" data-state="loading" aria-busy="true">
       {t('editor.save.loading', { done: loading.done, total: loading.total })}
@@ -52,10 +52,17 @@
 </span>
 
 <style>
+  /* Fixed width: a longer status must not wrap the top bar, which would move the map under the
+     pointer. Only the long error messages take the room they need. */
   .indicator {
     display: inline-flex;
     gap: var(--space-2);
     align-items: center;
+    width: 19rem;
+    max-width: 100%;
+  }
+  .indicator.wide {
+    width: auto;
   }
   .badge {
     display: inline-flex;

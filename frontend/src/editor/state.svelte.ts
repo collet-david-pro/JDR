@@ -6,6 +6,8 @@
 import type {
   Ambient,
   CellValue,
+  Link,
+  PortalIcon,
   GridTheme,
   LayerDef,
   LayerId,
@@ -46,7 +48,7 @@ export interface TokenDefItem {
 /** One selectable object / placed token of the floor (keyboard list, projet.md 22). */
 export interface SceneItem {
   readonly uid: string;
-  readonly kind: 'token' | 'wall' | 'door' | 'window' | 'light';
+  readonly kind: 'token' | 'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal';
   /** Token name, or null for objects (the UI labels them by kind and position). */
   readonly name: string | null;
   readonly x: number;
@@ -64,6 +66,15 @@ export interface ViewState {
   /** Fog exploration from the viewers' current visibility. */
   readonly explore: boolean;
   readonly performance: 'auto' | 'on' | 'off';
+}
+
+/** A floor as listed in the floor selector (P9a2). */
+export interface FloorItem {
+  readonly uid: string;
+  readonly name: string;
+  readonly level: number;
+  /** Tiles are in memory (otherwise the first selection fetches them). */
+  readonly loaded: boolean;
 }
 
 export interface EditorNotice {
@@ -97,6 +108,14 @@ export class EditorUiState implements EditorSettings {
   fogShape = $state<FogShape>(D.fogShape);
   fogHide = $state(D.fogHide);
   fogBrush = $state(D.fogBrush);
+  // ---- P9a2 passage tools ----
+  stairsDirection = $state<'up' | 'down'>(D.stairsDirection);
+  stairsTarget = $state<string | null>(D.stairsTarget);
+  stairsLink = $state.raw<Link | null>(D.stairsLink);
+  portalIcon = $state<PortalIcon>(D.portalIcon);
+  portalColor = $state(D.portalColor);
+  portalLabel = $state(D.portalLabel);
+  portalLink = $state.raw<Link | null>(D.portalLink);
   /** Selected objects / placed tokens (uids). */
   objectSelection = $state.raw<ObjectSelection>(EMPTY_OBJECT_SELECTION);
 
@@ -120,6 +139,15 @@ export class EditorUiState implements EditorSettings {
   /** Number of vision timings measured by the engine (a new one after each scene change). */
   visionSamples = $state(0);
   resetFogOpen = $state(false);
+
+  // ---- P9a2 floors ----
+  floors = $state.raw<readonly FloorItem[]>([]);
+  /** Uid of the shown floor. */
+  currentFloor = $state('');
+  /** Ghost of the floor below (tiles only, 25 %); view setting, on by default. */
+  floorGhost = $state(true);
+  /** A floor is being fetched or deleted. */
+  floorBusy = $state(false);
 
   history = $state.raw<HistoryState>({
     canUndo: false,

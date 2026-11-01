@@ -34,6 +34,7 @@ class FakeEngine implements EngineLike {
     this.view = view;
   }
   setGridTheme(): void {}
+  setGhost(): void {}
   setGridVisible(v: boolean): void {
     this.gridVisible = v;
   }

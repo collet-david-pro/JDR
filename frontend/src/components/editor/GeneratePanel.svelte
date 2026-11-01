@@ -61,7 +61,6 @@
     const inside = (x: number, y: number): boolean =>
       x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
     return !doc.objects().some((o) => {
-      if (o.floor !== doc.floor) return false;
       switch (o.type) {
         case 'wall':
           return o.geometry.points.some((p) => inside(p[0], p[1]));
@@ -71,7 +70,13 @@
             inside(o.geometry.a[0], o.geometry.a[1]) || inside(o.geometry.b[0], o.geometry.b[1])
           );
         case 'light':
+        case 'portal':
           return inside(o.geometry.x, o.geometry.y);
+        case 'stairs':
+          return (
+            inside(o.geometry.x, o.geometry.y) ||
+            inside(o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h)
+          );
       }
     });
   }

@@ -43,6 +43,7 @@ import {
   zoomBucket,
   type Seg,
 } from './object-geometry';
+import { drawPortal, drawStairs } from './passage-shapes';
 import {
   OBJECT_LAYER_IDS,
   doorDrawnAsWall,
@@ -222,6 +223,12 @@ export class ObjectsRenderer {
         break;
       case 'window':
         this.drawWindow(gfx, obj);
+        break;
+      case 'stairs':
+        drawStairs(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'portal':
+        drawPortal(gfx, obj, this.cellPx, this.bucket);
         break;
       case 'light':
         break;

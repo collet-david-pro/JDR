@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { setContext, untrack } from 'svelte';
   import AmbientPanel from './AmbientPanel.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
@@ -43,6 +43,7 @@
   import { PendingOpsError, VersionsModel } from '../../editor/versions/versions.svelte';
   import { TILE_LAYERS } from '../../formats/chunk-codec';
   import { noticeText } from '../../editor/ui/labels';
+  import { LINK_TARGETS, LinkTargets } from '../../editor/ui/link-targets';
   import { EditorSession } from '../../editor/ui/session';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
   import { t } from '../../lib/i18n';
@@ -79,6 +80,8 @@
       | 'putThumbnail'
       | 'fog'
       | 'resetFog'
+      | 'list'
+      | 'get'
     >;
     /** Token definitions of the game (Tokens panel, token tool; P5). */
     loadTokens?: (() => Promise<Token[]>) | undefined;
@@ -100,7 +103,8 @@
 
   const session = new EditorSession({
     grid,
-    floor: initial.map.floors[0]?.id ?? 'f1',
+    floor: (initial.map.floors.find((f) => f.level === 0) ?? initial.map.floors[0])?.uid ?? 'f1',
+    floors: initial.map.floors,
     layers: layersFromWire(initial.map.layers),
     palette: paletteFromWire(initial.map.palette),
     theme: themeOf(initial.map.theme),
@@ -114,6 +118,22 @@
       (target instanceof Node && viewport !== undefined && viewport.contains(target)),
   });
   const ui = session.ui;
+  // Where links can lead: the maps of the game and their floors (door / stairs / portal editors).
+  setContext(
+    LINK_TARGETS,
+    new LinkTargets({
+      currentMapId: initial.map.id,
+      currentFloors: () => session.doc.floors(),
+      listMaps: async () =>
+        (await initial.client.list(gameId)).map((m) => ({ id: m.id, name: m.name })),
+      floorsOf: async (mapId) =>
+        (await initial.client.get(mapId)).floors.map((f) => ({
+          uid: f.uid,
+          name: f.name,
+          level: f.level,
+        })),
+    }),
+  );
   for (const entry of initial.map.palette) {
     if (entry != null) {
       session.catalog.rememberEntry(entry.asset_id, {

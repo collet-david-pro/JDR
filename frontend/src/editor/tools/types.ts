@@ -4,7 +4,9 @@ import type {
   CellValue,
   Command,
   GridSpec,
+  Link,
   MapPointerEvent,
+  PortalIcon,
   MapView,
   Overlay,
   SceneView,
@@ -26,6 +28,8 @@ export type ToolId =
   | 'wall'
   | 'door'
   | 'light'
+  | 'stairs'
+  | 'portal'
   | 'token'
   | 'fog'
   | 'pipette'
@@ -72,6 +76,12 @@ export interface ToolNotice {
     | 'room_open'
     | 'object_locked'
     | 'wall_limit'
+    | 'floor_load_failed'
+    | 'floor_limit'
+    | 'floor_last'
+    | 'floor_invalid'
+    | 'stairs_no_target'
+    | 'link_required'
     | 'invalid';
   readonly params?: Readonly<Record<string, number | string>>;
 }
@@ -107,6 +117,8 @@ export interface Tool {
 /** What tools read from the document (implemented by MapDocument). */
 export interface ToolDocument extends MapView, SceneView {
   readonly floor: string;
+  /** Floors by level (stairs targets). */
+  floors(): readonly { readonly uid: string; readonly name: string; readonly level: number }[];
   getIndex(layer: TileLayerId, x: number, y: number): number;
   /** Token definitions of the game (token tool). */
   tokenDefs(): readonly TokenDefView[];
@@ -143,6 +155,17 @@ export interface ToolSettings {
   readonly fogHide: boolean;
   /** Fog brush radius in cells. */
   readonly fogBrush: number;
+  // ---- P9a2 passage tools ----
+  readonly stairsDirection: 'up' | 'down';
+  /** Uid of the floor the stairs lead to; null / invalid = the first other floor. */
+  readonly stairsTarget: string | null;
+  /** Optional link of a new stairs (takes priority over the floor). */
+  readonly stairsLink: Link | null;
+  readonly portalIcon: PortalIcon;
+  readonly portalColor: string;
+  readonly portalLabel: string;
+  /** Required link of a new portal. */
+  readonly portalLink: Link | null;
 }
 
 /** Defaults of the P5 tool settings. */
@@ -158,6 +181,13 @@ export const DEFAULT_OBJECT_SETTINGS = Object.freeze({
   fogShape: 'brush' as FogShape,
   fogHide: false,
   fogBrush: 1.5,
+  stairsDirection: 'up' as 'up' | 'down',
+  stairsTarget: null as string | null,
+  stairsLink: null as Link | null,
+  portalIcon: 'portal' as PortalIcon,
+  portalColor: '#7c4dff',
+  portalLabel: '',
+  portalLink: null as Link | null,
 });
 
 export const FOG_BRUSH_MIN = 0.5;

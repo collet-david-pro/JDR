@@ -34,7 +34,14 @@ function layerShown(layers: readonly LayerDef[], id: string): boolean {
 export function objectDistance(o: MapObject, p: Point): number {
   switch (o.type) {
     case 'light':
+    case 'portal':
       return dist(p, [o.geometry.x, o.geometry.y]);
+    case 'stairs': {
+      const g = o.geometry;
+      const dx = Math.max(g.x - p[0], 0, p[0] - (g.x + g.w));
+      const dy = Math.max(g.y - p[1], 0, p[1] - (g.y + g.h));
+      return Math.hypot(dx, dy);
+    }
     case 'door':
     case 'window':
       return project(p, o.geometry.a, o.geometry.b).distance;
@@ -46,7 +53,14 @@ export function objectDistance(o: MapObject, p: Point): number {
   }
 }
 
-const RANK: Record<MapObject['type'], number> = { light: 0, door: 1, window: 1, wall: 2 };
+const RANK: Record<MapObject['type'], number> = {
+  light: 0,
+  portal: 0,
+  door: 1,
+  window: 1,
+  stairs: 1,
+  wall: 2,
+};
 
 /** Topmost object or token under p (tol in cells, px = cells per screen pixel). */
 export function hitTest(
@@ -65,7 +79,8 @@ export function hitTest(
   let best: { uid: string; rank: number; d: number } | null = null;
   for (const o of scene.objects()) {
     if (!layerShown(layers, o.layer)) continue;
-    const limit = o.type === 'light' ? Math.max(tol, LIGHT_PICK_PX * px) : tol;
+    const limit =
+      o.type === 'light' || o.type === 'portal' ? Math.max(tol, LIGHT_PICK_PX * px) : tol;
     const d = objectDistance(o, p);
     if (d > limit) continue;
     const rank = RANK[o.type];
@@ -92,6 +107,9 @@ export function handleAt(
     } else if (o.type === 'door' || o.type === 'window') {
       if (dist(p, o.geometry.a) <= tol) return { kind: 'end', uid, end: 'a' };
       if (dist(p, o.geometry.b) <= tol) return { kind: 'end', uid, end: 'b' };
+    } else if (o.type !== 'light') {
+      // stairs / portal: moved as a whole, no handle
+      continue;
     } else if (dist(p, lightRadiusHandle(o.geometry.x, o.geometry.y, o.props.dim_radius)) <= tol) {
       return { kind: 'radius', uid };
     }

@@ -147,8 +147,8 @@ describe('SessionsClient', () => {
     await client.kick('12', '7');
     expect(await client.assign('12', '21', null)).toEqual({ token_id: '21', user_id: null });
     await client.ready('12', true);
-    await client.changeMap('12', '35', '40');
-    await client.changeMap('12', '35');
+    await client.changeMap('12', { map_id: '35', floor_id: '40' });
+    await client.changeMap('12', { map_id: '35' });
     await client.leave('12');
     expect(calls.map((c) => `${c.method} ${c.url.replace('/api/v1', '')}`)).toEqual([
       'POST /sessions/12/start',

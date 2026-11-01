@@ -190,6 +190,10 @@ export class SceneEngine implements SceneEngineApi {
   private readonly sceneLayer: SceneLayer;
   private readonly textures: PaletteTextures;
   private readonly tilemap: TileMapRenderer;
+  /** P9a2: tiles of another floor under the map (25 %). */
+  private readonly ghostTilemap: TileMapRenderer;
+  private ghostView: MapView | null = null;
+  private ghostSubscription: (() => void) | null = null;
   private readonly overlayRenderer = new OverlayRenderer();
   private readonly input: InputController;
   private readonly canvas: HTMLCanvasElement;
@@ -261,9 +265,12 @@ export class SceneEngine implements SceneEngineApi {
 
     this.textures = new PaletteTextures((indices) => {
       this.tilemap.texturesChanged(indices);
+      this.ghostTilemap.texturesChanged(indices);
       this.requestRender();
     });
     this.tilemap = new TileMapRenderer(pixi, this.textures);
+    this.ghostTilemap = new TileMapRenderer(pixi, this.textures);
+    this.ghostTilemap.root.alpha = GHOST_ALPHA;
     const vision = options.vision ?? createVisionService();
     this.sceneLayer = new SceneLayer(pixi, vision, options.vision === undefined, {
       // Scene changes may move what the `objects` overlay / gizmos show.
@@ -274,7 +281,7 @@ export class SceneEngine implements SceneEngineApi {
       reducedMotion: this.reducedMotion,
     });
 
-    this.world.addChild(gridRenderer.background, this.tilemap.root);
+    this.world.addChild(gridRenderer.background, this.ghostTilemap.root, this.tilemap.root);
     this.worldScene.addChild(this.sceneLayer.objects.root, this.sceneLayer.tokens.root);
     this.worldFog.addChild(this.sceneLayer.fogWorld);
     const lighting = this.sceneLayer.lighting;
@@ -419,6 +426,20 @@ export class SceneEngine implements SceneEngineApi {
     this.fit();
   }
 
+  setGhost(view: MapView | null): void {
+    this.ghostSubscription?.();
+    this.ghostSubscription = null;
+    this.ghostView = view;
+    this.ghostTilemap.setMap(view);
+    if (view !== null) {
+      this.ghostSubscription = view.onChunksChanged((event: ChunksChangedEvent) => {
+        this.ghostTilemap.chunksChanged(event);
+        this.requestRender();
+      });
+    }
+    this.requestRender();
+  }
+
   setGridTheme(theme: GridTheme): void {
     this.applyTheme(theme);
     this.gridRenderer.drawBackground(this.grid);
@@ -474,8 +495,10 @@ export class SceneEngine implements SceneEngineApi {
     this.pointerEvents.clear();
     this.cameraEvents.clear();
     this.fpsEvents.clear();
+    this.ghostSubscription?.();
     this.sceneLayer.destroy();
     this.tilemap.destroy();
+    this.ghostTilemap.destroy();
     this.overlayRenderer.destroy();
     this.gridRenderer.destroy();
     this.stage.destroy({ children: true });
@@ -539,6 +562,7 @@ export class SceneEngine implements SceneEngineApi {
     }
     if (gridChanged) {
       this.tilemap.setMap(view);
+      this.ghostTilemap.setMap(this.ghostView);
       this.gridRenderer.drawBackground(this.grid);
       this.sceneLayer.setGrid(this.grid, view.layers);
       this.setCamera(this.cam);
@@ -546,6 +570,7 @@ export class SceneEngine implements SceneEngineApi {
       const key = layersKey(view.layers);
       if (key !== this.layersSnapshot) {
         this.tilemap.setLayers(view.layers);
+        this.ghostTilemap.setLayers(view.layers);
         this.sceneLayer.setLayers(view.layers);
       }
     }
@@ -593,6 +618,12 @@ export class SceneEngine implements SceneEngineApi {
 
     const settled = now - this.lastZoomAt >= ZOOM_SETTLE_MS;
     if (this.tilemap.update(now, this.cam, this.viewport, this.dprValue, settled, this.budgetMs)) {
+      again = true;
+    }
+    if (
+      this.ghostView !== null &&
+      this.ghostTilemap.update(now, this.cam, this.viewport, this.dprValue, settled, this.budgetMs)
+    ) {
       again = true;
     }
 
@@ -665,9 +696,13 @@ export class SceneEngine implements SceneEngineApi {
     if (this.destroyed) return;
     const now = performance.now();
     this.tilemap.releaseExpired(now);
+    this.ghostTilemap.releaseExpired(now);
     Ticker.system.update(now);
   }
 }
+
+/** Opacity of the floor drawn under the shown one (P9a2). */
+const GHOST_ALPHA = 0.25;
 
 function layersKey(layers: readonly LayerDef[]): string {
   return layers.map((l) => `${l.id}:${l.visible ? 1 : 0}:${l.opacity}`).join('|');

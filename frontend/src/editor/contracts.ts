@@ -226,6 +226,11 @@ export interface SceneEngineApi {
   setMap(view: MapView): void;
   setGridTheme(theme: GridTheme): void;
   setGridVisible(visible: boolean): void;
+  /**
+   * P9a2: read-only tiles of another floor drawn under the map at 25 % opacity (null removes it).
+   * Layers, palette, theme and grid are the map's own.
+   */
+  setGhost(view: MapView | null): void;
   setOverlay(overlay: Overlay | null): void;
   /** When true, primary-button drags pan the view (hand tool / space held). */
   setPanMode(enabled: boolean): void;
@@ -309,7 +314,9 @@ export type MapOp =
       readonly type: 'fog.reveal' | 'fog.hide';
       readonly floor: string;
       readonly chunks: readonly FogChunkWire[];
-    };
+    }
+  // ---- P9a (revision 5): floors are edited by ops ----
+  | FloorOp;
 
 /** A floor designated by its numeric id (as a string) or by its uid (never all digits). */
 export type FloorRef = string;
@@ -331,16 +338,16 @@ export interface FloorInfo {
  * `ops.<i>.floor = limit`, `ops.<i>.uid = not_found | last_floor`, `ops.<i>.patch.level = taken`.
  */
 export type FloorOp =
-  | { readonly type: 'floor.add'; readonly floor: { readonly uid: string; readonly name: string; readonly level: number } }
+  | {
+      readonly type: 'floor.add';
+      readonly floor: { readonly uid: string; readonly name: string; readonly level: number };
+    }
   | {
       readonly type: 'floor.update';
       readonly uid: string;
       readonly patch: { readonly name?: string; readonly level?: number };
     }
   | { readonly type: 'floor.remove'; readonly uid: string };
-
-/** Every op the server accepts since P9a (P9a2 folds FloorOp into MapOp). */
-export type AnyMapOp = MapOp | FloorOp;
 
 /** Undoable command (15.1). inverseOps are recomputed against the current state on undo. */
 export interface Command {
@@ -360,11 +367,8 @@ export type Point = readonly [x: number, y: number];
 
 export type ObjectVisibility = 'all' | 'gm' | 'hidden_until_revealed';
 
-/** Object types of P5 (12.4); the other types arrive with P9 and are refused until then. */
-export type MapObjectType = 'wall' | 'door' | 'window' | 'light';
-
-/** Every object type the server knows since P9a (P9a2 folds stairs / portal into MapObjectType and MapObject). */
-export type MapObjectTypeP9 = MapObjectType | 'stairs' | 'portal';
+/** Object types the server knows (P5 + P9a stairs / portal); the other types arrive with P9b. */
+export type MapObjectType = 'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal';
 
 /**
  * Where a door / stairs / portal leads (P9a). Normalized by the server: all four keys, floor = a floor UID of the
@@ -502,7 +506,12 @@ export interface StairsProps {
 /** Stairs: cells x, y, w, h (integers, w and h 1-10); blocks neither vision, light nor movement. Layer 'props'. */
 export interface StairsObject extends ObjectBase {
   readonly type: 'stairs';
-  readonly geometry: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
+  readonly geometry: {
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+  };
   readonly props: StairsProps;
 }
 
@@ -524,13 +533,8 @@ export interface PortalObject extends ObjectBase {
   readonly props: PortalProps;
 }
 
-export type MapObject = WallObject | DoorObject | WindowObject | LightObject;
-
-/**
- * Every object the server may send since P9a (GET /maps/{id}, objects of a floor). `MapObject` stays the P5 union so
- * that the P5 editor code keeps compiling; P9a2 widens MapObject and removes this alias.
- */
-export type AnyMapObject = MapObject | StairsObject | PortalObject;
+export type MapObject =
+  WallObject | DoorObject | WindowObject | LightObject | StairsObject | PortalObject;
 
 /** object.update patch: geometry and props replace the whole value (no deep merge). */
 export interface ObjectPatch {

@@ -1368,7 +1368,9 @@
       "door": "Porte / fenêtre",
       "light": "Lumière",
       "token": "Token",
-      "fog": "Brouillard"
+      "fog": "Brouillard",
+      "stairs": "Escalier",
+      "portal": "Portail"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1486,7 +1488,13 @@
       "delete": "supprimer",
       "door_toggle": "ouvrir / fermer la porte",
       "ambient": "ambiance",
-      "generate": "générer"
+      "generate": "générer",
+      "stairs": "poser un escalier",
+      "portal": "poser un portail",
+      "floor_add": "ajouter un étage",
+      "floor_rename": "renommer l'étage",
+      "floor_level": "changer le niveau de l'étage",
+      "floor_remove": "supprimer l'étage"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
@@ -1498,7 +1506,13 @@
       "room_open": "Pièce non fermée : la zone dépasse la limite (murs ouverts ?).",
       "object_locked": "Objet ou calque verrouillé : déverrouillez-le pour le modifier.",
       "wall_limit": "Un mur compte au plus 1 000 points.",
-      "invalid": "Modification refusée : valeur invalide."
+      "invalid": "Modification refusée : valeur invalide.",
+      "floor_load_failed": "Impossible de lire cet étage : vérifiez la connexion et réessayez.",
+      "floor_limit": "Une map ne peut pas avoir plus de 10 étages.",
+      "floor_last": "Le dernier étage ne peut pas être supprimé.",
+      "floor_invalid": "Étage refusé : nom de 1 à 60 caractères, niveau libre entre -9 et +9.",
+      "stairs_no_target": "Créez d'abord un autre étage, ou choisissez un lien vers une autre map.",
+      "link_required": "Choisissez la map de destination du portail dans les options de l'outil."
     },
     "help": {
       "title": "Raccourcis clavier",
@@ -1587,7 +1601,9 @@
         "door": "Porte",
         "window": "Fenêtre",
         "light": "Lumière",
-        "token": "Token"
+        "token": "Token",
+        "stairs": "Escalier",
+        "portal": "Portail"
       },
       "wall_kinds": {
         "stone": "Pierre",
@@ -1774,6 +1790,57 @@
       "saved": "Texture enregistrée.",
       "duplicate": "Cette texture est déjà dans votre bibliothèque.",
       "library_link": "Ouvrir la bibliothèque"
+    },
+    "floors": {
+      "label": "Étage",
+      "manage": "Étages",
+      "rename": "Renommer",
+      "level": "Niveau",
+      "name": "Nom du nouvel étage",
+      "name_placeholder": "Nom de l'étage",
+      "add": "Ajouter",
+      "limit": "Limite atteinte : {max} étages au maximum.",
+      "last": "Le dernier étage ne peut pas être supprimé.",
+      "remove": "Supprimer l'étage",
+      "remove_title": "Supprimer l'étage ?",
+      "remove_message": "L'étage « {name} » et tout son contenu (tuiles, objets, tokens posés, brouillard) seront supprimés. Vous pourrez annuler tant que l'éditeur reste ouvert.",
+      "remove_confirm": "Supprimer l'étage",
+      "ghost": "Étage du dessous",
+      "ghost_hint": "Affiche les tuiles de l'étage inférieur à 25 % sous l'étage courant (jamais en séance)."
+    },
+    "link": {
+      "title": "Lien",
+      "broken": "Lien cassé : la destination n'existe plus. Choisissez-en une autre pour le refaire.",
+      "load_failed": "Les maps de la partie n'ont pas pu être lues.",
+      "map": "Map de destination",
+      "choose": "— Choisir une map —",
+      "none": "— Aucun lien —",
+      "floor": "Étage",
+      "first_floor": "Premier étage",
+      "x": "Position x",
+      "y": "Position y",
+      "position_hint": "Position d'arrivée en cases de la map cible (vide : choisie à l'emprunt). La saisie est numérique."
+    },
+    "passage": {
+      "direction": "Sens",
+      "up": "Monte",
+      "down": "Descend",
+      "to_floor": "Étage de destination",
+      "floor_missing": "L'étage de destination n'existe plus : choisissez-en un autre.",
+      "icon": "Icône",
+      "color": "Couleur",
+      "label": "Libellé",
+      "link_single": "Le lien se modifie une porte à la fois.",
+      "no_other_floor": "Cette map n'a qu'un étage : créez-en un autre (menu Étages) ou donnez un lien vers une autre map.",
+      "stairs_hint": "Glissez pour tracer l'escalier (1 à 10 cases par côté).",
+      "portal_hint": "Cliquez pour poser le portail. Le lien est obligatoire.",
+      "icons": {
+        "portal": "Portail",
+        "door": "Porte",
+        "stairs": "Escalier",
+        "ladder": "Échelle",
+        "trapdoor": "Trappe"
+      }
     }
   },
   "maps": {
@@ -2074,6 +2141,19 @@
       "revoke": "Révoquer",
       "revoke_title": "Révoquer cet écran ?",
       "revoke_text": "« {name} » reviendra à la page d'appairage."
+    },
+    "passages": {
+      "title": "Passages",
+      "none": "Aucun escalier, portail ou porte avec lien sur cet étage.",
+      "broken": "Lien cassé",
+      "leads_to": "Mène à : {place}",
+      "take": "Emprunter",
+      "take_title": "Emprunter ce passage",
+      "target_unavailable": "La map de destination n'a pas pu être lue : saisissez la position à la main.",
+      "position": "Position d'arrivée (cases)",
+      "tokens": "Tokens à déplacer avec le groupe",
+      "no_tokens": "Aucun token posé sur cet étage.",
+      "player": "joueur"
     }
   },
   "play": {

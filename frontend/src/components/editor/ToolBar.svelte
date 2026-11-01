@@ -61,13 +61,13 @@
         class="tool"
         aria-pressed={ui.tool === tool.id}
         tabindex={index === current ? 0 : -1}
-        title={t('editor.tools.shortcut', { key: tool.shortcut })}
+        title={tool.shortcut === '' ? null : t('editor.tools.shortcut', { key: tool.shortcut })}
         data-testid={`tool-${tool.id}`}
         onclick={() => choose(tool.id, index)}
         onfocus={() => (focusIndex = index)}
       >
         <span class="label">{toolLabel(tool.id)}</span>
-        <kbd aria-hidden="true">{tool.shortcut}</kbd>
+        {#if tool.shortcut !== ''}<kbd aria-hidden="true">{tool.shortcut}</kbd>{/if}
       </button>
     {/each}
   </div>

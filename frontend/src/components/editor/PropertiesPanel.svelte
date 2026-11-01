@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PassageProperties from './PassageProperties.svelte';
   import SceneObjectList from './SceneObjectList.svelte';
   import type {
     DoorProps,
@@ -369,6 +370,8 @@
       {/if}
     </fieldset>
   {/if}
+
+  <PassageProperties {session} objects={sel.objects} />
 
   {#if sel.tokens.length > 0}
     <fieldset class="grid" data-testid="properties-token">

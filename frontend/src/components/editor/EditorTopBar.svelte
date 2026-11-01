@@ -1,5 +1,6 @@
 <script lang="ts">
   import ExportMenu from './ExportMenu.svelte';
+  import FloorSelector from './FloorSelector.svelte';
   import SaveIndicator from './SaveIndicator.svelte';
   import ViewControls from './ViewControls.svelte';
   import type { ExportKind } from '../../editor/ui/export-source';
@@ -63,6 +64,7 @@
     {mapName}
   </h1>
   <SaveIndicator {session} {onreload} />
+  <FloorSelector {session} />
 
   <div class="group" role="group" aria-label={t('editor.undo')}>
     <button

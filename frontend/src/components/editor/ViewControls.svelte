@@ -84,6 +84,15 @@
       <option value="off">{t('editor.view.performance_off')}</option>
     </select>
   </label>
+  <label class="inline check" title={t('editor.floors.ghost_hint')}>
+    <input
+      type="checkbox"
+      checked={ui.floorGhost}
+      data-testid="view-ghost"
+      onchange={(e) => session.floors.setGhostVisible(e.currentTarget.checked)}
+    />
+    {t('editor.floors.ghost')}
+  </label>
   <button
     type="button"
     class="button button-small"

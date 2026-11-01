@@ -93,6 +93,8 @@ export class SceneState {
   private pendingFog = new Set<ChunkKey>();
   private pendingAmbient = false;
   private pendingDefs = false;
+  /** Every reference (uid, server id) under which ops and loaded data designate this floor. */
+  readonly refs = new Set<string>();
 
   constructor(
     readonly floor: string,
@@ -102,6 +104,23 @@ export class SceneState {
     private readonly changed: () => void,
   ) {
     this._ambient = ambient;
+    this.refs.add(floor);
+  }
+
+  /** Another way to designate the floor (its server id). */
+  addRef(ref: string): void {
+    this.refs.add(ref);
+  }
+
+  /** Marks everything as changed for a consumer that starts showing this state (floor switch). */
+  eventForAll(): SceneChangedEvent {
+    return {
+      objects: [...this.objectMap.keys()],
+      tokens: [...this.tokenMap.keys()],
+      fog: [...this.fog.keys()],
+      ambient: false,
+      tokenDefs: false,
+    };
   }
 
   // ---- Read side (SceneView) -------------------------------------------------------------
@@ -185,7 +204,7 @@ export class SceneState {
         }
         if (this.objectMap.size >= MAX_OBJECTS) throw new MapOpError('bad_object', 'Too many');
         const value = normalizeObject(
-          { ...o, rev: rollback ? o.rev : 1 } as MapObject,
+          { ...o, floor: this.floor, rev: rollback ? o.rev : 1 } as MapObject,
           this.bounds,
         );
         this.putObject(value);
@@ -224,7 +243,10 @@ export class SceneState {
         if (this.tokenMap.size >= MAX_PLACED_TOKENS) {
           throw new MapOpError('bad_object', 'Too many tokens');
         }
-        const value = normalizeToken({ ...t, rev: rollback ? t.rev : 1 }, this.bounds);
+        const value = normalizeToken(
+          { ...t, floor: this.floor, rev: rollback ? t.rev : 1 },
+          this.bounds,
+        );
         this.putToken(value);
         return {
           op: { type: 'maptoken.add', token: value },
@@ -269,18 +291,18 @@ export class SceneState {
     for (const uid of [...this.objectMap.keys()]) this.deleteObject(uid);
     for (const uid of [...this.tokenMap.keys()]) this.deleteToken(uid);
     for (const o of objects) {
-      if (o.floor !== this.floor) continue;
+      if (!this.refs.has(o.floor)) continue;
       try {
-        this.putObject(normalizeObject(o, this.bounds));
+        this.putObject(normalizeObject({ ...o, floor: this.floor }, this.bounds));
         this.bumpForeign(`object:${o.uid}`);
       } catch {
         skipped++;
       }
     }
     for (const t of tokens) {
-      if (t.floor !== this.floor) continue;
+      if (!this.refs.has(t.floor)) continue;
       try {
-        this.putToken(normalizeToken(t, this.bounds));
+        this.putToken(normalizeToken({ ...t, floor: this.floor }, this.bounds));
         this.bumpForeign(`token:${t.uid}`);
       } catch {
         skipped++;
@@ -292,20 +314,20 @@ export class SceneState {
   /** Server state of an object after a conflict (null: it no longer exists). */
   replaceObject(uid: string, value: MapObject | null): void {
     this.bumpForeign(`object:${uid}`);
-    if (value === null || value.floor !== this.floor) {
+    if (value === null || !this.refs.has(value.floor)) {
       if (this.objectMap.has(uid)) this.deleteObject(uid);
       return;
     }
-    this.putObject(normalizeObject(value, this.bounds));
+    this.putObject(normalizeObject({ ...value, floor: this.floor }, this.bounds));
   }
 
   replaceToken(uid: string, value: PlacedToken | null): void {
     this.bumpForeign(`token:${uid}`);
-    if (value === null || value.floor !== this.floor) {
+    if (value === null || !this.refs.has(value.floor)) {
       if (this.tokenMap.has(uid)) this.deleteToken(uid);
       return;
     }
-    this.putToken(normalizeToken(value, this.bounds));
+    this.putToken(normalizeToken({ ...value, floor: this.floor }, this.bounds));
   }
 
   setTokenDefs(defs: readonly TokenDefView[]): void {
@@ -393,7 +415,7 @@ export class SceneState {
   }
 
   private checkFloor(floor: string): void {
-    if (floor !== this.floor) throw new MapOpError('unknown_floor', `Unknown floor ${floor}`);
+    if (!this.refs.has(floor)) throw new MapOpError('unknown_floor', `Unknown floor ${floor}`);
   }
 
   private checkChunk(key: ChunkKey): void {

@@ -23,6 +23,8 @@ import type {
   ChunkKey,
   DoorObject,
   MapObject,
+  PortalObject,
+  StairsObject,
   Polygon,
   WallObject,
   WindowObject,
@@ -34,6 +36,13 @@ import {
   segmentMiddle,
   type Seg,
 } from '../engine/scene/object-geometry';
+import {
+  PORTAL_RADIUS,
+  STAIRS_COLOR,
+  STAIRS_STEP_COLOR,
+  stairsArrow,
+  stairsStepLines,
+} from '../engine/scene/passage-shapes';
 import { FOG_SIDE, FOG_SUBCELLS } from '../formats/fog-codec';
 import {
   DOOR_COLOR,
@@ -88,9 +97,14 @@ function boxOf(obj: MapObject): Box {
   const pts =
     obj.type === 'wall'
       ? obj.geometry.points
-      : obj.type === 'light'
+      : obj.type === 'light' || obj.type === 'portal'
         ? [[obj.geometry.x, obj.geometry.y] as const]
-        : [obj.geometry.a, obj.geometry.b];
+        : obj.type === 'stairs'
+          ? [
+              [obj.geometry.x, obj.geometry.y] as const,
+              [obj.geometry.x + obj.geometry.w, obj.geometry.y + obj.geometry.h] as const,
+            ]
+          : [obj.geometry.a, obj.geometry.b];
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -224,8 +238,37 @@ export class ScenePainter {
       if (obj.type === 'wall') this.wall(ctx, obj);
       else if (obj.type === 'door') this.door(ctx, obj);
       else if (obj.type === 'window') this.window(ctx, obj);
+      else if (obj.type === 'stairs') this.stairs(ctx, obj);
+      else if (obj.type === 'portal') this.portal(ctx, obj);
     }
     ctx.globalAlpha = 1;
+  }
+
+  private stairs(ctx: Ctx2D, o: StairsObject): void {
+    const { x, y, w, h } = o.geometry;
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = cssColor(STAIRS_COLOR);
+    ctx.fillRect(x, y, w, h);
+    this.stroke(ctx, stairsStepLines(o.geometry), 0.03, STAIRS_STEP_COLOR, 0.8, 'butt');
+    this.stroke(ctx, stairsArrow(o.geometry, o.props.direction), 0.07, 0xffffff, 0.95, 'round');
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = cssColor(WALL_OUTLINE);
+    ctx.lineWidth = this.width(0.05);
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.stroke();
+  }
+
+  private portal(ctx: Ctx2D, o: PortalObject): void {
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = o.props.color;
+    ctx.beginPath();
+    ctx.ellipse(o.geometry.x, o.geometry.y, PORTAL_RADIUS, PORTAL_RADIUS, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 0.95;
+    ctx.strokeStyle = cssColor(WALL_OUTLINE);
+    ctx.lineWidth = this.width(0.05);
+    ctx.stroke();
   }
 
   private width(thickness: number): number {

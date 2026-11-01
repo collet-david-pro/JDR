@@ -274,7 +274,7 @@ export class SceneControls {
       const [x, y] =
         o.type === 'wall'
           ? (o.geometry.points[0] ?? [0, 0])
-          : o.type === 'light'
+          : o.type === 'light' || o.type === 'portal' || o.type === 'stairs'
             ? [o.geometry.x, o.geometry.y]
             : o.geometry.a;
       items.push({ uid: o.uid, kind: o.type, name: null, x, y });

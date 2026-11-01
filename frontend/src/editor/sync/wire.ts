@@ -7,6 +7,8 @@ import type {
   GridTheme,
   LayerDef,
   LayerId,
+  Link,
+  MapObject,
   MapOp,
   PaletteEntry,
   TokenDefView,
@@ -83,6 +85,10 @@ export function paletteFromWire(
 
 /** Editor op ⇒ wire op (map.meta layers carry `gm_only`). */
 export function toWireOp(op: MapOp): WireMapOp {
+  if (op.type === 'object.add') return { ...op, object: wireObject(op.object) };
+  if (op.type === 'object.update' && op.patch.props !== undefined) {
+    return { ...op, patch: { ...op.patch, props: wireProps(op.patch.props) } };
+  }
   if (op.type !== 'map.meta') return op;
   return {
     type: 'map.meta',
@@ -90,6 +96,20 @@ export function toWireOp(op: MapOp): WireMapOp {
     ...(op.theme !== undefined ? { theme: op.theme } : {}),
     ...(op.ambient !== undefined ? { ambient: op.ambient } : {}),
   };
+}
+
+/** Props without the read-side hints of a link (`broken`, `map_name`): the server computes them. */
+function wireProps<P extends MapObject['props']>(props: P): P {
+  const link = (props as { link?: Link }).link;
+  if (link === undefined || (link.broken === undefined && link.map_name === undefined))
+    return props;
+  const { broken: _broken, map_name: _name, ...clean } = link;
+  return { ...props, link: clean };
+}
+
+function wireObject(object: MapObject): MapObject {
+  const props = wireProps(object.props);
+  return props === object.props ? object : ({ ...object, props } as MapObject);
 }
 
 /** Token definition of the game (GET /games/{id}/tokens) as seen by the engine and tools. */

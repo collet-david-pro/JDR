@@ -144,6 +144,15 @@ export function objectHandles(
         { kind: 'radius', at: [x + obj.props.dim_radius, y] },
       ];
     }
+    case 'portal':
+      return [{ kind: 'centre', at: [obj.geometry.x, obj.geometry.y] }];
+    case 'stairs':
+      return [
+        {
+          kind: 'centre',
+          at: [obj.geometry.x + obj.geometry.w / 2, obj.geometry.y + obj.geometry.h / 2],
+        },
+      ];
   }
 }
 

@@ -110,9 +110,14 @@ export function objectBox(o: MapObject): { x0: number; y0: number; x1: number; y
   const pts: Point[] =
     o.type === 'wall'
       ? [...o.geometry.points]
-      : o.type === 'light'
+      : o.type === 'light' || o.type === 'portal'
         ? [[o.geometry.x, o.geometry.y]]
-        : [o.geometry.a, o.geometry.b];
+        : o.type === 'stairs'
+          ? [
+              [o.geometry.x, o.geometry.y],
+              [o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h],
+            ]
+          : [o.geometry.a, o.geometry.b];
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

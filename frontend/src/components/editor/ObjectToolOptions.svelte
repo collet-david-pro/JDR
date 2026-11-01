@@ -1,4 +1,6 @@
 <script lang="ts">
+  import LinkEditor from './LinkEditor.svelte';
+  import { PORTAL_ICONS } from '../../editor/model/scene-values';
   import { LIGHT_PRESET_IDS } from '../../editor/tools/object-common';
   import { FOG_BRUSH_MAX, FOG_BRUSH_MIN } from '../../editor/tools/types';
   import {
@@ -7,6 +9,7 @@
     WINDOW_KINDS,
     fogShapeLabel,
     lightPresetLabel,
+    portalIconLabel,
     wallKindLabel,
     windowKindLabel,
   } from '../../editor/ui/scene-labels';
@@ -21,6 +24,13 @@
   let { session }: Props = $props();
   const ui = $derived(session.ui);
   const uid = $props.id();
+  const otherFloors = $derived.by(() => {
+    void ui.floors;
+    return ui.floors.filter((f) => f.uid !== ui.currentFloor);
+  });
+  const stairsTo = $derived(
+    otherFloors.find((f) => f.uid === ui.stairsTarget)?.uid ?? otherFloors[0]?.uid ?? '',
+  );
   const tokenName = $derived(
     ui.tokenId === null ? null : (ui.tokenDefs.find((d) => d.id === ui.tokenId)?.name ?? null),
   );
@@ -96,6 +106,81 @@
     {/each}
   </fieldset>
   <p class="small muted">{t('editor.options.light_hint')}</p>
+{:else if ui.tool === 'stairs'}
+  <fieldset>
+    <legend>{t('editor.passage.direction')}</legend>
+    <label class="choice">
+      <input
+        type="radio"
+        name={`${uid}-dir`}
+        value="up"
+        bind:group={ui.stairsDirection}
+        data-testid="stairs-dir-up"
+      />
+      {t('editor.passage.up')}
+    </label>
+    <label class="choice">
+      <input
+        type="radio"
+        name={`${uid}-dir`}
+        value="down"
+        bind:group={ui.stairsDirection}
+        data-testid="stairs-dir-down"
+      />
+      {t('editor.passage.down')}
+    </label>
+  </fieldset>
+  {#if otherFloors.length === 0}
+    <p class="small" role="status" data-testid="stairs-no-floor">
+      {t('editor.passage.no_other_floor')}
+    </p>
+  {:else}
+    <label class="field">
+      <span>{t('editor.passage.to_floor')}</span>
+      <select
+        class="select"
+        value={stairsTo}
+        data-testid="stairs-target"
+        onchange={(e) => (ui.stairsTarget = e.currentTarget.value)}
+      >
+        {#each otherFloors as f (f.uid)}
+          <option value={f.uid}>{f.name}</option>
+        {/each}
+      </select>
+    </label>
+  {/if}
+  <LinkEditor link={ui.stairsLink} id="stairs-link" onchange={(link) => (ui.stairsLink = link)} />
+  <p class="small muted">{t('editor.passage.stairs_hint')}</p>
+{:else if ui.tool === 'portal'}
+  <label class="field">
+    <span>{t('editor.passage.icon')}</span>
+    <select class="select" bind:value={ui.portalIcon} data-testid="portal-tool-icon">
+      {#each PORTAL_ICONS as icon (icon)}
+        <option value={icon}>{portalIconLabel(icon)}</option>
+      {/each}
+    </select>
+  </label>
+  <label class="field">
+    <span>{t('editor.passage.color')}</span>
+    <input type="color" bind:value={ui.portalColor} data-testid="portal-tool-color" />
+  </label>
+  <label class="field">
+    <span>{t('editor.passage.label')}</span>
+    <input
+      class="select"
+      type="text"
+      maxlength="60"
+      bind:value={ui.portalLabel}
+      data-testid="portal-tool-label"
+    />
+  </label>
+  <LinkEditor
+    link={ui.portalLink}
+    required
+    id="portal-link"
+    onchange={(link) => (ui.portalLink = link)}
+  />
+  <p class="small muted">{t('editor.passage.portal_hint')}</p>
 {:else if ui.tool === 'token'}
   <p class="small" data-testid="current-token">
     {tokenName === null

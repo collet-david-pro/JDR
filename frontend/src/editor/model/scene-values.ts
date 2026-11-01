@@ -8,13 +8,16 @@ import type {
   Ambient,
   DoorProps,
   LightProps,
+  Link,
   MapObject,
   ObjectLayerId,
   ObjectPatch,
   ObjectVisibility,
   PlacedToken,
   PlacedTokenPatch,
+  PortalProps,
   Point,
+  StairsProps,
   TokenLightDef,
   WallProps,
   WindowProps,
@@ -28,6 +31,14 @@ export const MAX_PLACED_TOKENS = 2_000;
 const LAYERS: readonly ObjectLayerId[] = ['walls', 'props', 'lighting', 'labels', 'gm'];
 const VISIBILITIES: readonly ObjectVisibility[] = ['all', 'gm', 'hidden_until_revealed'];
 const WALL_KINDS = ['stone', 'brick', 'wood', 'metal', 'natural', 'invisible'];
+const OBJECT_TYPES: readonly MapObject['type'][] = [
+  'wall',
+  'door',
+  'window',
+  'light',
+  'stairs',
+  'portal',
+];
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
 export const round3 = (v: number): number => Math.round(v * 1000) / 1000;
@@ -86,6 +97,58 @@ function wallProps(p: WallProps): WallProps {
   };
 }
 
+const FLOOR_UID = /^[A-Za-z0-9_-]{1,21}$/;
+export const PORTAL_ICONS = ['portal', 'door', 'stairs', 'ladder', 'trapdoor'] as const;
+
+/** Validated link (door, stairs, portal): ids stay strings, `broken` / `map_name` are read-side hints. */
+export function linkProps(l: unknown): Link {
+  if (typeof l !== 'object' || l === null) bad('Invalid link');
+  const k = l as Record<string, unknown>;
+  const mapId = k['map_id'];
+  if (mapId !== null && typeof mapId !== 'string' && typeof mapId !== 'number')
+    bad('Invalid link map');
+  const floor = k['floor'] ?? null;
+  if (floor !== null && (typeof floor !== 'string' || !FLOOR_UID.test(floor)))
+    bad('Invalid link floor');
+  const coord = (v: unknown, max: number, what: string): number | null => {
+    if (v === null || v === undefined) return null;
+    return round3(num(v, 0, max, what));
+  };
+  return {
+    map_id: mapId === null ? null : String(mapId),
+    floor,
+    x: coord(k['x'], 100_000, 'link x'),
+    y: coord(k['y'], 100_000, 'link y'),
+    ...(typeof k['map_name'] === 'string' ? { map_name: k['map_name'] } : {}),
+    ...(k['broken'] === true ? { broken: true as const } : {}),
+  };
+}
+
+function stairsProps(p: StairsProps): StairsProps {
+  if (typeof p.to_floor !== 'string' || !FLOOR_UID.test(p.to_floor)) bad('Invalid to_floor');
+  return {
+    direction: oneOf(p.direction, ['up', 'down'], 'direction'),
+    to_floor: p.to_floor,
+    ...(p.link !== undefined && p.link !== null ? { link: linkProps(p.link) } : {}),
+  };
+}
+
+function portalProps(p: PortalProps): PortalProps {
+  if (typeof p.color !== 'string' || !COLOR.test(p.color)) bad('Invalid color');
+  if (
+    p.label !== undefined &&
+    (typeof p.label !== 'string' || p.label.length < 1 || p.label.length > 60)
+  ) {
+    bad('Invalid label');
+  }
+  return {
+    icon: oneOf(p.icon, PORTAL_ICONS, 'portal icon'),
+    color: p.color.toLowerCase(),
+    ...(p.label !== undefined ? { label: p.label } : {}),
+    link: linkProps(p.link),
+  };
+}
+
 function doorProps(p: DoorProps): DoorProps {
   return {
     state: oneOf(p.state, ['open', 'closed'], 'door state'),
@@ -94,6 +157,7 @@ function doorProps(p: DoorProps): DoorProps {
     asset_open: null,
     asset_closed: null,
     swing: oneOf(p.swing, ['a', 'b', 'slide'], 'swing'),
+    ...(p.link !== undefined && p.link !== null ? { link: linkProps(p.link) } : {}),
   };
 }
 
@@ -145,10 +209,21 @@ function geometry(type: MapObject['type'], g: MapObject['geometry'], b: Bounds) 
     case 'door':
     case 'window':
       return segment(g, b);
-    case 'light': {
+    case 'light':
+    case 'portal': {
       const l = g as { x?: unknown; y?: unknown };
       const [x, y] = point([l.x, l.y], b);
       return { x, y };
+    }
+    case 'stairs': {
+      const r = g as { x?: unknown; y?: unknown; w?: unknown; h?: unknown };
+      const w = num(r.w, 1, 10, 'stairs w');
+      const h = num(r.h, 1, 10, 'stairs h');
+      const x = num(r.x, 0, b.width, 'stairs x');
+      const y = num(r.y, 0, b.height, 'stairs y');
+      if (![w, h, x, y].every(Number.isInteger)) bad('Stairs geometry must be integers');
+      if (x + w > b.width || y + h > b.height) bad('Stairs out of bounds');
+      return { x, y, w, h };
     }
   }
 }
@@ -164,13 +239,17 @@ function props(type: MapObject['type'], p: MapObject['props']): MapObject['props
       return windowProps(p as WindowProps);
     case 'light':
       return lightProps(p as LightProps);
+    case 'stairs':
+      return stairsProps(p as StairsProps);
+    case 'portal':
+      return portalProps(p as PortalProps);
   }
 }
 
 /** Validated, rounded copy of an object (frozen). `rev` is kept (≥ 1). */
 export function normalizeObject(o: MapObject, b: Bounds): MapObject {
   if (typeof o !== 'object' || o === null || !UID_PATTERN.test(String(o.uid))) bad('Invalid uid');
-  const type = oneOf(o.type, ['wall', 'door', 'window', 'light'], 'type');
+  const type = oneOf(o.type, OBJECT_TYPES, 'type');
   if (typeof o.floor !== 'string' || o.floor === '') bad('Invalid floor');
   const sort = num(o.sort_order, -1_000_000, 1_000_000, 'sort_order');
   if (!Number.isInteger(sort)) bad('Invalid sort_order');

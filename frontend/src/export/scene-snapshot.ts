@@ -171,7 +171,9 @@ export function buildSceneSnapshot(
     )
     .sort((a, b) => order.indexOf(a.obj.layer) - order.indexOf(b.obj.layer) || a.i - b.i)
     .map(({ obj }) => obj);
-  const occluders = all.filter((o) => o.type !== 'light' && isPlayerObject(o));
+  const occluders = all.filter(
+    (o) => (o.type === 'wall' || o.type === 'door' || o.type === 'window') && isPlayerObject(o),
+  );
 
   const lights: SnapshotLight[] = [];
   const tokens: SnapshotToken[] = [];

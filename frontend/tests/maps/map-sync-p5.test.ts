@@ -87,7 +87,10 @@ describe('MapSync P5 loading', () => {
   });
 
   it('counts a failed fog request and keeps going', async () => {
-    const map = makeMap({ id: 'm2', floors: [{ id: 'f1', uid: 'f1', level: 0, name: 'RdC', sort_order: 0 }] });
+    const map = makeMap({
+      id: 'm2',
+      floors: [{ id: 'f1', uid: 'f1', level: 0, name: 'RdC', sort_order: 0 }],
+    });
     const session = new EditorSession({ grid: gridOf(map), floor: 'f1', editable: false });
     const sync = new MapSync({
       session,

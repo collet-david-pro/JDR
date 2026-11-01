@@ -10,6 +10,7 @@ import {
   type CellValue,
   type ChunkKey,
   type ChunksChangedEvent,
+  type FloorInfo,
   type FogBitmap,
   type GridSpec,
   type GridTheme,
@@ -34,8 +35,10 @@ import {
   encodeChunk,
 } from '../../formats/chunk-codec';
 import type { CompressionOptions } from '../../formats/compression';
+import { FloorSlot, floorRecreateOps, type ChunkRecord, type FloorMeta } from './FloorSlot';
 import { DEFAULT_LAYERS, EMPTY_CELL, MapOpError, chunkKey, parseChunkKey } from './ops';
-import { SceneState, isSceneOp } from './SceneState';
+import { FloorView } from './FloorView';
+import { SceneState, isSceneOp, type SceneOp } from './SceneState';
 import { DEFAULT_AMBIENT, ambientOf } from './scene-values';
 import { validateLayers } from './validate';
 
@@ -48,8 +51,10 @@ export interface AssetInfo {
 
 export interface MapDocumentInit {
   readonly grid: GridSpec;
-  /** Floor uid of the edited floor (single floor in P4a). */
+  /** Floor shown first (uid or id); single floor 'f1' when `floors` is absent. */
   readonly floor?: string;
+  /** P9a2: every floor of the map (server MapDetail.floors). Absent = one floor, `floor`. */
+  readonly floors?: readonly FloorInfo[];
   readonly layers?: readonly LayerDef[];
   /** Index 0 must be null. */
   readonly palette?: readonly (PaletteEntry | null)[];
@@ -67,12 +72,6 @@ export interface SerializedChunk {
   readonly data: Uint8Array;
 }
 
-interface ChunkRecord {
-  readonly key: ChunkKey;
-  readonly cells: Uint16Array;
-  filled: number;
-}
-
 type Listener<T> = (value: T) => void;
 
 /** Ops as actually applied (object / token revs stamped, see SceneState) and their inverse. */
@@ -84,20 +83,36 @@ export interface AppliedOps {
 type MetaOp = Extract<MapOp, { type: 'map.meta' }>;
 type AmbientPatch = NonNullable<MetaOp['ambient']>;
 
+export const MAX_FLOORS = 10;
+const FLOOR_UID = /^[A-Za-z0-9_-]{1,21}$/;
+
+export interface FloorsEvent {
+  /** The list of floors (or one of their names / levels) changed. */
+  readonly list: boolean;
+  /** The shown floor changed. */
+  readonly current: boolean;
+}
+
 export class MapDocument implements MapView, SceneView {
   readonly grid: GridSpec;
-  readonly floor: string;
-  /** Objects, placed tokens, fog, ambient of the floor (P5). */
-  private readonly scene: SceneState;
+  private readonly slots: FloorSlot[] = [];
+  private cur!: FloorSlot;
+  private sceneEpoch = 0;
   private readonly sceneListeners = new Set<Listener<SceneChangedEvent>>();
+  private readonly floorListeners = new Set<Listener<FloorsEvent>>();
+  private readonly floorChunkListeners = new Set<
+    (floor: string, event: ChunksChangedEvent) => void
+  >();
+  private pendingFloors: { list: boolean; current: boolean } | null = null;
+  private pendingSwitch: SceneChangedEvent | null = null;
+  private pendingSwitchChunks: { floor: FloorSlot; layer: TileLayerId; keys: ChunkKey[] }[] = [];
   private _layers: readonly LayerDef[];
   private _palette: readonly (PaletteEntry | null)[];
   private _theme: GridTheme;
   private readonly resolveAsset: (assetId: string) => AssetInfo | null;
-  private readonly chunks = new Map<TileLayerId, Map<number, ChunkRecord>>();
   private readonly chunkListeners = new Set<Listener<ChunksChangedEvent>>();
   private readonly metaListeners = new Set<() => void>();
-  private pendingChunks = new Map<TileLayerId, Set<ChunkKey>>();
+  private pendingChunks = new Map<FloorSlot, Map<TileLayerId, Set<ChunkKey>>>();
   private pendingMeta = false;
   private flushScheduled = false;
   private _revision = 0;
@@ -110,7 +125,6 @@ export class MapDocument implements MapView, SceneView {
       }
     }
     this.grid = { ...init.grid };
-    this.floor = init.floor ?? 'f1';
     this._layers = validateLayers(init.layers ?? DEFAULT_LAYERS);
     const palette = init.palette ?? [null];
     if (palette.length === 0 || palette[0] !== null) {
@@ -119,49 +133,209 @@ export class MapDocument implements MapView, SceneView {
     this._palette = [...palette];
     this._theme = init.theme ?? 'parchment';
     this.resolveAsset = init.resolveAsset ?? (() => null);
-    for (const l of TILE_LAYERS) this.chunks.set(l, new Map());
-    this.scene = new SceneState(
-      this.floor,
-      { width, height },
+    const ambient =
       init.ambient === undefined || init.ambient === null
         ? DEFAULT_AMBIENT
-        : ambientOf(init.ambient),
+        : ambientOf(init.ambient);
+    const infos: readonly FloorInfo[] =
+      init.floors !== undefined && init.floors.length > 0
+        ? init.floors
+        : [{ id: init.floor ?? 'f1', uid: init.floor ?? 'f1', level: 0, name: '', sort_order: 0 }];
+    const first =
+      infos.find(
+        (i) => init.floor !== undefined && (i.uid === init.floor || i.id === init.floor),
+      ) ?? infos[0]!;
+    for (const info of infos) {
+      // Only the shown floor is in memory at first (the others are fetched when needed).
+      const slot = this.newSlot(info.uid, info.id, info.name, info.level, ambient, info === first);
+      this.slots.push(slot);
+    }
+    this.sortSlots();
+    this.cur = this.slots.find((s) => s.uid === first.uid)!;
+  }
+
+  private newSlot(
+    uid: string,
+    id: string | null,
+    name: string,
+    level: number,
+    ambient: Ambient,
+    loaded: boolean,
+  ): FloorSlot {
+    const scene = new SceneState(
+      uid,
+      { width: this.grid.width, height: this.grid.height },
+      ambient,
       () => this.schedule(),
     );
+    if (id !== null) scene.addRef(id);
+    return new FloorSlot(uid, id, name, level, scene, loaded);
+  }
+
+  private sortSlots(): void {
+    this.slots.sort((a, b) => a.level - b.level);
+  }
+
+  /** The shown floor (uid): tools put it in the ops they build. */
+  get floor(): string {
+    return this.cur.uid;
+  }
+
+  // ---- Floors (P9a2) --------------------------------------------------------------------
+
+  /** Floors by level. */
+  floors(): readonly FloorMeta[] {
+    return this.slots.map((s) => s.meta);
+  }
+
+  floorMeta(ref: string): FloorMeta | undefined {
+    return this.slotOrUndefined(ref)?.meta;
+  }
+
+  /** Switches the shown floor (the engine is notified like for any change). */
+  setCurrentFloor(ref: string): void {
+    const slot = this.slotOf(ref);
+    if (slot === this.cur) return;
+    this.switchTo(slot);
+  }
+
+  /** Marks a floor as fully in memory (tiles imported, fog imported). */
+  markFloorLoaded(ref: string): void {
+    const slot = this.slotOf(ref);
+    if (slot.loaded) return;
+    slot.loaded = true;
+    this.noteFloors(true, false);
+  }
+
+  /** Server ids for floors created locally (after a reload of the floor list). */
+  setFloorId(uid: string, id: string): void {
+    const slot = this.slotOf(uid);
+    slot.id = id;
+    slot.scene.addRef(id);
+  }
+
+  onFloorsChanged(listener: Listener<FloorsEvent>): () => void {
+    this.floorListeners.add(listener);
+    return () => this.floorListeners.delete(listener);
+  }
+
+  /** Chunk changes of any floor (ghost floor view). */
+  onFloorChunksChanged(listener: (floor: string, event: ChunksChangedEvent) => void): () => void {
+    this.floorChunkListeners.add(listener);
+    return () => this.floorChunkListeners.delete(listener);
+  }
+
+  /** Floor whose level is the closest below the shown one, or undefined. */
+  floorBelow(): FloorMeta | undefined {
+    const i = this.slots.indexOf(this.cur);
+    return i > 0 ? this.slots[i - 1]!.meta : undefined;
+  }
+
+  /** A read-only MapView of another floor (ghost). */
+  floorView(ref: string): MapView {
+    return new FloorView(this, this.slotOf(ref).uid);
+  }
+
+  /** Chunk keys / cells of any floor (views, export of the cache). */
+  chunkKeysOf(floor: string, layer: TileLayerId): readonly ChunkKey[] {
+    return this.slotOf(floor).chunkKeys(layer);
+  }
+  chunkCellsOf(floor: string, layer: TileLayerId, key: ChunkKey): Uint16Array | null {
+    const p = parseChunkKey(key);
+    if (p === null) return null;
+    return this.slotOf(floor).chunks.get(layer)?.get(this.numKey(p.cx, p.cy))?.cells ?? null;
+  }
+  objectsOf(floor: string): readonly MapObject[] {
+    return this.slotOf(floor).scene.objects();
+  }
+  tokensOf(floor: string): readonly PlacedToken[] {
+    return this.slotOf(floor).scene.tokens();
+  }
+  fogKeysOf(floor: string): readonly ChunkKey[] {
+    return this.slotOf(floor).scene.fogKeys();
+  }
+
+  private slotOrUndefined(ref: string): FloorSlot | undefined {
+    return this.slots.find((s) => s.owns(ref));
+  }
+
+  private slotOf(ref: string): FloorSlot {
+    const slot = this.slotOrUndefined(ref);
+    if (slot === undefined) throw new MapOpError('unknown_floor', `Unknown floor ${ref}`);
+    return slot;
+  }
+
+  /** Slot holding an object / placed token (uids are unique in the map). */
+  private slotHolding(kind: 'object' | 'token', uid: string): FloorSlot | undefined {
+    if (this.cur.scene[kind](uid) !== undefined) return this.cur;
+    return this.slots.find((s) => s.scene[kind](uid) !== undefined);
+  }
+
+  private switchTo(slot: FloorSlot): void {
+    const prev = this.cur;
+    // What the engine shows changes: every block / object / token / fog chunk of both floors.
+    for (const f of [prev, slot]) {
+      for (const [layer, keys] of f.allChunkKeys()) {
+        if (keys.length > 0) this.pendingSwitchChunks.push({ floor: f, layer, keys });
+      }
+    }
+    const old = prev.scene.eventForAll();
+    const next = slot.scene.eventForAll();
+    this.pendingSwitch = {
+      objects: [...new Set([...old.objects, ...next.objects])],
+      tokens: [...new Set([...old.tokens, ...next.tokens])],
+      fog: [...new Set([...old.fog, ...next.fog])],
+      ambient: false,
+      tokenDefs: false,
+    };
+    this.cur = slot;
+    this.sceneEpoch++;
+    slot.scene.takeEvent();
+    this.noteFloors(false, true);
+    this.schedule();
+  }
+
+  private noteFloors(list: boolean, current: boolean): void {
+    this.pendingFloors = {
+      list: list || (this.pendingFloors?.list ?? false),
+      current: current || (this.pendingFloors?.current ?? false),
+    };
+    this.schedule();
   }
 
   // ---- SceneView (P5) --------------------------------------------------------------------
 
   get sceneRevision(): number {
-    return this.scene.sceneRevision;
+    return this.sceneEpoch * 1_000_000 + this.cur.scene.sceneRevision;
   }
   get ambient(): Ambient {
-    return this.scene.ambient;
+    return this.cur.scene.ambient;
   }
   objects(): readonly MapObject[] {
-    return this.scene.objects();
+    return this.cur.scene.objects();
   }
+  /** An object of any floor. */
   object(uid: string): MapObject | undefined {
-    return this.scene.object(uid);
+    return this.slotHolding('object', uid)?.scene.object(uid);
   }
   tokens(): readonly PlacedToken[] {
-    return this.scene.tokens();
+    return this.cur.scene.tokens();
   }
   token(uid: string): PlacedToken | undefined {
-    return this.scene.token(uid);
+    return this.slotHolding('token', uid)?.scene.token(uid);
   }
   tokenDef(tokenId: string): TokenDefView | null {
-    return this.scene.tokenDef(tokenId);
+    return this.cur.scene.tokenDef(tokenId);
   }
   /** Token definitions of the game (token tool, panels). */
   tokenDefs(): readonly TokenDefView[] {
-    return this.scene.tokenDefs();
+    return this.cur.scene.tokenDefs();
   }
   fogKeys(): readonly ChunkKey[] {
-    return this.scene.fogKeys();
+    return this.cur.scene.fogKeys();
   }
   fogChunk(key: ChunkKey): FogBitmap | null {
-    return this.scene.fogChunk(key);
+    return this.cur.scene.fogChunk(key);
   }
   onSceneChanged(listener: Listener<SceneChangedEvent>): () => void {
     this.sceneListeners.add(listener);
@@ -169,30 +343,46 @@ export class MapDocument implements MapView, SceneView {
   }
   /** Foreign change counter of `object:<uid>` / `token:<uid>` (History co-editing check). */
   foreignStamp(key: string): number {
-    return this.scene.foreignStamp(key);
+    let n = 0;
+    for (const slot of this.slots) n += slot.scene.foreignStamp(key);
+    return n;
   }
 
   // ---- P5 non-undoable updates (load, conflicts, reset): not ops ------------------------
 
   /** Objects and placed tokens of the map (GET /maps/{id}); other floors are ignored. */
   loadScene(objects: readonly MapObject[], tokens: readonly PlacedToken[]): { skipped: number } {
-    return this.scene.load(objects, tokens);
+    let skipped = 0;
+    for (const slot of this.slots) skipped += slot.scene.load(objects, tokens).skipped;
+    return { skipped };
   }
   setTokenDefs(defs: readonly TokenDefView[]): void {
-    this.scene.setTokenDefs(defs);
+    for (const slot of this.slots) slot.scene.setTokenDefs(defs);
   }
-  importFog(key: ChunkKey, bits: FogBitmap): void {
-    this.scene.importFog(key, bits);
+  /** Fog chunk of a floor (default: the shown one). */
+  importFog(key: ChunkKey, bits: FogBitmap, floor?: string): void {
+    const slot = floor === undefined ? this.cur : this.slotOf(floor);
+    slot.scene.importFog(key, bits);
   }
   clearFog(): void {
-    this.scene.clearFog();
+    this.cur.scene.clearFog();
   }
   /** Server state after a conflict (null: deleted). */
   replaceObject(uid: string, value: MapObject | null): void {
-    this.scene.replaceObject(uid, value);
+    const holder = this.slotHolding('object', uid);
+    if (holder !== undefined && (value === null || !holder.owns(value.floor))) {
+      holder.scene.replaceObject(uid, null);
+    }
+    const target = value === null ? holder : this.slotOrUndefined(value.floor);
+    target?.scene.replaceObject(uid, value);
   }
   replaceToken(uid: string, value: PlacedToken | null): void {
-    this.scene.replaceToken(uid, value);
+    const holder = this.slotHolding('token', uid);
+    if (holder !== undefined && (value === null || !holder.owns(value.floor))) {
+      holder.scene.replaceToken(uid, null);
+    }
+    const target = value === null ? holder : this.slotOrUndefined(value.floor);
+    target?.scene.replaceToken(uid, value);
   }
 
   // ---- MapView ---------------------------------------------------------------------------
@@ -226,9 +416,10 @@ export class MapDocument implements MapView, SceneView {
     );
   }
 
-  getCell(layer: TileLayerId, x: number, y: number): CellValue {
+  getCell(layer: TileLayerId, x: number, y: number, floor?: string): CellValue {
     if (!this.inBounds(x, y)) return EMPTY_CELL;
-    const rec = this.record(layer, x, y);
+    const slot = floor === undefined ? this.cur : this.slotOf(floor);
+    const rec = this.record(layer, x, y, slot);
     if (rec === undefined) return EMPTY_CELL;
     const s = this.offset(x, y);
     const index = rec.cells[s]!;
@@ -271,8 +462,8 @@ export class MapDocument implements MapView, SceneView {
    * cell, original value) — i.e. the cells of the inverse tiles.set. Cells outside the map are
    * ignored; an invalid value throws before anything is written.
    */
-  setCells(layer: TileLayerId, cells: readonly TileCell[]): TileCell[] {
-    const store = this.layerChunks(layer);
+  setCells(layer: TileLayerId, cells: readonly TileCell[], slot: FloorSlot = this.cur): TileCell[] {
+    const store = this.layerChunks(layer, slot);
     const paletteSize = this._palette.length;
     for (const c of cells) {
       const index = c[2];
@@ -291,7 +482,7 @@ export class MapDocument implements MapView, SceneView {
     const seenSet = !big && cells.length > 1 ? new Set<number>() : null;
     const seenBits = big ? new Uint8Array(this.grid.width * this.grid.height) : null;
     const w = this.grid.width;
-    let pending = this.pendingChunks.get(layer);
+    const pending = this.pendingSet(slot, layer);
     for (const c of cells) {
       const x = c[0];
       const y = c[1];
@@ -328,10 +519,6 @@ export class MapDocument implements MapView, SceneView {
       if (oldIndex === 0) rec.filled++;
       if (index === 0) rec.filled--;
       if (rec.filled === 0) store.delete(nk);
-      if (pending === undefined) {
-        pending = new Set();
-        this.pendingChunks.set(layer, pending);
-      }
       pending.add(rec.key);
     }
     if (previous.length > 0) this.schedule();
@@ -352,20 +539,23 @@ export class MapDocument implements MapView, SceneView {
    * they were based on (the value to send), adds carry the normalised value.
    */
   apply(ops: readonly MapOp[]): AppliedOps {
-    const inverse: MapOp[] = [];
+    // One group of inverse ops per op (floor.remove has several), in application order.
+    const groups: MapOp[][] = [];
     const applied: MapOp[] = [];
     try {
       for (const op of ops) {
         const r = this.applyOne(op);
         applied.push(r.op);
-        if (r.inverse !== null) inverse.push(r.inverse);
+        if (r.inverse !== null) groups.push(Array.isArray(r.inverse) ? r.inverse : [r.inverse]);
       }
     } catch (e) {
       // Roll back what was applied (inverse order), then rethrow.
-      for (let i = inverse.length - 1; i >= 0; i--) this.applyOne(inverse[i]!, true);
+      for (let i = groups.length - 1; i >= 0; i--) {
+        for (const inv of groups[i]!) this.applyOne(inv, true);
+      }
       throw e;
     }
-    return { ops: applied, inverse: inverse.reverse() };
+    return { ops: applied, inverse: groups.reverse().flat() };
   }
 
   /** Index of an asset in the palette, and the palette.add op to emit when it is missing. */
@@ -392,25 +582,40 @@ export class MapDocument implements MapView, SceneView {
     this.flushScheduled = false;
     const chunks = this.pendingChunks;
     const meta = this.pendingMeta;
+    const floors = this.pendingFloors;
+    const switched = this.pendingSwitch;
+    const switchedChunks = this.pendingSwitchChunks;
     this.pendingChunks = new Map();
     this.pendingMeta = false;
+    this.pendingFloors = null;
+    this.pendingSwitch = null;
+    this.pendingSwitchChunks = [];
     if (meta) for (const l of [...this.metaListeners]) l();
-    for (const [layer, keys] of chunks) {
-      if (keys.size === 0) continue;
+    const emitChunks = (slot: FloorSlot, layer: TileLayerId, keys: readonly ChunkKey[]): void => {
+      if (keys.length === 0) return;
       const event: ChunksChangedEvent = { layer, keys: [...keys] };
-      for (const l of [...this.chunkListeners]) l(event);
+      if (slot === this.cur) for (const l of [...this.chunkListeners]) l(event);
+      for (const l of [...this.floorChunkListeners]) l(slot.uid, event);
+    };
+    for (const item of switchedChunks) emitChunks(item.floor, item.layer, item.keys);
+    for (const [slot, byLayer] of chunks) {
+      if (!this.slots.includes(slot)) continue;
+      for (const [layer, keys] of byLayer) emitChunks(slot, layer, [...keys]);
     }
-    const scene = this.scene.takeEvent();
-    if (scene !== null) for (const l of [...this.sceneListeners]) l(scene);
+    const scene = this.cur.scene.takeEvent();
+    const event = mergeSceneEvents(switched, scene);
+    if (event !== null) for (const l of [...this.sceneListeners]) l(event);
+    if (floors !== null) for (const l of [...this.floorListeners]) l(floors);
   }
 
   // ---- Chunk (de)serialisation (12.2) ----------------------------------------------------
 
   /** Compresses every non-empty chunk. */
-  async exportChunks(options: CompressionOptions = {}): Promise<SerializedChunk[]> {
+  async exportChunks(options: CompressionOptions = {}, floor?: string): Promise<SerializedChunk[]> {
     const out: SerializedChunk[] = [];
+    const slot = floor === undefined ? this.cur : this.slotOf(floor);
     for (const layer of TILE_LAYERS) {
-      for (const rec of this.layerChunks(layer).values()) {
+      for (const rec of this.layerChunks(layer, slot).values()) {
         const data = await encodeChunk(layer, rec.cells, options);
         if (data !== null) out.push({ layer, key: rec.key, data });
       }
@@ -424,40 +629,65 @@ export class MapDocument implements MapView, SceneView {
     key: ChunkKey,
     data: Uint8Array,
     options: CompressionOptions = {},
+    floor?: string,
   ): Promise<void> {
     const decoded = await decodeChunk(data, {
       ...options,
       layer,
       paletteSize: this._palette.length,
     });
-    this.putChunk(layer, key, decoded?.cells ?? null, decoded?.filled ?? 0);
+    this.putChunk(layer, key, decoded?.cells ?? null, decoded?.filled ?? 0, floor);
   }
 
   /** Loads an uncompressed raw block (4 104 bytes). */
-  importRawChunk(layer: TileLayerId, key: ChunkKey, raw: Uint8Array): void {
+  importRawChunk(layer: TileLayerId, key: ChunkKey, raw: Uint8Array, floor?: string): void {
     const decoded = decodeChunkRaw(raw, { layer, paletteSize: this._palette.length });
-    this.putChunk(layer, key, decoded?.cells ?? null, decoded?.filled ?? 0);
+    this.putChunk(layer, key, decoded?.cells ?? null, decoded?.filled ?? 0, floor);
   }
 
   // ---- Internals -------------------------------------------------------------------------
 
-  private applyOne(op: MapOp, rollback = false): { op: MapOp; inverse: MapOp | null } {
-    if (isSceneOp(op)) return this.scene.apply(op, rollback);
+  private applyOne(op: MapOp, rollback = false): { op: MapOp; inverse: MapOp | MapOp[] | null } {
+    if (isSceneOp(op)) return this.sceneOf(op).apply(op, rollback);
     return { op, inverse: this.applyTile(op) };
   }
 
-  private applyTile(op: MapOp): MapOp | null {
+  /** The scene of the floor an object / token / fog op targets. */
+  private sceneOf(op: SceneOp): SceneState {
     switch (op.type) {
+      case 'object.add':
+        return this.slotOf(op.object.floor).scene;
+      case 'maptoken.add':
+        return this.slotOf(op.token.floor).scene;
+      case 'fog.reveal':
+      case 'fog.hide':
+        return this.slotOf(op.floor).scene;
+      case 'object.update':
+      case 'object.remove':
+        return (this.slotHolding('object', op.uid) ?? this.cur).scene;
+      case 'maptoken.update':
+      case 'maptoken.remove':
+        return (this.slotHolding('token', op.uid) ?? this.cur).scene;
+    }
+  }
+
+  private applyTile(op: MapOp): MapOp | MapOp[] | null {
+    switch (op.type) {
+      case 'floor.add':
+        return this.floorAdd(op.floor);
+      case 'floor.update':
+        return this.floorUpdate(op.uid, op.patch);
+      case 'floor.remove':
+        return this.floorRemove(op.uid);
       case 'tiles.set': {
-        if (op.floor !== this.floor)
-          throw new MapOpError('unknown_floor', `Unknown floor ${op.floor}`);
+        const slot = this.slotOf(op.floor);
         if (!TILE_LAYERS.includes(op.layer)) {
           throw new MapOpError('unknown_layer', `Unknown tile layer ${String(op.layer)}`);
         }
-        const prev = this.setCells(op.layer, op.cells);
+        const prev = this.setCells(op.layer, op.cells, slot);
         return prev.length === 0
           ? null
-          : { type: 'tiles.set', floor: op.floor, layer: op.layer, cells: prev };
+          : { type: 'tiles.set', floor: slot.uid, layer: op.layer, cells: prev };
       }
       case 'palette.add':
         this.addPalette(op.index, op.asset_id, op.autotile ?? null);
@@ -481,7 +711,7 @@ export class MapDocument implements MapView, SceneView {
         }
         if (ambient !== null) {
           inverse.ambient = ambient.inverse;
-          this.scene.setAmbient(ambient.next);
+          for (const slot of this.slots) slot.scene.setAmbient(ambient.next);
         }
         if (layers === undefined && op.theme === undefined && ambient === null) return null;
         if (layers !== undefined || op.theme !== undefined) this.markMeta();
@@ -492,9 +722,83 @@ export class MapDocument implements MapView, SceneView {
     }
   }
 
+  // ---- Floor ops (P9a2) --------------------------------------------------------------
+
+  private floorAdd(f: { uid: string; name: string; level: number }): MapOp {
+    if (typeof f.uid !== 'string' || !FLOOR_UID.test(f.uid) || /^[0-9]+$/.test(f.uid)) {
+      throw new MapOpError('bad_floor', `Invalid floor uid ${String(f.uid)}`);
+    }
+    if (this.slotOrUndefined(f.uid) !== undefined) {
+      throw new MapOpError('floor_taken', `Floor uid ${f.uid} already used`);
+    }
+    this.checkFloorName(f.name);
+    this.checkFloorLevel(f.level);
+    if (this.slots.some((s) => s.level === f.level)) {
+      throw new MapOpError('floor_taken', `Floor level ${f.level} already used`);
+    }
+    if (this.slots.length >= MAX_FLOORS) throw new MapOpError('floor_limit', 'Too many floors');
+    const slot = this.newSlot(f.uid, null, f.name, f.level, this.cur.scene.ambient, true);
+    slot.scene.setTokenDefs(this.cur.scene.tokenDefs());
+    this.slots.push(slot);
+    this.sortSlots();
+    this.noteFloors(true, false);
+    return { type: 'floor.remove', uid: f.uid };
+  }
+
+  private floorUpdate(uid: string, patch: { name?: string; level?: number }): MapOp | null {
+    const slot = this.slotOf(uid);
+    const inverse: { name?: string; level?: number } = {};
+    if (patch.name !== undefined && patch.name !== slot.name) {
+      this.checkFloorName(patch.name);
+      inverse.name = slot.name;
+    }
+    if (patch.level !== undefined && patch.level !== slot.level) {
+      this.checkFloorLevel(patch.level);
+      if (this.slots.some((s) => s !== slot && s.level === patch.level)) {
+        throw new MapOpError('floor_taken', `Floor level ${patch.level} already used`);
+      }
+      inverse.level = slot.level;
+    }
+    if (Object.keys(inverse).length === 0) return null;
+    if (inverse.name !== undefined) slot.name = patch.name!;
+    if (inverse.level !== undefined) slot.level = patch.level!;
+    this.sortSlots();
+    this.noteFloors(true, false);
+    return { type: 'floor.update', uid: slot.uid, patch: inverse };
+  }
+
+  /** The inverse recreates the floor with all its content (the floor must be loaded). */
+  private floorRemove(ref: string): MapOp[] {
+    const slot = this.slotOf(ref);
+    if (this.slots.length <= 1) throw new MapOpError('last_floor', 'Cannot remove the last floor');
+    if (!slot.loaded) throw new MapOpError('floor_unloaded', 'The floor content is not loaded');
+    const inverse = floorRecreateOps(slot);
+    const wasCurrent = slot === this.cur;
+    const index = this.slots.indexOf(slot);
+    if (wasCurrent) {
+      this.switchTo(this.slots[index === 0 ? 1 : 0]!);
+    }
+    this.slots.splice(this.slots.indexOf(slot), 1);
+    this.pendingChunks.delete(slot);
+    this.noteFloors(true, false);
+    return inverse;
+  }
+
+  private checkFloorName(name: string): void {
+    if (typeof name !== 'string' || name.trim() === '' || [...name].length > 60) {
+      throw new MapOpError('bad_floor', 'Invalid floor name');
+    }
+  }
+
+  private checkFloorLevel(level: number): void {
+    if (!Number.isInteger(level) || level < -9 || level > 9) {
+      throw new MapOpError('bad_floor', 'Invalid floor level');
+    }
+  }
+
   /** Next ambient and the inverse patch (previous values of the changed keys), or null. */
   private ambientChange(patch: AmbientPatch): { next: Ambient; inverse: AmbientPatch } | null {
-    const cur = this.scene.ambient;
+    const cur = this.cur.scene.ambient;
     const next = ambientOf({ ...cur, ...patch });
     const inverse: Record<string, unknown> = {};
     for (const k of Object.keys(patch) as (keyof Ambient)[]) {
@@ -530,7 +834,9 @@ export class MapDocument implements MapView, SceneView {
     key: ChunkKey,
     cells: Uint16Array | null,
     filled: number,
+    floor?: string,
   ): void {
+    const slot = floor === undefined ? this.cur : this.slotOf(floor);
     const p = parseChunkKey(key);
     if (
       p === null ||
@@ -539,28 +845,42 @@ export class MapDocument implements MapView, SceneView {
     ) {
       throw new MapOpError('bad_cell', `Chunk ${key} outside the map`);
     }
-    const store = this.layerChunks(layer);
+    const store = this.layerChunks(layer, slot);
     const nk = this.numKey(p.cx, p.cy);
     if (cells === null) store.delete(nk);
     else store.set(nk, { key: chunkKey(p.cx, p.cy), cells, filled });
-    let pending = this.pendingChunks.get(layer);
-    if (pending === undefined) {
-      pending = new Set();
-      this.pendingChunks.set(layer, pending);
-    }
-    pending.add(chunkKey(p.cx, p.cy));
+    this.pendingSet(slot, layer).add(chunkKey(p.cx, p.cy));
     this.schedule();
   }
 
-  private layerChunks(layer: TileLayerId): Map<number, ChunkRecord> {
-    const m = this.chunks.get(layer);
+  private pendingSet(slot: FloorSlot, layer: TileLayerId): Set<ChunkKey> {
+    let byLayer = this.pendingChunks.get(slot);
+    if (byLayer === undefined) {
+      byLayer = new Map();
+      this.pendingChunks.set(slot, byLayer);
+    }
+    let set = byLayer.get(layer);
+    if (set === undefined) {
+      set = new Set();
+      byLayer.set(layer, set);
+    }
+    return set;
+  }
+
+  private layerChunks(layer: TileLayerId, slot: FloorSlot = this.cur): Map<number, ChunkRecord> {
+    const m = slot.chunks.get(layer);
     if (m === undefined)
       throw new MapOpError('unknown_layer', `Unknown tile layer ${String(layer)}`);
     return m;
   }
 
-  private record(layer: TileLayerId, x: number, y: number): ChunkRecord | undefined {
-    return this.layerChunks(layer).get(
+  private record(
+    layer: TileLayerId,
+    x: number,
+    y: number,
+    slot: FloorSlot = this.cur,
+  ): ChunkRecord | undefined {
+    return this.layerChunks(layer, slot).get(
       this.numKey(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE)),
     );
   }
@@ -590,4 +910,19 @@ export class MapDocument implements MapView, SceneView {
 
 function isByte(v: number): boolean {
   return Number.isInteger(v) && v >= 0 && v <= 0xff;
+}
+
+function mergeSceneEvents(
+  a: SceneChangedEvent | null,
+  b: SceneChangedEvent | null,
+): SceneChangedEvent | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return {
+    objects: [...new Set([...a.objects, ...b.objects])],
+    tokens: [...new Set([...a.tokens, ...b.tokens])],
+    fog: [...new Set([...a.fog, ...b.fog])],
+    ambient: a.ambient || b.ambient,
+    tokenDefs: a.tokenDefs || b.tokenDefs,
+  };
 }

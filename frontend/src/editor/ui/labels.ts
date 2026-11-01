@@ -28,6 +28,10 @@ export function toolLabel(id: ToolId): string {
       return t('editor.tools.door');
     case 'light':
       return t('editor.tools.light');
+    case 'stairs':
+      return t('editor.tools.stairs');
+    case 'portal':
+      return t('editor.tools.portal');
     case 'token':
       return t('editor.tools.token');
     case 'fog':
@@ -115,6 +119,18 @@ export function commandLabel(key: string): string {
       return t('editor.command.light');
     case 'editor.command.token':
       return t('editor.command.token');
+    case 'editor.command.stairs':
+      return t('editor.command.stairs');
+    case 'editor.command.portal':
+      return t('editor.command.portal');
+    case 'editor.command.floor_add':
+      return t('editor.command.floor_add');
+    case 'editor.command.floor_rename':
+      return t('editor.command.floor_rename');
+    case 'editor.command.floor_level':
+      return t('editor.command.floor_level');
+    case 'editor.command.floor_remove':
+      return t('editor.command.floor_remove');
     case 'editor.command.fog_reveal':
       return t('editor.command.fog_reveal');
     case 'editor.command.fog_hide':
@@ -156,6 +172,18 @@ export function noticeText(notice: ToolNotice): string {
       return t('editor.notices.object_locked');
     case 'wall_limit':
       return t('editor.notices.wall_limit');
+    case 'floor_load_failed':
+      return t('editor.notices.floor_load_failed');
+    case 'floor_limit':
+      return t('editor.notices.floor_limit');
+    case 'floor_last':
+      return t('editor.notices.floor_last');
+    case 'floor_invalid':
+      return t('editor.notices.floor_invalid');
+    case 'stairs_no_target':
+      return t('editor.notices.stairs_no_target');
+    case 'link_required':
+      return t('editor.notices.link_required');
     case 'invalid':
       return t('editor.notices.invalid');
   }

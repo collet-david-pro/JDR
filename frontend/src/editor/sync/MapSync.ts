@@ -4,12 +4,13 @@
  * then feeds the persistent queue with every op of the history and follows the page lifecycle
  * (online/offline, hidden page, unload).
  */
-import type { ChunkKey, MapOp } from '../contracts';
+import type { ChunkKey, MapOp, TileLayerId } from '../contracts';
 import type { EditorSession } from '../ui/session';
 import type { MapsClient } from '../../lib/maps/maps-client';
 import type { MapStores } from '../../lib/persistence/map-stores';
 import type { MapDetail, MapOpConflict } from '../../lib/types';
 import { decodeFog, fogFromBase64 } from '../../formats/fog-codec';
+import type { FloorMeta } from '../model/FloorSlot';
 import { MapOpError, chunkKey } from '../model/ops';
 import { loadMapChunks, type ChunkLoadResult } from './chunk-loader';
 import { OpsQueue, type QueueEvents, type TransportError } from './OpsQueue';
@@ -122,7 +123,19 @@ export class MapSync {
     });
     const fogErrors = await fog;
     session.ui.loading = null;
-    const { replayed, replayFailed } = this.replay(pending);
+    // Pending ops on another floor need its content in memory first (they are applied on top of it).
+    let preloadFailed = 0;
+    for (const meta of this.floorsOf(pending)) {
+      try {
+        await this.loadFloor(meta);
+        session.doc.markFloorLoaded(meta.uid);
+      } catch (error) {
+        console.error(error);
+        preloadFailed++;
+      }
+    }
+    const { replayed, replayFailed: failed } = this.replay(pending);
+    const replayFailed = failed + preloadFailed;
     if (this.disposed) return { chunks, replayed, replayFailed, fogErrors };
     session.refreshPalette();
     this.offs.push(
@@ -130,9 +143,53 @@ export class MapSync {
       this.queue.onStatus((status) => (session.ui.save = status)),
     );
     this.listen();
+    session.floors.setLoader((meta) => this.loadFloor(meta));
     session.setEditable(true);
     if (this.queue.hasUnconfirmed) void this.queue.flush();
     return { chunks, replayed, replayFailed, fogErrors };
+  }
+
+  /**
+   * Fetches the tiles and the fog of a floor that is not in memory yet (a floor created in this
+   * session is already complete). Rejects when the server cannot be reached.
+   */
+  async loadFloor(meta: FloorMeta): Promise<void> {
+    const { doc } = this.session;
+    const ref = meta.uid;
+    const target = {
+      grid: doc.grid,
+      importChunk: (layer: TileLayerId, key: ChunkKey, data: Uint8Array) =>
+        doc.importChunk(layer, key, data, {}, ref),
+    };
+    const result = await loadMapChunks({
+      doc: target,
+      mapId: this.map.id,
+      floor: ref,
+      revision: this.map.revision,
+      fetch: (cells) =>
+        this.client.chunks(this.map.id, { floor: ref, ...(cells !== null ? { cells } : {}) }),
+    });
+    if (result.errors > 0) throw new Error('Some blocks of the floor could not be decoded');
+    const fogErrors = await this.loadFog(ref);
+    if (fogErrors !== 0) throw new Error('The fog of the floor could not be loaded');
+  }
+
+  /** Floors (other than the shown one) not in memory that the ops of the local queue target. */
+  private floorsOf(pending: readonly { ops: readonly MapOp[] }[]): FloorMeta[] {
+    const doc = this.session.doc;
+    const out = new Map<string, FloorMeta>();
+    const note = (ref: string): void => {
+      const meta = doc.floorMeta(ref);
+      if (meta !== undefined && !meta.loaded) out.set(meta.uid, meta);
+    };
+    for (const batch of pending) {
+      for (const op of batch.ops) {
+        if (op.type === 'tiles.set' || op.type === 'fog.reveal' || op.type === 'fog.hide')
+          note(op.floor);
+        else if (op.type === 'floor.remove') note(op.uid);
+      }
+    }
+    return [...out.values()];
   }
 
   /** The server revision moved outside the queue (fog reset): later batches build on it. */
@@ -169,12 +226,12 @@ export class MapSync {
   // ---- Internals -------------------------------------------------------------------------
 
   /** Explored fog of the floor (P5). Returns the number of chunks that failed. */
-  private async loadFog(): Promise<number> {
+  private async loadFog(floor: string = this.floor): Promise<number> {
     const fetchFog = this.client.fog;
     if (fetchFog === undefined) return 0;
     let chunks;
     try {
-      chunks = (await fetchFog.call(this.client, this.map.id, this.floor)).chunks;
+      chunks = (await fetchFog.call(this.client, this.map.id, floor)).chunks;
     } catch (error) {
       console.error(error);
       return -1;
@@ -183,7 +240,7 @@ export class MapSync {
     for (const [cx, cy, data] of chunks) {
       try {
         const bits = await decodeFog(fogFromBase64(data));
-        if (!this.disposed) this.session.doc.importFog(chunkKey(cx, cy), bits);
+        if (!this.disposed) this.session.doc.importFog(chunkKey(cx, cy), bits, floor);
       } catch (error) {
         console.error(error);
         errors++;
@@ -292,8 +349,11 @@ export class MapSync {
     const doc = this.session.doc;
     const before = doc.revision;
     if (this.queue.hasUnconfirmed || this.queue.serverRevision !== revision) return;
+    // The cache holds the floor loaded first; gone (deleted floor) = nothing to refresh.
+    const first = doc.floorMeta(this.floor);
+    if (first === undefined || !first.loaded) return;
     try {
-      const chunks = await doc.exportChunks();
+      const chunks = await doc.exportChunks({}, this.floor);
       if (doc.revision !== before || this.queue.hasUnconfirmed) return;
       await this.stores.chunks.put({ mapId: this.map.id, revision, floor: this.floor, chunks });
     } catch (error) {

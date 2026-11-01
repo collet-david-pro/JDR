@@ -38,7 +38,11 @@ function movedGeometry(o: MapObject, dx: number, dy: number): MapObject['geometr
     case 'window':
       return { a: mv(o.geometry.a), b: mv(o.geometry.b) };
     case 'light':
+    case 'portal':
       return { x: round3(o.geometry.x + dx), y: round3(o.geometry.y + dy) };
+    case 'stairs':
+      // Whole cells only.
+      return { ...o.geometry, x: o.geometry.x + Math.round(dx), y: o.geometry.y + Math.round(dy) };
   }
 }
 
@@ -154,6 +158,10 @@ export function shapeOverlay(o: MapObject): Overlay {
         radius: o.props.radius,
         dimRadius: o.props.dim_radius,
       };
+    case 'stairs':
+      return { kind: 'area', x: o.geometry.x, y: o.geometry.y, w: o.geometry.w, h: o.geometry.h };
+    case 'portal':
+      return { kind: 'area', x: o.geometry.x - 0.4, y: o.geometry.y - 0.4, w: 0.8, h: 0.8 };
   }
 }
 

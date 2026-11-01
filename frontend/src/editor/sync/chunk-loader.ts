@@ -3,8 +3,13 @@
  * when it holds the server revision, otherwise from GET /maps/{id}/chunks — the visible blocks
  * first, then the others in the background, nearest first.
  */
-import { CHUNK_SIZE, type CameraState, type ChunkKey, type GridSpec } from '../contracts';
-import type { MapDocument } from '../model/MapDocument';
+import {
+  CHUNK_SIZE,
+  type CameraState,
+  type ChunkKey,
+  type GridSpec,
+  type TileLayerId,
+} from '../contracts';
 import type { ChunkCacheStore, CachedChunk } from '../../lib/persistence/map-stores';
 import type { ChunkRecord } from '../../formats/chunk-stream';
 
@@ -16,8 +21,14 @@ export interface ChunkFetchResult {
   readonly revision: number | null;
 }
 
+/** What the loader fills: the document, or one floor of it (P9a2). */
+export interface ChunkImportTarget {
+  readonly grid: GridSpec;
+  importChunk(layer: TileLayerId, key: ChunkKey, data: Uint8Array): Promise<void>;
+}
+
 export interface ChunkLoadOptions {
-  readonly doc: MapDocument;
+  readonly doc: ChunkImportTarget;
   readonly mapId: string;
   readonly floor: string;
   /** Server revision of the metadata (GET /maps/{id}). */

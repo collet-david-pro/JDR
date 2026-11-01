@@ -19,7 +19,12 @@ export type MapOpErrorCode =
   | 'unknown_op'
   | 'bad_fog'
   | 'bad_object'
-  | 'object_exists';
+  | 'object_exists'
+  | 'bad_floor'
+  | 'floor_taken'
+  | 'floor_limit'
+  | 'last_floor'
+  | 'floor_unloaded';
 
 export class MapOpError extends Error {
   override readonly name = 'MapOpError';

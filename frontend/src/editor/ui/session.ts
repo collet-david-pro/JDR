@@ -4,6 +4,7 @@
  * testable with a fake engine.
  */
 import type {
+  FloorInfo,
   GridSpec,
   GridTheme,
   LayerDef,
@@ -31,10 +32,17 @@ import {
   type ShortcutAction,
 } from '../shortcuts';
 import { EditorUiState } from '../state.svelte';
-import type { ObjectSelection, ToolContext, ToolId, ToolNotice } from '../tools/types';
+import {
+  EMPTY_OBJECT_SELECTION,
+  type ObjectSelection,
+  type ToolContext,
+  type ToolId,
+  type ToolNotice,
+} from '../tools/types';
 import { createRng, type Rng } from '../util/rng';
 import type { ExplorerClock } from './exploration';
 import { PaletteCatalog, type TileAsset } from './palette';
+import { FloorsController } from './floors';
 import { SceneControls } from './scene-controls';
 import { SoloView } from './solo-view';
 
@@ -54,6 +62,8 @@ export interface EditorKeyEvent extends KeyLike {
 export interface EditorSessionOptions {
   readonly grid: GridSpec;
   readonly floor?: string;
+  /** P9a2: every floor of the map (MapDetail.floors); absent = one floor. */
+  readonly floors?: readonly FloorInfo[];
   /** Saved map: layer stack, palette (index 0 null) and grid theme. */
   readonly layers?: readonly LayerDef[];
   readonly palette?: readonly (PaletteEntry | null)[];
@@ -101,6 +111,8 @@ export class EditorSession {
   /** P5: objects, view mode, exploration. */
   readonly scene: SceneControls;
   readonly catalog = new PaletteCatalog();
+  /** P9a2: floors (list, switching, undoable edits, ghost). */
+  readonly floors: FloorsController;
 
   private engine: EngineLike | null = null;
   private engineOffs: (() => void)[] = [];
@@ -121,6 +133,7 @@ export class EditorSession {
     this.doc = new MapDocument({
       grid: options.grid,
       ...(options.floor !== undefined ? { floor: options.floor } : {}),
+      ...(options.floors !== undefined ? { floors: options.floors } : {}),
       ...(options.layers !== undefined ? { layers: options.layers } : {}),
       ...(options.palette !== undefined ? { palette: options.palette } : {}),
       ...(options.theme !== undefined ? { theme: options.theme } : {}),
@@ -162,6 +175,19 @@ export class EditorSession {
       },
       options.exploreClock,
     );
+    this.floors = new FloorsController(
+      this.doc,
+      this.history,
+      this.ui,
+      {
+        notify: (notice) => this.notify(this.describeNotice(notice)),
+        floorChanged: () => {
+          this.controller.handleAction('cancel');
+          this.controller.selectObjects(EMPTY_OBJECT_SELECTION);
+        },
+      },
+      options.newUid,
+    );
     this.offs.push(
       this.history.onChange((state) => (this.ui.history = state)),
       this.view.onMetaChanged(() => this.syncMeta()),
@@ -177,6 +203,7 @@ export class EditorSession {
     this.engine = engine;
     engine.setMap(this.view);
     this.scene.attach(engine);
+    this.floors.attach(engine);
     engine.setGridVisible(this.ui.gridVisible);
     engine.setPanMode(this.ui.panMode);
     this.ui.renderer = engine.renderer;
@@ -219,12 +246,14 @@ export class EditorSession {
     for (const off of this.engineOffs) off();
     this.engineOffs = [];
     this.scene.detach();
+    this.floors.detach();
     this.engine = null;
   }
 
   dispose(): void {
     this.detach();
     this.scene.dispose();
+    this.floors.dispose();
     for (const off of this.offs) off();
     this.offs.length = 0;
   }
