@@ -9,6 +9,7 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Errors\ConflictException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Maps\MapInput;
+use JDR\Domain\Maps\MapNotesOps;
 
 /**
  * Applies a lot of validated ops (MapOpsInput) to a locked map (projet.md 11.4, contract P4b).
@@ -48,6 +49,7 @@ final class OpsApplier
         private \Closure $canUseAsset,
         ?SceneStore $sceneStore = null,
         ?FloorStore $floorStore = null,
+        private ?MapNotesOps $notes = null,
     ) {
         $this->scene = $sceneStore === null ? null : new SceneApplier($state, $sceneStore);
         $this->floors = $floorStore === null ? null : new FloorApplier($state, $floorStore);
@@ -104,17 +106,31 @@ final class OpsApplier
                 case 'map.meta':
                     $this->meta($op, $field, $baseRevision);
                     break;
+                case 'note.add':
+                case 'note.update':
+                case 'note.remove':
+                case 'secrets.reset':
+                    if ($this->notes === null) {
+                        throw new \LogicException('No notes for ' . $op['type']);
+                    }
+                    if (!$this->notes->apply($op, $i)) {
+                        continue 2;
+                    }
+                    break;
                 default:
                     if ($this->scene === null) {
                         throw new \LogicException('No scene store for ' . $op['type']);
                     }
+                    $this->notes?->beforeObjectOp($op, $field);
                     if (!$this->scene->apply($op, $i)) {
                         continue 2;
                     }
+                    $this->notes?->afterObjectOp($op);
             }
             $applied++;
         }
         $this->scene?->flush();
+        $this->notes?->flush();
 
         return $applied;
     }
@@ -126,7 +142,10 @@ final class OpsApplier
      */
     public function conflicts(): array
     {
-        return $this->scene?->conflicts() ?? [];
+        $conflicts = [...($this->scene?->conflicts() ?? []), ...($this->notes?->conflicts() ?? [])];
+        usort($conflicts, static fn (array $a, array $b): int => $a['op_index'] <=> $b['op_index']);
+
+        return $conflicts;
     }
 
     /**

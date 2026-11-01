@@ -30,6 +30,7 @@ use JDR\Maps\TokenRules;
  * - fog.reveal / fog.hide {floor, chunks: [[cx, cy, base64 raw deflate of 2 048 bytes], ...] (<= 200)}.
  * P9a floor ops (MapFloorOpsInput): floor.add / floor.update / floor.remove, floors designated by id
  * or uid (MapFloors::ref) everywhere an op names a floor; resolved by OpsApplier.
+ * P9 ops: note.add, note.update, note.remove, secrets.reset (MapNoteInput, MapNotesOps).
  * Coordinates are checked here against the largest grid (400), against the map by SceneApplier.
  * What depends on the map (map size, palette, floors, assets, tokens) is checked by OpsApplier.
  * Field errors: "ops" (required | invalid | too_many), "ops.<i>" / "ops.<i>.<key>[.<sub>]".
@@ -55,6 +56,10 @@ final class MapOpsInput
         'maptoken.remove' => ['type', 'uid'],
         'fog.reveal' => ['type', 'floor', 'chunks'],
         'fog.hide' => ['type', 'floor', 'chunks'],
+        'note.add' => ['type', 'note'],
+        'note.update' => ['type', 'uid', 'patch'],
+        'note.remove' => ['type', 'uid'],
+        'secrets.reset' => ['type'],
     ] + MapFloorOpsInput::KEYS;
 
     /**
@@ -119,6 +124,10 @@ final class MapOpsInput
                 'object.update', 'maptoken.update' => self::update($op, $field, $errors),
                 'object.remove', 'maptoken.remove' => self::remove($op, $field, $errors),
                 'floor.add', 'floor.update', 'floor.remove' => MapFloorOpsInput::parse($op, $field, $errors),
+                'note.add' => MapNoteInput::add($op, $field, $errors),
+                'note.update' => MapNoteInput::update($op, $field, $errors),
+                'note.remove' => MapNoteInput::remove($op, $field, $errors),
+                'secrets.reset' => ['type' => 'secrets.reset'],
                 default => self::fog($op, $field, $errors),
             };
             if ($parsed !== null) {

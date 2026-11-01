@@ -39,6 +39,7 @@ final class MapService
         private MapSceneRepository $scene,
         private PlayerMapAccess $players,
         private MapLinks $links,
+        private MapNotes $notes,
     ) {
     }
 
@@ -181,6 +182,7 @@ final class MapService
             }
             $this->maps->copyRefs($source->id, $id);
             $this->links->rebuildMap($id);
+            $this->notes->copy($source->id, $id);
 
             return $id;
         });

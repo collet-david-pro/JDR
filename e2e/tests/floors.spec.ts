@@ -225,7 +225,10 @@ test("1. editor: second floor, paint, stairs, reload, delete and undo", async ({
     await page.mouse.down();
     await page.mouse.move(cx - 90, cy - 40, { steps: 5 });
     await page.mouse.up();
-    await expect.poll(() => page.getByTestId("status-history").getAttribute("data-count")).toBe("3");
+    // At least floor + stroke + stairs: on a loaded machine the stroke may exceed the merge window of the history.
+    await expect
+      .poll(async () => Number(await page.getByTestId("status-history").getAttribute("data-count")))
+      .toBeGreaterThanOrEqual(3);
     await saved();
 
     const upperUid = await page.getByTestId("floor-select").inputValue();

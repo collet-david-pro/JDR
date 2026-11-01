@@ -379,6 +379,16 @@ describe('objects, fog, ambient, camera, notes', () => {
       expect(r.effects).toEqual([]);
     }
   });
+
+  it('note and zone events only move the cursor until their screens exist (P9b2)', () => {
+    const before = player();
+    for (const type of ['note.shared', 'note.hidden', 'zone.entered']) {
+      const r = apply(before, type, { uid: 'n1' });
+      expect(r.state.session).toBe(before.session);
+      expect(r.state.tokens).toBe(before.tokens);
+      expect(r.effects).toEqual([]);
+    }
+  });
 });
 
 describe('map content events', () => {

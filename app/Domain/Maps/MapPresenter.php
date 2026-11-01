@@ -24,6 +24,7 @@ final class MapPresenter
         private AssetUrls $urls,
         private MapThumbnailService $thumbs,
         private MapSceneRepository $scene,
+        private MapNotes $notes,
     ) {
     }
 
@@ -57,9 +58,11 @@ final class MapPresenter
     }
 
     /**
+     * @param bool $withNotes the reader is a GM / co-GM (refusal by default: the notes are never
+     *                        given by mistake; a player's come from PlayerView)
      * @return array<string, mixed>
      */
-    public function full(Map $map, string $apiBase): array
+    public function full(Map $map, string $apiBase, bool $withNotes = false): array
     {
         return [
             ...$this->summary($map, $apiBase),
@@ -78,7 +81,7 @@ final class MapPresenter
             'floors' => $this->maps->floors($map->id),
             'format_version' => $map->formatVersion,
             'objects' => $this->scene->objects($map->id),
-            'notes' => [],
+            'notes' => $withNotes ? $this->notes->forEditor($map->id) : [],
             'tokens_placed' => $this->scene->tokens($map->id),
             'generation' => $this->maps->generation($map->id),
         ];

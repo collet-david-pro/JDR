@@ -39,7 +39,7 @@ final class UpdatePackageTest extends ApiTestCase
      */
     private static function release(): array
     {
-        return Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0006_probe.sql' => "SELECT 1;\n"];
+        return Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0007_probe.sql' => "SELECT 1;\n"];
     }
 
     private function package(?FakeReleaseHttp $http = null): UpdatePackage
@@ -74,10 +74,10 @@ final class UpdatePackageTest extends ApiTestCase
         self::assertSame('0.2.0', $summary['version']);
         self::assertSame('0.1.0', $summary['current']);
         self::assertSame('unverified', $summary['authenticity']);
-        self::assertSame(['added' => 2, 'changed' => 5, 'removed' => 1, 'unchanged' => 7], $summary['files']);
-        self::assertSame(['app/New/Added.php', 'migrations/0006_probe.sql'], $summary['changes']['added']);
+        self::assertSame(['added' => 2, 'changed' => 5, 'removed' => 1, 'unchanged' => 8], $summary['files']);
+        self::assertSame(['app/New/Added.php', 'migrations/0007_probe.sql'], $summary['changes']['added']);
         self::assertSame(['app/Old/Gone.php'], $summary['changes']['removed']);
-        self::assertSame(['0006_probe.sql'], $summary['migrations']);
+        self::assertSame(['0007_probe.sql'], $summary['migrations']);
         self::assertSame(['unverified'], array_column($summary['warnings'], 'code'));
         self::assertSame($summary, $this->package()->pending());
         self::assertFileExists($this->storage->runDir($summary['id']) . '/package.zip');

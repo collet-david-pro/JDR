@@ -13,6 +13,7 @@ use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
 use JDR\Domain\Sessions\SessionEvents;
+use JDR\Domain\Sessions\NoteFanout;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
@@ -52,6 +53,8 @@ final class MapOpsService
         private MapFloorRepository $floorRows,
         private SessionEvents $sessionEvents,
         private MapLinks $links,
+        private MapNotes $notes,
+        private NoteFanout $noteFanout,
     ) {
     }
 
@@ -108,12 +111,14 @@ final class MapOpsService
                 $this->maps->floors($locked->id),
             );
             $capture = $this->broadcaster->prepare($locked, $user, self::withFloorIds($ops, $state), $clientOpId);
+            $noteCapture = $capture === null ? null : $this->noteFanout->prepare($locked, $ops);
             $applier = new OpsApplier(
                 $state,
                 new MapChunkStore($this->maps, $locked->id, $this->floorRows),
                 $canUse,
                 new MapSceneStore($this->scene, $locked->id, $game->id, $this->links),
                 new MapFloorStore($this->maps, $this->floorRows, $locked->id),
+                new MapNotesOps($this->notes, $this->maps, $this->scene, $state, $locked->id, $game->id, $canUse),
             );
             $applied = $applier->apply($ops, $envelope['base_revision']);
             $conflicts = $applier->conflicts();
@@ -143,6 +148,9 @@ final class MapOpsService
             $this->versions->afterOps($locked, $revision, $user->id);
             if ($capture !== null) {
                 $changed = $state->changedColumns() + ($state->floorsChanged ? ['floors' => true] : []);
+                if ($noteCapture !== null) {
+                    $this->noteFanout->emit($noteCapture, $capture['batches'], $revision);
+                }
                 $this->broadcaster->publish($capture, $revision, $envelope['ops'], $conflicts, $applier->dirtyChunks(), $changed);
             }
             foreach ($applier->movedSessions() as $moved) {

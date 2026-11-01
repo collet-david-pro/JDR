@@ -16,7 +16,7 @@ use JDR\Domain\Maps\MapInput;
  *
  * Types: wall {points [[x, y]] 2-1 000, closed}, door / window {a, b} (length 0.1-20),
  * light {x, y}. Every geometry / props key is required (the document accepts a few defaults,
- * see $lenient); unknown keys are refused. Other 12.4 types arrive with P9 (refused until then).
+ * see $lenient); unknown keys are refused. P9: pin, zone, trap, secret (ObjectRulesNotes).
  * texture_asset / asset_open / asset_closed are reserved (null) until P9.
  *
  * Errors are added to $errors as "<field>.<key>[.<sub>]" => required | invalid | too_small |
@@ -25,7 +25,7 @@ use JDR\Domain\Maps\MapInput;
  */
 final class ObjectRules
 {
-    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal'];
+    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal', ...ObjectRulesNotes::TYPES];
     public const VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'];
     public const UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const SORT_MAX = 1000000;
@@ -45,7 +45,7 @@ final class ObjectRules
     public const FLICKER_TYPES = ['none', 'torch', 'pulse'];
     public const FLICKER_SPEED_MIN = 0.1;
     public const FLICKER_SPEED_MAX = 10.0;
-    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props'];
+    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props', 'pin' => 'props', 'zone' => 'gm', 'trap' => 'props', 'secret' => 'props'];
 
     /** Keys of an object, in canonical order (API form). */
     public const OBJECT_KEYS = ['uid', 'floor', 'type', 'layer', 'geometry', 'props', 'visibility', 'locked', 'sort_order', 'rev'];
@@ -58,6 +58,10 @@ final class ObjectRules
         'light' => ['x', 'y'],
         'stairs' => ['x', 'y', 'w', 'h'],
         'portal' => ['x', 'y'],
+        'pin' => ['x', 'y'],
+        'zone' => ['polygon'],
+        'trap' => ['x', 'y', 'polygon'],
+        'secret' => ['a', 'b', 'polygon'],
     ];
     private const PROPS_KEYS = [
         'wall' => ['kind', 'thickness', 'blocks_vision', 'blocks_light', 'blocks_move', 'texture_asset', 'height'],
@@ -66,6 +70,10 @@ final class ObjectRules
         'light' => ['radius', 'dim_radius', 'color', 'intensity', 'flicker', 'cone', 'enabled', 'follows_token'],
         'stairs' => ['direction', 'to_floor', 'link'],
         'portal' => ['icon', 'color', 'label', 'link'],
+        'pin' => ['icon', 'color', 'note'],
+        'zone' => ['kind', 'note', 'show_on_enter'],
+        'trap' => ['note', 'reveal_effect'],
+        'secret' => ['kind', 'note'],
     ];
     /** Props keys the document may omit (reserved for P9): default null. */
     private const LENIENT_PROPS = ['texture_asset', 'height', 'asset_open', 'asset_closed'];
@@ -100,6 +108,7 @@ final class ObjectRules
 
             return null;
         }
+        $o = ObjectRulesNotes::withDefaults($o);
         $before = count($errors);
         $uid = self::uid($o, 'uid', $field . '.uid', $errors);
         $floorValue = null;
@@ -148,6 +157,9 @@ final class ObjectRules
             } else {
                 $props = self::props($type, $o['props'], $field . '.props', $errors, $lenient);
             }
+        }
+        if ($geometry !== null && $props !== null && ObjectRulesNotes::handles($type)) {
+            ObjectRulesNotes::enforce($type, $layer, $visibility, $geometry, $props, $field, $errors);
         }
         if (count($errors) !== $before || $type === null || $geometry === null || $props === null || $uid === null) {
             return null;
@@ -232,6 +244,9 @@ final class ObjectRules
                 $object[$key] = $patch[$key];
             }
         }
+        if (ObjectRulesNotes::handles($type)) {
+            ObjectRulesNotes::enforce($type, $object['layer'], $object['visibility'], $object['geometry'], $object['props'], $field, $errors);
+        }
 
         return count($errors) === $before ? $object : null;
     }
@@ -242,6 +257,9 @@ final class ObjectRules
      */
     public static function geometry(string $type, mixed $value, string $field, array &$errors, float $width, float $height): ?array
     {
+        if (ObjectRulesNotes::handles($type)) {
+            return ObjectRulesNotes::geometry($type, $value, $field, $errors, $width, $height);
+        }
         $g = Fields::object($value, self::GEOMETRY_KEYS[$type]);
         if ($g === null) {
             $errors[$field] = 'invalid';
@@ -322,6 +340,9 @@ final class ObjectRules
      */
     public static function props(string $type, mixed $value, string $field, array &$errors, bool $lenient): ?array
     {
+        if (ObjectRulesNotes::handles($type)) {
+            return ObjectRulesNotes::props($type, $value, $field, $errors);
+        }
         $keys = self::PROPS_KEYS[$type];
         $p = Fields::object($value, $keys);
         if ($p === null) {
@@ -400,6 +421,9 @@ final class ObjectRules
     {
         if (ObjectRulesP9::handles((string) $object['type'])) {
             return ObjectRulesP9::bbox($object, $width, $height);
+        }
+        if (ObjectRulesNotes::handles($object['type'])) {
+            return ObjectRulesNotes::bbox($object, $width, $height);
         }
         $g = $object['geometry'];
         $pad = 0.0;

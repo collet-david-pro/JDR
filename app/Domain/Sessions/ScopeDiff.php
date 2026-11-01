@@ -36,8 +36,8 @@ final class ScopeDiff
         $upsert = [];
         $remove = [];
         foreach ($this->objectsNear(array_merge($added, $removed)) as $object) {
-            $v0 = $sight->object($object, $old);
-            $v1 = $sight->object($object, $new);
+            $v0 = $sight->object($object, $old, null, $user);
+            $v1 = $sight->object($object, $new, null, $user);
             if ($v1 !== null && $v0 === null) {
                 $upsert[] = $v1;
             } elseif ($v1 === null && $v0 !== null) {

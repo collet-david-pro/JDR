@@ -14,6 +14,7 @@ use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Domain\Sessions\EventTypes;
 use JDR\Domain\Sessions\FanoutBatch;
 use JDR\Domain\Sessions\SessionRepository;
+use JDR\Domain\Sessions\ZoneEntry;
 use JDR\Maps\Collision;
 use JDR\Maps\ObjectRules;
 use JDR\Maps\PlayerFilter;
@@ -29,7 +30,7 @@ use JDR\Maps\PlayerFilter;
  *   for the GM, maptoken.added for the players who see it);
  * - camera.set: play_sessions.camera, camera.moved (players, ephemeral, D3);
  * - ambient.set: maps.ambient (same rules as map.meta ambient), ambient.changed;
- * - note.show: note.read_aloud only;
+ * - note.show: note.read_aloud only; note.share, secret.reveal, trap.reveal: NoteActions;
  * - fog.reveal / fog.hide: FogActions.
  * Result of an action: {index, ok: true, ...} or {index, ok: false, error: "blocked_by_wall",
  * position: {x, y}} (the token stopped at the last valid point).
@@ -43,6 +44,8 @@ final class ActionHandlers
         private FogActions $fog,
         private Db $db,
         private Clock $clock,
+        private NoteActions $notes,
+        private ZoneEntry $zones,
     ) {
     }
 
@@ -60,7 +63,9 @@ final class ActionHandlers
             'fog.reveal', 'fog.hide' => $this->fog->apply($s, $f, $a),
             'camera.set' => $this->camera($s, $f, $a),
             'ambient.set' => $this->ambient($s, $f, $a),
-            default => $this->note($f, $a),
+            'note.share' => $this->notes->share($s, $f, $a, $index),
+            'secret.reveal', 'trap.reveal' => $this->revealObject($s, $f, $this->notes->revealTarget($s, $a, $index)),
+            default => isset($a['note_uid']) ? $this->notes->show($s, $f, $a, $index) : $this->note($f, $a),
         };
 
         return ['index' => $index] + $result;
@@ -104,6 +109,7 @@ final class ActionHandlers
             $s->tokens[$a['uid']]['token'] = $after;
             $f->gm(EventTypes::TOKEN_MOVED, FanoutBatch::moved($after));
             $f->token($before, $after, EventTypes::TOKEN_MOVED);
+            $this->zones->afterMove($s, $f, $before, $after);
             if (isset($s->assignments[(int) $after['token_id']])) {
                 $f->refreshScopes();
             }

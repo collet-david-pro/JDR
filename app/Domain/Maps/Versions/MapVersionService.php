@@ -18,6 +18,7 @@ use JDR\Domain\Maps\MapPolicy;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Support\Dates;
 use JDR\Domain\Users\User;
+use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
 use JDR\Maps\Document\MapDocumentBuilder;
 use JDR\Maps\Document\MapDocumentMigrator;
 use JDR\Maps\Document\MapDocumentValidator;
@@ -57,6 +58,7 @@ final class MapVersionService
         private PaletteResolver $resolver,
         private Clock $clock,
         private Logger $logger,
+        private MapOpsBroadcaster $broadcaster,
     ) {
     }
 
@@ -131,7 +133,13 @@ final class MapVersionService
             }
             $this->snapshot($locked, 'pre_restore', null, $user->id);
             $tokens = $this->writer->resolveTokens((int) $locked->gameId, $doc['tokens_placed'], true);
+            // P9: a session playing the map reloads it (map.ops.public {reload: true}, filtered snapshot).
+            $capture = $this->broadcaster->prepare($locked, $user, [], $clientOpId ?? 'version-restore-' . $versionId);
+            $doc['notes'] = $this->resolveNotes($doc['notes'] ?? [], $user->id);
             $revision = $this->writer->replace($locked, $doc, $this->resolvePalette($doc['palette'], $user->id), $tokens['ids']);
+            if ($capture !== null) {
+                $this->broadcaster->publish($capture, $revision, [], [], [], ['layers' => $doc['layers']]);
+            }
             if ($clientOpId !== null) {
                 try {
                     $this->maps->rememberProcessed($clientOpId, $user->id, [
@@ -229,6 +237,24 @@ final class MapVersionService
         }
 
         return (new MapDocumentValidator($migrator))->validate($raw, true);
+    }
+
+    /**
+     * Image of the notes of a snapshot: same rule as the palette below.
+     *
+     * @param list<array<string, mixed>> $notes
+     * @return list<array<string, mixed>>
+     */
+    private function resolveNotes(array $notes, int $userId): array
+    {
+        $existing = $this->resolver->existing(array_values(array_filter(array_map(static fn (array $n): ?int => $n['asset_id'] ?? null, $notes))));
+        $bySha = $this->resolver->resolve($userId, array_values(array_filter(array_column($notes, 'sha256'))));
+        foreach ($notes as $i => $note) {
+            $id = $note['asset_id'] ?? null;
+            $notes[$i]['asset_id'] = $id !== null && isset($existing[$id]) ? $id : ($bySha[$note['sha256'] ?? ''] ?? null);
+        }
+
+        return $notes;
     }
 
     /**

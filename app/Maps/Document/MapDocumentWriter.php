@@ -11,6 +11,7 @@ use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapFloorRepository;
 use JDR\Domain\Maps\MapFloors;
 use JDR\Domain\Maps\MapLinks;
+use JDR\Domain\Maps\MapNotes;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Maps\ChunkCodec;
@@ -44,6 +45,7 @@ final class MapDocumentWriter
         private MapSceneRepository $scene,
         private MapFloorRepository $floorRows,
         private MapLinks $links,
+        private MapNotes $notes,
     ) {
     }
 
@@ -211,6 +213,7 @@ final class MapDocumentWriter
         foreach ($doc['fog'] ?? [] as $chunk) {
             $this->scene->insertFog($mapId, $floorIds[$chunk['floor']], $chunk['cx'], $chunk['cy'], FogCodec::encode($chunk['raw']));
         }
+        $this->maps->applyRefDeltas($mapId, $this->notes->writeDocument($mapId, $doc));
     }
 
     /**

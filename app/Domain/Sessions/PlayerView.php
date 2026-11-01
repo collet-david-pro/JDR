@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
+use JDR\Domain\Maps\MapNotes;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\ChunkCodecException;
@@ -23,7 +24,7 @@ final class PlayerView
 {
     private const MAX_SQL_CELLS = 400;
 
-    public function __construct(private MapRepository $maps)
+    public function __construct(private MapRepository $maps, private MapNotes $notes)
     {
     }
 
@@ -65,12 +66,13 @@ final class PlayerView
      * @param list<string>                                                      $revealed uids
      * @param array<string, array{0: float, 1: float, 2: float, 3: float}>      $bboxes uid => box (only read when restricted)
      * @param list<string>                                                      $hiddenTokens uids of the hidden placed tokens
+     * @param list<string>                                                      $visibleNotes uids of the notes he sees
      * @return list<array<string, mixed>>
      */
-    public function objects(array $objects, array $revealed, FogScope $scope, array $bboxes, array $hiddenTokens = []): array
+    public function objects(array $objects, array $revealed, FogScope $scope, array $bboxes, array $hiddenTokens = [], array $visibleNotes = []): array
     {
         $out = array_values(array_filter(
-            PlayerFilter::objects($objects, $revealed, $hiddenTokens),
+            PlayerFilter::objects($objects, $revealed, $hiddenTokens, $visibleNotes),
             static fn (array $o): bool => $scope->allowsFloor((int) $o['floor']),
         ));
         if (!$scope->isRestricted()) {
@@ -82,6 +84,31 @@ final class PlayerView
 
             return $box !== null && $scope->allowsBox((int) $o['floor'], $box);
         }));
+    }
+
+    public function noteVisibility(int $mapId): NoteVisibility
+    {
+        return $this->notes->visibility($mapId);
+    }
+
+    /**
+     * The notes $viewer (a player, TableView::USER) may read: recipient forms.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function notes(int $mapId, int $viewer): array
+    {
+        return $this->notes->forRecipient($mapId, $viewer);
+    }
+
+    /**
+     * Assets of the notes $viewer may read; null: of every note (GM).
+     *
+     * @return list<int>
+     */
+    public function noteAssetIds(int $mapId, ?int $viewer): array
+    {
+        return $this->notes->assetIds($mapId, $viewer);
     }
 
     /**

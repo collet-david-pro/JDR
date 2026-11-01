@@ -72,7 +72,7 @@ final class SchemaTest extends DbTestCase
             'visibility', 'revealed_at', 'locked', 'sort_order', 'bbox_x1', 'bbox_y1', 'bbox_x2', 'bbox_y2', 'rev',
             'updated_at',
         ],
-        'map_notes' => ['id', 'map_id', 'uid', 'title', 'body', 'asset_id', 'gm_only', 'read_aloud', 'updated_at'],
+        'map_notes' => ['id', 'map_id', 'uid', 'title', 'body', 'asset_id', 'gm_only', 'audience', 'read_aloud', 'updated_at'],
         'map_links' => ['id', 'from_map_id', 'from_object_id', 'to_map_id', 'to_floor_id', 'to_x', 'to_y'],
         'map_tokens' => [
             'id', 'uid', 'map_id', 'floor_id', 'token_id', 'x', 'y', 'rotation', 'scale', 'hidden', 'light_override',
@@ -104,6 +104,7 @@ final class SchemaTest extends DbTestCase
      */
     private const LATER_COLUMNS = [
         'event_seq' => ['id', 'purged_upto'],
+        'map_note_users' => ['note_id', 'user_id'],
     ];
 
     /**
@@ -147,6 +148,8 @@ final class SchemaTest extends DbTestCase
         'map_chunks_floor' => ['map_chunks', 'floor_id', 'map_floors', 'CASCADE'],
         'map_notes_map' => ['map_notes', 'map_id', 'maps', 'CASCADE'],
         'map_notes_asset' => ['map_notes', 'asset_id', 'assets', 'SET NULL'],
+        'map_note_users_note' => ['map_note_users', 'note_id', 'map_notes', 'CASCADE'],
+        'map_note_users_user' => ['map_note_users', 'user_id', 'users', 'CASCADE'],
         'map_objects_map' => ['map_objects', 'map_id', 'maps', 'CASCADE'],
         'map_objects_floor' => ['map_objects', 'floor_id', 'map_floors', 'CASCADE'],
         'map_objects_asset' => ['map_objects', 'asset_id', 'assets', 'SET NULL'],

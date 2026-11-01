@@ -152,13 +152,7 @@ final class SessionPlayers
             if ($player['status'] === 'kicked') {
                 return null;
             }
-            $this->sessions->setPlayerStatus($sessionId, $target, 'kicked', false);
-            $freed = $this->sessions->removeUserAssignments($sessionId, $target);
-            $this->events->kicked($sessionId, $target, $user->id, $opId);
-            foreach ($freed as $tokenId) {
-                $this->events->assignment($sessionId, $tokenId, null, $user->id, $opId);
-            }
-            $this->events->left($sessionId, $target, $player['username'], $user->id, $opId);
+            $this->eject($sessionId, $target, $player['username'], $user->id, $opId);
 
             return null;
         });
@@ -219,6 +213,37 @@ final class SessionPlayers
     private function requireSession(int $sessionId): Session
     {
         return $this->sessions->findForUpdate($sessionId) ?? throw new NotFoundException();
+    }
+
+    /**
+     * A member leaves the game (removed, or by himself; inside its transaction): he is kicked from
+     * its open sessions, or he would keep reading them (etapes P09 D3).
+     */
+    public function leftGame(int $gameId, int $userId, int $actor): void
+    {
+        $db = $this->sessions->db();
+        $rows = $db->fetchAll(
+            'SELECT p.`session_id` FROM ' . $db->t('session_players') . ' p JOIN ' . $db->t('play_sessions') . ' s ON s.`id` = p.`session_id` '
+            . "WHERE s.`game_id` = ? AND p.`user_id` = ? AND p.`status` <> 'kicked' AND s.`state` <> 'ended'",
+            [$gameId, $userId],
+        );
+        foreach ($rows as $row) {
+            $player = $this->sessions->player((int) $row['session_id'], $userId, true);
+            if ($player !== null) {
+                $this->eject((int) $row['session_id'], $userId, $player['username'], $actor, null);
+            }
+        }
+    }
+
+    private function eject(int $sessionId, int $target, string $username, int $actor, ?string $opId): void
+    {
+        $this->sessions->setPlayerStatus($sessionId, $target, 'kicked', false);
+        $freed = $this->sessions->removeUserAssignments($sessionId, $target);
+        $this->events->kicked($sessionId, $target, $actor, $opId);
+        foreach ($freed as $tokenId) {
+            $this->events->assignment($sessionId, $tokenId, null, $actor, $opId);
+        }
+        $this->events->left($sessionId, $target, $username, $actor, $opId);
     }
 
     private function requireNotEnded(Session $session): void

@@ -47,7 +47,7 @@ final class MapsController
     {
         $map = $this->maps->create(CurrentUser::require($request), self::id($request), self::body($request));
 
-        return Response::ok($this->presenter->full($map, $this->apiBase($request)), [], 201);
+        return Response::ok($this->presenter->full($map, $this->apiBase($request), true), [], 201);
     }
 
     /**
@@ -57,7 +57,7 @@ final class MapsController
     {
         $map = $this->maps->show(CurrentUser::require($request), self::id($request));
 
-        return Response::ok($this->presenter->full($map, $this->apiBase($request)));
+        return Response::ok($this->presenter->full($map, $this->apiBase($request), true));
     }
 
     /**
@@ -97,7 +97,7 @@ final class MapsController
     {
         $map = $this->maps->duplicate(CurrentUser::require($request), self::id($request), self::body($request));
 
-        return Response::ok($this->presenter->full($map, $this->apiBase($request)), [], 201);
+        return Response::ok($this->presenter->full($map, $this->apiBase($request), true), [], 201);
     }
 
     /**

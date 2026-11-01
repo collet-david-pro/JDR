@@ -22,6 +22,7 @@ use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapOpsInput;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Users\User;
+use JDR\Maps\Document\MapDocumentNotes;
 use JDR\Maps\Document\MapDocumentValidator;
 use JDR\Maps\Document\MapDocumentWriter;
 use JDR\Maps\Document\PaletteResolver;
@@ -158,6 +159,11 @@ final class MapImportService
                         $names[$entry['sha256']] ??= $entry['name'];
                     }
                 }
+                foreach ($doc['notes'] ?? [] as $note) {
+                    if ($note['sha256'] !== null) {
+                        $names[$note['sha256']] ??= $note['title'];
+                    }
+                }
                 $bySha = $this->resolver->resolve($user->id, array_keys($names));
                 foreach ($names as $sha => $name) {
                     if (isset($bySha[$sha]) || !isset($files[$sha]) || $reader === null) {
@@ -185,6 +191,7 @@ final class MapImportService
                     }
                     $palette[] = $item;
                 }
+                $doc['notes'] = MapDocumentNotes::resolveImported($doc['notes'] ?? [], $bySha, $missing);
                 $missing = array_values($missing);
                 $tokens = $this->writer->resolveTokens($game->id, $doc['tokens_placed'], false);
                 $mapId = $this->writer->create($game->id, $user->id, null, $doc, $palette, $tokens['ids']);
