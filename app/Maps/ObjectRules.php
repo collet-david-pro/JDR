@@ -25,7 +25,7 @@ use JDR\Domain\Maps\MapInput;
  */
 final class ObjectRules
 {
-    public const TYPES = ['wall', 'door', 'window', 'light'];
+    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal'];
     public const VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'];
     public const UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const SORT_MAX = 1000000;
@@ -45,7 +45,7 @@ final class ObjectRules
     public const FLICKER_TYPES = ['none', 'torch', 'pulse'];
     public const FLICKER_SPEED_MIN = 0.1;
     public const FLICKER_SPEED_MAX = 10.0;
-    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting'];
+    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props'];
 
     /** Keys of an object, in canonical order (API form). */
     public const OBJECT_KEYS = ['uid', 'floor', 'type', 'layer', 'geometry', 'props', 'visibility', 'locked', 'sort_order', 'rev'];
@@ -56,12 +56,16 @@ final class ObjectRules
         'door' => ['a', 'b'],
         'window' => ['a', 'b'],
         'light' => ['x', 'y'],
+        'stairs' => ['x', 'y', 'w', 'h'],
+        'portal' => ['x', 'y'],
     ];
     private const PROPS_KEYS = [
         'wall' => ['kind', 'thickness', 'blocks_vision', 'blocks_light', 'blocks_move', 'texture_asset', 'height'],
-        'door' => ['state', 'locked', 'secret', 'asset_open', 'asset_closed', 'swing'],
+        'door' => ['state', 'locked', 'secret', 'asset_open', 'asset_closed', 'swing', 'link'],
         'window' => ['kind'],
         'light' => ['radius', 'dim_radius', 'color', 'intensity', 'flicker', 'cone', 'enabled', 'follows_token'],
+        'stairs' => ['direction', 'to_floor', 'link'],
+        'portal' => ['icon', 'color', 'label', 'link'],
     ];
     /** Props keys the document may omit (reserved for P9): default null. */
     private const LENIENT_PROPS = ['texture_asset', 'height', 'asset_open', 'asset_closed'];
@@ -253,6 +257,9 @@ final class ObjectRules
         if (count($errors) !== $before) {
             return null;
         }
+        if (ObjectRulesP9::handles($type)) {
+            return ObjectRulesP9::geometry($type, $g, $field, $errors, $width, $height);
+        }
         switch ($type) {
             case 'wall':
                 $points = $g['points'];
@@ -324,6 +331,15 @@ final class ObjectRules
         }
         $before = count($errors);
         foreach ($keys as $key) {
+            if (in_array($key, ObjectRulesP9::OPTIONAL_PROPS, true)) {
+                if (($p[$key] ?? null) === null) {
+                    unset($p[$key]);
+                    if ($key === 'link' && $type === 'portal') {
+                        $errors[$field . '.link'] = 'required';
+                    }
+                }
+                continue;
+            }
             if (!array_key_exists($key, $p)) {
                 if ($lenient && in_array($key, self::LENIENT_PROPS, true)) {
                     $p[$key] = null;
@@ -337,9 +353,14 @@ final class ObjectRules
         }
         $out = [];
         foreach ($keys as $key) {
+            if (!array_key_exists($key, $p)) {
+                continue;
+            }
             $v = $p[$key];
             $f = $field . '.' . $key;
             $checked = match ($key) {
+                'direction', 'icon', 'to_floor', 'label', 'link' => ObjectRulesP9::prop($key, $v, $f, $errors, $lenient),
+                'color' => $type === 'portal' ? ObjectRulesP9::prop($key, $v, $f, $errors) : self::color($v, $f, $errors),
                 'kind' => self::enum($v, $type === 'wall' ? self::WALL_KINDS : self::WINDOW_KINDS, $f, $errors),
                 'thickness' => self::number($v, self::THICKNESS_MIN, self::THICKNESS_MAX, $f, $errors),
                 'blocks_vision', 'blocks_light', 'blocks_move', 'locked', 'secret', 'enabled' => self::bool($v, $f, $errors),
@@ -348,7 +369,6 @@ final class ObjectRules
                 'state' => self::enum($v, self::DOOR_STATES, $f, $errors),
                 'swing' => self::enum($v, self::DOOR_SWINGS, $f, $errors),
                 'radius', 'dim_radius' => self::number($v, 0, self::LIGHT_RADIUS_MAX, $f, $errors),
-                'color' => self::color($v, $f, $errors),
                 'intensity' => self::number($v, 0, 1, $f, $errors),
                 'flicker' => self::flicker($v, $f, $errors),
                 'cone' => $v === null ? null : self::cone($v, $f, $errors),
@@ -378,6 +398,9 @@ final class ObjectRules
      */
     public static function bbox(array $object, float $width, float $height): array
     {
+        if (ObjectRulesP9::handles((string) $object['type'])) {
+            return ObjectRulesP9::bbox($object, $width, $height);
+        }
         $g = $object['geometry'];
         $pad = 0.0;
         switch ($object['type']) {
@@ -442,6 +465,9 @@ final class ObjectRules
             }
             if (is_array($props['cone'] ?? null)) {
                 $props['cone'] = self::ordered($props['cone'], self::CONE_KEYS);
+            }
+            if (is_array($props['link'] ?? null)) {
+                $props['link'] = ObjectRulesP9::canonicalLink($props['link']);
             }
             $out['props'] = $props;
         }

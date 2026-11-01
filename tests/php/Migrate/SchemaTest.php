@@ -65,7 +65,7 @@ final class SchemaTest extends DbTestCase
             'generation', 'format_version', 'revision', 'is_template', 'template_scope', 'thumb_asset_path',
             'created_at', 'updated_at', 'deleted_at',
         ],
-        'map_floors' => ['id', 'map_id', 'level', 'name', 'sort_order'],
+        'map_floors' => ['id', 'map_id', 'uid', 'level', 'name', 'sort_order'],
         'map_chunks' => ['map_id', 'floor_id', 'layer', 'cx', 'cy', 'data', 'revision', 'updated_at'],
         'map_objects' => [
             'id', 'uid', 'map_id', 'floor_id', 'layer', 'type', 'asset_id', 'geometry', 'props', 'note_id',
@@ -186,7 +186,7 @@ final class SchemaTest extends DbTestCase
         'invitations' => [['code_hash']],
         'assets' => [['uuid']],
         'asset_tags' => [['owner_user_id', 'name']],
-        'map_floors' => [['map_id', 'level']],
+        'map_floors' => [['map_id', 'level'], ['map_id', 'uid']],
         'map_objects' => [['map_id', 'uid']],
         'map_tokens' => [['map_id', 'uid']],
         'play_sessions' => [['code']],
@@ -412,7 +412,7 @@ final class SchemaTest extends DbTestCase
             $mapId = (int) $db->lastInsertId();
             $db->execute('UPDATE ' . $db->t('games') . ' SET world_map_id = ? WHERE id = ?', [$mapId, $gameId]);
             $db->execute(
-                'INSERT INTO ' . $db->t('map_floors') . ' (map_id, level, name) VALUES (?, 0, ?)',
+                'INSERT INTO ' . $db->t('map_floors') . " (map_id, uid, level, name) VALUES (?, 'f1', 0, ?)",
                 [$mapId, 'Ground']
             );
         });

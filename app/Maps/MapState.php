@@ -20,7 +20,7 @@ final class MapState
      * @param list<array{asset_id: int, autotile?: ?string}|null> $palette
      * @param list<array<string, mixed>>                          $layers
      * @param array<string, mixed>                                $ambient
-     * @param list<int>                                           $floorIds
+     * @param list<array{id: int, uid: string, level: int, name: string, sort_order: int}> $floors in display order
      */
     public function __construct(
         public readonly int $revision,
@@ -34,8 +34,41 @@ final class MapState
         public array $ambient,
         public array $palette,
         public array $layers,
-        public readonly array $floorIds,
+        array $floors,
     ) {
+        $this->setFloors($floors);
+    }
+
+    /** @var list<int> ids of the floors of the map (kept in step with $floors) */
+    public array $floorIds = [];
+
+    /** @var list<array{id: int, uid: string, level: int, name: string, sort_order: int}> */
+    public array $floors = [];
+
+    /** True once a floor.* op changed the floors of the map. */
+    public bool $floorsChanged = false;
+
+    /**
+     * @param list<array{id: int, uid: string, level: int, name: string, sort_order: int}> $floors
+     */
+    public function setFloors(array $floors): void
+    {
+        $this->floors = $floors;
+        $this->floorIds = array_map(static fn (array $f): int => $f['id'], $floors);
+    }
+
+    /**
+     * Floor id of a reference (numeric id or uid) among the floors of the map, null when unknown.
+     */
+    public function floorId(int|string $ref): ?int
+    {
+        foreach ($this->floors as $floor) {
+            if (is_int($ref) ? $floor['id'] === $ref : $floor['uid'] === $ref) {
+                return $floor['id'];
+            }
+        }
+
+        return null;
     }
 
     public function change(string $column): void

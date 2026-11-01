@@ -23,7 +23,7 @@ final class UpdatePageTest extends ApiTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0005'");
+        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0006'");
         Fixture::markRealMigrationsApplied($this->db);
         $this->install = Fixture::install(Fixture::oldFiles() + Fixture::realMigrations(), \APP_VERSION);
         $this->app->container()->instance(AppPaths::class, new AppPaths($this->install, $this->install . '/storage', $this->install));

@@ -31,7 +31,7 @@ final class UpdateRunnerTest extends ApiTestCase
         parent::setUp();
         $this->db->pdo()->exec('DROP TABLE IF EXISTS ' . $this->db->t('update_probe'));
         // schema_migrations survives the truncation between tests: forget the probe migration.
-        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0005'");
+        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0006'");
         Fixture::markRealMigrationsApplied($this->db);
         $this->createUser('Keeper', 'admin');
         $this->install = Fixture::install(Fixture::oldFiles() + Fixture::realMigrations());
@@ -50,7 +50,7 @@ final class UpdateRunnerTest extends ApiTestCase
      */
     private static function release(string $migration = self::PROBE): array
     {
-        return Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0005_probe.sql' => $migration];
+        return Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0006_probe.sql' => $migration];
     }
 
     private function runner(?\Closure $beforeWrite = null): UpdateRunner
@@ -116,9 +116,9 @@ final class UpdateRunnerTest extends ApiTestCase
         self::assertSame($keys, array_keys($snapshot), 'exactly the new files, no stray temporary file');
         self::assertSame('0.2.0', json_decode((string) file_get_contents($this->install . '/manifest.json'), true)['version']);
         self::assertSame(1, (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('update_probe')));
-        self::assertSame('applied', $this->db->fetchValue('SELECT `status` FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0005'"));
+        self::assertSame('applied', $this->db->fetchValue('SELECT `status` FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0006'"));
         self::assertSame('0.2.0', $this->setting('app_version'));
-        self::assertSame(['0005'], $s['migrations']);
+        self::assertSame(['0006'], $s['migrations']);
         self::assertFileDoesNotExist($this->storage->runDir($s['id']) . '/package.zip');
         self::assertDirectoryDoesNotExist($this->storage->runDir($s['id']) . '/rollback');
         self::assertSame(1, $this->rows('audit_log', "`action` = 'update.applied'"));
@@ -191,7 +191,7 @@ final class UpdateRunnerTest extends ApiTestCase
         self::assertSame('restored', $s['state'], (string) $s['error']);
         self::assertSame($this->before, Fixture::snapshot($this->install), 'files back');
         self::assertFalse($this->db->tableExists('update_probe'), 'table created by the failed migration dropped');
-        self::assertNull($this->db->fetchValue('SELECT `status` FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0005'"));
+        self::assertNull($this->db->fetchValue('SELECT `status` FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0006'"));
         self::assertSame(1, $this->rows('users', "`username` = 'Keeper'"));
         self::assertFalse($this->setting('maintenance'));
         self::assertNull($this->setting('app_version'));
@@ -201,7 +201,7 @@ final class UpdateRunnerTest extends ApiTestCase
     {
         $id = $this->prepare("THIS IS NOT SQL;\n");
         self::assertSame('failed_migration', $this->runToEnd($id)['state']);
-        file_put_contents($this->install . '/migrations/0005_probe.sql', self::PROBE);
+        file_put_contents($this->install . '/migrations/0006_probe.sql', self::PROBE);
         $this->runner()->retry($id);
         $s = $this->runToEnd($id);
         self::assertSame('done', $s['state'], (string) $s['error']);

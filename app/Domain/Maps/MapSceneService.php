@@ -118,13 +118,13 @@ final class MapSceneService
         if ($raw === null || $raw === '') {
             throw new ValidationException('', ['floor' => 'required']);
         }
-        $id = Fields::id($raw);
-        if ($id === null) {
+        $ref = MapFloors::ref($raw);
+        if ($ref === null) {
             throw new ValidationException('', ['floor' => 'invalid']);
         }
         foreach ($this->maps->floors($map->id) as $floor) {
-            if ($floor['id'] === $id) {
-                return $id;
+            if (is_int($ref) ? $floor['id'] === $ref : $floor['uid'] === $ref) {
+                return $floor['id'];
             }
         }
         throw new ValidationException('', ['floor' => 'not_found']);

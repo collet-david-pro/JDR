@@ -42,8 +42,11 @@ final class SceneApplier
     /** @var list<array<string, mixed>> */
     private array $conflicts = [];
 
+    private ObjectLinkRules $links;
+
     public function __construct(private MapState $state, private SceneStore $store)
     {
+        $this->links = new ObjectLinkRules($state, $store);
     }
 
     /**
@@ -189,6 +192,30 @@ final class SceneApplier
         }
     }
 
+    /**
+     * A floor was removed (its rows are gone, FK CASCADE): forget what was read about it.
+     */
+    public function dropFloor(int $floorId): void
+    {
+        foreach ($this->objects as $uid => $entry) {
+            if ((int) $entry['object']['floor'] === $floorId) {
+                $this->forget($this->objects, $this->objectKeys, $uid);
+            }
+        }
+        foreach ($this->tokens as $uid => $entry) {
+            if ((int) $entry['token']['floor'] === $floorId) {
+                $this->forget($this->tokens, $this->tokenKeys, $uid);
+            }
+        }
+        foreach ($this->fog as $key => $chunk) {
+            if ($chunk['floor'] === $floorId) {
+                unset($this->fog[$key]);
+            }
+        }
+        $this->objectCount = null;
+        $this->tokenCount = null;
+    }
+
     // ---- Objects ---------------------------------------------------------------------------
 
     /**
@@ -213,7 +240,9 @@ final class SceneApplier
             throw new ValidationException('', [$field => 'too_many']);
         }
         $api = ObjectRules::canonical(['floor' => (string) $object['floor'], 'geometry' => $geometry, 'rev' => 1] + $object);
+        $this->links->check($api, $field . '.object');
         $id = $this->store->insertObject($api, ObjectRules::bbox($api, $this->state->width, $this->state->height));
+        $this->store->syncLink($id, $api['props']['link'] ?? null);
         $this->remember($this->objects, $this->objectKeys, $api['uid'], ['id' => $id, 'object' => $api]);
         $this->objectCount++;
 
@@ -244,7 +273,13 @@ final class SceneApplier
         }
         $merged['rev'] = $current['rev'] + 1;
         $merged = ObjectRules::canonical($merged);
+        if (array_key_exists('props', $op['patch'])) {
+            $this->links->check($merged, $field . '.patch');
+        }
         $this->store->updateObject($stored['id'], $merged, ObjectRules::bbox($merged, $this->state->width, $this->state->height));
+        if (array_key_exists('props', $op['patch'])) {
+            $this->store->syncLink($stored['id'], $merged['props']['link'] ?? null);
+        }
         $this->objects[$current['uid']] = ['id' => $stored['id'], 'object' => $merged];
 
         return true;

@@ -94,4 +94,18 @@ interface SceneStore
      * Deletes the fog chunks of every floor starting at or beyond these chunk coordinates.
      */
     public function deleteFogBeyond(int $minCx, int $minCy): void;
+
+    /**
+     * Floor uids of a live map of the game (valid target of a link), null when the map is not one.
+     *
+     * @return list<string>|null
+     */
+    public function linkFloors(int $mapId): ?array;
+
+    /**
+     * Keeps the map_links row of an object in step with its props.link (null = no link).
+     *
+     * @param array<string, mixed>|null $link
+     */
+    public function syncLink(int $objectId, ?array $link): void;
 }

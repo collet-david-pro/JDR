@@ -13,7 +13,7 @@ use JDR\Maps\ChunkStore;
  */
 final class MapChunkStore implements ChunkStore
 {
-    public function __construct(private MapRepository $maps, private int $mapId)
+    public function __construct(private MapRepository $maps, private int $mapId, private ?MapFloorRepository $floors = null)
     {
     }
 
@@ -25,5 +25,10 @@ final class MapChunkStore implements ChunkStore
     public function lockBeyond(int $minCx, int $minCy): array
     {
         return $this->maps->chunksBeyondForUpdate($this->mapId, $minCx, $minCy);
+    }
+
+    public function lockFloor(int $floorId): array
+    {
+        return ($this->floors ?? throw new \LogicException('No floor repository.'))->chunksForUpdate($this->mapId, $floorId);
     }
 }

@@ -12,6 +12,7 @@ use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
+use JDR\Domain\Sessions\SessionEvents;
 use JDR\Domain\Users\User;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\MapState;
@@ -48,6 +49,9 @@ final class MapOpsService
         private MapVersionService $versions,
         private MapSceneRepository $scene,
         private MapOpsBroadcaster $broadcaster,
+        private MapFloorRepository $floorRows,
+        private SessionEvents $sessionEvents,
+        private MapLinks $links,
     ) {
     }
 
@@ -101,14 +105,15 @@ final class MapOpsService
                 $locked->ambient,
                 $locked->palette,
                 $locked->layers,
-                array_map(static fn (array $f): int => $f['id'], $this->maps->floors($locked->id)),
+                $this->maps->floors($locked->id),
             );
-            $capture = $this->broadcaster->prepare($locked, $user, $ops, $clientOpId);
+            $capture = $this->broadcaster->prepare($locked, $user, self::withFloorIds($ops, $state), $clientOpId);
             $applier = new OpsApplier(
                 $state,
-                new MapChunkStore($this->maps, $locked->id),
+                new MapChunkStore($this->maps, $locked->id, $this->floorRows),
                 $canUse,
-                new MapSceneStore($this->scene, $locked->id, $game->id),
+                new MapSceneStore($this->scene, $locked->id, $game->id, $this->links),
+                new MapFloorStore($this->maps, $this->floorRows, $locked->id),
             );
             $applied = $applier->apply($ops, $envelope['base_revision']);
             $conflicts = $applier->conflicts();
@@ -137,7 +142,11 @@ final class MapOpsService
             $this->maps->update($locked->id, $state->changedColumns(), true);
             $this->versions->afterOps($locked, $revision, $user->id);
             if ($capture !== null) {
-                $this->broadcaster->publish($capture, $revision, $envelope['ops'], $conflicts, $applier->dirtyChunks(), $state->changedColumns());
+                $changed = $state->changedColumns() + ($state->floorsChanged ? ['floors' => true] : []);
+                $this->broadcaster->publish($capture, $revision, $envelope['ops'], $conflicts, $applier->dirtyChunks(), $changed);
+            }
+            foreach ($applier->movedSessions() as $moved) {
+                $this->sessionEvents->mapChanged($moved['session_id'], $locked->id, $moved['floor_id'], $user->id, $clientOpId);
             }
 
             $response = ['revision' => $revision, 'applied' => $applied, 'conflicts' => $conflicts];
@@ -145,6 +154,24 @@ final class MapOpsService
 
             return $response;
         });
+    }
+
+    /**
+     * The ops with the floor references known before the lot replaced by floor ids (the broadcaster
+     * reads fog floors as ids; a floor created by the lot itself stays a uid).
+     *
+     * @param list<array<string, mixed>> $ops
+     * @return list<array<string, mixed>>
+     */
+    private static function withFloorIds(array $ops, MapState $state): array
+    {
+        foreach ($ops as $i => $op) {
+            if (($op['type'] === 'fog.reveal' || $op['type'] === 'fog.hide') && $state->floorId($op['floor']) !== null) {
+                $ops[$i]['floor'] = $state->floorId($op['floor']);
+            }
+        }
+
+        return $ops;
     }
 
     /**

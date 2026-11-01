@@ -103,7 +103,7 @@ final class MapOpsTest extends MapsTestCase
             [['type' => 'tiles.set', 'floor' => $floor, 'layer' => 'ground', 'cells' => [[0, '0', 1, 0, 0]]], ['ops.0.cells.0' => 'invalid']],
             [self::tiles($floor, 'walls', [[0, 0, 1]]), ['ops.0.layer' => 'invalid']],
             [self::tiles('999999', 'ground', [[0, 0, 1]]), ['ops.0.floor' => 'not_found']],
-            [self::tiles('abc', 'ground', [[0, 0, 1]]), ['ops.0.floor' => 'invalid']],
+            [self::tiles('a/b', 'ground', [[0, 0, 1]]), ['ops.0.floor' => 'invalid']],
             [self::tiles($floor, 'ground', [[0, 0, 1]]) + ['extra' => 1], ['ops.0' => 'invalid']],
             [['type' => 'note.set'], ['ops.0.type' => 'invalid']],
             // P5: object.add exists now (tests/php/MapsP5).

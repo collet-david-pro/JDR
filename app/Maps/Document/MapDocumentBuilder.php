@@ -11,6 +11,7 @@ use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
+use JDR\Maps\ObjectRulesP9;
 
 /**
  * Builds the map document (projet.md 12.1, format_version 1) from the database: grid, theme,
@@ -42,8 +43,8 @@ final class MapDocumentBuilder
         $floors = $this->maps->floors($map->id);
         $uids = [];
         $docFloors = [];
-        foreach ($floors as $i => $floor) {
-            $uid = 'f' . ($i + 1);
+        foreach ($floors as $floor) {
+            $uid = $floor['uid'];
             $uids[$floor['id']] = $uid;
             $docFloors[] = ['uid' => $uid, 'level' => $floor['level'], 'name' => $floor['name']];
         }
@@ -181,6 +182,7 @@ final class MapDocumentBuilder
     private function objects(int $mapId, array $uids): array
     {
         $out = [];
+        $names = [];
         foreach ($this->scene->objects($mapId) as $object) {
             $uid = $uids[(int) $object['floor']] ?? null;
             if ($uid === null) {
@@ -188,6 +190,17 @@ final class MapDocumentBuilder
             }
             $object['floor'] = $uid;
             unset($object['rev']);
+            $target = $object['props']['link']['map_id'] ?? null;
+            if (is_int($target)) {
+                // Where the link leads: the map id (same game: kept by snapshots / duplication) and its
+                // name as a hint for the import into another game. "broken" is a read-time flag.
+                $names[$target] ??= (string) $this->db->fetchValue('SELECT `name` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$target]);
+                unset($object['props']['link']['broken']);
+                if ($names[$target] !== '') {
+                    $object['props']['link']['map_name'] = $names[$target];
+                }
+                $object['props']['link'] = ObjectRulesP9::canonicalLink($object['props']['link']);
+            }
             $out[] = $object;
         }
 

@@ -38,6 +38,7 @@ final class MapService
         private I18n $i18n,
         private MapSceneRepository $scene,
         private PlayerMapAccess $players,
+        private MapLinks $links,
     ) {
     }
 
@@ -84,7 +85,7 @@ final class MapService
                 'palette' => [null],
                 'layers' => MapInput::defaultLayers(),
             ]);
-            $this->maps->insertFloor($id, 0, $this->text('maps.default_floor_name', 'Rez-de-chaussée'), 0);
+            $this->maps->insertFloor($id, MapFloors::defaultUid(0), 0, $this->text('maps.default_floor_name', 'Rez-de-chaussée'), 0);
 
             return $id;
         });
@@ -174,11 +175,12 @@ final class MapService
                 'layers' => $source->layers,
             ]);
             foreach ($this->maps->floors($source->id) as $floor) {
-                $floorId = $this->maps->insertFloor($id, $floor['level'], $floor['name'], $floor['sort_order']);
+                $floorId = $this->maps->insertFloor($id, $floor['uid'], $floor['level'], $floor['name'], $floor['sort_order']);
                 $this->maps->copyChunks($source->id, $floor['id'], $id, $floorId);
                 $this->scene->copyFloor($source->id, $floor['id'], $id, $floorId);
             }
             $this->maps->copyRefs($source->id, $id);
+            $this->links->rebuildMap($id);
 
             return $id;
         });
@@ -223,10 +225,10 @@ final class MapService
         if ($rawFloor === '' || $rawFloor === null) {
             $floorId = $floors[0]['id'] ?? null;
         } else {
-            $wanted = Fields::id($rawFloor);
+            $wanted = MapFloors::ref($rawFloor);
             foreach ($floors as $floor) {
-                if ($floor['id'] === $wanted) {
-                    $floorId = $wanted;
+                if ($wanted !== null && (is_int($wanted) ? $floor['id'] === $wanted : $floor['uid'] === $wanted)) {
+                    $floorId = $floor['id'];
                 }
             }
             if ($floorId === null) {
@@ -238,7 +240,8 @@ final class MapService
         if ($errors !== []) {
             throw new ValidationException('', $errors);
         }
-        if ($floorId === null) {
+        if ($floorId === null || ($scope !== null && !$scope->allowsFloor($floorId))) {
+            // P9a: a player / screen only receives the current floor of the session.
             return ['body' => '', 'revision' => $map->revision];
         }
 

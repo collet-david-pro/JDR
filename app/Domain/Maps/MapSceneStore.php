@@ -14,7 +14,7 @@ use JDR\Maps\SceneStore;
  */
 final class MapSceneStore implements SceneStore
 {
-    public function __construct(private MapSceneRepository $scene, private int $mapId, private int $gameId)
+    public function __construct(private MapSceneRepository $scene, private int $mapId, private int $gameId, private ?MapLinks $links = null)
     {
     }
 
@@ -106,5 +106,15 @@ final class MapSceneStore implements SceneStore
     public function deleteFogBeyond(int $minCx, int $minCy): void
     {
         $this->scene->deleteFogBeyond($this->mapId, $minCx, $minCy);
+    }
+
+    public function linkFloors(int $mapId): ?array
+    {
+        return $this->links?->targetFloors($this->gameId, $mapId);
+    }
+
+    public function syncLink(int $objectId, ?array $link): void
+    {
+        $this->links?->sync($this->mapId, $objectId, $link);
     }
 }

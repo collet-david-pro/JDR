@@ -36,6 +36,8 @@ final class OpsApplier
 
     private ?SceneApplier $scene;
 
+    private ?FloorApplier $floors;
+
     /**
      * @param \Closure(int): bool $canUseAsset may the editor put this asset on the map
      * @param SceneStore|null     $sceneStore  objects / placed tokens / fog of the map (P5 ops)
@@ -45,8 +47,20 @@ final class OpsApplier
         private ChunkStore $store,
         private \Closure $canUseAsset,
         ?SceneStore $sceneStore = null,
+        ?FloorStore $floorStore = null,
     ) {
         $this->scene = $sceneStore === null ? null : new SceneApplier($state, $sceneStore);
+        $this->floors = $floorStore === null ? null : new FloorApplier($state, $floorStore);
+    }
+
+    /**
+     * Sessions moved off a removed floor (floor.remove).
+     *
+     * @return list<array{session_id: int, floor_id: int}>
+     */
+    public function movedSessions(): array
+    {
+        return $this->floors?->movedSessions() ?? [];
     }
 
     /**
@@ -56,11 +70,30 @@ final class OpsApplier
      */
     public function apply(array $ops, int $baseRevision): int
     {
-        $this->preload($ops);
-        $this->scene?->preload($ops);
+        $known = array_map(fn (array $op): array => $this->resolveFloors($op, 'ops', false), $ops);
+        $this->preload($known);
+        $this->scene?->preload($known);
         $applied = 0;
         foreach ($ops as $i => $op) {
             $field = 'ops.' . $i;
+            if (str_starts_with($op['type'], 'floor.')) {
+                if ($this->floors === null) {
+                    throw new \LogicException('No floor store for ' . $op['type']);
+                }
+                if ($op['type'] === 'floor.remove') {
+                    // Before the delete (the chunks are read to release their asset references); an invalid remove
+                    // throws in apply() and the whole lot is rolled back.
+                    foreach ($this->state->floors as $floor) {
+                        if ($floor['uid'] === $op['uid']) {
+                            $this->dropFloor($floor['id']);
+                        }
+                    }
+                }
+                $this->floors->apply($op, $field);
+                $applied++;
+                continue;
+            }
+            $op = $this->resolveFloors($op, $field, true);
             switch ($op['type']) {
                 case 'tiles.set':
                     $this->tiles($op, $field);
@@ -112,6 +145,72 @@ final class OpsApplier
     public function refDeltas(): array
     {
         return array_filter($this->deltas, static fn (int $d): bool => $d !== 0);
+    }
+
+    /**
+     * The op with its floor references (id or uid) replaced by floor ids. $strict: an unknown
+     * floor is a "not_found" error on its field; otherwise it is left as it is (preload).
+     *
+     * @param array<string, mixed> $op
+     * @return array<string, mixed>
+     */
+    private function resolveFloors(array $op, string $field, bool $strict): array
+    {
+        $container = match ($op['type']) {
+            'tiles.set', 'fog.reveal', 'fog.hide' => null,
+            'object.add' => 'object',
+            'maptoken.add' => 'token',
+            default => false,
+        };
+        if ($container === false) {
+            return $op;
+        }
+        $ref = $container === null ? $op['floor'] : $op[$container]['floor'];
+        $id = $this->state->floorId($ref);
+        if ($id === null) {
+            if ($strict) {
+                throw new ValidationException('', [$field . ($container === null ? '' : '.' . $container) . '.floor' => 'not_found']);
+            }
+
+            return $op;
+        }
+        if ($container === null) {
+            $op['floor'] = $id;
+        } else {
+            $op[$container]['floor'] = $id;
+        }
+
+        return $op;
+    }
+
+    /**
+     * A removed floor: its chunk buffers are dropped and the asset references of all its cells
+     * are released (the rows go with the floor, FK CASCADE).
+     */
+    private function dropFloor(int $floorId): void
+    {
+        $buffered = [];
+        foreach ($this->buffers as $key => $buffer) {
+            if ($buffer->floorId === $floorId) {
+                // The deltas hold (current - stored) of this block; the whole stored block must go.
+                $this->countAll($buffer->raw, -1);
+                $buffered[$buffer->layer . '|' . $buffer->cx . ':' . $buffer->cy] = true;
+                unset($this->buffers[$key]);
+            }
+        }
+        foreach ($this->store->lockFloor($floorId) as $row) {
+            if (!isset($buffered[$row['layer'] . '|' . $row['cx'] . ':' . $row['cy']])) {
+                $this->countAll($this->decode($row['data'], $row['layer']), -1);
+            }
+        }
+        $this->scene?->dropFloor($floorId);
+    }
+
+    private function countAll(string $raw, int $sign): void
+    {
+        foreach (ChunkCodec::indexCounts($raw) as $index => $n) {
+            $this->count($this->state->assetOf((int) $index), $sign * $n);
+        }
     }
 
     /**

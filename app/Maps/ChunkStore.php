@@ -26,4 +26,11 @@ interface ChunkStore
      * @return list<array{floor_id: int, layer: string, cx: int, cy: int, data: string}>
      */
     public function lockBeyond(int $minCx, int $minCy): array;
+
+    /**
+     * Locks and returns every chunk of one floor (all layers).
+     *
+     * @return list<array{layer: string, cx: int, cy: int, data: string}>
+     */
+    public function lockFloor(int $floorId): array;
 }

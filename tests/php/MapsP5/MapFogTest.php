@@ -50,7 +50,7 @@ final class MapFogTest extends MapsP5TestCase
     {
         ['gm' => $gm, 'map' => $map, 'floor' => $f] = $this->p5Scene();
         $this->db->execute(
-            'INSERT INTO ' . $this->db->t('map_floors') . ' (`map_id`, `level`, `name`, `sort_order`) VALUES (?, 1, ?, 1)',
+            'INSERT INTO ' . $this->db->t('map_floors') . ' (`map_id`, `uid`, `level`, `name`, `sort_order`) VALUES (?, "up", 1, ?, 1)',
             [(int) $map['id'], 'Étage'],
         );
         $f2 = (string) $this->db->lastInsertId();
@@ -73,7 +73,7 @@ final class MapFogTest extends MapsP5TestCase
         $other = $this->newMap($gm, $map['game_id'], ['name' => 'Autre']);
         foreach (['get', 'delete'] as $method) {
             self::assertFieldErrors($gm->{$method}('/maps/' . $map['id'] . '/fog'), ['floor' => 'required']);
-            self::assertFieldErrors($gm->{$method}('/maps/' . $map['id'] . '/fog?floor=abc'), ['floor' => 'invalid']);
+            self::assertFieldErrors($gm->{$method}('/maps/' . $map['id'] . '/fog?floor=a%2Fb'), ['floor' => 'invalid']);
             self::assertFieldErrors($gm->{$method}('/maps/' . $map['id'] . '/fog?floor=' . $other['floors'][0]['id']), ['floor' => 'not_found']);
         }
         self::assertSame($before + 2, $this->revision($map['id']));
@@ -100,7 +100,7 @@ final class MapFogTest extends MapsP5TestCase
             [$op([[0, 0, base64_encode((string) gzdeflate(str_repeat("\1", 2049)))]]), ['ops.0.chunks.0' => 'invalid']],
             [$op([[0, 0, base64_encode(str_repeat("\1", 2048))]]), ['ops.0.chunks.0' => 'invalid']],
             [$op([[0, 0, base64_encode((string) gzdeflate(str_repeat("\0", 10_000_000)))]]), ['ops.0.chunks.0' => 'invalid']],
-            [$op([[0, 0, $wire]], ['floor' => 'abc']), ['ops.0.floor' => 'invalid']],
+            [$op([[0, 0, $wire]], ['floor' => 'a/b']), ['ops.0.floor' => 'invalid']],
             [$op([[0, 0, $wire]], ['floor' => '999999']), ['ops.0.floor' => 'not_found']],
             [$op([[0, 0, $wire]], ['extra' => 1]), ['ops.0' => 'invalid']],
             [$op([[0, 0, $wire]], ['type' => 'fog.hide', 'floor' => null]), ['ops.0.floor' => 'invalid']],

@@ -140,7 +140,7 @@ final class MapDocumentTest extends TestCase
                 return $d;
             }, ['floors.1.uid' => 'duplicate', 'floors.1.level' => 'duplicate']],
             ['too many floors', static function (array $d): array {
-                for ($i = 1; $i <= 8; $i++) {
+                for ($i = 1; $i <= 10; $i++) {
                     $d['floors'][] = ['uid' => 'f' . ($i + 1), 'level' => $i, 'name' => 'N' . $i];
                 }
 

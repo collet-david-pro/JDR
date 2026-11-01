@@ -28,6 +28,8 @@ use JDR\Maps\TokenRules;
  * - object.remove {uid}; maptoken.add {token: {uid, floor, token_id, x, y, rotation, scale, hidden,
  *   light_override, rev?}}; maptoken.update {uid, rev, patch}; maptoken.remove {uid};
  * - fog.reveal / fog.hide {floor, chunks: [[cx, cy, base64 raw deflate of 2 048 bytes], ...] (<= 200)}.
+ * P9a floor ops (MapFloorOpsInput): floor.add / floor.update / floor.remove, floors designated by id
+ * or uid (MapFloors::ref) everywhere an op names a floor; resolved by OpsApplier.
  * Coordinates are checked here against the largest grid (400), against the map by SceneApplier.
  * What depends on the map (map size, palette, floors, assets, tokens) is checked by OpsApplier.
  * Field errors: "ops" (required | invalid | too_many), "ops.<i>" / "ops.<i>.<key>[.<sub>]".
@@ -53,7 +55,7 @@ final class MapOpsInput
         'maptoken.remove' => ['type', 'uid'],
         'fog.reveal' => ['type', 'floor', 'chunks'],
         'fog.hide' => ['type', 'floor', 'chunks'],
-    ];
+    ] + MapFloorOpsInput::KEYS;
 
     /**
      * @param array<array-key, mixed> $body
@@ -116,6 +118,7 @@ final class MapOpsInput
                 'maptoken.add' => self::tokenAdd($op, $field, $errors),
                 'object.update', 'maptoken.update' => self::update($op, $field, $errors),
                 'object.remove', 'maptoken.remove' => self::remove($op, $field, $errors),
+                'floor.add', 'floor.update', 'floor.remove' => MapFloorOpsInput::parse($op, $field, $errors),
                 default => self::fog($op, $field, $errors),
             };
             if ($parsed !== null) {
@@ -137,7 +140,7 @@ final class MapOpsInput
     private static function tiles(array $op, string $field, array &$errors): ?array
     {
         $before = count($errors);
-        $floor = Fields::id($op['floor'] ?? null);
+        $floor = MapFloors::ref($op['floor'] ?? null);
         if ($floor === null) {
             $errors[$field . '.floor'] = array_key_exists('floor', $op) ? 'invalid' : 'required';
         }
@@ -253,7 +256,7 @@ final class MapOpsInput
             return null;
         }
         $max = (float) MapInput::GRID_MAX;
-        $object = ObjectRules::object($op['object'], $field . '.object', $errors, $max, $max, Fields::id(...), true);
+        $object = ObjectRules::object($op['object'], $field . '.object', $errors, $max, $max, MapFloors::ref(...), true);
 
         return $object === null ? null : ['type' => 'object.add', 'object' => $object];
     }
@@ -279,7 +282,7 @@ final class MapOpsInput
         }
         $before = count($errors);
         $uid = ObjectRules::uid($t, 'uid', $f . '.uid', $errors);
-        $floor = Fields::id($t['floor'] ?? null);
+        $floor = MapFloors::ref($t['floor'] ?? null);
         if ($floor === null) {
             $errors[$f . '.floor'] = array_key_exists('floor', $t) ? 'invalid' : 'required';
         }
@@ -348,7 +351,7 @@ final class MapOpsInput
     private static function fog(array $op, string $field, array &$errors): ?array
     {
         $before = count($errors);
-        $floor = Fields::id($op['floor'] ?? null);
+        $floor = MapFloors::ref($op['floor'] ?? null);
         if ($floor === null) {
             $errors[$field . '.floor'] = array_key_exists('floor', $op) ? 'invalid' : 'required';
         }

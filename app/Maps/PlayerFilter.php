@@ -17,6 +17,7 @@ defined('JDR_BOOT') || exit;
  *   {type: wall, layer: walls, geometry {points: [a, b], closed: false}, props: stone 0.15,
  *   blocking vision, light and movement};
  * - hidden placed tokens are removed;
+ * - props.link (where a door / stairs / portal leads) is removed from every object;
  * - a light following a hidden token (props.follows_token) loses that link (P6c: the uid of a
  *   hidden token never reaches a player).
  */
@@ -56,6 +57,8 @@ final class PlayerFilter
             if (($object['type'] ?? null) === 'door' && ($object['props']['secret'] ?? false) === true && !$shown) {
                 $object = self::asWall($object);
             }
+            // The destination of a door / stairs / portal is GM information (P9a, D2).
+            $object = ObjectRulesP9::forPlayer($object);
             $follows = $object['props']['follows_token'] ?? null;
             if (($object['type'] ?? null) === 'light' && is_string($follows) && isset($isHidden[$follows])) {
                 $object['props']['follows_token'] = null;

@@ -50,7 +50,7 @@ final class MapSceneRepository
         }
         $rows = $this->db->fetchAll($sql . ' ORDER BY `floor_id`, `sort_order`, `id`', $params);
 
-        return array_map(self::objectFromRow(...), $rows);
+        return MapLinks::annotate($this->db, array_map(self::objectFromRow(...), $rows));
     }
 
     /**

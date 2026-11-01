@@ -56,7 +56,7 @@ final class MapDocumentValidator
     public const FORMAT = 'jdr-map';
     public const MAX_BYTES = 16777216;
     public const MAX_DEPTH = 64;
-    public const MAX_FLOORS = 8;
+    public const MAX_FLOORS = 10;
     public const LEVEL_MIN = -100;
     public const LEVEL_MAX = 100;
     public const FLOOR_NAME_MAX = 60;
@@ -502,6 +502,8 @@ final class MapDocumentValidator
             if ($object !== null) {
                 if (!isset($known[$object['floor']])) {
                     $errors[$field . '.floor'] = 'not_found';
+                } elseif ($object['type'] === 'stairs' && (!isset($known[$object['props']['to_floor']]) || $object['props']['to_floor'] === $object['floor'])) {
+                    $errors[$field . '.props.to_floor'] = 'invalid';
                 } elseif (isset($uids[strtolower($object['uid'])])) {
                     $errors[$field . '.uid'] = 'duplicate';
                 } else {

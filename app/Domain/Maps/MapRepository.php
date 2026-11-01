@@ -232,29 +232,30 @@ final class MapRepository
 
     // ---- Floors ----------------------------------------------------------------------------
 
-    public function insertFloor(int $mapId, int $level, string $name, int $sortOrder): int
+    public function insertFloor(int $mapId, string $uid, int $level, string $name, int $sortOrder): int
     {
         $this->db->execute(
-            'INSERT INTO ' . $this->db->t('map_floors') . ' (`map_id`, `level`, `name`, `sort_order`) VALUES (?, ?, ?, ?)',
-            [$mapId, $level, $name, $sortOrder],
+            'INSERT INTO ' . $this->db->t('map_floors') . ' (`map_id`, `uid`, `level`, `name`, `sort_order`) VALUES (?, ?, ?, ?, ?)',
+            [$mapId, $uid, $level, $name, $sortOrder],
         );
 
         return (int) $this->db->lastInsertId();
     }
 
     /**
-     * @return list<array{id: int, level: int, name: string, sort_order: int}>
+     * @return list<array{id: int, uid: string, level: int, name: string, sort_order: int}>
      */
     public function floors(int $mapId): array
     {
         $rows = $this->db->fetchAll(
-            'SELECT `id`, `level`, `name`, `sort_order` FROM ' . $this->db->t('map_floors') . ' WHERE `map_id` = ? '
+            'SELECT `id`, `uid`, `level`, `name`, `sort_order` FROM ' . $this->db->t('map_floors') . ' WHERE `map_id` = ? '
             . 'ORDER BY `sort_order`, `level`, `id`',
             [$mapId],
         );
 
         return array_map(static fn (array $r): array => [
             'id' => (int) $r['id'],
+            'uid' => (string) $r['uid'],
             'level' => (int) $r['level'],
             'name' => (string) $r['name'],
             'sort_order' => (int) $r['sort_order'],
