@@ -12,6 +12,7 @@ use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Maps\Collision;
+use JDR\Maps\PlayerFilter;
 use JDR\Maps\TokenRules;
 use JDR\Realtime\Audience;
 use JDR\Realtime\Channel;
@@ -109,10 +110,12 @@ final class SessionTravel
      */
     private function spots(Map $map, int $floorId, float $fx, float $fy, int $count, array $ignoreUids): array
     {
+        // Same view as the collision of a player: an unrevealed secret passage is a wall.
+        $revealed = $this->scene->revealedUids($map->id);
         $segments = Collision::segments(array_values(array_filter(
-            $this->scene->objects($map->id, $floorId),
+            PlayerFilter::objects($this->scene->objects($map->id, $floorId), $revealed),
             static fn (array $o): bool => in_array($o['type'], ['wall', 'door', 'window'], true),
-        )), []);
+        )), array_fill_keys($revealed, true));
         $taken = [];
         $ignore = array_fill_keys(array_map('strtolower', $ignoreUids), true);
         foreach ($this->scene->tokens($map->id) as $t) {

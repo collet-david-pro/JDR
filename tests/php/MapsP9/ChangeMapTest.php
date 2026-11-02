@@ -123,6 +123,25 @@ final class ChangeMapTest extends MapsP9TestCase
         self::assertSame(1, $this->rows('token_assignments', '`token_id` = ?', [(int) $w['guard']['id']]), 'assignments follow the definition');
     }
 
+    public function testMovedTokensDoNotLandOnAnUnrevealedSecretPassage(): void
+    {
+        $w = $this->session();
+        $gm = $w['gm'];
+        $o = (string) $w['other']['id'];
+        $of = (string) $w['other']['floors'][0]['id'];
+        $this->opsOk($gm, $o, [self::addObject([
+            'uid' => 'passage',
+            'floor' => $of,
+            'type' => 'secret',
+            'geometry' => ['a' => [10, 11.5], 'b' => [13, 11.5]],
+            'props' => ['kind' => 'passage', 'note' => null],
+        ])]);
+        $this->ok($gm->post('/sessions/' . $w['session'] . '/change-map', ['map_id' => $o, 'focus' => ['x' => 11.5, 'y' => 11.5], 'move_tokens' => ['t3']]));
+        $rows = $this->db->fetchAll('SELECT `x`, `y` FROM ' . $this->db->t('map_tokens') . ' WHERE `map_id` = ?', [(int) $o]);
+        self::assertCount(1, $rows);
+        self::assertNotEquals(11.5, (float) $rows[0]['y'], 'the passage blocks like a wall until it is revealed');
+    }
+
     public function testFailureMovesNothing(): void
     {
         $w = $this->session();
