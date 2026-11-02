@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "taverne",
+      "name": "Taverne",
+      "file": "taverne.json",
+      "bytes": 85076
+    },
+    {
+      "id": "crypte",
+      "name": "Crypte",
+      "file": "crypte.json",
+      "bytes": 90015
+    },
+    {
+      "id": "foret",
+      "name": "Forêt",
+      "file": "foret.json",
+      "bytes": 155128
+    },
+    {
+      "id": "grotte",
+      "name": "Grotte",
+      "file": "grotte.json",
+      "bytes": 113498
+    }
+  ]
+}

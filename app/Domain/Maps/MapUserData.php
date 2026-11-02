@@ -40,5 +40,14 @@ final class MapUserData implements UserDataExtension
     public function deleteUserData(User $user): void
     {
         $this->maps->reassignToGameGm($user->id);
+        // Templates of the whole site survive the account when another admin can take them over;
+        // private templates leave with the account (FK CASCADE).
+        $admin = $this->maps->db()->fetchValue(
+            'SELECT `id` FROM ' . $this->maps->db()->t('users') . " WHERE `role` = 'admin' AND `status` = 'active' AND `id` <> ? ORDER BY `id` LIMIT 1",
+            [$user->id],
+        );
+        if ($admin !== null) {
+            $this->maps->reassignSiteTemplates($user->id, (int) $admin);
+        }
     }
 }

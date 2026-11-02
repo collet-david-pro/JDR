@@ -383,11 +383,17 @@ final class MapNotes
 
     /**
      * Duplication of a map (same game): same notes, same audiences, objects linked again (the
-     * objects are copied first).
+     * objects are copied first). $gmOnly (map templates, P9c1): every note goes back to the GM alone
+     * (audience "gm", no account): an audience aims at the players of one game, keeping it would
+     * leak the note to another table. Title, body, image and read-aloud flag are kept.
      */
-    public function copy(int $fromMapId, int $toMapId): void
+    public function copy(int $fromMapId, int $toMapId, bool $gmOnly = false): void
     {
         foreach ($this->all($fromMapId) as $row) {
+            if ($gmOnly) {
+                $row['audience'] = MapNoteInput::AUDIENCE_GM;
+                $row['users'] = [];
+            }
             $this->insert($toMapId, ['audience_users' => $row['users']] + $row);
         }
         $o = $this->db->t('map_objects');

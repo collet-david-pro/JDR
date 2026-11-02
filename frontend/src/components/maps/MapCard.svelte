@@ -13,9 +13,12 @@
     onduplicate: (map: MapSummary) => void;
     ontrash: (map: MapSummary) => void;
     onrestore: (map: MapSummary) => void;
+    /** "Save as a template" action; absent = not offered. */
+    onsavetemplate?: (map: MapSummary) => void;
   }
 
-  let { map, trash, busy, onedit, onduplicate, ontrash, onrestore }: Props = $props();
+  let { map, trash, busy, onedit, onduplicate, ontrash, onrestore, onsavetemplate }: Props =
+    $props();
   const uid = $props.id();
   const editUrl = $derived(
     href(`/games/${encodeURIComponent(map.game_id)}/maps/${encodeURIComponent(map.id)}/edit`),
@@ -81,6 +84,17 @@
           data-testid="map-duplicate"
           onclick={() => onduplicate(map)}>{t('games.maps.duplicate')}</button
         >
+        {#if onsavetemplate}
+          <button
+            type="button"
+            class="button button-small"
+            disabled={busy}
+            aria-haspopup="dialog"
+            aria-label={t('games.maps.template.save_label', { name: map.name })}
+            data-testid="map-save-template"
+            onclick={() => onsavetemplate(map)}>{t('games.maps.template.save')}</button
+          >
+        {/if}
         <button
           type="button"
           class="button button-small button-ghost"

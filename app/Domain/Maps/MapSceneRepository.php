@@ -443,18 +443,24 @@ final class MapSceneRepository
 
     /**
      * Copies the objects, placed tokens and fog of a floor to another map / floor (map
-     * duplication); objects and tokens start again at rev 1.
+     * duplication); objects and tokens start again at rev 1. $keepState false (map templates, P9c1):
+     * neither placed tokens nor fog are copied and the objects come back as not revealed
+     * (revealed_at NULL, the visibility they had is kept).
      */
-    public function copyFloor(int $fromMapId, int $fromFloorId, int $toMapId, int $toFloorId): void
+    public function copyFloor(int $fromMapId, int $fromFloorId, int $toMapId, int $toFloorId, bool $keepState = true): void
     {
         $now = $this->clock->sql();
+        $revealed = $keepState ? '`revealed_at`' : 'NULL';
         $this->db->execute(
             'INSERT INTO ' . $this->db->t('map_objects') . ' (`uid`, `map_id`, `floor_id`, `layer`, `type`, `asset_id`, `geometry`, `props`, '
             . '`visibility`, `revealed_at`, `locked`, `sort_order`, `bbox_x1`, `bbox_y1`, `bbox_x2`, `bbox_y2`, `rev`, `updated_at`) '
-            . 'SELECT `uid`, ?, ?, `layer`, `type`, `asset_id`, `geometry`, `props`, `visibility`, `revealed_at`, `locked`, `sort_order`, '
+            . 'SELECT `uid`, ?, ?, `layer`, `type`, `asset_id`, `geometry`, `props`, `visibility`, ' . $revealed . ', `locked`, `sort_order`, '
             . '`bbox_x1`, `bbox_y1`, `bbox_x2`, `bbox_y2`, 1, ? FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ? AND `floor_id` = ? ORDER BY `id`',
             [$toMapId, $toFloorId, $now, $fromMapId, $fromFloorId],
         );
+        if (!$keepState) {
+            return;
+        }
         $this->db->execute(
             'INSERT INTO ' . $this->db->t('map_tokens') . ' (`uid`, `map_id`, `floor_id`, `token_id`, `x`, `y`, `rotation`, `scale`, `hidden`, '
             . '`light_override`, `rev`, `updated_at`) SELECT `uid`, ?, ?, `token_id`, `x`, `y`, `rotation`, `scale`, `hidden`, `light_override`, 1, ? '

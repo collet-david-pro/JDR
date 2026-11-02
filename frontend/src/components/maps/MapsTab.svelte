@@ -3,11 +3,14 @@
   import MapCreateDialog from './MapCreateDialog.svelte';
   import MapEditDialog from './MapEditDialog.svelte';
   import MapImportDialog from './MapImportDialog.svelte';
+  import SaveTemplateDialog from './SaveTemplateDialog.svelte';
+  import TemplatePickerDialog from './TemplatePickerDialog.svelte';
   import { describeError } from '../../lib/errors';
   import { folderNames, isMapSort, MAP_SORTS, type MapSort } from '../../lib/maps/folders';
   import { MapImportModel } from '../../lib/maps/map-import.svelte';
   import { MapsTabModel } from '../../lib/maps/maps-tab.svelte';
-  import { mapsClient } from '../../lib/maps/service';
+  import { mapsClient, templatesClient } from '../../lib/maps/service';
+  import type { MapTemplate } from '../../lib/maps/templates';
   import { t } from '../../lib/i18n';
   import { services } from '../../lib/services';
   import type {
@@ -45,6 +48,10 @@
   let editOpen = $state(false);
   let editing = $state.raw<MapSummary | null>(null);
   let busyId = $state<string | null>(null);
+  let pickerOpen = $state(false);
+  let saveOpen = $state(false);
+  let saving = $state.raw<MapSummary | null>(null);
+  const isAdmin = $derived(services().auth.isAdmin);
 
   $effect(() => {
     void model.load('active');
@@ -79,6 +86,20 @@
   function created(map: MapDetail): void {
     toasts.success(t('games.maps.created', { name: map.name }));
     openEditor(map);
+  }
+
+  function saveTemplate(map: MapSummary): void {
+    saving = map;
+    saveOpen = true;
+  }
+
+  function templateSaved(template: MapTemplate): void {
+    toasts.success(t('games.maps.template.saved', { name: template.name }));
+  }
+
+  function createdFromTemplate(map: MapDetail): void {
+    model.added(map);
+    created(map);
   }
 
   function imported(result: MapImportResult): void {
@@ -151,6 +172,13 @@
       >
       <button
         type="button"
+        class="button"
+        aria-haspopup="dialog"
+        data-testid="map-from-template"
+        onclick={() => (pickerOpen = true)}>{t('games.maps.template.button')}</button
+      >
+      <button
+        type="button"
         class="button button-primary"
         data-testid="map-new"
         onclick={() => openCreate()}>{t('games.maps.create')}</button
@@ -210,6 +238,7 @@
                   act(m, () => model.duplicate(m.id), t('games.maps.duplicated', { name: m.name }))}
                 ontrash={(m) =>
                   act(m, () => model.trash(m.id), t('games.maps.trashed', { name: m.name }))}
+                onsavetemplate={saveTemplate}
                 onrestore={(m) =>
                   act(m, () => model.restore(m.id), t('games.maps.restored', { name: m.name }))}
               />
@@ -230,6 +259,21 @@
   oncreated={created}
 />
 <MapEditDialog bind:open={editOpen} map={editing} {folders} onsave={save} />
+<TemplatePickerDialog
+  bind:open={pickerOpen}
+  list={() => templatesClient().list()}
+  create={(template, name) =>
+    templatesClient().instantiate(template.id, { game_id: game.id, name })}
+  remove={(template) => templatesClient().remove(template.id)}
+  oncreated={createdFromTemplate}
+/>
+<SaveTemplateDialog
+  bind:open={saveOpen}
+  map={saving}
+  admin={isAdmin}
+  onsave={(map, input) => templatesClient().save(map.id, input)}
+  onsaved={templateSaved}
+/>
 <MapImportDialog
   bind:open={importOpen}
   model={importer}

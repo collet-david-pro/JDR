@@ -213,6 +213,29 @@ final class MapRepository
     }
 
     /**
+     * Turns a freshly inserted map (game_id NULL) into a template of the given scope (private | site).
+     */
+    public function markTemplate(int $id, string $scope): void
+    {
+        $this->db->execute(
+            'UPDATE ' . $this->db->t('maps') . ' SET `is_template` = 1, `template_scope` = ? WHERE `id` = ?',
+            [$scope, $id],
+        );
+    }
+
+    /**
+     * Account deletion: the templates shared with the whole site stay available, they go to $toUserId
+     * (the FK to the owner would delete them with the account).
+     */
+    public function reassignSiteTemplates(int $fromUserId, int $toUserId): int
+    {
+        return $this->db->execute(
+            'UPDATE ' . $this->db->t('maps') . " SET `owner_user_id` = ? WHERE `is_template` = 1 AND `template_scope` = 'site' AND `owner_user_id` = ?",
+            [$toUserId, $fromUserId],
+        );
+    }
+
+    /**
      * @return list<array{id: int, game_id: ?int, name: string, created_at: string}>
      */
     public function ownedBy(int $userId): array

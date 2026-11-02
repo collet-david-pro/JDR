@@ -1147,6 +1147,39 @@
           "one": "{count} token n'existe pas dans cette partie (recherche par nom) : ses jetons posés n'ont pas été importés.",
           "other": "{count} tokens n'existent pas dans cette partie (recherche par nom) : leurs jetons posés n'ont pas été importés."
         }
+      },
+      "template": {
+        "button": "Depuis un modèle",
+        "pick_title": "Nouvelle map depuis un modèle",
+        "section_shared": "Modèles livrés et du site",
+        "section_mine": "Mes modèles",
+        "section_empty": "Aucun modèle dans cette section.",
+        "empty": "Aucun modèle pour le moment. Enregistrez une map comme modèle depuis sa carte de l'onglet Maps.",
+        "floors": {
+          "zero": "aucun étage",
+          "one": "{count} étage",
+          "other": "{count} étages"
+        },
+        "builtin": "livré",
+        "pick_hint": "Choisissez d'abord un modèle.",
+        "create_submit": "Créer et ouvrir l'éditeur",
+        "delete": "Supprimer",
+        "delete_label": "Supprimer le modèle {name}",
+        "delete_title": "Supprimer ce modèle ?",
+        "delete_message": "Le modèle « {name} » sera supprimé définitivement. Les maps déjà créées à partir de lui ne changent pas.",
+        "deleted": "Modèle « {name} » supprimé.",
+        "save": "Enregistrer comme modèle",
+        "save_label": "Enregistrer {name} comme modèle",
+        "save_title": "Enregistrer comme modèle",
+        "save_intro": "Le modèle garde le terrain, les murs, les lumières, les étages et les notes. Les tokens posés, le brouillard, les révélations et les liens vers d'autres maps ne sont pas copiés ; les notes redeviennent visibles du MJ seul.",
+        "save_submit": "Enregistrer le modèle",
+        "name": "Nom du modèle",
+        "scope": "Visibilité",
+        "scope_private": "Moi seul",
+        "scope_site": "Tout le site",
+        "scope_hint": "Un modèle du site est visible de tous les MJ du site.",
+        "private_assets": "Cette map utilise des images qui ne sont qu'à vous (textures ou images de notes). Un modèle du site ne peut pas les partager : remplacez-les par des éléments de la bibliothèque générale, ou enregistrez le modèle pour vous seul.",
+        "saved": "Modèle « {name} » enregistré."
       }
     },
     "shelf": {
