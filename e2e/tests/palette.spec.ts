@@ -12,11 +12,17 @@ test.beforeEach(() => {
   resetRateLimits(main.dbName);
 });
 
-/** The desktop Chrome / Firefox profiles report Windows / Linux: the modifier is Ctrl (Safari: Cmd). */
-const MOD = "Control";
+/** Same detection as the app (detectPlatform): Chromium's profile hides the host, the others do not. */
+async function paletteModifier(page: Page): Promise<string> {
+  const mac = await page.evaluate(() => {
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    return /mac|iphone|ipad|ipod/i.test(nav.userAgentData?.platform ?? nav.platform ?? nav.userAgent);
+  });
+  return mac ? "Meta" : "Control";
+}
 
 async function openPalette(page: Page) {
-  await page.keyboard.press(`${MOD}+k`);
+  await page.keyboard.press(`${await paletteModifier(page)}+k`);
   const palette = page.getByTestId("command-palette");
   await expect(palette).toBeVisible();
   await expect(palette.getByRole("combobox")).toBeFocused();
@@ -50,7 +56,7 @@ test("1. editor: search a tool, run it, undo through the palette", async ({ brow
     await page.keyboard.press("Escape");
     await expect(palette).toBeHidden();
     await openPalette(page);
-    await page.keyboard.press(`${MOD}+k`);
+    await page.keyboard.press(`${await paletteModifier(page)}+k`);
     await expect(palette).toBeHidden();
 
     // A tool without a shortcut, found by search and run with Enter.

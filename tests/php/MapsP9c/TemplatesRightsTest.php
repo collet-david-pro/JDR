@@ -73,6 +73,8 @@ final class TemplatesRightsTest extends TemplatesTestCase
         $created = $this->instantiateTpl($w['gm'], $t['id'], $w['game'], ['name' => 'Nouvelle']);
         self::assertSame('Nouvelle', $created['name']);
         self::assertSame((int) $w['game'], (int) $created['game_id']);
+        $fromString = $w['gm']->post('/templates/' . $t['id'] . '/instantiate', ['game_id' => (string) $w['game']]);
+        self::assertSame(201, $fromString->status(), 'the front sends identifiers as strings');
         self::assertSame(0, (int) $created['revision']);
         self::assertNotEmpty($created['floors']);
         $this->instantiateTpl($w['co'], $t['id'], $w['game'], [], 404);

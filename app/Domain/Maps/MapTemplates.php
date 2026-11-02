@@ -103,7 +103,9 @@ final class MapTemplates
     public function instantiate(User $user, int $templateId, array $body): Map
     {
         $errors = [];
-        $gameId = Fields::int($body['game_id'] ?? null, 1, PHP_INT_MAX);
+        // Identifiers are strings in the API (a JSON integer stays accepted).
+        $rawGame = $body['game_id'] ?? null;
+        $gameId = Fields::int(is_string($rawGame) && ctype_digit($rawGame) ? (int) $rawGame : $rawGame, 1, PHP_INT_MAX);
         if ($gameId === null) {
             $errors['game_id'] = array_key_exists('game_id', $body) ? 'invalid' : 'required';
         }
