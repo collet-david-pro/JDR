@@ -6,9 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.1.0-alpha.2] - 2026-11-02
+
+Phase 9 « MJ en séance » terminée.
+
 ### Added
 - **Étages et liens entre maps (phase 9)** : jusqu'à 10 étages par map, créés, renommés, réordonnés et supprimés depuis l'éditeur (actions annulables, enregistrées hors ligne), étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map ; en séance, panneau « Passages » et action « Emprunter » du MJ, avec déplacement des tokens choisis. Joueurs et écrans ne reçoivent que l'étage courant, jamais la destination d'un lien. Migration `0005`.
-- **Notes, épingles, zones, secrets et pièges : partie serveur (phase 9)** : notes réservées au MJ et partageables à un, plusieurs ou tous les joueurs ; passages secrets vus comme des murs tant qu'ils ne sont pas révélés ; suggestion de lecture au MJ quand un token entre dans une zone. L'interface reste à venir. Migration `0006`.
+- **Notes, épingles, zones, secrets et pièges (phase 9)** : notes réservées au MJ et partageables à un, plusieurs ou tous les joueurs, en direct, avec éditeur Markdown sûr (aucun HTML interprété) ; épingles, zones à lire, pièges et secrets dans l'éditeur ; en séance, lecture à voix haute, suggestion au MJ quand un token entre dans une zone, révélation des pièges et des secrets. Un passage secret bloque comme un mur tant qu'il n'est pas révélé ; il ne perce pas un mur existant : laissez une ouverture à cet endroit. Migration `0006`.
+- **Modèles de map (phase 9)** : enregistrer une map comme modèle (personnel, ou pour tout le site par un administrateur) et créer une map depuis un modèle, sans tokens, sans brouillard, notes remises au MJ seul, pièges et secrets remis à non révélés. Quatre modèles livrés : taverne, crypte, forêt, grotte.
+- **Palette de commandes (phase 9)** : Cmd/Ctrl+K dans l'éditeur et la console du MJ, avec recherche floue et raccourcis affichés ; les actions destructives passent par une confirmation.
 
 ### Changed
 - Le statut d'enregistrement de l'éditeur a une largeur fixe : un statut plus long ne décale plus la carte sous le pointeur. À 1280 px de large, la barre du haut occupe une rangée de plus.
@@ -43,4 +49,5 @@ Première version publiée (alpha) : phases 0 à 8 de la feuille de route et mod
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
+[0.1.0-alpha.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.1

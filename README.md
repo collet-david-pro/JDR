@@ -10,7 +10,7 @@ Outil web pour construire, révéler et projeter des cartes de jeu de rôle, en 
 ![Statut](https://img.shields.io/badge/statut-alpha-orange)
 
 > [!WARNING]
-> **Version alpha `0.1.0-alpha.1`.** Première release publique, utilisable pour des essais entre amis. Il n'y a pas encore de revue de sécurité complète, et l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
+> **Version alpha `0.1.0-alpha.2`.** Release publique, utilisable pour des essais entre amis. Il n'y a pas encore de revue de sécurité complète, et l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
 
 ## Sommaire
 
@@ -63,8 +63,10 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 ### Éditeur de maps
 
 - Grille carrée, calques, tuiles par blocs, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
-- Jusqu'à 10 étages par map, avec l'étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map. *Dans le code de `main`, pas encore dans une release.*
+- Jusqu'à 10 étages par map, avec l'étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map.
 - Enregistrement automatique avec file d'attente hors ligne (IndexedDB) : une coupure réseau ou un onglet fermé brutalement ne fait pas perdre les modifications.
+- Notes en Markdown sûr, épingles, zones à lire, pièges et secrets ; modèles de map, dont 4 livrés (taverne, crypte, forêt, grotte).
+- Palette de commandes (Cmd/Ctrl+K), aussi dans la console du MJ.
 - Historique de versions restaurable, export et import JSON ou ZIP (images incluses), onglet Maps avec dossiers, duplication et corbeille.
 - Export PNG en flux : haute résolution, fond transparent, mode impression (A4, A3, Letter).
 - Rendu WebGPU, avec repli WebGL2.
@@ -89,7 +91,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 - Le MJ lance une séance. Les joueurs la rejoignent avec un code sur `/join`.
 - Lobby avec préchargement, console du MJ (joueurs, affectations, tokens, révélations, ambiance, notes, maps), vue joueur.
 - Pause, textes à lire à voix haute, expulsion d'un joueur.
-- Le MJ fait voyager la table d'un clic : il emprunte un escalier ou un portail, et joueurs et écrans suivent sur le bon étage ou la bonne map, avec les tokens qu'il choisit de déplacer. Les joueurs ne voient jamais la destination d'un lien. *Dans le code de `main`, pas encore dans une release.*
+- Le MJ fait voyager la table d'un clic : il emprunte un escalier ou un portail, et joueurs et écrans suivent sur le bon étage ou la bonne map, avec les tokens qu'il choisit de déplacer. Les joueurs ne voient jamais la destination d'un lien.
 - Temps réel sans WebSocket : flux SSE, puis long polling, puis polling court, avec bascule automatique selon l'hébergement.
 - Brouillard strict (`fog_strict`, actif par défaut) : le serveur filtre ce que chaque joueur reçoit. Les tokens cachés et les objets réservés au MJ ne lui sont jamais envoyés.
 - Détails : [docs/realtime.md](docs/realtime.md).
@@ -123,7 +125,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 
 ## Démarrage rapide
 
-1. Téléchargez `jdr-v0.1.0-alpha.1-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.1) et décompressez-le.
+1. Téléchargez `jdr-v0.1.0-alpha.2-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2) et décompressez-le.
 2. Envoyez **tout le contenu** du dossier dans le dossier web de votre hébergement (souvent `www/` ou `public_html/`), fichiers cachés compris.
 3. Créez une base MySQL ou MariaDB dans le panneau de l'hébergeur, et notez serveur, port, nom, utilisateur et mot de passe.
 4. Ouvrez `https://votre-site/install.php` et suivez les 6 étapes : prérequis, base de données, site, administrateur, installation, fin.
@@ -394,7 +396,7 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 | P6 | Séances en temps réel : code de séance, lobby, synchronisation | Terminée |
 | P7 | Mode présentiel : écrans appairés, échelle réelle | Terminée |
 | P8 | Génération procédurale : donjons, grottes, extérieurs, villages, textures | Terminée |
-| P9 | MJ en séance : étages et escaliers, liens entre maps (faits) ; notes et épingles du MJ, zones de texte à lire, secrets et pièges (serveur fait, interface à venir) ; modèles de maps, palette de commandes (Cmd+K) (à venir) | En cours |
+| P9 | MJ en séance : étages et escaliers, liens entre maps, notes et épingles du MJ, zones de texte à lire, secrets et pièges, modèles de maps, palette de commandes (Cmd/Ctrl+K) | Terminée |
 | P10 | Durcissement : revue de sécurité OWASP, accessibilité, performances et tests de charge, mise à jour automatique avec archives signées, sauvegarde et restauration, documentation d'exploitation | À venir |
 | P11 | Grille hexagonale (option) | À venir |
 | P12 | Ajouts et retours d'expérience : demandes et défauts remontés à l'usage | À venir |
