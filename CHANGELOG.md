@@ -4,6 +4,21 @@ Toutes les évolutions notables de ce projet sont consignées ici.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Added
+- **Étages et liens entre maps (phase 9)** : jusqu'à 10 étages par map, créés, renommés, réordonnés et supprimés depuis l'éditeur (actions annulables, enregistrées hors ligne), étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map ; en séance, panneau « Passages » et action « Emprunter » du MJ, avec déplacement des tokens choisis. Joueurs et écrans ne reçoivent que l'étage courant, jamais la destination d'un lien. Migration `0005`.
+- **Notes, épingles, zones, secrets et pièges : partie serveur (phase 9)** : notes réservées au MJ et partageables à un, plusieurs ou tous les joueurs ; passages secrets vus comme des murs tant qu'ils ne sont pas révélés ; suggestion de lecture au MJ quand un token entre dans une zone. L'interface reste à venir. Migration `0006`.
+
+### Changed
+- Le statut d'enregistrement de l'éditeur a une largeur fixe : un statut plus long ne décale plus la carte sous le pointeur. À 1280 px de large, la barre du haut occupe une rangée de plus.
+
+### Fixed
+- Écran de projection : un réglage reçu pendant une relecture de `/display/me` n'est plus écrasé par l'ancienne valeur.
+
+### Security
+- Un membre retiré d'une partie est exclu de ses séances ouvertes (instantané et flux temps réel). S'il est réinscrit, il reste exclu de ces séances jusqu'à leur fin.
+
 ## [0.1.0-alpha.1] - 2026-10-28
 
 Première version publiée (alpha) : phases 0 à 8 de la feuille de route et module de mise à jour.
