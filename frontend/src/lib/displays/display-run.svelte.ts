@@ -113,6 +113,8 @@ export class DisplayRun {
   private noteTimer: unknown = null;
   private refreshing: Promise<void> | null = null;
   private lastEvent = '0';
+  /** Counts the changes of the name and settings, so a slower `/display/me` cannot undo them. */
+  private settingsChanges = 0;
   private readonly setT: (fn: () => void, ms: number) => unknown;
   private readonly clearT: (handle: unknown) => void;
 
@@ -191,6 +193,7 @@ export class DisplayRun {
   async saveSettings(patch: DeviceSettingsPatch): Promise<void> {
     const before = this.me;
     if (before === null) return;
+    this.settingsChanges++;
     this.me = { ...before, settings: { ...before.settings, ...patch } };
     try {
       const me = await this.o.device.patchMe(patch);
@@ -223,11 +226,17 @@ export class DisplayRun {
   private async doRefresh(): Promise<void> {
     if (this.stopped) return;
     this.cancelPoll();
+    const changes = this.settingsChanges;
     try {
       const me = await this.o.device.me();
       if (this.stopped) return;
       this.ended = false;
-      await this.adopt(me);
+      const current = this.me;
+      await this.adopt(
+        changes === this.settingsChanges || current === null
+          ? me
+          : { ...me, name: current.name, settings: current.settings },
+      );
     } catch (error) {
       if (isUnpaired(error)) this.markUnpaired();
       else {
@@ -347,6 +356,7 @@ export class DisplayRun {
       void this.refresh();
       return;
     }
+    this.settingsChanges++;
     this.me = {
       ...me,
       name: display.name ?? me.name,

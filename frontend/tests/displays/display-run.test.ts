@@ -252,6 +252,32 @@ describe('DisplayRun: events', () => {
     t.run.stop();
   });
 
+  it('keeps a display.updated received while /display/me is being read', async () => {
+    const t = setup();
+    await t.run.start();
+    await flush();
+    let answer: (me: DisplayMe) => void = () => undefined;
+    t.device.me.mockImplementationOnce(
+      () => new Promise<DisplayMe>((resolve) => (answer = resolve)),
+    );
+    const reading = t.run.refresh();
+    t.sync.emit(101, 'display.updated', {
+      display: {
+        id: '5',
+        session_id: '12',
+        name: 'Salon',
+        state: 'active',
+        settings: settings({ rotation: 90 }),
+      },
+    });
+    answer(meOf({ last_event_id: '100' }, { name: 'Séance 5' }));
+    await reading;
+    expect(t.run.settings?.rotation).toBe(90);
+    expect(t.run.me?.name).toBe('Salon');
+    expect(t.run.me?.session.name).toBe('Séance 5');
+    t.run.stop();
+  });
+
   it('shows a text to read until the next one or its duration (D11)', async () => {
     const t = setup();
     await t.run.start();
