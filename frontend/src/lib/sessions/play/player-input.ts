@@ -22,6 +22,8 @@ export interface PlayerInputHost {
   /** The placed token belongs to the player. */
   isOwn(uid: string): boolean;
   moveToken(uid: string, x: number, y: number): void;
+  /** A pin carrying a note was clicked. */
+  openNote?(uid: string): void;
 }
 
 interface Drag {
@@ -54,8 +56,14 @@ export class PlayerInput {
     const px = this.host.cellsPerPixel();
     switch (e.type) {
       case 'down': {
-        if (e.button !== 0 || !this.host.canMove()) return;
+        if (e.button !== 0) return;
         const hit = hitTest(scene.doc, scene.doc.layers, p, TOLERANCE_PX * px, px);
+        if (hit?.kind === 'object') {
+          const o = scene.doc.object(hit.uid);
+          if (o?.type === 'pin' && o.props.note !== null) this.host.openNote?.(o.props.note);
+          return;
+        }
+        if (!this.host.canMove()) return;
         if (hit === null || hit.kind !== 'token' || !this.host.isOwn(hit.uid)) return;
         const token = scene.token(hit.uid);
         if (token === undefined) return;

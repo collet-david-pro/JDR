@@ -54,6 +54,8 @@
     if (selected === null || selected.kind !== 'object') return;
     const type = props.run.state?.objects[selected.uid]?.type;
     if (type === 'stairs' || type === 'portal') current = 'maps';
+    else if (type === 'pin' || type === 'zone') current = 'notes';
+    else if (type === 'trap' || type === 'secret') current = 'reveal';
   });
 
   async function keydown(event: KeyboardEvent, index: number): Promise<void> {

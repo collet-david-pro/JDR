@@ -1,4 +1,6 @@
 <script lang="ts">
+  import MarkdownView from '../MarkdownView.svelte';
+
   /** Text read aloud by the GM, readable from afar, above the map. No control. */
   interface Props {
     title: string;
@@ -10,7 +12,7 @@
 <div class="overlay" data-testid="display-read-aloud" role="status">
   <article>
     {#if title !== ''}<h2>{title}</h2>{/if}
-    <p>{body}</p>
+    <div class="body"><MarkdownView source={body} /></div>
   </article>
 </div>
 
@@ -35,10 +37,10 @@
     margin: 0 0 0.5em;
     font-size: clamp(2rem, 7vmin, 5rem);
   }
-  p {
+  .body {
+    text-align: start;
     margin: 0;
     font-size: clamp(1.5rem, 5vmin, 3.5rem);
     line-height: 1.35;
-    white-space: pre-wrap;
   }
 </style>

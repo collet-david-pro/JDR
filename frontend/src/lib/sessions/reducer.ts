@@ -31,6 +31,7 @@ import type {
   TokenMovedPayload,
   UserPayload,
 } from './event-payloads';
+import { onNoteHidden, onNoteShared, onZoneEntered } from './note-events';
 import { applyMapOps } from './scene-ops';
 import type { SessionState } from './state';
 import type { Session, SessionPlayer } from './types';
@@ -118,7 +119,15 @@ const onState: Handler = (s, _e, p) => {
     effects.push(reload('map_changed'));
   }
   if (mapChanged)
-    state = { ...state, map: null, mapRevision: null, objects: {}, tokens: {}, revealed: [] };
+    state = {
+      ...state,
+      map: null,
+      mapRevision: null,
+      objects: {},
+      tokens: {},
+      notes: {},
+      revealed: [],
+    };
   return { state, effects };
 };
 
@@ -219,6 +228,7 @@ const onMapChanged: Handler = (s, _e, p) => {
     mapRevision: null,
     objects: {},
     tokens: {},
+    notes: {},
     revealed: [],
   };
   const effects: SessionEffect[] = [reload('map_changed')];
@@ -327,6 +337,14 @@ const onCamera: Handler = (s, _e, p) => {
   return same(withSession(s, { camera }));
 };
 
+const onObjectOrPulse: Handler = (s, e, p) => {
+  const r = onRevealed(s, e, p);
+  if (r === null) return r;
+  const o = withoutView(p) as unknown as MapObject;
+  if (o.type !== 'trap' || o.props.reveal_effect !== 'pulse') return r;
+  return { state: r.state, effects: [{ kind: 'trap.pulse', uid: o.uid }] };
+};
+
 const onNote: Handler = (s, e, p) => {
   const x = p as unknown as NotePayload;
   return {
@@ -357,6 +375,8 @@ const onMapOps: Handler = (s, _e, p) => {
       ...s,
       objects: r.objects,
       tokens: r.tokens,
+      notes: r.notes,
+      revealed: r.revealed,
       ambient: r.ambient,
       mapRevision: x.revision,
     },
@@ -398,7 +418,7 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
   'maptoken.updated': onTokenSet,
   'maptoken.removed': onTokenRemoved,
   'door.toggled': onDoor,
-  'object.revealed': onRevealed,
+  'object.revealed': onObjectOrPulse,
   'fog.updated': onFog,
   'light.changed': onObject,
   'ambient.changed': onAmbient,
@@ -406,5 +426,8 @@ const HANDLERS: Readonly<Record<string, Handler>> = {
   'note.read_aloud': onNote,
   'map.ops': onMapOps,
   'map.ops.public': onOpsPublic,
+  'note.shared': onNoteShared,
+  'note.hidden': onNoteHidden,
+  'zone.entered': onZoneEntered,
   'server.notice': onNotice,
 };

@@ -114,7 +114,12 @@ export interface ZoneObject extends NoteObjectBase {
 export interface TrapObject extends NoteObjectBase {
   readonly type: 'trap';
   readonly geometry: { readonly x: number; readonly y: number } | PolygonGeometry;
-  readonly props: { readonly note: string | null; readonly reveal_effect: 'pulse' | 'none' };
+  readonly props: {
+    readonly note: string | null;
+    readonly reveal_effect: 'pulse' | 'none';
+    /** Client only: highlighted for two seconds after its reveal. */
+    readonly pulse?: boolean;
+  };
 }
 
 export type SecretKind = 'passage' | 'room' | 'object';
@@ -128,7 +133,12 @@ export interface SecretObject extends NoteObjectBase {
   readonly geometry:
     | { readonly a: readonly [number, number]; readonly b: readonly [number, number] }
     | PolygonGeometry;
-  readonly props: { readonly kind: SecretKind; readonly note: string | null };
+  readonly props: {
+    readonly kind: SecretKind;
+    readonly note: string | null;
+    /** Client only: set on the players' side once the passage is revealed (it no longer blocks). */
+    readonly revealed?: boolean;
+  };
 }
 
 export type NoteObject = PinObject | ZoneObject | TrapObject | SecretObject;

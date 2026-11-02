@@ -3,6 +3,7 @@
  * preload). Identifiers are strings, dates ISO 8601 UTC strings, coordinates in cells.
  */
 import type { Ambient, FogChunkWire } from '../../editor/contracts';
+import type { NoteAction } from '../../editor/contracts-notes';
 import type { MapDetail, MapAmbient, Token } from '../types';
 
 export type SessionStatus = 'lobby' | 'running' | 'paused' | 'ended';
@@ -145,6 +146,7 @@ export type SessionAction =
     }
   | { readonly type: 'ambient.set'; readonly ambient: Partial<MapAmbient> }
   | { readonly type: 'note.show'; readonly title: string; readonly body: string }
+  | NoteAction
   | { readonly type: 'light.toggle'; readonly uid: string; readonly enabled?: boolean };
 
 export type SessionActionType = SessionAction['type'];

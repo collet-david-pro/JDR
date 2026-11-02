@@ -12,6 +12,8 @@ import type { SessionState } from './state';
 export interface OpsResult {
   readonly objects: SessionState['objects'];
   readonly tokens: SessionState['tokens'];
+  readonly notes: SessionState['notes'];
+  readonly revealed: SessionState['revealed'];
   readonly ambient: SessionState['ambient'];
   readonly effects: readonly SessionEffect[];
 }
@@ -24,6 +26,8 @@ export function applyMapOps(
   let objects = state.objects;
   let tokens = state.tokens;
   let ambient = state.ambient;
+  let notes = state.notes;
+  let revealed = state.revealed;
   const effects: SessionEffect[] = [];
   const blocks = new Map<string, { floor: string; cx: number; cy: number }>();
   // Ops designate a floor by its id or its uid (the editor sends uids); the replica keeps ids.
@@ -76,6 +80,48 @@ export function applyMapOps(
       case 'maptoken.remove':
         if (op.uid in tokens) delete toks()[op.uid];
         break;
+      case 'note.add': {
+        const n = op.note;
+        notes = {
+          ...notes,
+          [n.uid]: {
+            uid: n.uid,
+            title: n.title,
+            body: n.body,
+            asset_id: n.asset_id ?? null,
+            audience: n.audience ?? 'gm',
+            audience_users: n.audience === 'players' ? (n.audience_users ?? []) : [],
+            read_aloud: n.read_aloud ?? false,
+          },
+        };
+        break;
+      }
+      case 'note.update': {
+        const current = notes[op.uid];
+        if (current === undefined) break;
+        const next = { ...current, ...op.patch } as typeof current;
+        if ('audience' in next && op.patch.audience !== undefined) {
+          const users =
+            op.patch.audience === 'players' ? (op.patch.audience_users ?? next.audience_users) : [];
+          (next as { audience_users: readonly string[] }).audience_users = users;
+        }
+        notes = { ...notes, [op.uid]: next };
+        break;
+      }
+      case 'note.remove':
+        if (op.uid in notes) {
+          notes = { ...notes };
+          delete (notes as Record<string, unknown>)[op.uid];
+        }
+        break;
+      case 'secrets.reset': {
+        const kept = revealed.filter((uid) => {
+          const type = objects[uid]?.type;
+          return type !== 'trap' && type !== 'secret';
+        });
+        if (kept.length !== revealed.length) revealed = kept;
+        break;
+      }
       case 'tiles.set':
         for (const [x, y] of op.cells) {
           const cx = Math.floor((x ?? 0) / CHUNK_SIZE);
@@ -129,5 +175,12 @@ export function applyMapOps(
   }
   if (blocks.size > 0) effects.push({ kind: 'reload.chunks', mapId, chunks: [...blocks.values()] });
   if (reload) effects.push({ kind: 'reload.snapshot', reason: 'map_reload' });
-  return { objects, tokens, ambient, effects: effects.length === 0 ? NO_EFFECTS : effects };
+  return {
+    objects,
+    tokens,
+    notes,
+    revealed,
+    ambient,
+    effects: effects.length === 0 ? NO_EFFECTS : effects,
+  };
 }

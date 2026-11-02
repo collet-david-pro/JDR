@@ -54,7 +54,7 @@ export function isOccluder(obj: MapObject | undefined): boolean {
     (obj.type === 'wall' ||
       obj.type === 'door' ||
       obj.type === 'window' ||
-      (obj.type === 'secret' && 'a' in obj.geometry))
+      (obj.type === 'secret' && 'a' in obj.geometry && obj.props.revealed !== true))
   );
 }
 

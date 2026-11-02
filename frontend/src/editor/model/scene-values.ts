@@ -140,7 +140,8 @@ function trapProps(p: TrapObject['props']): TrapObject['props'] {
 }
 
 function secretProps(p: SecretObject['props']): SecretObject['props'] {
-  return { kind: oneOf(p.kind, SECRET_KINDS, 'secret kind'), note: noteLink(p.note) };
+  const base = { kind: oneOf(p.kind, SECRET_KINDS, 'secret kind'), note: noteLink(p.note) };
+  return p.revealed === true ? { ...base, revealed: true } : base;
 }
 
 function wallProps(p: WallProps): WallProps {

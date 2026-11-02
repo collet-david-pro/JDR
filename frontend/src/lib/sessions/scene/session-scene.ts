@@ -161,8 +161,47 @@ export class SessionScene {
    * in the vision of the editor's "player view".
    */
   private shown(object: MapObject): MapObject {
-    if (this.role === 'gm' || object.type !== 'door' || !object.props.secret) return object;
+    if (this.role === 'gm') return object;
+    // A trap or a secret received by a player or a screen is a revealed one (the server only
+    // sends those): shown to all; a revealed passage no longer blocks.
+    if (object.type === 'trap') return { ...object, visibility: 'all' };
+    if (object.type === 'secret') {
+      const props = 'a' in object.geometry ? { ...object.props, revealed: true } : object.props;
+      return { ...object, visibility: 'all', props };
+    }
+    if (object.type !== 'door' || !object.props.secret) return object;
     return { ...object, props: { ...object.props, secret: false } };
+  }
+
+  // ---- Reveal pulse ----------------------------------------------------------------------
+
+  private readonly pulses = new Set<ReturnType<typeof setTimeout>>();
+
+  /** Highlights a trap for two seconds (rendering only; steady marker with reduced motion). */
+  pulse(uid: string): void {
+    const trap = this.objects[uid];
+    if (this.disposed || trap?.type !== 'trap' || trap.floor !== this.floor) return;
+    const reduced =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const set = (on: boolean): void => {
+      const now = this.objects[uid];
+      if (this.disposed || now?.type !== 'trap') return;
+      const shown = this.shown(now);
+      this.safely(() =>
+        this.doc.replaceObject(
+          uid,
+          on && shown.type === 'trap'
+            ? { ...shown, props: { ...shown.props, pulse: true } }
+            : shown,
+        ),
+      );
+    };
+    const steps = reduced ? 1 : 8;
+    for (let i = 0; i < steps; i++) {
+      this.pulses.add(setTimeout(() => set(true), i * 250));
+      if (!reduced) this.pulses.add(setTimeout(() => set(false), i * 250 + 125));
+    }
+    this.pulses.add(setTimeout(() => set(false), 2000));
   }
 
   /** An invalid value from the server must not stop the other updates. */
@@ -299,6 +338,10 @@ export class SessionScene {
       }
       return null;
     }
+    if (effect.kind === 'trap.pulse') {
+      this.pulse(effect.uid);
+      return null;
+    }
     if (effect.kind === 'reload.chunks' && effect.mapId === this.mapId) {
       return this.reloadChunks(source, effect.chunks);
     }
@@ -307,6 +350,7 @@ export class SessionScene {
 
   dispose(): void {
     this.disposed = true;
+    for (const timer of this.pulses) clearTimeout(timer);
     this.abort.abort();
   }
 }

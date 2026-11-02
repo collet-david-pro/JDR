@@ -36,6 +36,15 @@ export type SessionEffect =
       readonly title: string;
       readonly body: string;
     }
+  /** A trap with `reveal_effect: pulse` was revealed: highlight it two seconds (rendering only). */
+  | { readonly kind: 'trap.pulse'; readonly uid: string }
+  /** zone.entered (GM): suggest reading the note of the zone (never sent by itself). */
+  | {
+      readonly kind: 'zone.suggest';
+      readonly zoneUid: string;
+      readonly noteUid: string;
+      readonly title: string;
+    }
   /** The user was kicked: leave the session screens. */
   | { readonly kind: 'kicked' }
   /** server.notice (maintenance / reload). */

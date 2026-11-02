@@ -22,7 +22,7 @@ export function isOccluderObject(o: MapObject): boolean {
     o.type === 'wall' ||
     o.type === 'door' ||
     o.type === 'window' ||
-    (o.type === 'secret' && 'a' in o.geometry)
+    (o.type === 'secret' && 'a' in o.geometry && o.props.revealed !== true)
   );
 }
 

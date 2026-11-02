@@ -1922,7 +1922,8 @@
         "room": "Pièce secrète",
         "object": "Objet caché"
       },
-      "passage_hint": "Deux clics : le début et la fin du passage (0,1 à 20 cases). Il bloque la vue des joueurs jusqu'à sa révélation."
+      "passage_hint": "Deux clics : le début et la fin du passage (0,1 à 20 cases). Il bloque la vue des joueurs jusqu'à sa révélation.",
+      "passage_opening": "Laissez une ouverture dans le mur à cet endroit : le passage la bouche tant qu'il n'est pas révélé."
     }
   },
   "maps": {
@@ -2236,6 +2237,36 @@
       "tokens": "Tokens à déplacer avec le groupe",
       "no_tokens": "Aucun token posé sur cet étage.",
       "player": "joueur"
+    },
+    "map_notes": {
+      "title": "Notes de la map",
+      "empty": "Aucune note sur cette map. Créez-en dans l'éditeur.",
+      "untitled": "Sans titre",
+      "read": "Lire",
+      "share": "Partager"
+    },
+    "share": {
+      "title": "Partager « {title} »",
+      "audience": "Visible par",
+      "gm": "MJ seul",
+      "players": "Certains joueurs",
+      "all": "Tous les joueurs",
+      "who": "Joueurs",
+      "no_players": "Aucun joueur dans cette partie.",
+      "hint": "Cochez au moins un joueur.",
+      "apply": "Appliquer"
+    },
+    "secrets": {
+      "title": "Pièges et secrets",
+      "empty": "Aucun piège ni secret sur cet étage.",
+      "trap": "Piège",
+      "reveal": "Révéler",
+      "revealed": "Révélé"
+    },
+    "zone": {
+      "entered": "Un pion est entré dans une zone.",
+      "read": "Lire « {title} »",
+      "ignore": "Ignorer"
     }
   },
   "play": {
@@ -2286,6 +2317,13 @@
       "mode_sse": "temps réel (SSE)",
       "mode_longpoll": "long polling",
       "mode_poll": "interrogation régulière"
+    },
+    "notes": {
+      "button": "Notes",
+      "title": "Notes",
+      "empty": "Aucune note.",
+      "back": "Retour à la liste",
+      "received": "Nouvelle note : {title}"
     }
   },
   "display": {

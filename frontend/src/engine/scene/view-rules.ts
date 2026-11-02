@@ -119,7 +119,9 @@ export function doorDrawnAsWall(obj: MapObject, mode: ViewMode): boolean {
  * the revealed state: its player preview always treats the passage as not revealed.
  */
 export function secretDrawnAsWall(obj: MapObject, mode: ViewMode): boolean {
-  return obj.type === 'secret' && 'a' in obj.geometry && mode !== 'gm';
+  return (
+    obj.type === 'secret' && 'a' in obj.geometry && obj.props.revealed !== true && mode !== 'gm'
+  );
 }
 
 /** Light objects contributing to the lightmap / visibility in this view. */

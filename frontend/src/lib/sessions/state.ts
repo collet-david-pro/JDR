@@ -5,6 +5,7 @@
  * messages to read) is handed to the UI as effects, never stored here.
  */
 import type { Ambient, MapObject, PlacedToken } from '../../editor/contracts';
+import type { MapNote, PlayerNote } from '../../editor/contracts-notes';
 import type { MapDetail, Token } from '../types';
 import type { Session, SessionRole, SessionSnapshot } from './types';
 
@@ -26,6 +27,8 @@ export interface SessionState {
   readonly tokens: Readonly<Record<string, PlacedToken>>;
   /** Token definitions of the game, by id. */
   readonly definitions: Readonly<Record<string, Token>>;
+  /** Notes of the map by uid: all of them for the GM, the readable ones for a player / screen. */
+  readonly notes: Readonly<Record<string, MapNote | PlayerNote>>;
   /** Uids of the objects revealed to the players. */
   readonly revealed: readonly string[];
   /** Highest event id applied (snapshot included): events up to it are never applied again. */
@@ -39,11 +42,13 @@ export function createSessionState(snapshot: SessionSnapshot, me: string): Sessi
   let map: MapHead | null = null;
   const objects: Record<string, MapObject> = {};
   const tokens: Record<string, PlacedToken> = {};
+  const notes: Record<string, MapNote | PlayerNote> = {};
   if (full !== null) {
     const { objects: o, tokens_placed: t, ambient: _ambient, ...head } = full;
     map = head;
     for (const obj of o) objects[obj.uid] = obj;
     for (const tok of t) tokens[tok.uid] = tok;
+    for (const note of full.notes ?? []) notes[note.uid] = note;
   }
   const definitions: Record<string, Token> = {};
   for (const def of snapshot.tokens) definitions[def.id] = def;
@@ -56,6 +61,7 @@ export function createSessionState(snapshot: SessionSnapshot, me: string): Sessi
     ambient: full?.ambient ?? null,
     objects,
     tokens,
+    notes,
     definitions,
     revealed: snapshot.revealed,
     lastEventId: snapshot.last_event_id,

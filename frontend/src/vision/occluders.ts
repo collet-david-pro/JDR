@@ -108,7 +108,7 @@ export function rawPieces(objects: readonly MapObject[], viewer: Viewer): RawPie
   // A secret passage is a plain wall for the players (P9b2a), nothing for the GM.
   if (viewer === 'player') {
     for (const o of objects) {
-      if (o.type !== 'secret' || !('a' in o.geometry)) continue;
+      if (o.type !== 'secret' || !('a' in o.geometry) || o.props.revealed === true) continue;
       const [ax, ay] = o.geometry.a;
       const [bx, by] = o.geometry.b;
       out.push({ ax, ay, bx, by, vision: true, light: true, move: true });

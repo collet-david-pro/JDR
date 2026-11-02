@@ -1,10 +1,17 @@
 <script lang="ts">
+  import MapNotesList from './MapNotesList.svelte';
   import { t } from '../../lib/i18n';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
   import { toasts } from '../../stores/toasts.svelte';
 
   /** Console panel "Notes": a text shown to the players to read aloud (`note.show`). */
-  let { send }: PanelProps = $props();
+  let { run, send, gameId, selection }: PanelProps = $props();
+  // A pin or a zone selected on the map unfolds its note.
+  const focus = $derived.by(() => {
+    if (selection?.kind !== 'object') return null;
+    const o = run.state?.objects[selection.uid];
+    return o?.type === 'pin' || o?.type === 'zone' ? o.props.note : null;
+  });
   const uid = $props.id();
   const TITLE_MAX = 120;
   const BODY_MAX = 4000;
@@ -27,6 +34,7 @@
   }
 </script>
 
+<div class="panel list"><MapNotesList {run} {gameId} {send} {focus} /></div>
 <form class="panel" onsubmit={show} aria-labelledby={`${uid}-title`} data-testid="notes-panel">
   <h2 id={`${uid}-title`}>{t('sessions.notes.title')}</h2>
   <label class="field">

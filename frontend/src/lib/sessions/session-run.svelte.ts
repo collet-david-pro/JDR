@@ -37,6 +37,13 @@ export interface SessionRunOptions {
   readonly onBlocked?: (move: BlockedMove) => void;
 }
 
+export interface ZoneSuggestion {
+  readonly zoneUid: string;
+  readonly noteUid: string;
+  readonly title: string;
+  readonly at: number;
+}
+
 export class SessionRun {
   phase = $state<RunPhase>('loading');
   error = $state.raw<unknown>(null);
@@ -47,6 +54,8 @@ export class SessionRun {
   tilesErrors = $state(0);
   /** Last text read aloud (note.read_aloud). */
   readAloud = $state.raw<ReadAloud | null>(null);
+  /** Zones entered by a token (GM): suggestions to read their note, never read by themselves. */
+  zoneSuggestions = $state.raw<readonly ZoneSuggestion[]>([]);
   /** The server asked the clients to reload (server.notice reload). */
   reloadAsked = $state(false);
   /** Counts the `reload.preload` effects (player: the map changed, preload again). */
@@ -111,6 +120,10 @@ export class SessionRun {
     this.sync.setHidden(hidden);
   }
 
+  dismissSuggestion(zoneUid: string): void {
+    this.zoneSuggestions = this.zoneSuggestions.filter((z) => z.zoneUid !== zoneUid);
+  }
+
   /** Reads the session again (after a kick, a refused action...). */
   reload(): Promise<void> {
     return this.sync.reload();
@@ -126,6 +139,13 @@ export class SessionRun {
 
   private effect(effect: SessionEffect): void {
     switch (effect.kind) {
+      case 'zone.suggest':
+        this.zoneSuggestions = [
+          ...this.zoneSuggestions.filter((z) => z.zoneUid !== effect.zoneUid),
+          { zoneUid: effect.zoneUid, noteUid: effect.noteUid, title: effect.title, at: Date.now() },
+        ].slice(-3);
+        return;
+      case 'trap.pulse':
       case 'fog':
       case 'reload.chunks':
         this.host.effect(effect);

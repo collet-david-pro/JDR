@@ -103,9 +103,24 @@ export function drawZone(g: Graphics, o: ZoneObject, cellPx: number, bucket: num
   dashedRing(g, pts, cellPx, bucket, ZONE_COLOR, 0.9);
 }
 
+/** Red halo of a trap that was just revealed (`props.pulse`, client only). */
+function drawPulse(g: Graphics, o: TrapObject, k: number): void {
+  const geo = o.geometry;
+  const pts = 'polygon' in geo ? geo.polygon : [geo];
+  const cx = (pts.reduce((s, q) => s + q.x, 0) / pts.length) * k;
+  const cy = (pts.reduce((s, q) => s + q.y, 0) / pts.length) * k;
+  g.circle(cx, cy, TRAP_MARK_RADIUS * k * 2.6).fill({ color: 0xff2d2d, alpha: 0.35 });
+  g.circle(cx, cy, TRAP_MARK_RADIUS * k * 2.6).stroke({
+    width: 0.08 * k,
+    color: 0xff2d2d,
+    alpha: 0.9,
+  });
+}
+
 export function drawTrap(g: Graphics, o: TrapObject, cellPx: number, bucket: number): void {
   const k = cellPx;
   const geo = o.geometry;
+  if (o.props.pulse === true) drawPulse(g, o, k);
   if ('polygon' in geo) {
     const pts = toPoly(geo);
     ring(g, pts, k);
@@ -141,7 +156,8 @@ export function drawSecret(g: Graphics, o: SecretObject, cellPx: number, bucket:
     dashedRing(g, pts, k, bucket, SECRET_COLOR, 0.95);
     return;
   }
-  const dash = Math.max(0.25 * k, 6 / bucket);
+  const revealed = o.props.revealed === true;
+  const dash = Math.max(0.25 * k, 6 / bucket) * (revealed ? 0.6 : 1);
   let any = false;
   for (const d of dashSegments(
     geo.a[0] * k,
@@ -157,8 +173,8 @@ export function drawSecret(g: Graphics, o: SecretObject, cellPx: number, bucket:
   if (any) {
     g.stroke({
       width: Math.max(3 / bucket, 0.12 * k),
-      color: SECRET_COLOR,
-      alpha: 0.95,
+      color: revealed ? 0xe8e0c8 : SECRET_COLOR,
+      alpha: revealed ? 0.8 : 0.95,
       cap: 'butt',
     });
   }

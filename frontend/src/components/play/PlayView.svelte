@@ -2,6 +2,7 @@
   import { cameraText } from '../../lib/sessions/play/camera';
   import { onMount, untrack } from 'svelte';
   import NetworkIndicator from './NetworkIndicator.svelte';
+  import PlayerNotes from './PlayerNotes.svelte';
   import EngineUnsupported from '../editor/EngineUnsupported.svelte';
   import { isEngineUnsupportedError, loadSceneEngine, type SceneEngine } from '../../engine/load';
   import { t } from '../../lib/i18n';
@@ -55,7 +56,10 @@
       .join(',');
   });
 
+  let notesPanel: PlayerNotes | undefined = $state();
+
   const input = new PlayerInput({
+    openNote: (uid) => notesPanel?.show(uid),
     scene: () => run.scene,
     cellsPerPixel: () => {
       const scene = run.scene;
@@ -221,6 +225,7 @@
         />
         <span>{t('play.view.follow')}</span>
       </label>
+      <PlayerNotes {run} bind:this={notesPanel} />
       <button
         type="button"
         class="button button-small"

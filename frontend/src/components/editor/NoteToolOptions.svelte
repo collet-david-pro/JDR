@@ -113,6 +113,11 @@
   <p class="small muted">
     {ui.secretKind === 'passage' ? t('editor.notes.passage_hint') : t('editor.notes.polygon_hint')}
   </p>
+  {#if ui.secretKind === 'passage'}
+    <p class="small muted" data-testid="passage-opening-hint">
+      {t('editor.notes.passage_opening')}
+    </p>
+  {/if}
 {/if}
 
 <style>

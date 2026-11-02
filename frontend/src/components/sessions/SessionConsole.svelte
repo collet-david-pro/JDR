@@ -2,6 +2,7 @@
   import { onMount, untrack } from 'svelte';
   import ConsoleHeader from './ConsoleHeader.svelte';
   import ConsolePanels from './ConsolePanels.svelte';
+  import ZoneSuggestions from './ZoneSuggestions.svelte';
   import EngineUnsupported from '../editor/EngineUnsupported.svelte';
   import type { Overlay } from '../../editor/contracts';
   import { newObjectUid } from '../../editor/util/uid';
@@ -310,6 +311,7 @@
           >
         </div>
       {/if}
+      <ZoneSuggestions {run} {send} />
     </div>
 
     <div class="stage">

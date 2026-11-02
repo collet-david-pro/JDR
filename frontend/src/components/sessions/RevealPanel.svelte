@@ -1,5 +1,6 @@
 <script lang="ts">
   import { FOG_BRUSH_MAX, FOG_BRUSH_MIN } from '../../editor/tools/types';
+  import SecretsList from './SecretsList.svelte';
   import { t } from '../../lib/i18n';
   import type { ConsoleTool } from '../../lib/sessions/console/console-input';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
@@ -24,6 +25,10 @@
   );
   const token = $derived(
     selection?.kind === 'token' ? run.scene?.doc.token(selection.uid) : undefined,
+  );
+
+  const noteKind = $derived(
+    object?.type === 'trap' || object?.type === 'secret' ? object.type : null,
   );
 
   function activate(): void {
@@ -89,12 +94,20 @@
     <button
       type="button"
       class="button"
-      onclick={() => send([{ type: 'reveal', kind: selection.kind, uid: selection.uid }])}
+      onclick={() =>
+        send([
+          noteKind === 'trap'
+            ? { type: 'trap.reveal', uid: selection.uid }
+            : noteKind === 'secret'
+              ? { type: 'secret.reveal', uid: selection.uid }
+              : { type: 'reveal', kind: selection.kind, uid: selection.uid },
+        ])}
       >{selection.kind === 'object'
         ? t('sessions.reveal.reveal_object')
         : t('sessions.reveal.reveal_token')}</button
     >
   {/if}
+  <SecretsList {run} {send} />
 </section>
 
 <style>
