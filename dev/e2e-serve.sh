@@ -18,6 +18,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PORT="${E2E_PORT:-8090}"
+# The copy has no .git: without this, the site under test would update itself from GitHub.
+export JDR_AUTO_UPDATE=0
 export E2E_DB_NAME="${E2E_DB_NAME:-jdr_e2e}"
 export E2E_DB_HOST="${E2E_DB_HOST:-127.0.0.1}"
 export E2E_DB_PORT="${E2E_DB_PORT:-3306}"

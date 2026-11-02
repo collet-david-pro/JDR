@@ -82,11 +82,24 @@ export interface UpdateRun {
   readonly updated_at: string;
 }
 
+export interface UpdateAuto {
+  readonly enabled: boolean;
+  readonly supported: boolean;
+  readonly running: boolean;
+  readonly last_done: { readonly version: string; readonly at: number } | null;
+  readonly last_error: {
+    readonly version: string;
+    readonly message: string;
+    readonly at: number;
+  } | null;
+}
+
 export interface UpdateInfo {
   readonly current: string;
   readonly db_version: string | number | null;
   readonly required_db_version: string | number | null;
   readonly channel: UpdateChannel;
+  readonly auto: UpdateAuto;
   readonly check: UpdateCheck | null;
   readonly pending: UpdateSummary | null;
   readonly run: UpdateRun | null;
@@ -242,6 +255,18 @@ export class UpdateModel implements UploadTransport {
       }
     } finally {
       this.checking = false;
+    }
+  }
+
+  async setAuto(enabled: boolean): Promise<void> {
+    this.actionFailure = null;
+    try {
+      const { data } = await this.api.patch<{ auto: UpdateAuto }>('/admin/update', {
+        auto: enabled,
+      });
+      if (this.info !== null) this.info = { ...this.info, auto: data.auto };
+    } catch (error) {
+      this.actionFailure = updateError(error, this.t);
     }
   }
 

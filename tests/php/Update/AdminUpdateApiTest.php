@@ -66,7 +66,7 @@ final class AdminUpdateApiTest extends ApiTestCase
         return [$id, $data];
     }
 
-    private function zipBytes(string $version = '0.2.0'): string
+    private function zipBytes(string $version = '99.0.0'): string
     {
         $files = Fixture::newFiles() + Fixture::realMigrations();
 
@@ -121,7 +121,7 @@ final class AdminUpdateApiTest extends ApiTestCase
         $done = $admin->post('/admin/update/uploads/' . $id . '/complete');
         self::assertSame(201, $done->status(), $done->body());
         $pending = $done->payload()['data']['pending'];
-        self::assertSame('0.2.0', $pending['version']);
+        self::assertSame('99.0.0', $pending['version']);
         self::assertSame('unverified', $pending['authenticity']);
         self::assertSame($pending['id'], $admin->get('/admin/update')->payload()['data']['pending']['id']);
         self::assertSame(1, $this->rows('audit_log', "`action` = 'update.uploaded'"));
@@ -183,6 +183,11 @@ final class AdminUpdateApiTest extends ApiTestCase
         self::assertSame(422, $admin->patch('/admin/update', ['channel' => 'beta'])->status());
         self::assertSame(200, $admin->patch('/admin/update', ['channel' => 'prerelease'])->status());
         self::assertSame('prerelease', $admin->get('/admin/update')->payload()['data']['channel']);
+        $auto = $admin->get('/admin/update')->payload()['data']['auto'];
+        self::assertTrue($auto['enabled'], 'on by default');
+        self::assertSame(false, $admin->patch('/admin/update', ['auto' => false])->payload()['data']['auto']['enabled']);
+        self::assertSame('prerelease', $admin->get('/admin/update')->payload()['data']['channel'], 'the channel is kept');
+        self::assertSame(422, $admin->patch('/admin/update', ['auto' => 'oui'])->status());
         self::assertSame('9.1.0-beta.1', $admin->post('/admin/update/check', [])->payload()['data']['latest']['version']);
     }
 }

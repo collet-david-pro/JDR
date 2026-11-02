@@ -116,7 +116,7 @@ final class UpdatePageTest extends ApiTestCase
     public function testPackageInstalledThroughThePage(): void
     {
         $this->login('Root');
-        $zip = Fixture::zip($this->install . '/storage', Fixture::newFiles() + Fixture::realMigrations(), '0.2.0');
+        $zip = Fixture::zip($this->install . '/storage', Fixture::newFiles() + Fixture::realMigrations(), '99.0.0');
         $summary = $this->app->container()->get(\JDR\Domain\Update\UpdatePackage::class)->accept($zip, 1);
         $home = $this->page('GET');
         self::assertSame(303, $home->status());
@@ -138,7 +138,7 @@ final class UpdatePageTest extends ApiTestCase
         }
         self::assertSame('done', $state);
         self::assertSame(hash('sha256', "<?php // front controller v2\n"), Fixture::snapshot($this->install)['index.php']);
-        self::assertStringContainsString('La version 0.2.0 est installée', $this->page('GET', '/update.php?id=' . $summary['id'])->body());
+        self::assertStringContainsString('La version 99.0.0 est installée', $this->page('GET', '/update.php?id=' . $summary['id'])->body());
     }
 
     public function testFilesSentByFtp(): void

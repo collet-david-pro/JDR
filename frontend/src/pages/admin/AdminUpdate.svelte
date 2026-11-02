@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import ErrorAlert from '../../components/ErrorAlert.svelte';
   import Button from '../../components/Button.svelte';
+  import CheckboxField from '../../components/CheckboxField.svelte';
   import UpdateNotes from '../../components/admin/UpdateNotes.svelte';
   import UpdateSummary from '../../components/admin/UpdateSummary.svelte';
   import {
@@ -73,6 +74,33 @@
         <option value="stable">{t('admin.update.channel_stable')}</option>
         <option value="prerelease">{t('admin.update.channel_prerelease')}</option>
       </select>
+    </div>
+
+    <div class="stack" data-testid="update-auto">
+      {#if info.auto.supported}
+        <CheckboxField
+          label={t('admin.update.auto.label')}
+          hint={t('admin.update.auto.hint')}
+          checked={info.auto.enabled}
+          onchange={(enabled) => void model.setAuto(enabled)}
+        />
+        {#if info.auto.running}
+          <p class="muted" role="status">{t('admin.update.auto.running')}</p>
+        {/if}
+        {#if info.auto.last_error !== null}
+          <div class="alert alert-warning" role="status">
+            <p>{t('admin.update.auto.failed', { version: info.auto.last_error.version })}</p>
+            <p>{info.auto.last_error.message}</p>
+          </div>
+        {/if}
+        {#if info.auto.last_done !== null}
+          <p class="muted">
+            {t('admin.update.auto.done', { version: info.auto.last_done.version })}
+          </p>
+        {/if}
+      {:else}
+        <p class="muted">{t('admin.update.auto.unsupported')}</p>
+      {/if}
     </div>
 
     <h3>{t('admin.update.check.title')}</h3>

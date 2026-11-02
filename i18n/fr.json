@@ -736,6 +736,14 @@
       "channel": "Canal de mise à jour",
       "channel_stable": "Stable (versions publiées)",
       "channel_prerelease": "Préversions (alpha, bêta)",
+      "auto": {
+        "label": "Mettre à jour automatiquement",
+        "hint": "Le site installe seul les nouvelles versions publiées sur GitHub, avec sauvegarde et retour arrière. Rien ne démarre pendant une séance en cours. La mise à jour n'avance que lorsque le site reçoit des visites ou qu'une tâche cron est configurée.",
+        "running": "Mise à jour automatique en cours.",
+        "failed": "La mise à jour automatique vers la version {version} a échoué :",
+        "done": "Dernière mise à jour automatique : version {version}.",
+        "unsupported": "Mise à jour automatique désactivée sur une copie de développement."
+      },
       "check": {
         "title": "Nouvelle version",
         "button": "Vérifier les mises à jour",

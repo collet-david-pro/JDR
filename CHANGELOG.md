@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.2.0] - 2026-11-03
+
+La numérotation passe aux versions et sous-versions : plus de numéro d'alpha.
+
+### Added
+- **Mise à jour automatique** : une fois installé, le site se met à jour seul depuis les releases GitHub, en arrière-plan. L'archive n'est installée que si son empreinte correspond au `SHA256SUMS` de la release ; sauvegarde et retour arrière restent ceux de la mise à jour manuelle. Rien ne démarre pendant une séance lancée depuis moins de 12 h. Une migration en échec est restaurée et n'est pas retentée pour cette version ; les autres échecs sont retentés 3 fois, à 1 h d'intervalle. Activée par défaut, désactivable dans **Administration > Mise à jour**.
+- Des fichiers envoyés par FTP se terminent aussi tout seuls : les migrations s'appliquent à la visite suivante, sans ouvrir `update.php`.
+
 ## [0.1.0-alpha.2] - 2026-11-02
 
 Phase 9 « MJ en séance » terminée.
@@ -49,5 +57,6 @@ Première version publiée (alpha) : phases 0 à 8 de la feuille de route et mod
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
+[0.2.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0
 [0.1.0-alpha.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.1

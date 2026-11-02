@@ -26,6 +26,7 @@ const info: UpdateInfo = {
   db_version: '0003',
   required_db_version: '0003',
   channel: 'stable',
+  auto: { enabled: true, supported: true, running: false, last_done: null, last_error: null },
   check: null,
   pending: null,
   run: null,

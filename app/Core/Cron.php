@@ -15,6 +15,8 @@ use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Sessions\SessionHousekeeping;
 use JDR\Domain\Settings\Settings;
+use JDR\Domain\Update\AutoUpdater;
+use JDR\Domain\Update\UpdateStorage;
 use JDR\Realtime\EventPurger;
 
 /**
@@ -48,6 +50,7 @@ final class Cron
             return 403;
         }
         $this->runTasks(30.0);
+        $this->autoUpdate();
 
         return 204;
     }
@@ -57,10 +60,58 @@ final class Cron
      */
     public function maybeRunPseudo(): void
     {
-        if ($this->config === null || mt_rand() / mt_getrandmax() >= self::PSEUDO_PROBABILITY) {
+        if ($this->config === null) {
+            return;
+        }
+        if ($this->autoUpdateRunning()) {
+            $this->autoUpdate();
+
+            return;
+        }
+        if (mt_rand() / mt_getrandmax() >= self::PSEUDO_PROBABILITY) {
             return;
         }
         $this->runTasks(self::PSEUDO_BUDGET_S);
+        $this->autoUpdate();
+    }
+
+    /**
+     * Comes last: a run replaces the code of this application.
+     */
+    private function autoUpdate(): void
+    {
+        if ($this->container === null || !$this->container->has(Db::class)) {
+            return;
+        }
+        try {
+            $this->container->get(AutoUpdater::class)->tick();
+        } catch (\Throwable $e) {
+            $this->logger->error('Automatic update failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * A run to drive, or files newer than the database (FTP): the site is then in maintenance or
+     * about to be, the pseudo-cron alone would be too rare.
+     */
+    private function autoUpdateRunning(): bool
+    {
+        try {
+            if ($this->container === null) {
+                return false;
+            }
+            if (AutoUpdater::runPending($this->container->get(UpdateStorage::class))) {
+                return true;
+            }
+            $settings = $this->container->get(Settings::class);
+            $db = $settings->get('db_version');
+            $app = $settings->get('app_version');
+
+            return SystemStatus::isBehind(is_string($db) ? $db : null, \REQUIRED_DB_VERSION)
+                || (is_string($app) && $app !== \APP_VERSION);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

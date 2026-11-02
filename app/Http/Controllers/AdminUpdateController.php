@@ -16,6 +16,7 @@ use JDR\Domain\Audit\AuditLog;
 use JDR\Domain\Auth\CurrentUser;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Support\Validator;
+use JDR\Domain\Update\AutoUpdater;
 use JDR\Domain\Update\RunState;
 use JDR\Domain\Update\UpdateChecker;
 use JDR\Domain\Update\UpdateException;
@@ -40,6 +41,7 @@ final class AdminUpdateController
         private AuditLog $audit,
         private RateLimiter $limiter,
         private Clock $clock,
+        private AutoUpdater $auto,
     ) {
     }
 
@@ -57,6 +59,7 @@ final class AdminUpdateController
             'db_version' => is_string($dbVersion) ? $dbVersion : null,
             'required_db_version' => \REQUIRED_DB_VERSION,
             'channel' => $this->checker->channel(),
+            'auto' => $this->auto->status(),
             'check' => $this->checker->cached(),
             'pending' => $this->packages->pending(),
             'run' => $run === null ? null : self::run($run),
@@ -90,18 +93,28 @@ final class AdminUpdateController
     }
 
     /**
-     * PATCH /admin/update {channel: stable|prerelease}
+     * PATCH /admin/update {channel?: stable|prerelease, auto?: bool}
      */
     public function update(Request $request): Response
     {
         $admin = CurrentUser::require($request);
         $v = Validator::fromRequest($request);
-        $channel = (string) $v->in('channel', UpdateChecker::CHANNELS);
+        $channel = $v->has('auto') && !$v->has('channel') ? null : (string) $v->in('channel', UpdateChecker::CHANNELS);
+        $auto = $v->bool('auto', false);
         $v->validate();
-        $this->checker->setChannel($channel);
-        $this->audit->record($admin->id, 'update.channel', 'settings', null, ['channel' => $channel], $request->ip());
+        $out = [];
+        if ($channel !== null) {
+            $this->checker->setChannel($channel);
+            $this->audit->record($admin->id, 'update.channel', 'settings', null, ['channel' => $channel], $request->ip());
+            $out['channel'] = $channel;
+        }
+        if ($auto !== null) {
+            $this->auto->setEnabled($auto);
+            $this->audit->record($admin->id, 'update.auto', 'settings', null, ['enabled' => $auto], $request->ip());
+            $out['auto'] = $this->auto->status();
+        }
 
-        return Response::ok(['channel' => $channel]);
+        return Response::ok($out);
     }
 
     /**

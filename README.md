@@ -10,7 +10,7 @@ Outil web pour construire, révéler et projeter des cartes de jeu de rôle, en 
 ![Statut](https://img.shields.io/badge/statut-alpha-orange)
 
 > [!WARNING]
-> **Version alpha `0.1.0-alpha.2`.** Release publique, utilisable pour des essais entre amis. Il n'y a pas encore de revue de sécurité complète, et l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
+> **Version alpha `0.2.0`.** Release publique, utilisable pour des essais entre amis. Il n'y a pas encore de revue de sécurité complète, et l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
 
 ## Sommaire
 
@@ -125,7 +125,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 
 ## Démarrage rapide
 
-1. Téléchargez `jdr-v0.1.0-alpha.2-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2) et décompressez-le.
+1. Téléchargez `jdr-v0.2.0-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0) et décompressez-le.
 2. Envoyez **tout le contenu** du dossier dans le dossier web de votre hébergement (souvent `www/` ou `public_html/`), fichiers cachés compris.
 3. Créez une base MySQL ou MariaDB dans le panneau de l'hébergeur, et notez serveur, port, nom, utilisateur et mot de passe.
 4. Ouvrez `https://votre-site/install.php` et suivez les 6 étapes : prérequis, base de données, site, administrateur, installation, fin.
@@ -213,9 +213,18 @@ Pour vérifier le flux temps réel (`curl -N` avec le cookie de session), voir [
 
 ## Mise à jour
 
-Deux voies, au choix. L'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.php`, ni `storage/`, ni `install.php` : vos réglages, vos données et vos fichiers envoyés ne sont jamais touchés.
+Le site se met à jour tout seul. Deux voies manuelles restent possibles. L'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.php`, ni `storage/`, ni `install.php` : vos réglages, vos données et vos fichiers envoyés ne sont jamais touchés.
 
-### Depuis l'administration (recommandé)
+### Automatique (activée par défaut)
+
+Une fois installé, le site consulte les releases GitHub (toutes les 6 h au plus) et installe seul les nouvelles versions, en arrière-plan, avec les mêmes sauvegardes et le même retour arrière que la voie manuelle. Le site passe en maintenance le temps de la mise à jour.
+
+- L'archive doit venir de ce dépôt et correspondre au `SHA256SUMS` de la release, sinon elle est refusée. Ce contrôle protège d'un fichier corrompu, pas d'une prise de contrôle du dépôt GitHub : les archives signées sont prévues en phase 10.
+- Rien ne démarre pendant une séance lancée depuis moins de 12 h.
+- Le contrôle tourne sur une fraction des visites : un site sans visites ne se met à jour qu'avec une tâche cron (`cron.php?key=<clé>`, toutes les 5 minutes).
+- Une migration en échec est restaurée et n'est pas retentée pour cette version ; les autres échecs sont retentés 3 fois, à 1 h d'intervalle. Le résultat s'affiche dans **Administration > Mise à jour**, où la fonction se désactive.
+
+### Depuis l'administration
 
 1. Connectez-vous en administrateur, puis ouvrez **Administration > Mise à jour**.
 2. Cliquez sur **Vérifier les mises à jour**. Le site consulte les releases GitHub (canal stable ou pré-versions, résultat gardé en cache 6 h).
@@ -226,7 +235,7 @@ Deux voies, au choix. L'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.p
 ### Par FTP
 
 1. Téléchargez `jdr-update-vX.Y.Z.zip`, décompressez-le et envoyez son contenu par-dessus l'installation.
-2. Ouvrez `update.php` à la racine du site et connectez-vous en administrateur : il termine la mise à jour.
+2. La visite suivante termine la mise à jour (migrations comprises). Si la mise à jour automatique est désactivée, ouvrez `update.php` à la racine du site et connectez-vous en administrateur.
 
 ### Authenticité, sauvegardes et retour arrière
 
@@ -234,7 +243,7 @@ Deux voies, au choix. L'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.p
 - Si la copie des fichiers échoue, les fichiers précédents sont remis en place automatiquement.
 - Si une migration échoue, le site reste en maintenance et `update.php` propose **Réessayer** ou **Restaurer** la version précédente.
 - Une mise à jour interrompue se reprend depuis l'onglet Mise à jour ou en rouvrant `update.php`.
-- La mise à jour automatique avec archives signées est prévue en phase 10 (voir la [feuille de route](#feuille-de-route)).
+- Les archives signées sont prévues en phase 10 (voir la [feuille de route](#feuille-de-route)).
 
 ## Sécurité
 
