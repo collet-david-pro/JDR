@@ -256,6 +256,8 @@ export function shortcutDescription(action: ShortcutAction): string | null {
       return t('editor.help.snapshot');
     case 'generate':
       return t('editor.shortcuts.generate');
+    case 'palette':
+      return t('editor.help.palette');
     case 'pan.hold':
       return t('editor.help.pan_hold');
     case 'cancel':

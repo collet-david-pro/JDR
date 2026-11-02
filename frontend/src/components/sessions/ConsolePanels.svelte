@@ -10,6 +10,7 @@
   import TokensPanel from './TokensPanel.svelte';
   import { nextTabIndex } from '../../lib/games/roles';
   import { t } from '../../lib/i18n';
+  import { CONSOLE_PANELS, consoleUi } from '../../lib/sessions/console/console-ui.svelte';
   import type { ConsoleTool } from '../../lib/sessions/console/console-input';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
 
@@ -22,10 +23,9 @@
   }
 
   let props: Props = $props();
-  const PANELS = ['players', 'tokens', 'reveal', 'ambiance', 'notes', 'maps', 'displays'] as const;
+  const PANELS = CONSOLE_PANELS;
   type PanelId = (typeof PANELS)[number];
   const uid = $props.id();
-  let current = $state<PanelId>('players');
   const tabId = (p: PanelId): string => `${uid}-tab-${p}`;
   const panelId = (p: PanelId): string => `${uid}-panel-${p}`;
 
@@ -53,9 +53,9 @@
     const selected = props.selection;
     if (selected === null || selected.kind !== 'object') return;
     const type = props.run.state?.objects[selected.uid]?.type;
-    if (type === 'stairs' || type === 'portal') current = 'maps';
-    else if (type === 'pin' || type === 'zone') current = 'notes';
-    else if (type === 'trap' || type === 'secret') current = 'reveal';
+    if (type === 'stairs' || type === 'portal') consoleUi.tab = 'maps';
+    else if (type === 'pin' || type === 'zone') consoleUi.tab = 'notes';
+    else if (type === 'trap' || type === 'secret') consoleUi.tab = 'reveal';
   });
 
   async function keydown(event: KeyboardEvent, index: number): Promise<void> {
@@ -64,7 +64,7 @@
     event.preventDefault();
     const panel = PANELS[next];
     if (panel === undefined) return;
-    current = panel;
+    consoleUi.tab = panel;
     await tick();
     document.getElementById(tabId(panel))?.focus();
   }
@@ -77,11 +77,11 @@
         type="button"
         role="tab"
         id={tabId(panel)}
-        aria-selected={current === panel}
+        aria-selected={consoleUi.tab === panel}
         aria-controls={panelId(panel)}
-        tabindex={current === panel ? 0 : -1}
+        tabindex={consoleUi.tab === panel ? 0 : -1}
         data-testid={`panel-tab-${panel}`}
-        onclick={() => (current = panel)}
+        onclick={() => (consoleUi.tab = panel)}
         onkeydown={(event) => keydown(event, index)}>{label(panel)}</button
       >
     {/each}
@@ -89,21 +89,21 @@
   <div
     class="body"
     role="tabpanel"
-    id={panelId(current)}
-    aria-labelledby={tabId(current)}
+    id={panelId(consoleUi.tab)}
+    aria-labelledby={tabId(consoleUi.tab)}
     tabindex="0"
   >
-    {#if current === 'players'}
+    {#if consoleUi.tab === 'players'}
       <PlayersPanel {...props} />
-    {:else if current === 'tokens'}
+    {:else if consoleUi.tab === 'tokens'}
       <TokensPanel {...props} />
-    {:else if current === 'reveal'}
+    {:else if consoleUi.tab === 'reveal'}
       <RevealPanel {...props} />
-    {:else if current === 'ambiance'}
+    {:else if consoleUi.tab === 'ambiance'}
       <AmbiancePanel {...props} />
-    {:else if current === 'notes'}
+    {:else if consoleUi.tab === 'notes'}
       <NotesPanel {...props} />
-    {:else if current === 'maps'}
+    {:else if consoleUi.tab === 'maps'}
       <MapsPanel {...props} />
       <PassagesPanel {...props} />
     {:else}

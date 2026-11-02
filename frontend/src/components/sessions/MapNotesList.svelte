@@ -4,6 +4,7 @@
   import type { MapNote } from '../../editor/contracts-notes';
   import { audienceBadge } from '../../editor/ui/note-labels';
   import { t } from '../../lib/i18n';
+  import { consoleUi } from '../../lib/sessions/console/console-ui.svelte';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
 
   /**
@@ -28,6 +29,15 @@
 
   $effect(() => {
     if (focus !== null && focus in (run.state?.notes ?? {})) opened = focus;
+  });
+
+  // Palette: "share this note" opens the share dialog.
+  $effect(() => {
+    const requested = consoleUi.shareRequest;
+    const note = requested === null ? undefined : notes.find((n) => n.uid === requested);
+    if (note === undefined) return;
+    consoleUi.shareRequest = null;
+    share(note);
   });
 
   function share(note: MapNote): void {

@@ -3,6 +3,7 @@
   import { t } from '../../lib/i18n';
   import { mapsClient } from '../../lib/maps/service';
   import { passagesOf, shownFloor, type Passage } from '../../lib/sessions/console/passages';
+  import { consoleUi } from '../../lib/sessions/console/console-ui.svelte';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
   import type { MapLinks } from '../../lib/types';
 
@@ -49,6 +50,16 @@
     if (selection === null || selection.kind !== 'object') return;
     const hit = passages.find((p) => p.uid === selection.uid && p.type !== 'door');
     if (hit !== undefined && hit.destination !== null) taking = hit;
+  });
+
+  // Palette: a passage asked by uid opens the travel dialog once it is known and not broken.
+  $effect(() => {
+    const requested = consoleUi.passageRequest;
+    if (requested === null) return;
+    const hit = passages.find((p) => p.uid === requested && p.destination !== null);
+    if (hit === undefined) return;
+    consoleUi.passageRequest = null;
+    taking = hit;
   });
 
   function kindLabel(p: Passage): string {

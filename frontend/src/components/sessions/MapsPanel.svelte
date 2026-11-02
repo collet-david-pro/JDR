@@ -5,6 +5,7 @@
   import { mapsClient } from '../../lib/maps/service';
   import { sessionsClient } from '../../lib/services';
   import { sessionProblem } from '../../lib/sessions/labels';
+  import { consoleUi } from '../../lib/sessions/console/console-ui.svelte';
   import type { PanelProps } from '../../lib/sessions/console/panel-props';
   import type { MapSummary } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
@@ -35,6 +36,15 @@
 
   $effect(() => {
     if (target === '' && current !== null) target = current;
+  });
+
+  // Palette: "change map" proposes the map and opens the confirmation.
+  $effect(() => {
+    const requested = consoleUi.mapRequest;
+    if (requested === null) return;
+    consoleUi.mapRequest = null;
+    target = requested;
+    if (requested !== current) confirmOpen = true;
   });
 
   async function change(mapId: string, floorId?: string): Promise<void> {

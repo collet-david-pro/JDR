@@ -1,6 +1,7 @@
 <script lang="ts">
   import { setContext, untrack } from 'svelte';
   import AmbientPanel from './AmbientPanel.svelte';
+  import EditorCommandPalette from './EditorCommandPalette.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
   import GeneratePanel from './GeneratePanel.svelte';
@@ -489,6 +490,12 @@
   {#key ui.notice?.id}{ui.notice?.text ?? ''}{/key}
 </p>
 
+<EditorCommandPalette
+  {session}
+  platform={detectPlatform(navigator)}
+  onexport={exportMap}
+  {exporting}
+/>
 <HelpDialog bind:open={ui.helpOpen} />
 <SnapshotDialog
   bind:open={ui.snapshotOpen}

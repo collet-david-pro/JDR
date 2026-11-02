@@ -1584,7 +1584,8 @@
       "inputs": "Les raccourcis sont inactifs pendant la saisie dans un champ.",
       "snapshot": "Instantané nommé de la map",
       "confirm": "Terminer le mur en cours",
-      "delete": "Supprimer les objets sélectionnés"
+      "delete": "Supprimer les objets sélectionnés",
+      "palette": "Ouvrir la palette de commandes"
     },
     "map_title": "{map} — {game}",
     "save": {
@@ -2528,5 +2529,49 @@
       "quote": "Citation",
       "rule": "Séparateur"
     }
+  },
+  "palette": {
+    "title": "Palette de commandes",
+    "label": "Rechercher une commande",
+    "placeholder": "Rechercher une commande…",
+    "empty": "Aucune commande ne correspond.",
+    "group": {
+      "tools": "Outils",
+      "edit": "Édition",
+      "view": "Affichage",
+      "map": "Map",
+      "layers": "Calques",
+      "file": "Fichier",
+      "session": "Séance",
+      "go": "Aller à",
+      "notes": "Notes et secrets",
+      "tokens": "Tokens",
+      "players": "Joueurs et écrans"
+    },
+    "kw": {
+      "tool": "outil"
+    },
+    "grid_theme": "Thème de grille : {theme}",
+    "floor_go": "Aller à l'étage « {name} »",
+    "floor_add": "Ajouter un étage",
+    "floor_new_name": "Étage {level}",
+    "layer": "Calque {number} : {name}",
+    "copy_code": "Copier le code de la séance",
+    "go_to": "Aller à {panel}",
+    "tool_select": "Outil : sélection",
+    "place_token": "Placer un token « {name} »",
+    "reveal_selection": "Révéler la sélection",
+    "change_map": "Changer de map : « {name} »",
+    "take_passage": "Emprunter le passage vers {name}",
+    "note_read": "Lire « {title} »",
+    "note_share": "Partager « {title} »",
+    "reveal_named": "Révéler : {name}",
+    "token_reveal": "Révéler le token « {name} »",
+    "token_hide": "Masquer le token « {name} »",
+    "confirm_remove_title": "Retirer « {name} » ?",
+    "confirm_remove_text": "Le token sera retiré de la map pour tout le monde.",
+    "confirm_kick_title": "Expulser {name} ?",
+    "confirm_kick_text": "Le joueur sera retiré de la séance.",
+    "display_add": "Appairer un écran"
   }
 }

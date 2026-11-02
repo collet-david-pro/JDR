@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
+  import ConsoleCommandHost from './ConsoleCommandHost.svelte';
   import ConsoleHeader from './ConsoleHeader.svelte';
   import ConsolePanels from './ConsolePanels.svelte';
   import ZoneSuggestions from './ZoneSuggestions.svelte';
@@ -350,6 +351,7 @@
         ontool={setTool}
       />
     </aside>
+    <ConsoleCommandHost {run} {gameId} {send} {selection} onshare={share} ontool={setTool} />
   {/if}
 </div>
 

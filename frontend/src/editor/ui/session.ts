@@ -97,7 +97,7 @@ const REPEATABLE: ReadonlySet<ShortcutAction> = new Set([
 ]);
 
 /** Target inside a dialog (the dialog handles its own keys, e.g. Escape). */
-function inDialog(target: unknown): boolean {
+export function inDialog(target: unknown): boolean {
   const el = target as { closest?: (selector: string) => unknown } | null;
   return typeof el?.closest === 'function' && el.closest('dialog, [role="dialog"]') !== null;
 }

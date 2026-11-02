@@ -4,6 +4,7 @@
   import { copyText } from '../../lib/clipboard';
   import { t } from '../../lib/i18n';
   import { href, sessionsClient } from '../../lib/services';
+  import { consoleUi } from '../../lib/sessions/console/console-ui.svelte';
   import { formatSessionCode, type Transition } from '../../lib/sessions';
   import { sessionProblem, sessionStateLabel } from '../../lib/sessions/labels';
   import type { SessionRun } from '../../lib/sessions/session-run.svelte';
@@ -26,10 +27,7 @@
   const session = $derived(run.state?.session ?? null);
   const code = $derived(session?.code === undefined ? '' : formatSessionCode(session.code));
   let busy = $state<Transition | null>(null);
-  let endOpen = $state(false);
   let follow = $state(false);
-  let pauseOpen = $state(false);
-  let regenOpen = $state(false);
   let regenBusy = $state(false);
 
   async function go(action: Transition): Promise<void> {
@@ -37,7 +35,7 @@
     busy = action;
     try {
       await sessionsClient().transition(session.id, action);
-      endOpen = false;
+      consoleUi.endOpen = false;
       await run.reload();
     } catch (error) {
       toasts.show('error', sessionProblem(error));
@@ -51,7 +49,7 @@
     regenBusy = true;
     try {
       await sessionsClient().regenerateCode(session.id);
-      regenOpen = false;
+      consoleUi.regenOpen = false;
       await run.reload();
       toasts.success(t('sessions.console.code_regenerated'));
     } catch (error) {
@@ -92,7 +90,8 @@
           type="button"
           class="button button-small"
           data-testid="console-regenerate-code"
-          onclick={() => (regenOpen = true)}>{t('sessions.console.regenerate_code')}</button
+          onclick={() => (consoleUi.regenOpen = true)}
+          >{t('sessions.console.regenerate_code')}</button
         >
       </div>
     {/if}
@@ -130,7 +129,7 @@
           class="button button-danger"
           data-testid="session-end"
           disabled={busy !== null}
-          onclick={() => (endOpen = true)}>{t('sessions.console.end')}</button
+          onclick={() => (consoleUi.endOpen = true)}>{t('sessions.console.end')}</button
         >
         <label class="check small">
           <input type="checkbox" bind:checked={follow} />
@@ -156,14 +155,14 @@
           type="button"
           class="button"
           data-testid="console-pause-screen"
-          onclick={() => (pauseOpen = true)}>{t('sessions.console.pause_screen')}</button
+          onclick={() => (consoleUi.pauseOpen = true)}>{t('sessions.console.pause_screen')}</button
         >
       {/if}
     </div>
   </header>
 
   <ConfirmDialog
-    bind:open={endOpen}
+    bind:open={consoleUi.endOpen}
     title={t('sessions.console.end_title')}
     message={t('sessions.console.end_text')}
     confirmLabel={t('sessions.console.end')}
@@ -172,7 +171,7 @@
     onconfirm={() => go('end')}
   />
   <ConfirmDialog
-    bind:open={regenOpen}
+    bind:open={consoleUi.regenOpen}
     title={t('sessions.console.regenerate_title')}
     message={t('sessions.console.regenerate_text')}
     confirmLabel={t('sessions.console.regenerate_code')}
@@ -180,7 +179,7 @@
     busy={regenBusy}
     onconfirm={regenerate}
   />
-  <PauseScreenDialog bind:open={pauseOpen} {run} />
+  <PauseScreenDialog bind:open={consoleUi.pauseOpen} {run} />
 {/if}
 
 <style>

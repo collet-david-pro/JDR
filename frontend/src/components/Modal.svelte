@@ -23,6 +23,8 @@
   });
 
   function handleClose(): void {
+    // A late `close` event of an earlier close, after the dialog was opened again: ignore it.
+    if (dialog?.open) return;
     if (open) open = false;
     onclose?.();
   }

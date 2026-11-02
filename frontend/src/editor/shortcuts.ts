@@ -39,6 +39,8 @@ export type ShortcutAction =
   | 'snapshot'
   /** Shift+G: open the "Générer" panel (P8e2b). */
   | 'generate'
+  /** Cmd/Ctrl+K: the command palette (P9c2). */
+  | 'palette'
   /** Space held: temporary hand tool (the UI handles keyup). */
   | 'pan.hold'
   | 'cancel';
@@ -94,6 +96,7 @@ export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   tool('tool.wall', 'w'),
   tool('tool.door', 'd'),
   tool('tool.light', 'l'),
+  { action: 'palette', key: 'k', mod: true, shift: false, alt: false },
   tool('tool.token', 'k'),
   tool('tool.fog', 'f'),
   { action: 'confirm', key: 'Enter', shift: false, alt: false },
