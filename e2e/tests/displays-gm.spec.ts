@@ -75,17 +75,17 @@ test("GM adds, drives and revokes a projection screen", async ({ browser }) => {
     await expect(active).toHaveAttribute("data-online", "true", { timeout: 20_000 });
     await expect(gm.page.getByTestId(`display-code-${id}`)).toHaveCount(0);
     // An active screen on a running session: the table is explored by the console.
-    await expect(gm.page.getByTestId("console-viewport")).toHaveAttribute("data-table-viewers", /\w+/, { timeout: 15_000 });
+    await expect(gm.page.getByTestId("console-viewport")).toHaveAttribute("data-table-viewers", /\w+/, { timeout: 40_000 });
 
     // Rotation 180.
     await gm.page.getByTestId(`display-rotation-${id}`).selectOption("180");
     await gm.page.getByTestId(`display-save-${id}`).click();
-    await expect(screen.getByTestId("display-stage")).toHaveAttribute("data-rotation", "180", { timeout: 15_000 });
+    await expect(screen.getByTestId("display-stage")).toHaveAttribute("data-rotation", "180", { timeout: 40_000 });
 
     // Tokens hidden.
     await gm.page.getByTestId(`display-tokens-${id}`).uncheck();
     await gm.page.getByTestId(`display-save-${id}`).click();
-    await expect(screen.getByTestId("display-viewport")).toHaveAttribute("data-tokens", "off", { timeout: 15_000 });
+    await expect(screen.getByTestId("display-viewport")).toHaveAttribute("data-tokens", "off", { timeout: 40_000 });
 
     // Lock the view here.
     await gm.page.getByTestId(`display-lock-${id}`).click();
@@ -107,9 +107,9 @@ test("GM adds, drives and revokes a projection screen", async ({ browser }) => {
     await gm.page.getByTestId("pause-screen-save").click();
     await expect(gm.page.getByTestId("pause-screen-dialog")).toHaveCount(0);
     await gm.page.getByTestId("session-pause").click();
-    await expect(screen.getByTestId("display-pause")).toContainText("revenez dans dix minutes", { timeout: 15_000 });
+    await expect(screen.getByTestId("display-pause")).toContainText("revenez dans dix minutes", { timeout: 40_000 });
     await gm.page.getByTestId("session-resume").click();
-    await expect(screen.getByTestId("display-page")).toHaveAttribute("data-status", "running", { timeout: 15_000 });
+    await expect(screen.getByTestId("display-page")).toHaveAttribute("data-status", "running", { timeout: 40_000 });
 
     expect(errors).toEqual([]);
 

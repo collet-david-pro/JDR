@@ -37,7 +37,8 @@ const server = (port: number, dbName: string) => ({
   url: `http://127.0.0.1:${port}/install.php`,
   env: { E2E_PORT: String(port), E2E_DB_NAME: dbName },
   reuseExistingServer: false,
-  timeout: 60_000,
+  // Three servers each copy the site at startup: slow when the disk is busy (synced folder).
+  timeout: 180_000,
   stdout: 'pipe' as const,
   stderr: 'pipe' as const,
   gracefulShutdown: { signal: 'SIGTERM' as const, timeout: 15_000 },

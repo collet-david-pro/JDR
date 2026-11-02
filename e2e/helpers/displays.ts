@@ -104,10 +104,14 @@ export async function pairByUrl(page: Page, code: string): Promise<void> {
   await page.goto(`/display?c=${code}`);
 }
 
-/** The screen is paired, the session runs and the scene is drawn. */
-export async function waitScene(page: Page, timeout = 30_000): Promise<void> {
+/**
+ * The screen is paired, the session runs and the scene is drawn. The limits exceed 25 s: a php -S
+ * worker can accept a request, then run a 25 s SSE stream before it (not the case under PHP-FPM).
+ */
+export async function waitScene(page: Page, timeout = 40_000): Promise<void> {
   await expect(page.getByTestId('display-page')).toHaveAttribute('data-status', 'running', { timeout });
   await expect(page.getByTestId('display-viewport')).toHaveAttribute('data-scene', 'ready', { timeout });
+  await expect(page.getByTestId('display-viewport')).toHaveAttribute('data-state', 'ready', { timeout });
 }
 
 /** GM side: partial settings patch (and optional name). */

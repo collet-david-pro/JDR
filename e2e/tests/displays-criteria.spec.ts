@@ -255,7 +255,7 @@ test("3. a cell measures 25 mm (+/- 2 %)", async ({ browser, browserName }) => {
     const viewport = screen.page.getByTestId("display-viewport");
     const measure = async (expected: number): Promise<number> => {
       await expect
-        .poll(async () => Math.abs((await cellCssPx(screen.page)) - expected) / expected, { timeout: 15_000 })
+        .poll(async () => Math.abs((await cellCssPx(screen.page)) - expected) / expected, { timeout: 40_000 })
         .toBeLessThan(0.02);
       return cellCssPx(screen.page);
     };
@@ -341,8 +341,8 @@ test("4. rotations 0 / 90 / 180 / 270 and mirror", async ({ browser }) => {
       });
     const rad = (deg: number) => (deg * Math.PI) / 180;
     const check = async (rotation: number, mirror: boolean): Promise<void> => {
-      await expect(stage).toHaveAttribute("data-rotation", String(rotation), { timeout: 15_000 });
-      await expect(stage).toHaveAttribute("data-mirror", String(mirror), { timeout: 15_000 });
+      await expect(stage).toHaveAttribute("data-rotation", String(rotation), { timeout: 40_000 });
+      await expect(stage).toHaveAttribute("data-mirror", String(mirror), { timeout: 40_000 });
       await expect(screen.page.getByTestId("display-viewport")).toHaveAttribute("data-scene", "ready");
       const r = await read();
       const c = Math.cos(rad(rotation));
@@ -447,8 +447,8 @@ test("6. two screens at once, each with its own settings", async ({ browser }) =
     await waitScene(c.page);
     await patchSettings(b.gm, da.id, { rotation: 0, show_tokens: true });
     await patchSettings(b.gm, db.id, { rotation: 90, mirror: true, show_tokens: false });
-    await expect(a.page.getByTestId("display-stage")).toHaveAttribute("data-rotation", "0", { timeout: 15_000 });
-    await expect(c.page.getByTestId("display-stage")).toHaveAttribute("data-rotation", "90", { timeout: 15_000 });
+    await expect(a.page.getByTestId("display-stage")).toHaveAttribute("data-rotation", "0", { timeout: 40_000 });
+    await expect(c.page.getByTestId("display-stage")).toHaveAttribute("data-rotation", "90", { timeout: 40_000 });
     await expect(c.page.getByTestId("display-stage")).toHaveAttribute("data-mirror", "true");
     await expect(a.page.getByTestId("display-viewport")).toHaveAttribute("data-tokens", "on");
     await expect(c.page.getByTestId("display-viewport")).toHaveAttribute("data-tokens", "off");
@@ -509,7 +509,7 @@ test("7. automatic reconnection after a network cut", async ({ browser, browserN
     console.log(`[${browserName}] reconnection: final position applied ${elapsed} ms after the network came back`);
     test.info().annotations.push({ type: "reconnect_ms", description: String(elapsed) });
     expect(elapsed).toBeLessThanOrEqual(30_000);
-    await expect(screen.page.getByTestId("display-page")).toHaveAttribute("data-status", "running", { timeout: 15_000 });
+    await expect(screen.page.getByTestId("display-page")).toHaveAttribute("data-status", "running", { timeout: 40_000 });
     await expect(screen.page.getByTestId("display-pair-form")).toHaveCount(0);
 
     // A reload keeps the pairing.
@@ -540,7 +540,7 @@ test("8. the screen stays awake (Wake Lock, fallback)", async ({ browser, browse
     await pairByUrl(counting.page, display.code);
     await waitScene(counting.page);
     const root = counting.page.getByTestId("display-page");
-    await expect(root).toHaveAttribute("data-wake", "active", { timeout: 15_000 });
+    await expect(root).toHaveAttribute("data-wake", "active", { timeout: 40_000 });
     const calls = () => counting.page.evaluate(() => (window as any).__wake.calls as number);
     const first = await calls();
     expect(first).toBeGreaterThanOrEqual(1);
@@ -557,8 +557,8 @@ test("8. the screen stays awake (Wake Lock, fallback)", async ({ browser, browse
       set("hidden");
       set("visible");
     });
-    await expect.poll(calls, { timeout: 15_000 }).toBeGreaterThan(first);
-    await expect(root).toHaveAttribute("data-wake", "active", { timeout: 15_000 });
+    await expect.poll(calls, { timeout: 40_000 }).toBeGreaterThan(first);
+    await expect(root).toHaveAttribute("data-wake", "active", { timeout: 40_000 });
     console.log(`[${browserName}] wake lock: requests ${first} then ${await calls()}, state active`);
 
     // No Wake Lock at all: video fallback, or the banner.
@@ -566,7 +566,7 @@ test("8. the screen stays awake (Wake Lock, fallback)", async ({ browser, browse
     await pairByUrl(bare.page, display2.code);
     await waitScene(bare.page);
     const rootBare = bare.page.getByTestId("display-page");
-    await expect(rootBare).toHaveAttribute("data-wake", /video|unsupported/, { timeout: 15_000 });
+    await expect(rootBare).toHaveAttribute("data-wake", /video|unsupported/, { timeout: 40_000 });
     const state = await rootBare.getAttribute("data-wake");
     console.log(`[${browserName}] without navigator.wakeLock: data-wake=${state}`);
     test.info().annotations.push({ type: "wake_without_api", description: String(state) });

@@ -68,9 +68,9 @@ test("pairing by URL, table view, pause, menu and revocation", async ({ browser 
 
     // Pause then resume.
     expect(await transition(gm, session.id, "pause")).toBe(200);
-    await expect(page.getByTestId("display-pause")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("display-pause")).toBeVisible({ timeout: 40_000 });
     expect(await transition(gm, session.id, "resume")).toBe(200);
-    await expect(root).toHaveAttribute("data-status", "running", { timeout: 15_000 });
+    await expect(root).toHaveAttribute("data-status", "running", { timeout: 40_000 });
     await expect(page.getByTestId("display-viewport")).toHaveAttribute("data-scene", "ready", { timeout: 30_000 });
 
     // Discreet menu: M, rotation 90.
