@@ -306,6 +306,11 @@ describe('selection, pipette, ruler, hand', () => {
       // P9a2: the passage tools have no shortcut (editor/shortcuts.ts belongs to P9c).
       'stairs:',
       'portal:',
+      // P9b2a: the notes tools have no shortcut either.
+      'pin:',
+      'zone:',
+      'trap:',
+      'secret:',
       'token:K',
       'fog:F',
       'pipette:I',

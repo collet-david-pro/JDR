@@ -13,7 +13,7 @@ import type {
   SceneView,
 } from '../contracts';
 import { round3 } from '../model/scene-values';
-import { objectBox } from './geometry';
+import { notePoints, objectBox } from './geometry';
 import type { HandleHit } from './hit';
 import type { ObjectSelection, ToolDocument } from './types';
 
@@ -43,6 +43,18 @@ function movedGeometry(o: MapObject, dx: number, dy: number): MapObject['geometr
     case 'stairs':
       // Whole cells only.
       return { ...o.geometry, x: o.geometry.x + Math.round(dx), y: o.geometry.y + Math.round(dy) };
+    case 'pin':
+      return { x: round3(o.geometry.x + dx), y: round3(o.geometry.y + dy) };
+    case 'zone':
+    case 'trap':
+    case 'secret': {
+      const g = o.geometry;
+      if ('polygon' in g) {
+        return { polygon: g.polygon.map((q) => ({ x: round3(q.x + dx), y: round3(q.y + dy) })) };
+      }
+      if ('a' in g) return { a: mv(g.a), b: mv(g.b) };
+      return { x: round3(g.x + dx), y: round3(g.y + dy) };
+    }
   }
 }
 
@@ -161,7 +173,17 @@ export function shapeOverlay(o: MapObject): Overlay {
     case 'stairs':
       return { kind: 'area', x: o.geometry.x, y: o.geometry.y, w: o.geometry.w, h: o.geometry.h };
     case 'portal':
+    case 'pin':
       return { kind: 'area', x: o.geometry.x - 0.4, y: o.geometry.y - 0.4, w: 0.8, h: 0.8 };
+    case 'zone':
+      return { kind: 'polyline', points: notePoints(o), closed: true };
+    case 'trap':
+    case 'secret': {
+      const g = o.geometry;
+      if ('polygon' in g) return { kind: 'polyline', points: notePoints(o), closed: true };
+      if ('a' in g) return { kind: 'segment', a: g.a, b: g.b, valid: true };
+      return { kind: 'area', x: g.x - 0.4, y: g.y - 0.4, w: 0.8, h: 0.8 };
+    }
   }
 }
 
@@ -171,6 +193,21 @@ export function handlePatch(o: MapObject, handle: HandleHit, p: Point): ObjectPa
   if (handle.kind === 'vertex' && o.type === 'wall') {
     const points = o.geometry.points.map((v, i) => (i === handle.index ? q : v));
     return { geometry: { points, closed: o.geometry.closed } };
+  }
+  if (
+    handle.kind === 'vertex' &&
+    (o.type === 'zone' || o.type === 'trap' || o.type === 'secret') &&
+    'polygon' in o.geometry
+  ) {
+    const polygon = o.geometry.polygon.map((v, i) =>
+      i === handle.index ? { x: q[0], y: q[1] } : v,
+    );
+    return { geometry: { polygon } };
+  }
+  if (handle.kind === 'end' && o.type === 'secret' && 'a' in o.geometry) {
+    const g = handle.end === 'a' ? { a: q, b: o.geometry.b } : { a: o.geometry.a, b: q };
+    const len = Math.hypot(g.b[0] - g.a[0], g.b[1] - g.a[1]);
+    return len < 0.1 || len > 20 ? null : { geometry: g };
   }
   if (handle.kind === 'end' && (o.type === 'door' || o.type === 'window')) {
     const g = handle.end === 'a' ? { a: q, b: o.geometry.b } : { a: o.geometry.a, b: q };

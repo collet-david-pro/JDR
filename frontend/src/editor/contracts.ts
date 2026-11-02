@@ -22,6 +22,7 @@
  * layer, the objects and placed tokens of the floor from its MapDetail, GET /maps/{id}/fog?floor=...) and undoes by
  * sending floor.add + tiles.set / object.add / maptoken.add / fog.reveal for the same uid.
  */
+import type { NoteObject, NoteOp } from './contracts-notes';
 
 export const CHUNK_SIZE = 32;
 
@@ -267,6 +268,7 @@ export interface SceneEngineApi {
 
 /** Edit operation (subset of projet.md 11.4 used in P4a). */
 export type MapOp =
+  | NoteOp
   | {
       readonly type: 'tiles.set';
       readonly floor: string;
@@ -368,7 +370,8 @@ export type Point = readonly [x: number, y: number];
 export type ObjectVisibility = 'all' | 'gm' | 'hidden_until_revealed';
 
 /** Object types the server knows (P5 + P9a stairs / portal); the other types arrive with P9b. */
-export type MapObjectType = 'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal';
+export type MapObjectType =
+  'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal' | 'pin' | 'zone' | 'trap' | 'secret';
 
 /**
  * Where a door / stairs / portal leads (P9a). Normalized by the server: all four keys, floor = a floor UID of the
@@ -534,7 +537,7 @@ export interface PortalObject extends ObjectBase {
 }
 
 export type MapObject =
-  WallObject | DoorObject | WindowObject | LightObject | StairsObject | PortalObject;
+  WallObject | DoorObject | WindowObject | LightObject | StairsObject | PortalObject | NoteObject;
 
 /** object.update patch: geometry and props replace the whole value (no deep merge). */
 export interface ObjectPatch {

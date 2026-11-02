@@ -38,6 +38,7 @@ import type { CompressionOptions } from '../../formats/compression';
 import { FloorSlot, floorRecreateOps, type ChunkRecord, type FloorMeta } from './FloorSlot';
 import { DEFAULT_LAYERS, EMPTY_CELL, MapOpError, chunkKey, parseChunkKey } from './ops';
 import { FloorView } from './FloorView';
+import { NotesState, isNoteOp } from './NotesState';
 import { SceneState, isSceneOp, type SceneOp } from './SceneState';
 import { DEFAULT_AMBIENT, ambientOf } from './scene-values';
 import { validateLayers } from './validate';
@@ -95,6 +96,8 @@ export interface FloorsEvent {
 
 export class MapDocument implements MapView, SceneView {
   readonly grid: GridSpec;
+  /** Notes of the map (P9b2a), outside the floors. */
+  readonly notes = new NotesState();
   private readonly slots: FloorSlot[] = [];
   private cur!: FloorSlot;
   private sceneEpoch = 0;
@@ -649,6 +652,7 @@ export class MapDocument implements MapView, SceneView {
 
   private applyOne(op: MapOp, rollback = false): { op: MapOp; inverse: MapOp | MapOp[] | null } {
     if (isSceneOp(op)) return this.sceneOf(op).apply(op, rollback);
+    if (isNoteOp(op)) return this.notes.apply(op);
     return { op, inverse: this.applyTile(op) };
   }
 

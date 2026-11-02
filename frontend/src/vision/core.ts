@@ -18,7 +18,12 @@ const BORDER_INSET = 1e-3;
 const CACHE_LIMIT = 4096;
 
 export function isOccluderObject(o: MapObject): boolean {
-  return o.type === 'wall' || o.type === 'door' || o.type === 'window';
+  return (
+    o.type === 'wall' ||
+    o.type === 'door' ||
+    o.type === 'window' ||
+    (o.type === 'secret' && 'a' in o.geometry)
+  );
 }
 
 function sameList(a: readonly MapObject[], b: readonly MapObject[]): boolean {

@@ -43,6 +43,7 @@ import {
   stairsArrow,
   stairsStepLines,
 } from '../engine/scene/passage-shapes';
+import { notePoints } from '../editor/tools/geometry';
 import { FOG_SIDE, FOG_SUBCELLS } from '../formats/fog-codec';
 import {
   DOOR_COLOR,
@@ -104,7 +105,9 @@ function boxOf(obj: MapObject): Box {
               [obj.geometry.x, obj.geometry.y] as const,
               [obj.geometry.x + obj.geometry.w, obj.geometry.y + obj.geometry.h] as const,
             ]
-          : [obj.geometry.a, obj.geometry.b];
+          : obj.type === 'door' || obj.type === 'window'
+            ? [obj.geometry.a, obj.geometry.b]
+            : notePoints(obj);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -240,6 +243,16 @@ export class ScenePainter {
       else if (obj.type === 'window') this.window(ctx, obj);
       else if (obj.type === 'stairs') this.stairs(ctx, obj);
       else if (obj.type === 'portal') this.portal(ctx, obj);
+      else if (obj.type === 'secret' && 'a' in obj.geometry) {
+        // Passage: a plain wall in the player view (never the dashed GM drawing).
+        const { a, b } = obj.geometry;
+        this.solid(
+          ctx,
+          [[a[0], a[1], b[0], b[1]]],
+          this.width(SECRET_AS_WALL.thickness),
+          WALL_COLORS[SECRET_AS_WALL.kind],
+        );
+      }
     }
     ctx.globalAlpha = 1;
   }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import NoteObjectProperties from './NoteObjectProperties.svelte';
   import PassageProperties from './PassageProperties.svelte';
   import SceneObjectList from './SceneObjectList.svelte';
   import type {
@@ -32,6 +33,7 @@
     windowKindLabel,
   } from '../../editor/ui/scene-labels';
   import { layerLabel } from '../../editor/ui/labels';
+  import { isNoteFamily, layerImposed, visibilityImposed } from '../../editor/ui/note-labels';
   import type { EditorSession } from '../../editor/ui/session';
   import { t } from '../../lib/i18n';
 
@@ -65,6 +67,12 @@
         : t('editor.properties.several', { count }),
   );
 
+  // Pins, traps and secrets never go to the GM layer; some layers / visibilities are imposed.
+  const layerChoices = $derived(
+    sel.objects.some((o) => isNoteFamily(o.type) && o.type !== 'zone')
+      ? OBJECT_LAYERS.filter((l) => l !== 'gm')
+      : OBJECT_LAYERS,
+  );
   const walls = $derived(sel.objects.filter((o) => o.type === 'wall'));
   const doors = $derived(sel.objects.filter((o) => o.type === 'door'));
   const windows = $derived(sel.objects.filter((o) => o.type === 'window'));
@@ -120,6 +128,7 @@
         <span>{t('editor.properties.visibility')}</span>
         <select
           value={show(common(sel.objects, (o) => o.visibility))}
+          disabled={sel.objects.some(visibilityImposed)}
           onchange={(e) => objects(() => ({ visibility: value(e) as ObjectVisibility }))}
         >
           <option value="" disabled>{t('editor.properties.mixed')}</option>
@@ -130,10 +139,11 @@
         <span>{t('editor.properties.layer')}</span>
         <select
           value={show(common(sel.objects, (o) => o.layer))}
+          disabled={sel.objects.some(layerImposed)}
           onchange={(e) => objects(() => ({ layer: value(e) as ObjectLayerId }))}
         >
           <option value="" disabled>{t('editor.properties.mixed')}</option>
-          {#each OBJECT_LAYERS as l (l)}<option value={l}>{layerLabel(l)}</option>{/each}
+          {#each layerChoices as l (l)}<option value={l}>{layerLabel(l)}</option>{/each}
         </select>
       </label>
       <label class="check">
@@ -372,6 +382,7 @@
   {/if}
 
   <PassageProperties {session} objects={sel.objects} />
+  <NoteObjectProperties {session} objects={sel.objects} />
 
   {#if sel.tokens.length > 0}
     <fieldset class="grid" data-testid="properties-token">

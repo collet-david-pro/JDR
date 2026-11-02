@@ -32,6 +32,14 @@ export function toolLabel(id: ToolId): string {
       return t('editor.tools.stairs');
     case 'portal':
       return t('editor.tools.portal');
+    case 'pin':
+      return t('editor.tools.pin');
+    case 'zone':
+      return t('editor.tools.zone');
+    case 'trap':
+      return t('editor.tools.trap');
+    case 'secret':
+      return t('editor.tools.secret');
     case 'token':
       return t('editor.tools.token');
     case 'fog':
@@ -123,6 +131,20 @@ export function commandLabel(key: string): string {
       return t('editor.command.stairs');
     case 'editor.command.portal':
       return t('editor.command.portal');
+    case 'editor.command.pin':
+      return t('editor.command.pin');
+    case 'editor.command.zone':
+      return t('editor.command.zone');
+    case 'editor.command.trap':
+      return t('editor.command.trap');
+    case 'editor.command.secret':
+      return t('editor.command.secret');
+    case 'editor.command.note_add':
+      return t('editor.command.note_add');
+    case 'editor.command.note_update':
+      return t('editor.command.note_update');
+    case 'editor.command.note_remove':
+      return t('editor.command.note_remove');
     case 'editor.command.floor_add':
       return t('editor.command.floor_add');
     case 'editor.command.floor_rename':
@@ -184,6 +206,10 @@ export function noticeText(notice: ToolNotice): string {
       return t('editor.notices.stairs_no_target');
     case 'link_required':
       return t('editor.notices.link_required');
+    case 'polygon_limit':
+      return t('editor.notices.polygon_limit');
+    case 'passage_length':
+      return t('editor.notices.passage_length');
     case 'invalid':
       return t('editor.notices.invalid');
   }

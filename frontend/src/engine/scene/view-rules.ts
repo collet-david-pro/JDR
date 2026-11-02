@@ -3,7 +3,8 @@
  * - gm: everything drawn; gm-layer objects and visibility ≠ 'all' faded; hidden tokens faded;
  *   invisible walls dashed; secret doors drawn as doors with a dashed outline; light gizmos.
  * - player / display: gm layer, visibility ≠ 'all', invisible walls and hidden tokens are not
- *   drawn; a secret door is drawn (and blocks) like a plain wall; no gizmos.
+ *   drawn; a secret door or a secret passage is drawn (and blocks) like a plain wall; no gizmos.
+ *   Pins, zones, traps and secret rooms / objects follow the generic rule (not drawn).
  */
 
 import type {
@@ -98,6 +99,7 @@ export function isGmOnlyObject(obj: MapObject): boolean {
 export function objectShown(obj: MapObject, mode: ViewMode): boolean {
   if (mode === 'gm') return true;
   if (obj.type === 'light') return false;
+  if (secretDrawnAsWall(obj, mode)) return true;
   if (isGmOnlyObject(obj)) return false;
   if (obj.type === 'wall' && obj.props.kind === 'invisible') return false;
   return true;
@@ -110,6 +112,14 @@ export function objectAlpha(obj: MapObject, mode: ViewMode): number {
 /** A secret door is a plain wall for players (12.4). */
 export function doorDrawnAsWall(obj: MapObject, mode: ViewMode): boolean {
   return obj.type === 'door' && obj.props.secret && mode !== 'gm';
+}
+
+/**
+ * A secret passage is a plain wall for players until it is revealed (P9b2a). The editor does not know
+ * the revealed state: its player preview always treats the passage as not revealed.
+ */
+export function secretDrawnAsWall(obj: MapObject, mode: ViewMode): boolean {
+  return obj.type === 'secret' && 'a' in obj.geometry && mode !== 'gm';
 }
 
 /** Light objects contributing to the lightmap / visibility in this view. */

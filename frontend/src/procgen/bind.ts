@@ -14,6 +14,7 @@ import type {
   WallObject,
   WindowObject,
 } from '../editor/contracts';
+import { objectBox } from '../editor/tools/geometry';
 import { LIGHT_PRESETS } from '../editor/tools/object-common';
 import { DEFAULT_OBJECT_SETTINGS } from '../editor/tools/types';
 import { round3 } from './geometry';
@@ -72,6 +73,13 @@ function bbox(o: MapObject): [number, number, number, number] {
       return [o.geometry.x, o.geometry.y, o.geometry.x, o.geometry.y];
     case 'stairs':
       return [o.geometry.x, o.geometry.y, o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h];
+    case 'pin':
+    case 'zone':
+    case 'trap':
+    case 'secret': {
+      const b = objectBox(o);
+      return [b.x0, b.y0, b.x1, b.y1];
+    }
   }
 }
 
@@ -173,6 +181,9 @@ export function bindResult(
   const removed: MapObject[] = [];
   if (t.scene !== null && t.replace.objects !== 'none') {
     for (const o of t.scene.objects()) {
+      // Pins, zones, traps and secrets are the GM's notes: the generator never removes them.
+      if (o.type === 'pin' || o.type === 'zone' || o.type === 'trap' || o.type === 'secret')
+        continue;
       if (t.replace.objects === 'all') removed.push(o);
       else {
         const [a, b, c, d] = bbox(o);

@@ -106,6 +106,14 @@ export function objectTypeLabel(type: MapObjectType | 'token'): string {
       return t('editor.objects.types.stairs');
     case 'portal':
       return t('editor.objects.types.portal');
+    case 'pin':
+      return t('editor.objects.types.pin');
+    case 'zone':
+      return t('editor.objects.types.zone');
+    case 'trap':
+      return t('editor.objects.types.trap');
+    case 'secret':
+      return t('editor.objects.types.secret');
     case 'token':
       return t('editor.objects.types.token');
   }

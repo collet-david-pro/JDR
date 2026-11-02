@@ -7,6 +7,7 @@
   import HelpDialog from './HelpDialog.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import LayersPanel from './LayersPanel.svelte';
+  import NotesPanel from './NotesPanel.svelte';
   import PalettePanel from './PalettePanel.svelte';
   import PropertiesPanel from './PropertiesPanel.svelte';
   import SnapshotDialog from './SnapshotDialog.svelte';
@@ -19,6 +20,7 @@
   import { detectPlatform } from '../../editor/shortcuts';
   import { visibleChunkKeys } from '../../editor/sync/chunk-loader';
   import { MapSync } from '../../editor/sync/MapSync';
+  import { rejectionText } from '../../editor/sync/rejection-text';
   import { saveErrorText } from '../../editor/sync/save-status';
   import {
     gridOf,
@@ -322,7 +324,7 @@
       doc: document,
       onRejected: (error) => {
         session.notify(saveErrorText(error.code));
-        toasts.show('error', saveErrorText('rejected'));
+        toasts.show('error', rejectionText(error));
       },
       onSaved: () => thumbnails.saved(),
     });
@@ -475,6 +477,7 @@
       <LayersPanel {session} />
       <PalettePanel {session} />
       <TokensPanel {session} state={tokensState} />
+      <NotesPanel {session} {gameId} />
       <AmbientPanel {session} />
     </aside>
   {/if}

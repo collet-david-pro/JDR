@@ -3,7 +3,11 @@ import { createFillTool } from './fill';
 import { createFogTool } from './fog';
 import { createLightTool } from './light';
 import { createPaintTool } from './paint';
+import { createPinTool } from './pin';
 import { createPortalTool } from './portal';
+import { createSecretTool } from './secret';
+import { createTrapTool } from './trap';
+import { createZoneTool } from './zone';
 import { createHandTool, createPipetteTool, createRulerTool } from './pick';
 import { createSelectTool, type SelectTool } from './select';
 import { createShapeTool } from './shape';
@@ -30,6 +34,10 @@ export function createTools(ctx: ToolContext): ToolSet {
     light: createLightTool(ctx),
     stairs: createStairsTool(ctx),
     portal: createPortalTool(ctx),
+    pin: createPinTool(ctx),
+    zone: createZoneTool(ctx),
+    trap: createTrapTool(ctx),
+    secret: createSecretTool(ctx),
     token: createTokenTool(ctx),
     fog: createFogTool(ctx),
     pipette: createPipetteTool(ctx),

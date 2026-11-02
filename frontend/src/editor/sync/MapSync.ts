@@ -104,6 +104,7 @@ export class MapSync {
     session.setEditable(false);
     const pending = await this.queue.restore();
     session.doc.loadScene(this.map.objects ?? [], this.map.tokens_placed ?? []);
+    session.doc.notes.load(this.map.notes ?? []);
     const fog = this.loadFog();
     const chunks = await loadMapChunks({
       doc: session.doc,

@@ -43,10 +43,12 @@ import {
   zoomBucket,
   type Seg,
 } from './object-geometry';
+import { drawPin, drawSecret, drawTrap, drawZone } from './note-shapes';
 import { drawPortal, drawStairs } from './passage-shapes';
 import {
   OBJECT_LAYER_IDS,
   doorDrawnAsWall,
+  secretDrawnAsWall,
   objectAlpha,
   objectLayerOrder,
   objectLayerState,
@@ -229,6 +231,27 @@ export class ObjectsRenderer {
         break;
       case 'portal':
         drawPortal(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'pin':
+        drawPin(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'zone':
+        drawZone(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'trap':
+        drawTrap(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'secret':
+        if (secretDrawnAsWall(obj, this.mode) && 'a' in obj.geometry) {
+          const { a, b } = obj.geometry;
+          const seg = this.px([a[0], a[1], b[0], b[1]]);
+          this.solid(
+            gfx,
+            [seg],
+            this.width(SECRET_AS_WALL.thickness),
+            WALL_COLORS[SECRET_AS_WALL.kind],
+          );
+        } else drawSecret(gfx, obj, this.cellPx, this.bucket);
         break;
       case 'light':
         break;

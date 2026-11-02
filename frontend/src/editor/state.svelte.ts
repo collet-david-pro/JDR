@@ -4,6 +4,7 @@
  * read by the tools.
  */
 import type {
+  MapObjectType,
   Ambient,
   CellValue,
   Link,
@@ -16,6 +17,7 @@ import type {
   WallKind,
   WindowProps,
 } from './contracts';
+import type { PinIcon, SecretKind } from './contracts-notes';
 import type { EditorSettings } from './EditorController';
 import type { HistoryState } from './history/History';
 import { DEFAULT_AMBIENT } from './model/scene-values';
@@ -48,7 +50,7 @@ export interface TokenDefItem {
 /** One selectable object / placed token of the floor (keyboard list, projet.md 22). */
 export interface SceneItem {
   readonly uid: string;
-  readonly kind: 'token' | 'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal';
+  readonly kind: 'token' | MapObjectType;
   /** Token name, or null for objects (the UI labels them by kind and position). */
   readonly name: string | null;
   readonly x: number;
@@ -116,6 +118,20 @@ export class EditorUiState implements EditorSettings {
   portalColor = $state(D.portalColor);
   portalLabel = $state(D.portalLabel);
   portalLink = $state.raw<Link | null>(D.portalLink);
+  // ---- P9b2a notes ----
+  pinIcon = $state<PinIcon>(D.pinIcon);
+  pinColor = $state(D.pinColor);
+  pinNote = $state<string | null>(D.pinNote);
+  zoneNote = $state<string | null>(D.zoneNote);
+  zoneShowOnEnter = $state(D.zoneShowOnEnter);
+  trapShape = $state<'point' | 'polygon'>(D.trapShape);
+  trapNote = $state<string | null>(D.trapNote);
+  trapReveal = $state<'pulse' | 'none'>(D.trapReveal);
+  secretKind = $state<SecretKind>(D.secretKind);
+  secretNote = $state<string | null>(D.secretNote);
+  /** Note dialog: `uid` null = new note; `linkObject` = pin / zone to link the new note to. */
+  noteDialog = $state.raw<{ uid: string | null; linkObject: string | null } | null>(null);
+  resetSecretsOpen = $state(false);
   /** Selected objects / placed tokens (uids). */
   objectSelection = $state.raw<ObjectSelection>(EMPTY_OBJECT_SELECTION);
 

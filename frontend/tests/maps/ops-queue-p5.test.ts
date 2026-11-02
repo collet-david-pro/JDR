@@ -110,6 +110,7 @@ function setup() {
       conflicts.push([...c]);
       for (const x of c) {
         if (x.kind === 'object') doc.replaceObject(x.uid, x.current);
+        else if (x.kind === 'note') doc.notes.replace(x.uid, x.current);
         else doc.replaceToken(x.uid, x.current);
       }
     },

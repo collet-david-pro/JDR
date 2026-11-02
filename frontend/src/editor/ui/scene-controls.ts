@@ -17,6 +17,7 @@ import type {
 } from '../contracts';
 import type { History } from '../history/History';
 import type { MapDocument } from '../model/MapDocument';
+import { notePoints } from '../tools/geometry';
 import { changedObjectPatch, changedTokenPatch } from '../model/scene-values';
 import type { EditorUiState, SceneItem, ViewState } from '../state.svelte';
 import { EMPTY_OBJECT_SELECTION, type ObjectSelection } from '../tools/types';
@@ -178,6 +179,7 @@ export class SceneControls {
     for (const c of conflicts) {
       try {
         if (c.kind === 'object') this.doc.replaceObject(c.uid, c.current);
+        else if (c.kind === 'note') this.doc.notes.replace(c.uid, c.current);
         else this.doc.replaceToken(c.uid, c.current);
       } catch (error) {
         console.error(error);
@@ -276,7 +278,9 @@ export class SceneControls {
           ? (o.geometry.points[0] ?? [0, 0])
           : o.type === 'light' || o.type === 'portal' || o.type === 'stairs'
             ? [o.geometry.x, o.geometry.y]
-            : o.geometry.a;
+            : o.type === 'door' || o.type === 'window'
+              ? o.geometry.a
+              : (notePoints(o)[0] ?? [0, 0]);
       items.push({ uid: o.uid, kind: o.type, name: null, x, y });
     }
     ui.sceneItems = items;

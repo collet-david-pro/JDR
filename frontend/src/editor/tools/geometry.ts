@@ -3,6 +3,7 @@
  * (projet.md 15.2: grid, half cell, wall ends and middles; Alt disables it).
  */
 import type { MapObject, Point, WallObject } from '../contracts';
+import type { NoteObject } from '../contracts-notes';
 import { round3 } from '../model/scene-values';
 
 export interface Projection {
@@ -105,6 +106,39 @@ export function dedupePoints(points: readonly Point[]): Point[] {
   return out;
 }
 
+/** Vertices of a polygon geometry (`{polygon:[{x,y}…]}`) as points. */
+export function polygonPoints(g: {
+  readonly polygon: readonly { x: number; y: number }[];
+}): Point[] {
+  return g.polygon.map((q): Point => [q.x, q.y]);
+}
+
+/** Distance from p to a polygon (cells): 0 inside. */
+export function polygonDistance(pts: readonly Point[], p: Point): number {
+  let inside = false;
+  let best = Infinity;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const a = pts[i]!;
+    const b = pts[j]!;
+    if (
+      a[1] > p[1] !== b[1] > p[1] &&
+      p[0] < ((b[0] - a[0]) * (p[1] - a[1])) / (b[1] - a[1]) + a[0]
+    ) {
+      inside = !inside;
+    }
+    best = Math.min(best, project(p, a, b).distance);
+  }
+  return inside ? 0 : best;
+}
+
+/** Points of the shape of a P9b2a object: a polygon, a point or a segment. */
+export function notePoints(o: NoteObject): Point[] {
+  const g = o.geometry;
+  if ('polygon' in g) return polygonPoints(g);
+  if ('a' in g) return [g.a, g.b];
+  return [[g.x, g.y]];
+}
+
 /** Bounding box of an object (cells), for rectangle selection. */
 export function objectBox(o: MapObject): { x0: number; y0: number; x1: number; y1: number } {
   const pts: Point[] =
@@ -117,7 +151,9 @@ export function objectBox(o: MapObject): { x0: number; y0: number; x1: number; y
               [o.geometry.x, o.geometry.y],
               [o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h],
             ]
-          : [o.geometry.a, o.geometry.b];
+          : o.type === 'door' || o.type === 'window'
+            ? [o.geometry.a, o.geometry.b]
+            : notePoints(o);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

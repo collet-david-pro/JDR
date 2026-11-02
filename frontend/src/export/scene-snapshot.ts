@@ -102,6 +102,14 @@ export function isPlayerObject(obj: MapObject): boolean {
   return obj.layer !== 'gm' && obj.visibility === 'all';
 }
 
+/**
+ * A secret passage is a plain wall for the players until it is revealed. The export is a player
+ * view and the editor does not know the revealed state: it is always drawn as a wall.
+ */
+export function isSecretPassage(obj: MapObject): boolean {
+  return obj.type === 'secret' && 'a' in obj.geometry && obj.layer !== 'gm';
+}
+
 function layerVisible(layers: readonly LayerDef[], id: ObjectLayerId): boolean {
   if (id === 'gm') return false;
   const def = layers.find((l) => l.id === id);
@@ -165,14 +173,16 @@ export function buildSceneSnapshot(
     .filter(
       ({ obj }) =>
         obj.type !== 'light' &&
-        isPlayerObject(obj) &&
+        (isPlayerObject(obj) || isSecretPassage(obj)) &&
         layerVisible(layers, obj.layer) &&
         !(obj.type === 'wall' && obj.props.kind === 'invisible'),
     )
     .sort((a, b) => order.indexOf(a.obj.layer) - order.indexOf(b.obj.layer) || a.i - b.i)
     .map(({ obj }) => obj);
   const occluders = all.filter(
-    (o) => (o.type === 'wall' || o.type === 'door' || o.type === 'window') && isPlayerObject(o),
+    (o) =>
+      ((o.type === 'wall' || o.type === 'door' || o.type === 'window') && isPlayerObject(o)) ||
+      isSecretPassage(o),
   );
 
   const lights: SnapshotLight[] = [];

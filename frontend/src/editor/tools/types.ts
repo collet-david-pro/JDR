@@ -15,6 +15,7 @@ import type {
   WallKind,
   WindowProps,
 } from '../contracts';
+import type { PinIcon, SecretKind } from '../contracts-notes';
 import type { VisionCore } from '../../vision/index';
 import type { Rng } from '../util/rng';
 
@@ -30,6 +31,10 @@ export type ToolId =
   | 'light'
   | 'stairs'
   | 'portal'
+  | 'pin'
+  | 'zone'
+  | 'trap'
+  | 'secret'
   | 'token'
   | 'fog'
   | 'pipette'
@@ -82,6 +87,8 @@ export interface ToolNotice {
     | 'floor_invalid'
     | 'stairs_no_target'
     | 'link_required'
+    | 'polygon_limit'
+    | 'passage_length'
     | 'invalid';
   readonly params?: Readonly<Record<string, number | string>>;
 }
@@ -122,6 +129,8 @@ export interface ToolDocument extends MapView, SceneView {
   getIndex(layer: TileLayerId, x: number, y: number): number;
   /** Token definitions of the game (token tool). */
   tokenDefs(): readonly TokenDefView[];
+  /** Notes of the map (P9b2a): tools only check that a linked note still exists. */
+  readonly notes: { get(uid: string): unknown };
 }
 
 /** Live editor settings, read at every event (the UI store implements it). */
@@ -166,6 +175,18 @@ export interface ToolSettings {
   readonly portalLabel: string;
   /** Required link of a new portal. */
   readonly portalLink: Link | null;
+  // ---- P9b2a notes: pins, zones, traps, secrets ----
+  readonly pinIcon: PinIcon;
+  readonly pinColor: string;
+  /** Note a new pin / zone / trap / secret is linked to (uid); null = none. */
+  readonly pinNote: string | null;
+  readonly zoneNote: string | null;
+  readonly zoneShowOnEnter: boolean;
+  readonly trapShape: 'point' | 'polygon';
+  readonly trapNote: string | null;
+  readonly trapReveal: 'pulse' | 'none';
+  readonly secretKind: SecretKind;
+  readonly secretNote: string | null;
 }
 
 /** Defaults of the P5 tool settings. */
@@ -188,6 +209,16 @@ export const DEFAULT_OBJECT_SETTINGS = Object.freeze({
   portalColor: '#7c4dff',
   portalLabel: '',
   portalLink: null as Link | null,
+  pinIcon: 'place' as PinIcon,
+  pinColor: '#d9534f',
+  pinNote: null as string | null,
+  zoneNote: null as string | null,
+  zoneShowOnEnter: false,
+  trapShape: 'point' as 'point' | 'polygon',
+  trapNote: null as string | null,
+  trapReveal: 'pulse' as 'pulse' | 'none',
+  secretKind: 'passage' as SecretKind,
+  secretNote: null as string | null,
 });
 
 export const FOG_BRUSH_MIN = 0.5;

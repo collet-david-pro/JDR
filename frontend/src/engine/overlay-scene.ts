@@ -204,6 +204,25 @@ function drawSelection(
         lightRings(g, toScreen, x, y, obj.props.radius, obj.props.dim_radius);
         break;
       }
+      case 'zone':
+      case 'trap':
+      case 'secret': {
+        const geo = obj.geometry;
+        if ('polygon' in geo) {
+          outline(
+            g,
+            geo.polygon.map((q) => toScreen(q.x, q.y)),
+            true,
+          );
+        } else if ('a' in geo) {
+          outline(
+            g,
+            [geo.a, geo.b].map(([x, y]) => toScreen(x, y)),
+            false,
+          );
+        }
+        break;
+      }
     }
     const position = obj.type === 'light' ? lightPosition(obj, (t) => scene.token(t)) : undefined;
     for (const h of objectHandles(obj, position)) {

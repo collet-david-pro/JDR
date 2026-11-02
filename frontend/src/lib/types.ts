@@ -2,6 +2,7 @@
  * API data types of phase P1 (etapes/P01 "Contrat d'API P1"). Identifiers are strings,
  * dates are ISO 8601 UTC strings.
  */
+import type { MapNote, NoteOp } from '../editor/contracts-notes';
 import type { FloorInfo, FogChunkWire, MapObject, MapOp, PlacedToken } from '../editor/contracts';
 
 export type Role = 'user' | 'admin';
@@ -507,7 +508,7 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly format_version: number;
   /** P5: objects of every floor (GM view: nothing filtered). Since P9a also stairs / portal (MapObject). */
   readonly objects: readonly MapObject[];
-  readonly notes: readonly unknown[];
+  readonly notes: readonly MapNote[];
   /** P5: placed tokens of every floor. */
   readonly tokens_placed: readonly PlacedToken[];
   /** P8: how the map was generated (null = hand-made). */
@@ -583,7 +584,9 @@ export type WireMapOp =
           | 'floor.update'
           | 'floor.remove';
       }
-    >;
+    >
+  /** P9b2a ops of the notes (editor/contracts-notes.ts). */
+  | NoteOp;
 
 /** Body of POST /maps/{id}/ops */
 export interface MapOpsRequest {
@@ -612,6 +615,13 @@ export type MapOpConflict =
       readonly uid: string;
       readonly reason: 'stale' | 'gone' | 'exists';
       readonly current: PlacedToken | null;
+    }
+  | {
+      readonly op_index: number;
+      readonly kind: 'note';
+      readonly uid: string;
+      readonly reason: 'gone';
+      readonly current: MapNote | null;
     };
 
 /** Answer of POST /maps/{id}/ops */

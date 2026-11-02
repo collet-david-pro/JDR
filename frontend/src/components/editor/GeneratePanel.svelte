@@ -77,6 +77,12 @@
             inside(o.geometry.x, o.geometry.y) ||
             inside(o.geometry.x + o.geometry.w, o.geometry.y + o.geometry.h)
           );
+        case 'pin':
+        case 'zone':
+        case 'trap':
+        case 'secret':
+          // The generator never removes the notes' objects: they do not count as content.
+          return false;
       }
     });
   }

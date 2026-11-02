@@ -5,7 +5,7 @@
  * light, at dim_radius), the same positions as the engine `objects` overlay.
  */
 import type { LayerDef, MapObject, PlacedToken, Point, SceneView } from '../contracts';
-import { dist, objectBox, project, wallSegments } from './geometry';
+import { dist, notePoints, objectBox, polygonDistance, project, wallSegments } from './geometry';
 import type { ObjectSelection } from './types';
 
 export type Hit =
@@ -50,6 +50,17 @@ export function objectDistance(o: MapObject, p: Point): number {
       for (const [a, b] of wallSegments(o)) best = Math.min(best, project(p, a, b).distance);
       return Math.max(0, best - o.props.thickness / 2);
     }
+    case 'pin':
+      return dist(p, [o.geometry.x, o.geometry.y]);
+    case 'zone':
+      return polygonDistance(notePoints(o), p);
+    case 'trap':
+    case 'secret': {
+      const g = o.geometry;
+      if ('polygon' in g) return polygonDistance(notePoints(o), p);
+      if ('a' in g) return project(p, g.a, g.b).distance;
+      return dist(p, [g.x, g.y]);
+    }
   }
 }
 
@@ -60,6 +71,10 @@ const RANK: Record<MapObject['type'], number> = {
   window: 1,
   stairs: 1,
   wall: 2,
+  pin: 0,
+  trap: 0,
+  secret: 1,
+  zone: 3,
 };
 
 /** Topmost object or token under p (tol in cells, px = cells per screen pixel). */
@@ -80,7 +95,9 @@ export function hitTest(
   for (const o of scene.objects()) {
     if (!layerShown(layers, o.layer)) continue;
     const limit =
-      o.type === 'light' || o.type === 'portal' ? Math.max(tol, LIGHT_PICK_PX * px) : tol;
+      o.type === 'light' || o.type === 'portal' || o.type === 'pin' || o.type === 'trap'
+        ? Math.max(tol, LIGHT_PICK_PX * px)
+        : tol;
     const d = objectDistance(o, p);
     if (d > limit) continue;
     const rank = RANK[o.type];
@@ -107,8 +124,19 @@ export function handleAt(
     } else if (o.type === 'door' || o.type === 'window') {
       if (dist(p, o.geometry.a) <= tol) return { kind: 'end', uid, end: 'a' };
       if (dist(p, o.geometry.b) <= tol) return { kind: 'end', uid, end: 'b' };
+    } else if (
+      o.type === 'zone' ||
+      (o.type === 'trap' && 'polygon' in o.geometry) ||
+      (o.type === 'secret' && 'polygon' in o.geometry)
+    ) {
+      const i = notePoints(o).findIndex((q) => dist(p, q) <= tol);
+      if (i >= 0) return { kind: 'vertex', uid, index: i };
+    } else if (o.type === 'secret') {
+      const g = o.geometry as { a: Point; b: Point };
+      if (dist(p, g.a) <= tol) return { kind: 'end', uid, end: 'a' };
+      if (dist(p, g.b) <= tol) return { kind: 'end', uid, end: 'b' };
     } else if (o.type !== 'light') {
-      // stairs / portal: moved as a whole, no handle
+      // stairs / portal / pin / point trap: moved as a whole, no handle
       continue;
     } else if (dist(p, lightRadiusHandle(o.geometry.x, o.geometry.y, o.props.dim_radius)) <= tol) {
       return { kind: 'radius', uid };

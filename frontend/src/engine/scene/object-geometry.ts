@@ -153,6 +153,23 @@ export function objectHandles(
           at: [obj.geometry.x + obj.geometry.w / 2, obj.geometry.y + obj.geometry.h / 2],
         },
       ];
+    case 'pin':
+      return [{ kind: 'centre', at: [obj.geometry.x, obj.geometry.y] }];
+    case 'zone':
+    case 'trap':
+    case 'secret': {
+      const g = obj.geometry;
+      if ('polygon' in g) {
+        return g.polygon.map((q) => ({ kind: 'vertex' as const, at: [q.x, q.y] as Point }));
+      }
+      if ('a' in g) {
+        return [
+          { kind: 'end', at: g.a },
+          { kind: 'end', at: g.b },
+        ];
+      }
+      return [{ kind: 'centre', at: [g.x, g.y] }];
+    }
   }
 }
 

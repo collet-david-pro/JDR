@@ -7,6 +7,8 @@
  * from GET /sessions/{id}/preload (`assets[].id === asset_id`, reload it after a `note.shared`).
  */
 
+import type { ObjectLayerId, ObjectVisibility } from './contracts';
+
 export type NoteAudience = 'gm' | 'players' | 'all';
 
 /** GM / co-GM form of a note. */
@@ -20,7 +22,7 @@ export interface MapNote {
   /** Accounts of the audience `players`, empty otherwise. */
   readonly audience_users: readonly string[];
   readonly read_aloud: boolean;
-  readonly updated_at: string;
+  readonly updated_at?: string;
 }
 
 /** What a player or a screen receives of a note. */
@@ -78,12 +80,10 @@ export interface PolygonGeometry {
   readonly polygon: readonly PolygonPoint[];
 }
 
-export type ObjectVisibility = 'all' | 'gm' | 'hidden_until_revealed';
-
 interface NoteObjectBase {
   readonly uid: string;
   readonly floor: string;
-  readonly layer: string;
+  readonly layer: ObjectLayerId;
   readonly visibility: ObjectVisibility;
   readonly locked: boolean;
   readonly sort_order: number;

@@ -49,7 +49,13 @@ export interface PlanContext {
 }
 
 export function isOccluder(obj: MapObject | undefined): boolean {
-  return obj !== undefined && (obj.type === 'wall' || obj.type === 'door' || obj.type === 'window');
+  return (
+    obj !== undefined &&
+    (obj.type === 'wall' ||
+      obj.type === 'door' ||
+      obj.type === 'window' ||
+      (obj.type === 'secret' && 'a' in obj.geometry))
+  );
 }
 
 function hasLight(t: PlacedToken | undefined, def: (id: string) => TokenDefView | null): boolean {

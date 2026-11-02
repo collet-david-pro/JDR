@@ -22,6 +22,7 @@ import type {
   WallProps,
   WindowProps,
 } from '../contracts';
+import type { PinObject, SecretObject, TrapObject, ZoneObject } from '../contracts-notes';
 import { MapOpError } from './ops';
 
 export const UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
@@ -38,6 +39,10 @@ const OBJECT_TYPES: readonly MapObject['type'][] = [
   'light',
   'stairs',
   'portal',
+  'pin',
+  'zone',
+  'trap',
+  'secret',
 ];
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -83,6 +88,59 @@ function segment(g: unknown, b: Bounds): { a: Point; b: Point } {
   const len = Math.hypot(e[0] - a[0], e[1] - a[1]);
   if (len < 0.1 - 1e-9 || len > 20 + 1e-9) bad('Invalid segment length');
   return { a, b: e };
+}
+
+export const MAX_POLYGON_POINTS = 200;
+
+function polygon(g: unknown, b: Bounds): { polygon: { x: number; y: number }[] } {
+  const raw = (g as { polygon?: unknown } | null)?.polygon;
+  if (!Array.isArray(raw) || raw.length < 3 || raw.length > MAX_POLYGON_POINTS) {
+    bad('Invalid polygon');
+  }
+  return {
+    polygon: raw.map((p) => {
+      const q = p as { x?: unknown; y?: unknown } | null;
+      const [x, y] = point([q?.x, q?.y], b);
+      return { x, y };
+    }),
+  };
+}
+
+export const PIN_ICONS = ['place', 'danger', 'treasure', 'npc', 'info'] as const;
+export const SECRET_KINDS = ['passage', 'room', 'object'] as const;
+
+function noteLink(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== 'string' || !UID_PATTERN.test(v)) bad('Invalid note link');
+  return v;
+}
+
+function pinProps(p: PinObject['props']): PinObject['props'] {
+  if (typeof p.color !== 'string' || !COLOR.test(p.color)) bad('Invalid color');
+  return {
+    icon: oneOf(p.icon, PIN_ICONS, 'pin icon'),
+    color: p.color.toLowerCase(),
+    note: noteLink(p.note),
+  };
+}
+
+function zoneProps(p: ZoneObject['props']): ZoneObject['props'] {
+  return {
+    kind: oneOf(p.kind, ['description'], 'zone kind'),
+    note: noteLink(p.note),
+    show_on_enter: bool(p.show_on_enter, 'show_on_enter'),
+  };
+}
+
+function trapProps(p: TrapObject['props']): TrapObject['props'] {
+  return {
+    note: noteLink(p.note),
+    reveal_effect: oneOf(p.reveal_effect, ['pulse', 'none'], 'reveal_effect'),
+  };
+}
+
+function secretProps(p: SecretObject['props']): SecretObject['props'] {
+  return { kind: oneOf(p.kind, SECRET_KINDS, 'secret kind'), note: noteLink(p.note) };
 }
 
 function wallProps(p: WallProps): WallProps {
@@ -215,6 +273,24 @@ function geometry(type: MapObject['type'], g: MapObject['geometry'], b: Bounds) 
       const [x, y] = point([l.x, l.y], b);
       return { x, y };
     }
+    case 'pin': {
+      const l = g as { x?: unknown; y?: unknown };
+      const [x, y] = point([l.x, l.y], b);
+      return { x, y };
+    }
+    case 'zone':
+      return polygon(g, b);
+    case 'trap': {
+      const t = g as { polygon?: unknown; x?: unknown; y?: unknown };
+      if (t.polygon !== undefined) return polygon(g, b);
+      const [x, y] = point([t.x, t.y], b);
+      return { x, y };
+    }
+    case 'secret': {
+      const sg = g as { polygon?: unknown };
+      if (sg.polygon !== undefined) return polygon(g, b);
+      return segment(g, b);
+    }
     case 'stairs': {
       const r = g as { x?: unknown; y?: unknown; w?: unknown; h?: unknown };
       const w = num(r.w, 1, 10, 'stairs w');
@@ -243,6 +319,14 @@ function props(type: MapObject['type'], p: MapObject['props']): MapObject['props
       return stairsProps(p as StairsProps);
     case 'portal':
       return portalProps(p as PortalProps);
+    case 'pin':
+      return pinProps(p as PinObject['props']);
+    case 'zone':
+      return zoneProps(p as ZoneObject['props']);
+    case 'trap':
+      return trapProps(p as TrapObject['props']);
+    case 'secret':
+      return secretProps(p as SecretObject['props']);
   }
 }
 

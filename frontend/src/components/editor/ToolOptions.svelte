@@ -1,4 +1,5 @@
 <script lang="ts">
+  import NoteToolOptions from './NoteToolOptions.svelte';
   import ObjectToolOptions from './ObjectToolOptions.svelte';
   import { BRUSH_MAX, BRUSH_MIN, type BrushShape, type ShapeKind } from '../../editor/tools/types';
   import { brushShapeLabel, shapeKindLabel } from '../../editor/ui/labels';
@@ -111,6 +112,7 @@
   {/if}
 
   <ObjectToolOptions {session} />
+  <NoteToolOptions {session} />
 </section>
 
 <style>

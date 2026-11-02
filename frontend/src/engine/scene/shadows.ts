@@ -34,6 +34,9 @@ export function shadowSegments(objects: readonly MapObject[], mode: ViewMode): S
       if (obj.props.state === 'open' && !doorDrawnAsWall(obj, mode)) continue;
       const { a, b } = obj.geometry;
       out.push({ seg: [a[0], a[1], b[0], b[1]], height: DEFAULT_WALL_HEIGHT });
+    } else if (obj.type === 'secret' && 'a' in obj.geometry && mode !== 'gm') {
+      const { a, b } = obj.geometry;
+      out.push({ seg: [a[0], a[1], b[0], b[1]], height: DEFAULT_WALL_HEIGHT });
     }
   }
   return out;

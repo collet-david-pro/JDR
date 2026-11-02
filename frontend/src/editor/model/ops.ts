@@ -24,7 +24,8 @@ export type MapOpErrorCode =
   | 'floor_taken'
   | 'floor_limit'
   | 'last_floor'
-  | 'floor_unloaded';
+  | 'floor_unloaded'
+  | 'bad_note';
 
 export class MapOpError extends Error {
   override readonly name = 'MapOpError';
