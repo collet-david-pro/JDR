@@ -333,7 +333,9 @@
     "out_of_bounds": "Hors des limites de la carte.",
     "palette_index": "Index de palette invalide.",
     "already_used": "Cet identifiant d'opération a déjà été utilisé.",
-    "conflict": "Cet élément a été modifié entre-temps."
+    "conflict": "Cet élément a été modifié entre-temps.",
+    "limit": "Limite atteinte : cette map ne peut plus accueillir cet élément.",
+    "not_member": "Un des joueurs choisis ne fait pas partie de la partie."
   },
   "mail": {
     "reset": {
@@ -1370,7 +1372,11 @@
       "token": "Token",
       "fog": "Brouillard",
       "stairs": "Escalier",
-      "portal": "Portail"
+      "portal": "Portail",
+      "pin": "Épingle",
+      "zone": "Zone",
+      "trap": "Piège",
+      "secret": "Secret"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1494,7 +1500,14 @@
       "floor_add": "ajouter un étage",
       "floor_rename": "renommer l'étage",
       "floor_level": "changer le niveau de l'étage",
-      "floor_remove": "supprimer l'étage"
+      "floor_remove": "supprimer l'étage",
+      "note_add": "ajouter une note",
+      "note_update": "modifier la note",
+      "note_remove": "supprimer la note",
+      "pin": "poser une épingle",
+      "zone": "tracer une zone",
+      "trap": "poser un piège",
+      "secret": "poser un secret"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
@@ -1512,7 +1525,9 @@
       "floor_last": "Le dernier étage ne peut pas être supprimé.",
       "floor_invalid": "Étage refusé : nom de 1 à 60 caractères, niveau libre entre -9 et +9.",
       "stairs_no_target": "Créez d'abord un autre étage, ou choisissez un lien vers une autre map.",
-      "link_required": "Choisissez la map de destination du portail dans les options de l'outil."
+      "link_required": "Choisissez la map de destination du portail dans les options de l'outil.",
+      "polygon_limit": "Un polygone compte 200 points au plus : terminez-le (double-clic ou Entrée).",
+      "passage_length": "Un passage secret mesure de 0,1 à 20 cases."
     },
     "help": {
       "title": "Raccourcis clavier",
@@ -1603,7 +1618,11 @@
         "light": "Lumière",
         "token": "Token",
         "stairs": "Escalier",
-        "portal": "Portail"
+        "portal": "Portail",
+        "pin": "Épingle",
+        "zone": "Zone",
+        "trap": "Piège",
+        "secret": "Secret"
       },
       "wall_kinds": {
         "stone": "Pierre",
@@ -1841,6 +1860,69 @@
         "ladder": "Échelle",
         "trapdoor": "Trappe"
       }
+    },
+    "notes": {
+      "title_panel": "Notes",
+      "add": "Ajouter une note",
+      "empty": "Aucune note. Les notes sont réservées au MJ tant qu'il ne les partage pas.",
+      "create_title": "Nouvelle note",
+      "edit_title": "Modifier la note",
+      "title": "Titre",
+      "body": "Texte",
+      "image_choose": "Choisir une image",
+      "image_change": "Changer l'image",
+      "image_remove": "Retirer l'image",
+      "read_aloud": "À lire à voix haute",
+      "read_aloud_hint": "Le MJ pourra l'afficher aux joueurs et aux écrans pendant la séance.",
+      "audience": {
+        "title": "Qui peut lire cette note ?",
+        "gm": "MJ seul",
+        "players": "Certains joueurs",
+        "all": "Tous les joueurs",
+        "hint": "Une note reste visible du MJ seul tant qu'elle n'est pas partagée.",
+        "no_players": "Aucun joueur dans cette partie.",
+        "pick_one": "Choisissez au moins un joueur."
+      },
+      "delete_title": "Supprimer la note",
+      "delete_message": "Supprimer la note « {title} » ? Vous pourrez annuler tant que vous restez dans l'éditeur.",
+      "delete_message_links": "Supprimer la note « {title} » ? {count} objet(s) de la map y sont liés : ils seront détachés (annulable).",
+      "reset": "Remettre les secrets et pièges à zéro",
+      "reset_title": "Remettre à zéro",
+      "reset_message": "Tous les pièges et secrets de cette map seront de nouveau masqués, y compris pour les prochaines séances. Cette action n'est pas annulable.",
+      "reset_confirm": "Tout remasquer",
+      "reset_done": "Pièges et secrets remasqués.",
+      "linked_note": "Note liée",
+      "no_note": "Aucune note",
+      "open_linked": "Ouvrir la note liée",
+      "create_linked": "Créer une note et la lier",
+      "pin_icon": "Icône",
+      "pin_color": "Couleur",
+      "pin_icons": {
+        "place": "Lieu",
+        "danger": "Danger",
+        "treasure": "Trésor",
+        "npc": "PNJ",
+        "info": "Information"
+      },
+      "pin_hint": "Cliquez pour poser une épingle, visible du MJ seul tant qu'elle n'est pas partagée.",
+      "polygon_hint": "Clic : un point. Double-clic ou Entrée : terminer. Échap : annuler. Clic sur le premier point : fermer.",
+      "show_on_enter": "Afficher la note quand un joueur entre",
+      "trap_shape": "Forme du piège",
+      "trap_point": "Un point",
+      "trap_polygon": "Un polygone",
+      "trap_hint": "Cliquez pour poser un piège, masqué jusqu'à ce que le MJ le révèle.",
+      "reveal": {
+        "label": "Effet à la révélation",
+        "pulse": "Pulsation",
+        "none": "Aucun"
+      },
+      "secret_kind": "Type de secret",
+      "secret_kinds": {
+        "passage": "Passage secret",
+        "room": "Pièce secrète",
+        "object": "Objet caché"
+      },
+      "passage_hint": "Deux clics : le début et la fin du passage (0,1 à 20 cases). Il bloque la vue des joueurs jusqu'à sa révélation."
     }
   },
   "maps": {
@@ -2357,6 +2439,23 @@
       "water": "Eau",
       "lava": "Lave",
       "ice": "Glace"
+    }
+  },
+  "markdown": {
+    "toolbar": "Mise en forme",
+    "mode": "Affichage",
+    "write": "Écrire",
+    "preview": "Aperçu",
+    "preview_empty": "Rien à afficher.",
+    "count": "{count} / {max} caractères",
+    "format": {
+      "heading": "Titre",
+      "bold": "Gras",
+      "italic": "Italique",
+      "list": "Liste à puces",
+      "ordered": "Liste numérotée",
+      "quote": "Citation",
+      "rule": "Séparateur"
     }
   }
 }
