@@ -65,6 +65,7 @@ function isSkippedName(name) {
   if (name === '.htaccess') return false;
   if (name.startsWith('.')) return true; // .DS_Store, .gitkeep (outside storage), .vite/, editor swap files…
   if (name === 'Thumbs.db' || name === 'desktop.ini' || name.endsWith('~')) return true;
+  if (/ \d+(\.[^.]+)?$/.test(name)) return true; // "app 2.js": copy made by iCloud or Finder
   return false;
 }
 
