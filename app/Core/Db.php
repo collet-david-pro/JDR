@@ -32,6 +32,7 @@ final class Db
     private string $pass;
     private string $prefix;
     private int $txDepth = 0;
+    private int $queryCount = 0;
 
     /** @var list<\Closure(Db): void> */
     private array $beforeCommit = [];
@@ -84,6 +85,14 @@ final class Db
         return $this->pdo;
     }
 
+    /**
+     * Number of statements run through query() since the instance was created (perf budgets, P10e).
+     */
+    public function queryCount(): int
+    {
+        return $this->queryCount;
+    }
+
     public function prefix(): string
     {
         return $this->prefix;
@@ -103,6 +112,7 @@ final class Db
     public function query(string $sql, array $params = []): \PDOStatement
     {
         $pdo = $this->pdo();
+        $this->queryCount++;
         if ($params === []) {
             $stmt = $pdo->query($sql);
             if ($stmt === false) {

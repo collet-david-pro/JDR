@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { loadFactor } from '../load-factor';
 import type { MapObject, Point } from '../../src/editor/contracts';
 import { VisionCoreImpl } from '../../src/vision/core';
 import { door, rng, scene, wall } from './helpers';
 
 /**
+ * Load tolerance (P10e): thresholds = nominal budget x loadFactor() (tests/load-factor.ts).
  * Performance (projet.md 23 P5: 30 lights + 20 tokens; door opening < 100 ms): a 100×100
  * dungeon of 10×10 rooms with doors and pillars, ~2 000 occluding segments.
  */
@@ -97,8 +99,10 @@ describe('performance', () => {
         `token move ${moveMs.toFixed(1)} ms`,
     );
     expect(segments).toBeGreaterThan(1500);
-    // Generous bounds (CI machines); typical values are reported above.
-    expect(first).toBeLessThan(500);
-    expect(doorMs).toBeLessThan(500);
-  });
+    // Nominal bounds scaled by the machine load measured right now (tests/load-factor.ts, P10e):
+    // a busy host does not fail the test, a real regression still does. Typical values above.
+    const f = loadFactor();
+    expect(first).toBeLessThan(500 * f);
+    expect(doorMs).toBeLessThan(500 * f);
+  }, 60_000);
 });

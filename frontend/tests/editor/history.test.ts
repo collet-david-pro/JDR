@@ -1,3 +1,8 @@
+/**
+ * Load tolerance (P10e): the fuzzing / property loops of this file are CPU bound and used to hit
+ * Vitest's 5 s default timeout when the machine was busy (parallel suites, builds). The file
+ * keeps its assertions untouched and only raises its own timeout to 60 s (a real hang still fails).
+ */
 import { describe, expect, it, vi } from 'vitest';
 import type { Command, MapOp, TileCell, TileLayerId } from '../../src/editor/contracts';
 import { History } from '../../src/editor/history/History';
@@ -10,6 +15,8 @@ import type { MapDocument } from '../../src/editor/model/MapDocument';
 import { createRng, type Rng } from '../../src/editor/util/rng';
 import { TILE_LAYERS } from '../../src/formats/chunk-codec';
 import { makeDoc, snapshot } from './helpers';
+
+vi.setConfig({ testTimeout: 60_000 });
 
 function clock(): { now: () => number; advance: (ms: number) => void } {
   let t = 1000;

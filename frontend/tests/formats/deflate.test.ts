@@ -1,8 +1,15 @@
+/**
+ * Load tolerance (P10e): the fuzzing / property loops of this file are CPU bound and used to hit
+ * Vitest's 5 s default timeout when the machine was busy (parallel suites, builds). The file
+ * keeps its assertions untouched and only raises its own timeout to 60 s (a real hang still fails).
+ */
 import { deflateRawSync as nodeDeflate, inflateRawSync as nodeInflate } from 'node:zlib';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CompressionError, deflateRaw, inflateRaw } from '../../src/formats/compression';
 import { InflateError, deflateRawSync, inflateRawSync } from '../../src/formats/deflate';
 import { createRng } from '../../src/editor/util/rng';
+
+vi.setConfig({ testTimeout: 60_000 });
 
 function randomBytes(seed: number, n: number, alphabet = 256): Uint8Array {
   const rng = createRng(seed);

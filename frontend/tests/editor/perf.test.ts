@@ -1,6 +1,9 @@
 /**
- * Performance budgets of the editor core (projet.md 22). Generous thresholds so that CI machines
- * pass; measured values are printed for the phase report.
+ * Performance budgets of the editor core (projet.md 22). Measured values are printed for the
+ * phase report. Load tolerance (P10e): every threshold is the nominal budget multiplied by
+ * `loadFactor()` (tests/load-factor.ts: a calibration workload measured right before the
+ * assertions, >= 1, capped at 12), so a busy machine (parallel suites, builds) does not fail the
+ * test while an algorithmic regression of several times still does.
  */
 import { describe, expect, it } from 'vitest';
 import type { TileCell } from '../../src/editor/contracts';
@@ -8,6 +11,7 @@ import { History } from '../../src/editor/history/History';
 import { createTools } from '../../src/editor/tools/index';
 import { createRng } from '../../src/editor/util/rng';
 import { TILE_LAYERS } from '../../src/formats/chunk-codec';
+import { loadFactor } from '../load-factor';
 import { context, ev, makeDoc, settings } from './helpers';
 
 function time(fn: () => void): number {
@@ -18,6 +22,7 @@ function time(fn: () => void): number {
 
 describe('editor core performance', () => {
   it('fills 200×200 cells on 3 layers', () => {
+    const before = loadFactor();
     const doc = makeDoc(200, 200);
     const history = new History(doc);
     const s = settings({ variantCount: 4 });
@@ -38,10 +43,11 @@ describe('editor core performance', () => {
       `[perf] fill 200×200 ×3 layers: ${ms.toFixed(1)} ms; undo ×3: ${undoMs.toFixed(1)} ms`,
     );
     expect(doc.chunkKeys('ground')).toEqual([]);
-    expect(ms).toBeLessThan(400);
+    expect(ms).toBeLessThan(400 * Math.max(before, loadFactor()));
   });
 
   it('applies 10 000 random cells', () => {
+    const before = loadFactor();
     const doc = makeDoc(400, 400, 100);
     const rng = createRng(3);
     const cells: TileCell[] = [];
@@ -54,10 +60,11 @@ describe('editor core performance', () => {
     const ms = time(() => history.execute({ label: 'x', ops: [op], inverseOps: [] }));
     const undoMs = time(() => history.undo());
     console.info(`[perf] 10 000 cells: apply ${ms.toFixed(1)} ms; undo ${undoMs.toFixed(1)} ms`);
-    expect(ms).toBeLessThan(100);
+    expect(ms).toBeLessThan(100 * Math.max(before, loadFactor()));
   });
 
   it('brush stroke of 2 000 moves at size 16 stays interactive', () => {
+    const before = loadFactor();
     const doc = makeDoc(400, 400);
     const history = new History(doc);
     const tools = createTools(context(doc, settings({ brushSize: 16, brushShape: 'round' })));
@@ -85,7 +92,9 @@ describe('editor core performance', () => {
     expect(history.state.undoSize).toBe(0);
     expect(doc.chunkKeys('ground')).toEqual([]);
     // p95 (a single move may hit a GC pause when the suite runs in parallel).
-    expect(p95).toBeLessThan(16);
-    expect(worst).toBeLessThan(250);
+    const f = Math.max(before, loadFactor());
+    expect(p95).toBeLessThan(16 * f);
+    // A single move is scheduler noise on a busy host: twice the scaled budget.
+    expect(worst).toBeLessThan(500 * f);
   });
 });

@@ -65,9 +65,12 @@ final class PresenceTest extends SessionsTestCase
     public function testSweepDisconnectsAfterSixtySeconds(): void
     {
         $w = $this->arena();
-        // Taken before Bob's last request: a slow run cannot eat the margin of the 59 s check.
-        $from = time();
         $this->ok($w['bob']->post('/sessions/' . $w['session'] . '/ready', ['ready' => true]), 204);
+        // The oldest presence still connected, read from the base: a slow setup cannot eat the margin of the 59 s check.
+        $from = (int) strtotime((string) $this->db->fetchValue(
+            'SELECT MIN(`last_seen_at`) FROM ' . $this->db->t('session_players') . " WHERE `session_id` = ? AND `status` = 'connected'",
+            [(int) $w['session']],
+        ) . ' UTC');
         $before = $this->head();
 
         self::assertSame(0, $this->presenceAt(30, $from)->sweep(), 'seen 30 s ago: still connected');

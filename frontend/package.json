@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node ../dev/release.mjs manifest",
+    "build": "vite build && node ../dev/bundle-budget.mjs && node ../dev/release.mjs manifest",
     "build:front": "vite build",
     "release": "npm run build && node ../dev/release.mjs package",
     "preview": "vite preview",
