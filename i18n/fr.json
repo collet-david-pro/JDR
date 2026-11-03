@@ -94,6 +94,18 @@
       "unverified": "Cette archive n'est pas vérifiée : cochez la case de confirmation pour l'installer.",
       "no_package": "Aucune archive en attente : envoyez-en une.",
       "version_changed": "La version installée a changé depuis l'envoi : envoyez de nouveau l'archive."
+    },
+    "backup": {
+      "invalid_file": "Ce fichier n'est pas une sauvegarde valide de JDR (ou il est incomplet).",
+      "too_recent": "Cette sauvegarde vient d'une version plus récente ({version}) que la version installée ({current}) : mettez d'abord le site à jour.",
+      "busy": "Une restauration est déjà en cours ; patientez puis réessayez.",
+      "too_large": "Le fichier est trop volumineux.",
+      "bad_offset": "Morceau envoyé à une mauvaise position ; reprenez l'envoi.",
+      "upload_incomplete": "Le fichier n'a pas été reçu en entier ; recommencez l'envoi.",
+      "upload_hash": "Le fichier reçu ne correspond pas au fichier envoyé ; recommencez l'envoi.",
+      "wrong_kind": "Ce fichier a été envoyé pour un autre type de restauration.",
+      "archive_limit": "La sauvegarde des assets dépasse les limites d'une archive ZIP (65 535 fichiers, 4 Gio).",
+      "restore_failed": "La restauration a échoué ; le site reste en maintenance. Relancez-la avec un fichier de sauvegarde."
     }
   },
   "pages": {
@@ -572,7 +584,9 @@
       "audit": "Journal d'audit",
       "migrations": "Migrations",
       "library": "Bibliothèque générale",
-      "update": "Mise à jour"
+      "update": "Mise à jour",
+      "backup": "Sauvegarde",
+      "integrity": "Intégrité"
     },
     "stats": {
       "users": "Comptes",
@@ -809,6 +823,95 @@
       },
       "errors": {
         "no_crypto": "Ce navigateur ne peut pas calculer l'empreinte du fichier (connexion HTTPS requise)."
+      }
+    },
+    "backup": {
+      "title": "Sauvegarde et restauration",
+      "intro": "Les sauvegardes ne sont pas gardées sur le serveur : chacune est téléchargée dès qu'elle est prête, puis supprimée (au plus tard une heure après).",
+      "create": {
+        "title": "Sauvegarder",
+        "hint": "La base de données et les assets (images) sont sauvegardés séparément.",
+        "db": "Sauvegarder la base de données",
+        "assets": "Sauvegarder les assets",
+        "cancel": "Annuler la sauvegarde",
+        "progress": "Sauvegarde en cours… {percent} %",
+        "done": "Sauvegarde téléchargée : {name}"
+      },
+      "restore": {
+        "title": "Restaurer",
+        "warning": "La restauration remplace les données actuelles par celles du fichier. Le site passe en maintenance pendant l'opération.",
+        "kind": "Que voulez-vous restaurer ?",
+        "kind_db": "La base de données (fichier .sql.gz)",
+        "kind_assets": "Les assets (fichier .zip)",
+        "first": "Avant de restaurer, téléchargez une sauvegarde de l'état actuel.",
+        "backup_first_db": "Télécharger d'abord la base actuelle",
+        "backup_first_assets": "Télécharger d'abord les assets actuels",
+        "file_db": "Fichier de sauvegarde de la base",
+        "file_assets": "Fichier de sauvegarde des assets",
+        "limit": "Taille maximale : {max}.",
+        "understand": "Je comprends que les données actuelles seront remplacées",
+        "word": "Tapez {word} pour confirmer",
+        "submit": "Restaurer",
+        "uploading": "Envoi du fichier… {percent} %",
+        "restoring": "Restauration en cours… {percent} %",
+        "done_db": "Base de données restaurée. Toutes les sessions ont été fermées : reconnectez-vous.",
+        "done_db_behind": "Base de données restaurée, mais elle vient d'une version plus ancienne : une mise à jour de la base est nécessaire. Ouvrez update.php pour appliquer les migrations.",
+        "open_update": "Ouvrir update.php",
+        "login": "Se reconnecter",
+        "done_assets": "Assets restaurés : {restored} fichier(s) remis, {skipped} déjà présent(s), {rejected} refusé(s).",
+        "previous_running": "Une restauration de la base a été interrompue : le site reste en maintenance. Relancez une restauration avec un fichier.",
+        "previous_failed": "La dernière restauration de la base a échoué. Relancez-la avec un fichier de sauvegarde."
+      }
+    },
+    "integrity": {
+      "title": "Vérification d'intégrité",
+      "intro": "Compare la base et les fichiers : quotas, fichiers orphelins, références des cartes, blocs illisibles, révisions. Rien n'est modifié sans votre action, et toute suppression demande une confirmation.",
+      "run": "Lancer la vérification",
+      "running": "Vérification en cours",
+      "progress": "Vérification en cours : {done} / {total}",
+      "cancelled": "Vérification annulée.",
+      "none": "Aucun problème détecté.",
+      "no_fix": "Aucune correction automatique",
+      "fix_all": "Tout recalculer ({n})",
+      "fixed": "{n} problème(s) corrigé(s). Relancez la vérification pour confirmer.",
+      "confirm_title": "Confirmer la suppression",
+      "confirm_message": "{n} élément(s) vont être supprimés définitivement. Cette action est irréversible.",
+      "confirm_button": "Supprimer",
+      "severity": {
+        "error": "Erreur",
+        "warning": "Avertissement"
+      },
+      "group": {
+        "quota_mismatch": "Quotas de stockage inexacts",
+        "size_mismatch": "Tailles de fichiers inexactes",
+        "asset_refs_mismatch": "Références d'assets des cartes inexactes",
+        "revision_ahead": "Révisions incohérentes",
+        "missing_file": "Assets sans fichier",
+        "orphan_file": "Fichiers orphelins",
+        "undecodable_chunk": "Blocs de carte illisibles",
+        "undecodable_fog": "Brouillards illisibles",
+        "ref_to_deleted_asset": "Cartes utilisant un asset supprimé"
+      },
+      "desc": {
+        "quota_mismatch": "Utilisateur n° {user_id} : {recorded_bytes} octets enregistrés, {actual_bytes} réellement utilisés.",
+        "size_mismatch": "Asset {uuid} : {recorded_bytes} octets enregistrés, {actual_bytes} sur le disque.",
+        "asset_refs_mismatch": "Carte n° {id} : les références de {count} asset(s) diffèrent du contenu réel.",
+        "revision_ahead": "Carte n° {id} : révision {map_revision}, mais des éléments sont en révision {max_revision}.",
+        "missing_file": "Asset {uuid} ({name}) : le fichier ou la miniature est introuvable.",
+        "orphan_file": "Fichier {path} ({size_bytes} octets) sans asset correspondant.",
+        "undecodable_chunk": "Carte n° {map_id}, bloc {layer} ({cx}, {cy}) illisible : {reason}.",
+        "undecodable_fog": "Carte n° {map_id}, brouillard ({cx}, {cy}) illisible.",
+        "ref_to_deleted_asset": "Carte n° {id} : l'asset n° {asset_id} est dans la corbeille mais encore utilisé ({ref_count} fois)."
+      },
+      "action": {
+        "recalc_quota": "Recalculer le quota",
+        "fix_sizes": "Mettre à jour les tailles",
+        "recalc_refs": "Recalculer les références",
+        "raise_revision": "Remonter la révision",
+        "delete_asset": "Supprimer l'asset",
+        "delete_file": "Supprimer le fichier",
+        "delete_chunk": "Supprimer le bloc",
+        "delete_fog": "Supprimer le brouillard"
       }
     }
   },

@@ -22,7 +22,8 @@ use JDR\Core\Session\SessionOptions;
  * sent jdr_sid or when something is written (CSRF token, login). Written and closed at the end of
  * the request, or earlier with the route option session_close (see Auth).
  * Routes with session=false or maintenance_exempt=true (health, version) get no session at all:
- * no lock, no database access, attribute "user" = null.
+ * no lock, no database access, attribute "user" = null. session=true keeps it on a maintenance_exempt route
+ * (admin restore routes, which must answer while the database is behind).
  */
 final class Session implements Middleware
 {
@@ -41,7 +42,8 @@ final class Session implements Middleware
     {
         $route = $request->attribute('route');
         if ($route instanceof RouteMatch
-            && ($route->option('session') === false || $route->option('maintenance_exempt') === true)) {
+            && ($route->option('session') === false
+                || ($route->option('maintenance_exempt') === true && $route->option('session') !== true))) {
             return $next($request);
         }
         $params = CookieParams::fromRequest($request, $this->config);

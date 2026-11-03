@@ -5,7 +5,9 @@
   import LibraryView from '../../components/library/LibraryView.svelte';
   import NotFound from '../NotFound.svelte';
   import AdminAudit from './AdminAudit.svelte';
+  import AdminBackup from './AdminBackup.svelte';
   import AdminDiagnostic from './AdminDiagnostic.svelte';
+  import AdminIntegrity from './AdminIntegrity.svelte';
   import AdminInvitations from './AdminInvitations.svelte';
   import AdminMigrations from './AdminMigrations.svelte';
   import AdminSettings from './AdminSettings.svelte';
@@ -25,6 +27,8 @@
     { slug: 'audit', label: t('admin.tabs.audit') },
     { slug: 'migrations', label: t('admin.tabs.migrations') },
     { slug: 'update', label: t('admin.tabs.update') },
+    { slug: 'backup', label: t('admin.tabs.backup') },
+    { slug: 'integrity', label: t('admin.tabs.integrity') },
   ];
 
   const current = $derived((params['rest'] ?? '').replace(/\/+$/, ''));
@@ -64,6 +68,10 @@
       <AdminMigrations />
     {:else if current === 'update'}
       <AdminUpdate />
+    {:else if current === 'backup'}
+      <AdminBackup />
+    {:else if current === 'integrity'}
+      <AdminIntegrity />
     {:else}
       <NotFound />
     {/if}

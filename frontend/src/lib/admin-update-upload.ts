@@ -20,6 +20,8 @@ export interface ChunkedUploadOptions {
 
 const MAX_RESYNC = 5;
 const NETWORK_CODES = new Set(['network_error', 'timeout']);
+/** Resume codes of the update upload and of the backup upload (same protocol). */
+const BAD_OFFSET_CODES = new Set(['update.bad_offset', 'backup.bad_offset']);
 
 const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -35,7 +37,7 @@ export async function sha256Hex(file: Blob): Promise<string> {
 }
 
 /**
- * Sends the file chunk by chunk (PUT ?offset=n). `409 update.bad_offset` resumes at the offset the
+ * Sends the file chunk by chunk (PUT ?offset=n). `409 update.bad_offset` (or `backup.bad_offset`) resumes at the offset the
  * server reports (fields.received); a network error is retried `retries` times for the same chunk.
  * Any other error is thrown as is.
  */
@@ -60,7 +62,7 @@ export async function uploadInChunks(options: ChunkedUploadOptions): Promise<voi
       offset = Number.isInteger(received) && received >= 0 ? received : end;
       onProgress?.(offset, total);
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'update.bad_offset') {
+      if (error instanceof ApiError && BAD_OFFSET_CODES.has(error.code)) {
         const received = Number(error.fields['received']);
         if (
           !Number.isInteger(received) ||

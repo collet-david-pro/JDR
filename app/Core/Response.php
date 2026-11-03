@@ -24,6 +24,9 @@ final class Response
     /** Chunk size used when streaming a file body. */
     public const FILE_CHUNK_BYTES = 65536;
 
+    /** @var list<\Closure(bool): void> called by send() with true when the whole body went out */
+    private array $afterSend = [];
+
     /**
      * @param array<string, string> $headers
      */
@@ -202,6 +205,19 @@ final class Response
         return $data === false ? '' : $data;
     }
 
+    /**
+     * Runs $callback at the end of send(), with true when the whole body was sent (not for HEAD,
+     * nor when the client went away mid-file): e.g. deleting a one-time download.
+     *
+     * @param \Closure(bool): void $callback
+     */
+    public function afterSend(\Closure $callback): self
+    {
+        $this->afterSend[] = $callback;
+
+        return $this;
+    }
+
     public function withStatus(int $status): self
     {
         $this->status = $status;
@@ -217,29 +233,34 @@ final class Response
                 header($name . ': ' . $value, true);
             }
         }
+        $complete = false;
         if ($withBody && $this->status !== 204 && $this->status !== 304) {
             if ($this->file !== null) {
-                $this->streamFile($this->file);
+                $complete = $this->streamFile($this->file);
             } else {
                 echo $this->body;
+                $complete = true;
             }
+        }
+        foreach ($this->afterSend as $callback) {
+            $callback($complete);
         }
     }
 
     /**
      * @param array{path: string, offset: int, length: int} $file
      */
-    private function streamFile(array $file): void
+    private function streamFile(array $file): bool
     {
         $handle = @fopen($file['path'], 'rb');
         if ($handle === false) {
-            return;
+            return false;
         }
+        $left = $file['length'];
         try {
             if ($file['offset'] > 0) {
                 fseek($handle, $file['offset']);
             }
-            $left = $file['length'];
             while ($left > 0 && !feof($handle)) {
                 $chunk = fread($handle, min(self::FILE_CHUNK_BYTES, $left));
                 if ($chunk === false || $chunk === '') {
@@ -257,5 +278,7 @@ final class Response
         } finally {
             fclose($handle);
         }
+
+        return $left === 0 && connection_aborted() !== 1;
     }
 }

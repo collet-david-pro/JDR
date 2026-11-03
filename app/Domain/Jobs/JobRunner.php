@@ -12,6 +12,9 @@ use JDR\Core\Errors\HttpException;
 use JDR\Core\Logger;
 use JDR\Domain\Assets\Packs\PackExportJob;
 use JDR\Domain\Assets\Packs\PackImportJob;
+use JDR\Domain\Backup\AssetsBackupJob;
+use JDR\Domain\Backup\AssetsRestoreJob;
+use JDR\Domain\Backup\DbBackupJob;
 use JDR\Zip\ZipException;
 
 /**
@@ -26,6 +29,9 @@ final class JobRunner
     public const HANDLERS = [
         'pack_import' => PackImportJob::class,
         'pack_export' => PackExportJob::class,
+        'db_backup' => DbBackupJob::class,
+        'assets_backup' => AssetsBackupJob::class,
+        'assets_restore' => AssetsRestoreJob::class,
     ];
 
     public function __construct(

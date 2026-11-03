@@ -14,6 +14,7 @@ use JDR\Core\Response;
 use JDR\Domain\Assets\AssetStorage;
 use JDR\Domain\Assets\Packs\PackService;
 use JDR\Domain\Auth\CurrentUser;
+use JDR\Domain\Backup\BackupStorage;
 use JDR\Domain\Jobs\Job;
 use JDR\Domain\Jobs\JobRepository;
 use JDR\Domain\Jobs\JobRunner;
@@ -28,6 +29,7 @@ final class JobsController
         private JobRepository $jobs,
         private JobRunner $runner,
         private AssetStorage $storage,
+        private BackupStorage $backups,
     ) {
     }
 
@@ -50,11 +52,14 @@ final class JobsController
     }
 
     /**
-     * GET /jobs/{id}/download: the archive of a finished export.
+     * GET /jobs/{id}/download: the archive of a finished export, or a backup (deleted once sent).
      */
     public function download(Request $request): Response
     {
         $job = $this->own($request);
+        if (isset(BackupStorage::DOWNLOAD_TYPES[$job->type])) {
+            return $this->backups->download($job);
+        }
         if ($job->type !== 'pack_export' || $job->status !== Job::DONE) {
             throw new ValidationException('', ['job' => 'not_ready']);
         }

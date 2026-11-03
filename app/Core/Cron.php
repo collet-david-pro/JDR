@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Domain\Assets\AssetHousekeeping;
 use JDR\Domain\Auth\LoginAttempts;
+use JDR\Domain\Backup\BackupStorage;
 use JDR\Domain\Games\GameHousekeeping;
 use JDR\Domain\Maps\MapHousekeeping;
 use JDR\Domain\Maps\Transfer\MapThumbnailService;
@@ -168,6 +169,7 @@ final class Cron
             'password_resets' => static fn (): int => $c->get(PasswordResets::class)->purgeExpired(),
             'assets_tmp' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeTmp(),
             'assets_job_files' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeJobFiles(),
+            'backup_files' => static fn (): int => $c->get(BackupStorage::class)->purge(time()),
             'assets_trash' => static fn (): int => $c->get(AssetHousekeeping::class)->purgeTrash(),
             'games_trash' => static fn (): int => $c->get(GameHousekeeping::class)->purgeTrash(),
             'maps_trash' => static fn (): int => $c->get(MapHousekeeping::class)->purgeTrash(),
