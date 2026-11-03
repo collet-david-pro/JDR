@@ -18,19 +18,29 @@ final class QueryBudgetTest extends ActionsTestCase
     private const BUDGET = 10;
 
     /**
-     * Documented exceptions (P10e): requests that rebuild a whole scene (snapshot / preload, once per
-     * client load) or fan an action out to every audience inside one transaction (ops, actions) run
-     * more than 10 statements today. Ceilings = measured value + 2, so a regression still fails.
-     * Reducing them needs a request-scoped cache in the repositories (assignments, fog, vision are
-     * read 3 to 4 times per write): tracked as debt.
+     * Documented exceptions. P10e2a added a request-scoped memo (Core\RequestMemo: assignments,
+     * fog blocks, vision, notes visibility, game tokens, objects, revealed uids, generation are read
+     * once per request), which removed the repeated reads (before -> after: snapshot GM 15 -> 14,
+     * player 23 -> 19, ops 29 -> 27, token.move 29 -> 27 and 31 -> 28). What is left are distinct
+     * statements, one per table or per step, so ceilings = measured value + 1:
+     * - snapshot / preload rebuild a whole scene once per client load: user, event cursor, session,
+     *   players, assignments, map, floors, objects, notes, tokens, token definitions, fog, revealed
+     *   uids (+ the player filter: explored fog, vision, note visibility, object boxes, chunks of
+     *   the scope); preload also reads the revision in its own transaction (consistent chunks);
+     * - ops / actions are a locked write (map / session FOR UPDATE) that fans the change out to
+     *   every audience: rate limit (3), idempotency check before and after the lock (a retry must
+     *   get the stored answer without taking the lock), players, assignments, hidden tokens,
+     *   revealed uids, active screens, fog scope before and after the change (the vision is read
+     *   again because the moved token changed it), the D3 merge scan of each merged audience, the
+     *   event_seq lock, the multi-row INSERT and the id read-back.
      */
     private const CEILINGS = [
-        'GET /sessions/{id}/snapshot (GM)' => 17,
-        'GET /sessions/{id}/snapshot (player)' => 25,
-        'GET /sessions/{id}/preload (player)' => 13,
-        'POST /maps/{id}/ops (edit)' => 31,
-        'POST actions token.move (GM)' => 31,
-        'POST actions token.move (player)' => 33,
+        'GET /sessions/{id}/snapshot (GM)' => 15,
+        'GET /sessions/{id}/snapshot (player)' => 20,
+        'GET /sessions/{id}/preload (player)' => 12,
+        'POST /maps/{id}/ops (edit)' => 28,
+        'POST actions token.move (GM)' => 28,
+        'POST actions token.move (player)' => 29,
     ];
 
     /** @var array<string, int> */

@@ -1,7 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { expectSignedIn, login } from '../helpers/app';
+import { AdminApi, expectSignedIn, login } from '../helpers/app';
 import { admin, main } from '../helpers/env';
 import { runInstaller, sitePath } from '../helpers/install';
 
@@ -61,4 +61,12 @@ test('the administrator session survives a reload', async ({ page }) => {
   await login(page, admin.email, admin.password, admin.username);
   await page.reload();
   await expectSignedIn(page, admin.username);
+});
+
+// Every spec shares this server: lift the cap on waiting connections (default 4, P10e2) so the
+// realtime criteria measure SSE, not the fallback to polling (the cap has its own PHP tests).
+test('lifts the cap on waiting connections for the E2E run', async () => {
+  const api = await AdminApi.open(main.baseURL);
+  await api.send('patch', '/admin/settings', { realtime_max_waiting: 200 });
+  await api.close();
 });

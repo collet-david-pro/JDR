@@ -17,6 +17,12 @@ node dev/load/run.mjs --transport=longpoll --sessions=10
 
 Options : `--transport=sse|longpoll|poll` (défaut `sse`), `--sessions=N` (défaut 5), `--duration=S`
 (défaut 60), `--workers=N` (défaut 8), `--poll-ms=MS` (intervalle du polling court, défaut 2000).
+`--spread-ms=MS` (défaut 5000) étale l'ouverture des écouteurs : `php -S` accepte toutes les connexions
+en attente quand un worker est libre puis les sert l'une après l'autre ; une rafale place une requête
+derrière un flux de 25 s du même worker (mesuré : en-têtes de `GET /stream` jusqu'à 50 s, propagation
+p95 23 s). Apache / PHP-FPM répartissent les requêtes sur les workers libres et ne sont pas concernés.
+La propagation est comptée une fois par écouteur et par événement, et ventilée selon le mode du
+récepteur (`sse`, `capped` = polling après le plafond, `poll`) ; `LOAD_DEBUG=1` liste les retards SSE.
 Serveur, copie et base sont supprimés à la fin (aussi sur erreur ou Ctrl+C). Code de sortie 1 si une erreur
 HTTP, réseau ou timeout est survenue.
 

@@ -228,7 +228,8 @@ final class App
         $this->logger->setRequestContext($request->id, $request->method . ' ' . $request->path, microtime(true));
         $this->errors->setRequestContext($request->isApi(), $request->id);
         try {
-            $response = $this->dispatch($request, $nonce);
+            // Request-scoped memo of repeated reads (P10e2a).
+            $response = RequestMemo::scope(fn (): Response => $this->dispatch($request, $nonce));
         } catch (\Throwable $e) {
             $response = $this->errors->render(
                 $e,

@@ -11,7 +11,8 @@ use JDR\Core\Db;
 
 /**
  * Typed access to the settings table (projet.md 7.2). Every known key has a default, identical
- * to the seed migration 0002_seed.php: get() returns it when the row is missing.
+ * to the seed migration 0002_seed.php (keys added later have no seed row): get() returns it when
+ * the row is missing.
  * Rows are read once per request.
  */
 final class Settings
@@ -31,6 +32,8 @@ final class Settings
         'versions_retention' => 30,
         'trash_days' => 30,
         'session_idle_hours' => 12,
+        /** Connections allowed to keep a PHP worker (stream, long polling); 0 = short polling only. */
+        'realtime_max_waiting' => 4,
         'use_db_sessions' => false,
         'maintenance' => false,
         'smtp' => self::SMTP_DEFAULTS,

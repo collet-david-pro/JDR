@@ -88,6 +88,8 @@ export class FakeEventsServer {
   mode: 'ok' | 'down' | 'gone' = 'ok';
   failAfterMs = 0;
   goneChannels = 'session:1';
+  /** No slot for waiting requests (P10e2a): wait > 0 answers at once with `transport`. */
+  capped = false;
   private pending: Pending[] = [];
 
   push(...events: WireEvent[]): void {
@@ -107,7 +109,9 @@ export class FakeEventsServer {
           (e) => channels.includes(e.channel) && BigInt(e.id) > BigInt(since),
         );
         const last = events.length > 0 ? events[events.length - 1]!.id : since;
-        resolve(json({ ok: true, data: { events, last_id: last }, meta: {} }));
+        const transport =
+          this.capped && wait > 0 ? { transport: { mode: 'poll', retry_after_s: 120 } } : {};
+        resolve(json({ ok: true, data: { events, last_id: last, ...transport }, meta: {} }));
       };
       init?.signal?.addEventListener('abort', () =>
         reject(new DOMException('aborted', 'AbortError')),
@@ -136,7 +140,7 @@ export class FakeEventsServer {
       const ready = this.events.some(
         (e) => channels.includes(e.channel) && BigInt(e.id) > BigInt(since),
       );
-      if (ready || wait === 0) {
+      if (ready || wait === 0 || this.capped) {
         answer();
         return;
       }

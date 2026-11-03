@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 
 /**
  * SQL access to maps, map_floors, map_chunks, map_asset_refs and processed_ops (projet.md 7.2).
@@ -25,7 +26,7 @@ final class MapRepository
     ];
     private const JSON_COLUMNS = ['ambient', 'palette', 'layers'];
 
-    public function __construct(private Db $db, private Clock $clock)
+    public function __construct(private Db $db, private Clock $clock, private RequestMemo $memo)
     {
     }
 
@@ -37,8 +38,23 @@ final class MapRepository
     public function find(int $id): ?Map
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]);
+        if ($row !== null) {
+            $this->memo->prime('map_generation:' . $id, ['maps'], $row['generation'] ?? null);
+        }
 
         return $row === null ? null : Map::fromRow($row);
+    }
+
+    /**
+     * Raw generation JSON of the map, read once per request (also primed by find()).
+     */
+    public function generationJson(int $id): mixed
+    {
+        return $this->memo->remember(
+            'map_generation:' . $id,
+            ['maps'],
+            fn (): mixed => $this->db->fetchValue('SELECT `generation` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]),
+        );
     }
 
     /**
@@ -49,7 +65,7 @@ final class MapRepository
      */
     public function generation(int $id): ?array
     {
-        $json = $this->db->fetchValue('SELECT `generation` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]);
+        $json = $this->generationJson($id);
         $data = is_string($json) ? json_decode($json, true) : null;
         if (!is_array($data)) {
             return null;

@@ -18,6 +18,7 @@ import {
   SSE_SILENCE_MS,
   type NetState,
   type TransportMode,
+  type TransportSignal,
   type WireEvent,
 } from './types';
 import { backoffDelay, compareIds, isEventId, maxId } from './util';
@@ -30,6 +31,8 @@ export interface FlowSink {
   /** mode or state changed. */
   status(): void;
 }
+
+type Trial = { from: TransportMode; next: TransportMode[] };
 
 /** A long polling request that fails this much before `wait` was cut by a proxy. */
 const EARLY_MARGIN_MS = 2000;
@@ -50,7 +53,10 @@ export class Flow {
   private attempts = 0;
   private cuts: number[] = [];
   private lpCuts = 0;
-  private trial: { from: TransportMode; next: TransportMode[] } | null = null;
+  private trial: Trial | null = null;
+  /** Fallback to short polling for lack of a server slot: the mode (and trial) to resume. */
+  private capped: { mode: TransportMode; trial: Trial | null } | null = null;
+  private capTimer: unknown = null;
   private halted = false;
   private readonly memory: ModeMemory;
 
@@ -91,6 +97,7 @@ export class Flow {
     this.gen++;
     this.teardown();
     this.clearBest();
+    this.clearCap();
     this.channels = [];
     this.cursor = null;
     this.halted = false;
@@ -156,6 +163,11 @@ export class Flow {
         onGone: (channel) => {
           if (gen === this.gen) gone.push(channel);
         },
+        onTransport: (signal) => {
+          if (gen !== this.gen) return;
+          this.closeConn = null;
+          this.onCapped(signal);
+        },
         onEnd: () => {
           if (gen !== this.gen) return;
           this.closeConn = null;
@@ -219,6 +231,13 @@ export class Flow {
         continue;
       }
       if (gen !== this.gen) return;
+      if (wait > 0 && page.transport !== null) {
+        // Answered at once for lack of a slot: not a proof that long polling works.
+        this.deliver(page.events);
+        this.advance(page.lastId);
+        this.onCapped(page.transport);
+        return;
+      }
       this.alive();
       if (wait > 0 && this.deps.now() - started >= wait * 1000 - EARLY_MARGIN_MS) this.lpCuts = 0;
       this.deliver(page.events);
@@ -292,9 +311,54 @@ export class Flow {
     this.connect();
   }
 
+  /**
+   * The server has no free slot for a waiting connection (P10e2a): short polling, and the
+   * current mode again after `retryAfterS`. Nothing is memorised (unlike a buffering proxy).
+   */
+  private onCapped(signal: TransportSignal): void {
+    this.gen++;
+    this.teardown();
+    this.resetCounters();
+    this.clearBest();
+    this.clearCap();
+    this.capped = { mode: this.mode, trial: this.trial };
+    this.trial = null;
+    this.mode = 'poll';
+    this.capTimer = this.deps.setTimeout(() => {
+      this.capTimer = null;
+      this.uncap();
+    }, signal.retryAfterS * 1000);
+    this.sink.status();
+    this.connect();
+  }
+
+  private uncap(): void {
+    const capped = this.capped;
+    this.capped = null;
+    if (capped === null) return;
+    this.mode = this.usable(capped.mode);
+    this.trial = capped.trial;
+    if (this.channels.length === 0 || this.halted) return;
+    this.gen++;
+    this.teardown();
+    this.resetCounters();
+    this.sink.status();
+    this.connect();
+    this.scheduleBest();
+  }
+
+  /** Forgets the fallback (flow stopped): the mode to resume is restored at once. */
+  private clearCap(): void {
+    if (this.capTimer !== null) this.deps.clearTimeout(this.capTimer);
+    this.capTimer = null;
+    if (this.capped !== null) this.mode = this.usable(this.capped.mode);
+    this.capped = null;
+  }
+
   /** Every 5 minutes, tries the better modes again (projet.md 10.3, rule 3). */
   private scheduleBest(): void {
-    if (this.bestTimer !== null || this.trial !== null || this.mode === 'sse') return;
+    if (this.bestTimer !== null || this.trial !== null || this.capped !== null) return;
+    if (this.mode === 'sse') return;
     this.bestTimer = this.deps.setTimeout(() => {
       this.bestTimer = null;
       if (this.channels.length === 0 || this.halted) {

@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 use JDR\Core\Response;
 
 /**
@@ -19,7 +20,7 @@ final class SessionRepository
     private const COLUMNS = '`id`, `game_id`, `code`, `name`, `state`, `current_map_id`, `current_floor_id`, `camera`, '
         . '`pause_screen`, `created_by`, `created_at`, `started_at`, `ended_at`';
 
-    public function __construct(private Db $db, private Clock $clock)
+    public function __construct(private Db $db, private Clock $clock, private RequestMemo $memo)
     {
     }
 
@@ -262,11 +263,11 @@ final class SessionRepository
         if ($sessionIds === []) {
             return $out;
         }
-        $rows = $this->db->fetchAll(
+        $rows = $this->memo->remember('assignments:' . implode(',', $sessionIds), ['token_assignments'], fn (): array => $this->db->fetchAll(
             'SELECT `session_id`, `token_id`, `user_id` FROM ' . $this->db->t('token_assignments') . ' WHERE `session_id` IN ('
             . implode(', ', array_fill(0, count($sessionIds), '?')) . ') ORDER BY `token_id`',
             $sessionIds,
-        );
+        ));
         foreach ($rows as $r) {
             $out[(int) $r['session_id']][] = ['token_id' => (int) $r['token_id'], 'user_id' => (int) $r['user_id']];
         }

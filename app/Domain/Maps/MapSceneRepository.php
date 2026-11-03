@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 use JDR\Maps\ObjectRules;
 use JDR\Maps\TokenRules;
 
@@ -23,7 +24,7 @@ final class MapSceneRepository
     private const OBJECT_COLUMNS = '`id`, `uid`, `floor_id`, `type`, `layer`, `geometry`, `props`, `visibility`, `locked`, `sort_order`, `rev`';
     private const TOKEN_COLUMNS = '`id`, `uid`, `floor_id`, `token_id`, `x`, `y`, `rotation`, `scale`, `hidden`, `light_override`, `rev`';
 
-    public function __construct(private Db $db, private Clock $clock)
+    public function __construct(private Db $db, private Clock $clock, private RequestMemo $memo)
     {
     }
 
@@ -48,9 +49,15 @@ final class MapSceneRepository
             $sql .= ' AND `bbox_x1` <= ? AND `bbox_x2` >= ? AND `bbox_y1` <= ? AND `bbox_y2` >= ?';
             array_push($params, self::dec($bbox[2]), self::dec($bbox[0]), self::dec($bbox[3]), self::dec($bbox[1]));
         }
-        $rows = $this->db->fetchAll($sql . ' ORDER BY `floor_id`, `sort_order`, `id`', $params);
 
-        return MapLinks::annotate($this->db, array_map(self::objectFromRow(...), $rows));
+        return $this->memo->remember(
+            'objects:' . json_encode([$mapId, $floorId, $bbox]),
+            ['map_objects', 'maps'],
+            fn (): array => MapLinks::annotate(
+                $this->db,
+                array_map(self::objectFromRow(...), $this->db->fetchAll($sql . ' ORDER BY `floor_id`, `sort_order`, `id`', $params)),
+            ),
+        );
     }
 
     /**
@@ -166,10 +173,10 @@ final class MapSceneRepository
      */
     public function revealedUids(int $mapId): array
     {
-        $rows = $this->db->fetchAll(
+        $rows = $this->memo->remember('revealed:' . $mapId, ['map_objects'], fn (): array => $this->db->fetchAll(
             'SELECT `uid` FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ? AND `revealed_at` IS NOT NULL',
             [$mapId],
-        );
+        ));
 
         return array_map(static fn (array $r): string => (string) $r['uid'], $rows);
     }

@@ -19,6 +19,7 @@ use JDR\Realtime\LongPoll;
 use JDR\Realtime\PhpSseOutput;
 use JDR\Realtime\SseStream;
 use JDR\Realtime\Subscription;
+use JDR\Realtime\WaitSlots;
 
 /**
  * Real-time reads (projet.md 10.3, contract P6a), both with the route option session_close:
@@ -27,6 +28,9 @@ use JDR\Realtime\Subscription;
  * Channels: ChannelAuthorizer (422 invalid / more than 4, 403 not allowed, 404 unknown).
  * With ?as=display (route option display, P7b D7): the projection screen of the jdr_display cookie
  * reads the channel of its session (audiences all + displays); its loops end when it is revoked.
+ * Waiting connections (stream, wait > 0) hold a WaitSlots slot; without one (P10e2a) the stream is
+ * a single "event: transport" and the long polling answers at once with a `transport` field, both
+ * carrying WaitSlots::POLL_SIGNAL (the client switches to short polling for retry_after_s).
  */
 final class RealtimeController
 {
@@ -36,6 +40,7 @@ final class RealtimeController
         private ChannelAuthorizer $authorizer,
         private LongPoll $longPoll,
         private SseStream $stream,
+        private WaitSlots $slots,
     ) {
     }
 
@@ -46,8 +51,16 @@ final class RealtimeController
         $since = self::cursor($request->query['since'] ?? null);
         $wait = self::wait($request->query['wait'] ?? null);
         $sub = $this->subscribe($request, $reader, $channels);
+        if ($wait === 0) {
+            return Response::ok($this->longPoll->poll($sub, $since, 0)->toArray());
+        }
 
-        return Response::ok($this->longPoll->poll($sub, $since, $wait)->toArray());
+        return $this->slots->run(
+            fn (): Response => Response::ok($this->longPoll->poll($sub, $since, $wait)->toArray()),
+            fn (): Response => Response::ok(
+                $this->longPoll->poll($sub, $since, 0)->toArray() + ['transport' => WaitSlots::POLL_SIGNAL],
+            ),
+        );
     }
 
     public function stream(Request $request): Response
@@ -62,6 +75,23 @@ final class RealtimeController
         $sub = $this->subscribe($request, $reader, $channels);
         $extra = ['X-Content-Type-Options' => 'nosniff', 'X-Request-Id' => $request->id];
 
+        return $this->slots->run(
+            fn (): Response => $this->runStream($sub, $since, $extra),
+            // EventSource does not expose the headers of an error: a 200 with one event, then end.
+            static fn (): Response => new Response(
+                'retry: ' . (WaitSlots::RETRY_AFTER_S * 1000) . "\n\nevent: transport\ndata: "
+                . json_encode(WaitSlots::POLL_SIGNAL, Response::JSON_FLAGS) . "\n\n",
+                200,
+                SseStream::HEADERS + $extra,
+            ),
+        );
+    }
+
+    /**
+     * @param array<string, string> $extra
+     */
+    private function runStream(Subscription $sub, int $since, array $extra): Response
+    {
         if (PHP_SAPI === 'cli') {
             $out = new BufferSseOutput();
             $this->stream->run($sub, $since, $out, $extra);

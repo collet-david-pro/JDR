@@ -11,6 +11,7 @@ use JDR\Core\Db;
 use JDR\Core\Request;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Support\AppPaths;
+use JDR\Realtime\WaitSlots;
 
 /**
  * Admin diagnostic page (projet.md 6.6): list of checks {id, status ok|warn|error, value, hint_key}.
@@ -28,6 +29,7 @@ final class Diagnostic
         private Settings $settings,
         private AppPaths $paths,
         private HttpProbe $probe,
+        private WaitSlots $slots,
         private ?Config $config = null,
     ) {
     }
@@ -103,6 +105,10 @@ final class Diagnostic
         ));
         $add('asset_files', $assets === null ? 'warn' : 'ok', $assets);
         $add(...$this->integrity());
+        $used = $this->safe(fn (): int => $this->slots->used());
+        $max = $this->slots->max();
+        // Occupied / cap of the waiting connections (stream and long polling, P10e2a).
+        $add('realtime_slots', $used === null || ($max > 0 && $used >= $max) ? 'warn' : 'ok', ($used ?? '?') . ' / ' . $max);
 
         return $checks;
     }

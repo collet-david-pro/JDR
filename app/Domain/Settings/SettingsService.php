@@ -31,6 +31,7 @@ final class SettingsService
         'versions_retention' => [1, 1000],
         'trash_days' => [1, 3650],
         'session_idle_hours' => [1, 720],
+        'realtime_max_waiting' => [0, 1000],
     ];
     private const BOOLS = ['use_db_sessions', 'maintenance'];
     private const LOCALES = ['fr'];

@@ -31,6 +31,8 @@ final class Db
     private string $user;
     private string $pass;
     private string $prefix;
+    /** @var (\Closure(string, string): void)|null RequestMemo invalidation (P10e2a) */
+    private ?\Closure $onChange = null;
     private int $txDepth = 0;
     private int $queryCount = 0;
 
@@ -93,6 +95,21 @@ final class Db
         return $this->queryCount;
     }
 
+    /** onChange kinds: a write statement ($sql given), a transaction boundary ($sql = ''). */
+    public const CHANGE_WRITE = 'write';
+    public const CHANGE_TX = 'tx';
+
+    /**
+     * Listener told of every statement that is not a read and of every transaction begin,
+     * commit and rollback (request-scoped memo invalidation, P10e2a).
+     *
+     * @param (\Closure(string, string): void)|null $fn ($kind, $sql)
+     */
+    public function onChange(?\Closure $fn): void
+    {
+        $this->onChange = $fn;
+    }
+
     public function prefix(): string
     {
         return $this->prefix;
@@ -113,6 +130,9 @@ final class Db
     {
         $pdo = $this->pdo();
         $this->queryCount++;
+        if ($this->onChange !== null && preg_match('/^\s*(SELECT|SHOW|DESCRIBE|EXPLAIN)\b/i', $sql) !== 1) {
+            ($this->onChange)(self::CHANGE_WRITE, $sql);
+        }
         if ($params === []) {
             $stmt = $pdo->query($sql);
             if ($stmt === false) {
@@ -198,11 +218,13 @@ final class Db
         while (true) {
             $pdo->beginTransaction();
             $this->txDepth++;
+            $this->changed();
             try {
                 $result = $fn($this);
                 $this->runBeforeCommit();
                 $this->txDepth--;
                 $pdo->commit();
+                $this->changed();
             } catch (\Throwable $e) {
                 $this->txDepth = 0;
                 try {
@@ -210,6 +232,7 @@ final class Db
                         $pdo->rollBack();
                     }
                 } finally {
+                    $this->changed();
                     $this->runAfterRollback();
                 }
                 if ($attempt < self::DEADLOCK_RETRIES && self::isDeadlock($e)) {
@@ -266,6 +289,13 @@ final class Db
     {
         $this->requireTransaction();
         $this->afterRollback[] = $fn;
+    }
+
+    private function changed(): void
+    {
+        if ($this->onChange !== null) {
+            ($this->onChange)(self::CHANGE_TX, '');
+        }
     }
 
     private function requireTransaction(): void

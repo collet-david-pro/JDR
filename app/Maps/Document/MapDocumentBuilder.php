@@ -249,7 +249,7 @@ final class MapDocumentBuilder
      */
     private function generation(int $mapId): ?array
     {
-        $json = $this->db->fetchValue('SELECT `generation` FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$mapId]);
+        $json = $this->maps->generationJson($mapId);
         $data = is_string($json) ? json_decode($json, true) : null;
         if (!is_array($data)) {
             return null;

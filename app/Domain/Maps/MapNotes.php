@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 use JDR\Domain\Sessions\NoteVisibility;
 use JDR\Domain\Support\Dates;
 
@@ -21,7 +22,7 @@ use JDR\Domain\Support\Dates;
  */
 final class MapNotes
 {
-    public function __construct(private Db $db, private Clock $clock)
+    public function __construct(private Db $db, private Clock $clock, private RequestMemo $memo)
     {
     }
 
@@ -115,11 +116,11 @@ final class MapNotes
 
     public function visibility(int $mapId): NoteVisibility
     {
-        $rows = $this->db->fetchAll(
+        $rows = $this->memo->remember('note_visibility:' . $mapId, ['map_notes', 'map_note_users'], fn (): array => $this->db->fetchAll(
             'SELECT n.`uid`, n.`audience`, u.`user_id` FROM ' . $this->db->t('map_notes') . ' n LEFT JOIN ' . $this->db->t('map_note_users')
             . " u ON u.`note_id` = n.`id` WHERE n.`map_id` = ? AND n.`audience` <> 'gm'",
             [$mapId],
-        );
+        ));
         $notes = [];
         foreach ($rows as $r) {
             $uid = (string) $r['uid'];

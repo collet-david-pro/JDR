@@ -19,6 +19,7 @@ describe('openSse', () => {
       onEvent: (e) => calls.events.push(e.id),
       onGone: (c) => calls.gone.push(c),
       onEnd: () => calls.ends++,
+      onTransport: () => undefined,
     });
     return { source: conn.source as FakeEventSource, conn, calls, h };
   }

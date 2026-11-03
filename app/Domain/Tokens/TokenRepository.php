@@ -8,6 +8,7 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 
 /**
  * SQL access to tokens (soft delete, projet.md 7.1). Reads join the image asset (uuid, deleted_at).
@@ -16,7 +17,7 @@ final class TokenRepository
 {
     private const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
 
-    public function __construct(private Db $db, private Clock $clock)
+    public function __construct(private Db $db, private Clock $clock, private RequestMemo $memo)
     {
     }
 
@@ -43,7 +44,11 @@ final class TokenRepository
             $sql .= ' AND t.`default_owner_user_id` = ?';
             $params[] = $ownerId;
         }
-        $rows = $this->db->fetchAll($sql . ' ORDER BY t.`name`, t.`id` LIMIT 2000', $params);
+        $rows = $this->memo->remember(
+            'game_tokens:' . $gameId . ':' . ($ownerId ?? ''),
+            ['tokens', 'assets'],
+            fn (): array => $this->db->fetchAll($sql . ' ORDER BY t.`name`, t.`id` LIMIT 2000', $params),
+        );
 
         return array_map(static fn (array $r): Token => Token::fromRow($r), $rows);
     }

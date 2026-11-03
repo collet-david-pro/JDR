@@ -5,7 +5,7 @@
  */
 import { ApiError, parseEnvelope } from '../api';
 import type { EventSourceLike, SyncDeps } from './deps';
-import type { WireEvent } from './types';
+import type { TransportSignal, WireEvent } from './types';
 import { isEventId, parseWireEvent, toWireEvent } from './util';
 
 export interface SseHandlers {
@@ -16,6 +16,17 @@ export interface SseHandlers {
   onGone(channel: string): void;
   /** The stream ended (server end after 25 s, network error, refusal). Called once. */
   onEnd(): void;
+  /** `event: transport`: no slot on the server; the stream is closed, onEnd is not called. */
+  onTransport(signal: TransportSignal): void;
+}
+
+/** Reads `{mode: "poll", retry_after_s}` (GET /stream event data or GET /events field). */
+export function parseTransportSignal(raw: unknown): TransportSignal | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const data = raw as { mode?: unknown; retry_after_s?: unknown };
+  if (data.mode !== 'poll') return null;
+  const after = typeof data.retry_after_s === 'number' ? data.retry_after_s : 120;
+  return { mode: 'poll', retryAfterS: Math.min(3600, Math.max(1, Math.round(after))) };
 }
 
 /**
@@ -66,6 +77,19 @@ export function openSse(
       // Malformed: the end of the stream follows anyway.
     }
   });
+  source.addEventListener('transport', (e) => {
+    if (ended) return;
+    let signal: TransportSignal | null;
+    try {
+      signal = parseTransportSignal(JSON.parse(e.data ?? '{}'));
+    } catch {
+      signal = null;
+    }
+    if (signal === null) return;
+    ended = true;
+    source.close();
+    h.onTransport(signal);
+  });
   source.addEventListener('error', end);
   return {
     source,
@@ -79,6 +103,8 @@ export function openSse(
 export interface EventsPage {
   readonly events: WireEvent[];
   readonly lastId: string;
+  /** Long polling refused for lack of a slot (the page was answered at once). */
+  readonly transport: TransportSignal | null;
 }
 
 export type FetchFailureKind = 'gone' | 'network' | 'timeout' | 'client' | 'server';
@@ -125,7 +151,7 @@ export async function fetchEvents(
       signal: controller.signal,
     });
     const text = await response.text();
-    const parsed = parseEnvelope<{ events?: unknown; last_id?: unknown }>(
+    const parsed = parseEnvelope<{ events?: unknown; last_id?: unknown; transport?: unknown }>(
       response.status,
       text,
       response.headers.get('X-Request-Id'),
@@ -141,7 +167,7 @@ export async function fetchEvents(
     }
     const last = data?.last_id;
     const lastId = isEventId(last) ? last : isEventId(String(last)) ? String(last) : since;
-    return { events, lastId };
+    return { events, lastId, transport: parseTransportSignal(data?.transport) };
   } catch (error) {
     if (error instanceof EventsFetchError) throw error;
     if (error instanceof ApiError) {

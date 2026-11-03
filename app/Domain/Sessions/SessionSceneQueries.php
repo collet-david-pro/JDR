@@ -7,13 +7,14 @@ namespace JDR\Domain\Sessions;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
+use JDR\Core\RequestMemo;
 
 /**
  * Read-only SQL used by the player views of a session (fog_strict scope, preload, D11 access).
  */
 final class SessionSceneQueries
 {
-    public function __construct(private Db $db)
+    public function __construct(private Db $db, private RequestMemo $memo)
     {
     }
 
@@ -24,10 +25,10 @@ final class SessionSceneQueries
      */
     public function fogBlocks(int $mapId): array
     {
-        $rows = $this->db->fetchAll(
+        $rows = $this->memo->remember('fog_blocks:' . $mapId, ['map_fog'], fn (): array => $this->db->fetchAll(
             'SELECT `floor_id`, `cx`, `cy` FROM ' . $this->db->t('map_fog') . ' WHERE `map_id` = ?',
             [$mapId],
-        );
+        ));
         $out = [];
         foreach ($rows as $r) {
             $out[(int) $r['floor_id']][(int) $r['cx'] . ':' . (int) $r['cy']] = true;
@@ -45,12 +46,16 @@ final class SessionSceneQueries
      */
     public function assignedPlaced(int $sessionId, int $mapId): array
     {
-        $rows = $this->db->fetchAll(
-            'SELECT ta.`user_id`, mt.`floor_id`, mt.`x`, mt.`y`, t.`vision` FROM ' . $this->db->t('map_tokens') . ' mt '
-            . 'JOIN ' . $this->db->t('token_assignments') . ' ta ON ta.`token_id` = mt.`token_id` AND ta.`session_id` = ? '
-            . 'JOIN ' . $this->db->t('tokens') . ' t ON t.`id` = mt.`token_id` '
-            . 'WHERE mt.`map_id` = ? AND mt.`hidden` = 0',
-            [$sessionId, $mapId],
+        $rows = $this->memo->remember(
+            'assigned_placed:' . $sessionId . ':' . $mapId,
+            ['map_tokens', 'token_assignments', 'tokens'],
+            fn (): array => $this->db->fetchAll(
+                'SELECT ta.`user_id`, mt.`floor_id`, mt.`x`, mt.`y`, t.`vision` FROM ' . $this->db->t('map_tokens') . ' mt '
+                . 'JOIN ' . $this->db->t('token_assignments') . ' ta ON ta.`token_id` = mt.`token_id` AND ta.`session_id` = ? '
+                . 'JOIN ' . $this->db->t('tokens') . ' t ON t.`id` = mt.`token_id` '
+                . 'WHERE mt.`map_id` = ? AND mt.`hidden` = 0',
+                [$sessionId, $mapId],
+            ),
         );
         $out = [];
         foreach ($rows as $r) {

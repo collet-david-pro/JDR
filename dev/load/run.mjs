@@ -25,6 +25,7 @@ const SESSIONS = Number(args.sessions ?? 5);
 const DURATION_S = Number(args.duration ?? 60);
 const WORKERS = Number(args.workers ?? 8);
 const POLL_MS = Number(args['poll-ms'] ?? 2000);
+const START_SPREAD_MS = Number(args['spread-ms'] ?? 5000);
 const PORT = 8092;
 const DB = 'jdr_load';
 const BASE = `http://127.0.0.1:${PORT}/api/v1`;
@@ -36,13 +37,17 @@ const logDir = mkdtempSync(join(tmpdir(), 'jdr-load-'));
 let server = null;
 
 // ---------------------------------------------------------------- metrics
-const lat = { gmAction: [], playerAction: [], poll: [], setup: [] };
+const lat = { gmAction: [], playerAction: [], poll: [], setup: [], streamWait: [] };
 const propagation = [];
+// Propagation by mode of the receiver when the event arrived (sse / poll after the cap / poll).
+const propagationBy = { sse: [], longpoll: [], capped: [], poll: [] };
+let duplicates = 0;
 const errors = { http: 0, network: 0, timeout: 0, tooMany: 0, samples: [] };
 let requests = 0;
 let eventsReceived = 0;
 let streamsOpened = 0;
 let streamsFailed = 0;
+let fallbacks = 0; // poll signals received (no free waiting slot on the server)
 const pct = (arr, p) => {
   if (arr.length === 0) return NaN;
   const s = [...arr].sort((a, b) => a - b);
@@ -246,79 +251,121 @@ async function finishSession(s) {
 
 // ---- listeners
 const pending = new Map(); // "x" -> send time (performance.now) for GM moves
-function onEvent(ev) {
+function onEvent(ev, cur) {
   eventsReceived++;
+  // Each listener counts an event once (a replay after a reconnection is not a new reception).
+  if (ev.id !== undefined) {
+    if (cur.seen.has(ev.id)) {
+      duplicates++;
+      return;
+    }
+    cur.seen.add(ev.id);
+  }
   if (ev.type !== 'maptoken.moved') return;
   const m = JSON.stringify(ev.payload ?? ev).match(/"x":(\d+\.\d{3})/);
   if (!m) return;
   const t = pending.get(m[1]);
-  if (t !== undefined) propagation.push(performance.now() - t);
+  if (t === undefined) return;
+  const ms = performance.now() - t;
+  propagation.push(ms);
+  propagationBy[cur.mode].push(ms);
+  if (ms > 3000 && cur.mode === 'sse' && lateSamples.length < 40) lateSamples.push(`${Math.round(ms)}ms age=${Math.round(performance.now() - cur.openedAt)} who=${cur.who} id=${ev.id} since0=${cur.openSince}`);
 }
+const lateSamples = [];
 
-async function listenSse(client, channel, stop) {
+// One stream connection from cur.since. Returns the server's poll signal (no free slot for a
+// waiting connection, P10e2a: `event: transport`), else null when the stream ended.
+async function sseOnce(client, channel, stop, cur) {
   const as = client.isDisplay ? '&as=display' : '';
-  while (!stop.done) {
-    let cursor = 0;
-    try {
-      streamsOpened++;
-      const res = await fetch(`${BASE}/stream?channels=${encodeURIComponent(channel)}&since=${cursor}${as}`, {
-        headers: { Cookie: client.cookieHeader(), Accept: 'text/event-stream' },
-        signal: stop.signal,
-      });
-      if (res.status !== 200) {
-        streamsFailed++;
-        errors.http++;
-        if (errors.samples.length < 5) errors.samples.push(`GET /stream -> ${res.status}`);
-        await sleep(1000);
-        continue;
-      }
-      let buf = '';
-      const dec = new TextDecoder();
-      for await (const chunk of res.body) {
-        buf += dec.decode(chunk, { stream: true });
-        let i;
-        while ((i = buf.indexOf('\n\n')) >= 0) {
-          const block = buf.slice(0, i);
-          buf = buf.slice(i + 2);
-          let data = '';
-          for (const line of block.split('\n')) {
-            if (line.startsWith('data:')) data += line.slice(5).trim();
-            if (line.startsWith('id:')) cursor = Number(line.slice(3).trim()) || cursor;
-          }
-          if (data) {
-            try {
-              onEvent(JSON.parse(data));
-            } catch {
-              /* comment / partial */
-            }
-          }
-        }
-      }
-    } catch (e) {
-      if (stop.done) return;
-      streamsFailed++;
-      errors.network++;
-      if (errors.samples.length < 5) errors.samples.push(`stream ${e?.name ?? e}`);
-      await sleep(1000);
-    }
-  }
-}
-
-async function listenPoll(client, channel, stop, wait) {
-  let since = 0;
-  const as = client.isDisplay ? '&as=display' : '';
-  while (!stop.done) {
-    const r = await client.call('GET', `/events?channels=${encodeURIComponent(channel)}&since=${since}&wait=${wait}${as}`, undefined, {
-      metric: wait === 0 ? lat.poll : undefined,
-      timeoutMs: 40_000,
+  try {
+    streamsOpened++;
+    cur.openedAt = performance.now();
+    cur.openSince = cur.since;
+    const res = await fetch(`${BASE}/stream?channels=${encodeURIComponent(channel)}&since=${cur.since}${as}`, {
+      headers: { Cookie: client.cookieHeader(), Accept: 'text/event-stream' },
+      signal: stop.signal,
     });
-    if (r.status === 200) {
-      since = r.json.data.last_id ?? since;
-      for (const ev of r.json.data.events ?? []) onEvent(ev);
-    } else {
+    const ttfb = performance.now() - cur.openedAt;
+    lat.streamWait.push(ttfb);
+    if (res.status !== 200) {
+      streamsFailed++;
+      errors.http++;
+      if (errors.samples.length < 5) errors.samples.push(`GET /stream -> ${res.status}`);
       await sleep(1000);
+      return null;
     }
-    if (wait === 0) await sleep(POLL_MS);
+    let buf = '';
+    const dec = new TextDecoder();
+    for await (const chunk of res.body) {
+      buf += dec.decode(chunk, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, i);
+        buf = buf.slice(i + 2);
+        let data = '';
+        let name = '';
+        for (const line of block.split('\n')) {
+          if (line.startsWith('data:')) data += line.slice(5).trim();
+          if (line.startsWith('event:')) name = line.slice(6).trim();
+          if (line.startsWith('id:')) cur.since = Number(line.slice(3).trim()) || cur.since;
+        }
+        if (!data) continue;
+        let parsed;
+        try {
+          parsed = JSON.parse(data);
+        } catch {
+          continue; // comment / partial
+        }
+        if (name === 'transport' && parsed?.mode === 'poll') return parsed;
+        onEvent(parsed, cur);
+      }
+    }
+  } catch (e) {
+    if (stop.done) return null;
+    streamsFailed++;
+    errors.network++;
+    if (errors.samples.length < 5) errors.samples.push(`stream ${e?.name ?? e}`);
+    await sleep(1000);
+  }
+  return null;
+}
+
+// One GET /events from cur.since. Returns the server's poll signal of a refused long poll, else null.
+async function pollOnce(client, channel, stop, cur, wait) {
+  const as = client.isDisplay ? '&as=display' : '';
+  const r = await client.call('GET', `/events?channels=${encodeURIComponent(channel)}&since=${cur.since}&wait=${wait}${as}`, undefined, {
+    metric: wait === 0 ? lat.poll : undefined,
+    timeoutMs: 40_000,
+  });
+  if (r.status !== 200) {
+    await sleep(1000);
+    return null;
+  }
+  cur.since = r.json.data.last_id ?? cur.since;
+  for (const ev of r.json.data.events ?? []) onEvent(ev, cur);
+  if (wait > 0 && r.json.data.transport?.mode === 'poll') return r.json.data.transport;
+  if (wait === 0) await sleep(POLL_MS);
+  return null;
+}
+
+// Like the browser client: the selected transport; on the poll signal, short polling for
+// retry_after_s, then the selected transport again.
+async function listen(client, channel, stop) {
+  const cur = { since: 0, mode: TRANSPORT, seen: new Set(), who: `${channel}/${client.isDisplay ? 'screen' : 'player'}` };
+  // Real devices do not connect in the same millisecond. `php -S` accepts every connection that is
+  // pending when a worker is idle and serves them one after the other: a burst puts a request behind
+  // a 25 s stream of the same worker (measured: GET /stream headers up to 50 s). Spread the openings.
+  await sleep(Math.random() * START_SPREAD_MS);
+  while (!stop.done) {
+    const signal = TRANSPORT === 'sse'
+      ? await sseOnce(client, channel, stop, cur)
+      : await pollOnce(client, channel, stop, cur, TRANSPORT === 'longpoll' ? 15 : 0);
+    if (signal === null || stop.done) continue;
+    fallbacks++;
+    const until = performance.now() + (Number(signal.retry_after_s) || 120) * 1000;
+    cur.mode = 'capped';
+    while (!stop.done && performance.now() < until) await pollOnce(client, channel, stop, cur, 0);
+    cur.mode = TRANSPORT;
   }
 }
 
@@ -388,8 +435,7 @@ async function main() {
     tasks.push(gmLoop(s, stop));
     const listeners = [...s.players.map((p) => p.client), s.display];
     for (const c of listeners) {
-      if (TRANSPORT === 'sse') tasks.push(listenSse(c, channel, stop));
-      else tasks.push(listenPoll(c, channel, stop, TRANSPORT === 'longpoll' ? 15 : 0));
+      tasks.push(listen(c, channel, stop));
     }
     for (const p of s.players) tasks.push(playerLoop(s, p, stop));
   }
@@ -411,9 +457,12 @@ async function main() {
   row('POST actions (GM)', lat.gmAction);
   row('POST actions (player)', lat.playerAction);
   row('POST actions (all)', actions);
-  if (TRANSPORT === 'poll') row('GET /events wait=0', lat.poll);
+  if (lat.poll.length > 0) row('GET /events wait=0', lat.poll);
+  if (lat.streamWait.length > 0) row('GET /stream headers', lat.streamWait);
   row('event propagation GM->clients', propagation);
-  console.log(`requests (non-stream): ${requests}; events received: ${eventsReceived}; streams opened/failed: ${streamsOpened}/${streamsFailed}`);
+  if (process.env.LOAD_DEBUG) console.log(lateSamples.join('\n'));
+  for (const [mode, list] of Object.entries(propagationBy)) if (list.length > 0) row(`  received in ${mode}`, list);
+  console.log(`requests (non-stream): ${requests}; events received: ${eventsReceived}; streams opened/failed: ${streamsOpened}/${streamsFailed}; fallbacks to polling: ${fallbacks}; duplicates ignored: ${duplicates}`);
   console.log(
     `errors: http=${errors.http} (429: ${errors.tooMany}) network=${errors.network} timeout=${errors.timeout}` +
       ` | setup errors: ${setupErrors.http + setupErrors.network + setupErrors.timeout}`,

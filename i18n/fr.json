@@ -423,7 +423,8 @@
       "db_size": "Taille de la base",
       "asset_files": "Nombre d'assets",
       "integrity": "Intégrité des fichiers (manifest.json)",
-      "sse": "Flux temps réel (SSE)"
+      "sse": "Flux temps réel (SSE)",
+      "realtime_slots": "Connexions en attente (occupées / plafond)"
     },
     "hints": {
       "php_version": "PHP 8.1 ou plus récent est requis : changez la version de PHP dans le panneau de l'hébergeur.",
@@ -458,7 +459,8 @@
       "db_size": "Taille de la base indisponible.",
       "asset_files": "Comptage des assets indisponible.",
       "integrity": "Des fichiers diffèrent de la version livrée ou manquent : renvoyez l'archive de mise à jour par FTP.",
-      "sse": "Le flux temps réel est tamponné par le serveur : le site basculera automatiquement sur le long polling."
+      "sse": "Le flux temps réel est tamponné par le serveur : le site basculera automatiquement sur le long polling.",
+      "realtime_slots": "Toutes les places de connexion en attente sont prises : les appareils suivants interrogent le serveur toutes les 2 s. Augmentez le réglage si l'hébergeur le permet."
     }
   },
   "nav": {
@@ -678,7 +680,11 @@
         "events_retention_hours": "Conservation des événements (heures)",
         "versions_retention": "Versions de map conservées",
         "trash_days": "Durée de la corbeille (jours)",
-        "session_idle_hours": "Expiration d'inactivité de session (heures)"
+        "session_idle_hours": "Expiration d'inactivité de session (heures)",
+        "realtime_max_waiting": "Connexions en attente maximales"
+      },
+      "hints": {
+        "realtime_max_waiting": "Nombre maximal de connexions qui gardent un processus PHP (flux en direct et attente longue). Au-delà, les appareils interrogent le serveur toutes les 2 s. Augmentez-le si votre hébergeur offre beaucoup de processus PHP."
       }
     },
     "smtp": {

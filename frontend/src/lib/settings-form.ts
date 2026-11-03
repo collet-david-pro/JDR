@@ -19,7 +19,10 @@ export const INT_KEYS = [
   'versions_retention',
   'trash_days',
   'session_idle_hours',
+  'realtime_max_waiting',
 ] as const;
+/** INT_KEYS fields shown with a help text (admin.settings.hints.<key>). */
+export const INT_HINT_KEYS: readonly string[] = ['realtime_max_waiting'];
 export const FLAG_KEYS = ['use_db_sessions', 'maintenance'] as const;
 export const SMTP_TEXT_KEYS = [
   'host',

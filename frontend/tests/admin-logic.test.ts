@@ -59,6 +59,7 @@ const settings: SiteSettings = {
   versions_retention: 20,
   trash_days: 30,
   session_idle_hours: 12,
+  realtime_max_waiting: 4,
   use_db_sessions: false,
   maintenance: false,
   smtp: {

@@ -178,6 +178,7 @@ final class AdminApiTest extends ApiTestCase
             'versions_retention' => 30,
             'trash_days' => 30,
             'session_idle_hours' => 12,
+            'realtime_max_waiting' => 4,
             'use_db_sessions' => false,
             'maintenance' => false,
             'smtp' => [
@@ -304,6 +305,8 @@ final class AdminApiTest extends ApiTestCase
             'private_dirs', 'clock_skew', 'disk_free', 'db_size', 'integrity', 'session_save_path'] as $id) {
             self::assertContains($id, $ids);
         }
+        $slots = $checks[array_search('realtime_slots', $ids, true)];
+        self::assertSame(['ok', '0 / 4'], [$slots['status'], $slots['value']]);
         foreach ($checks as $check) {
             self::assertSame(['id', 'status', 'value', 'hint_key'], array_keys($check));
             self::assertContains($check['status'], ['ok', 'warn', 'error']);

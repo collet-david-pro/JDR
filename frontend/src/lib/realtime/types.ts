@@ -55,6 +55,15 @@ export const POLL_INTERVAL_MS: Readonly<Record<SyncActivity, number>> = {
   hidden: 8000,
 };
 
+/**
+ * The server has no free slot for a waiting connection (P10e2a, setting realtime_max_waiting):
+ * short polling until `retryAfterS` has elapsed, then the better mode again (not memorised).
+ */
+export interface TransportSignal {
+  mode: 'poll';
+  retryAfterS: number;
+}
+
 /** Constants of the automatic selection (projet.md 10.3). */
 export const SSE_SILENCE_MS = 5000;
 export const SSE_SHORT_CUT_MS = 3000;

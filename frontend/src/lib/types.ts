@@ -120,6 +120,8 @@ export interface SiteSettings {
   readonly versions_retention: number;
   readonly trash_days: number;
   readonly session_idle_hours: number;
+  /** Connections that keep a PHP worker (stream, long polling); 0 = short polling only. */
+  readonly realtime_max_waiting: number;
   readonly use_db_sessions: boolean;
   readonly maintenance: boolean;
   readonly smtp: SmtpSettings;

@@ -10,6 +10,7 @@
   import { t } from '../../lib/i18n';
   import { services } from '../../lib/services';
   import {
+    INT_HINT_KEYS,
     INT_KEYS,
     buildSettingsPatch,
     toFormValues,
@@ -135,6 +136,7 @@
       {#each INT_KEYS as key (key)}
         <TextField
           label={t(`admin.settings.fields.${key}`)}
+          hint={INT_HINT_KEYS.includes(key) ? t(`admin.settings.hints.${key}`) : null}
           name={key}
           inputmode="numeric"
           bind:value={values.values[key]}
