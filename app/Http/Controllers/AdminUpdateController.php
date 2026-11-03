@@ -7,6 +7,7 @@ namespace JDR\Http\Controllers;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Clock;
+use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\RateLimitedException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Core\RateLimiter;
@@ -17,6 +18,7 @@ use JDR\Domain\Auth\CurrentUser;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Support\Validator;
 use JDR\Domain\Update\AutoUpdater;
+use JDR\Domain\Update\PreUpdateBackup;
 use JDR\Domain\Update\RunState;
 use JDR\Domain\Update\UpdateChecker;
 use JDR\Domain\Update\UpdateException;
@@ -42,6 +44,7 @@ final class AdminUpdateController
         private RateLimiter $limiter,
         private Clock $clock,
         private AutoUpdater $auto,
+        private PreUpdateBackup $backup,
     ) {
     }
 
@@ -51,6 +54,10 @@ final class AdminUpdateController
     public function show(Request $request): Response
     {
         $this->storage->purge($this->clock->timestamp());
+        $backup = $this->backup->status($this->clock->timestamp());
+        if ($backup !== null) {
+            $backup['token'] = $this->backup->token(CurrentUser::session($request)->csrfToken(), $backup['name']);
+        }
         $run = $this->storage->latestRun();
         $dbVersion = $this->settings->get('db_version');
 
@@ -62,6 +69,7 @@ final class AdminUpdateController
             'auto' => $this->auto->status(),
             'check' => $this->checker->cached(),
             'pending' => $this->packages->pending(),
+            'backup' => $backup,
             'run' => $run === null ? null : self::run($run),
             'upload_max_bytes' => UploadStore::MAX_BYTES,
             'chunk_bytes' => UploadStore::chunkBytes(),
@@ -71,6 +79,32 @@ final class AdminUpdateController
             ],
             'update_url' => $request->basePath . '/update.php',
         ]);
+    }
+
+    /**
+     * GET /admin/update/backup?t=<token> — the database backup taken before the last update (deleted once downloaded).
+     */
+    public function downloadBackup(Request $request): Response
+    {
+        CurrentUser::require($request);
+        $token = $request->query['t'] ?? null;
+        $response = is_string($token)
+            ? $this->backup->download($this->clock->timestamp(), CurrentUser::session($request)->csrfToken(), $token)
+            : null;
+
+        return $response ?? throw new NotFoundException();
+    }
+
+    /**
+     * DELETE /admin/update/backup -> 204 ("Do not keep it")
+     */
+    public function discardBackup(Request $request): Response
+    {
+        $admin = CurrentUser::require($request);
+        $this->backup->discard();
+        $this->audit->record($admin->id, 'update.backup_discarded', 'update', null, [], $request->ip());
+
+        return Response::noContent();
     }
 
     /**

@@ -17,6 +17,7 @@ use JDR\Domain\Auth\PasswordResets;
 use JDR\Domain\Sessions\SessionHousekeeping;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Update\AutoUpdater;
+use JDR\Domain\Update\PreUpdateBackup;
 use JDR\Domain\Update\UpdateStorage;
 use JDR\Realtime\EventPurger;
 
@@ -181,6 +182,7 @@ final class Cron
             'events' => static fn (): int => $c->get(EventPurger::class)->purge(),
             'presence' => static fn (): int => $c->get(SessionHousekeeping::class)->sweepPresence(),
             'sessions' => static fn (): int => $c->get(SessionHousekeeping::class)->purgeEnded(),
+            'update_backup' => static fn (): int => $c->get(PreUpdateBackup::class)->purge(time()),
         ];
     }
 }

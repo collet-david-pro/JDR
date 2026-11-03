@@ -46,7 +46,7 @@ return [
     'req.ext.optional.imagick' => 'Facultative : meilleure qualité d\'image et WebP animé.',
     'req.ext.optional.apcu' => 'Facultative : signaux temps réel en mémoire (sinon, fichiers témoins).',
     'req.ext.optional.zip' => 'Facultative : archives plus rapides (sinon, ZIP écrit en PHP).',
-    'req.ext.optional.sodium' => 'Facultative : cryptographie moderne.',
+    'req.ext.optional.sodium' => 'Facultative, mais nécessaire à la mise à jour automatique (vérification de la signature des versions) : sans elle, la mise à jour reste possible en envoyant l\'archive à la main.',
     'req.gd_formats' => 'Formats d\'image (GD)',
     'req.gd_formats.missing' => 'GD doit gérer PNG, JPEG, WebP et GIF : formats manquants listés à droite.',
     'req.write_storage' => 'Dossier storage/ inscriptible',

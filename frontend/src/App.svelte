@@ -76,6 +76,13 @@
     <section class="system-page" role="alert">
       <h1>{t('pages.maintenance.title')}</h1>
       <p>{t('errors.maintenance')}</p>
+      {#if appStatus.updateUrl !== null}
+        <p>
+          <a class="button button-primary" href={appStatus.updateUrl}
+            >{t('pages.maintenance.open_update')}</a
+          >
+        </p>
+      {/if}
       <button type="button" class="button" onclick={() => window.location.reload()}
         >{t('common.reload')}</button
       >

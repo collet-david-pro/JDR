@@ -26,6 +26,7 @@ defined('JDR_BOOT') || exit;
 <?php if ($disk['db_behind']) : ?>
 <div class="notice warn"><?= $t('home.disk.db_behind') ?></div>
 <?php endif; ?>
+<p class="muted"><?= $tr('backup.assets_note', ['link' => '<a href="' . $e($home) . 'admin/backup">' . $t('backup.assets_link') . '</a>']) ?></p>
 <form method="post" action="<?= $e($action) ?>">
 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
 <input type="hidden" name="action" value="start_disk">

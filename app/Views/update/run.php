@@ -28,6 +28,16 @@ $hidden = static fn (string $action) => '<input type="hidden" name="_csrf" value
 <p class="lead" id="run-state"><?= $t('state.' . $state) ?></p>
 <?php if ($state === 'done') : ?>
 <div class="notice ok" role="status"><?= $t('run.done', ['to' => (string) $run['to']]) ?></div>
+<?php if (($backup ?? null) !== null) : ?>
+<div class="notice ok" role="region" aria-label="<?= $t('backup.title') ?>">
+<p><strong><?= $t('backup.title') ?></strong></p>
+<p><?= $t($backup['auto'] ? 'backup.text_auto' : 'backup.text') ?></p>
+<div class="actions">
+<form method="post" action="<?= $e($action) ?>"><input type="hidden" name="_csrf" value="<?= $e($csrf) ?>"><input type="hidden" name="action" value="discard_backup"><input type="hidden" name="id" value="<?= $e((string) $run['id']) ?>"><button type="submit"><?= $t('backup.discard') ?></button></form>
+<a class="btn" id="backup-download" href="<?= $e($backup['url']) ?>"><?= $t('backup.download') ?></a>
+</div>
+</div>
+<?php endif; ?>
 <?php elseif ($state === 'restored') : ?>
 <div class="notice ok" role="status"><?= $t($run['mode'] === 'package' ? 'run.restored' : 'run.restored_disk') ?></div>
 <?php endif; ?>
@@ -43,6 +53,9 @@ $hidden = static fn (string $action) => '<input type="hidden" name="_csrf" value
 <li><?= $e($line) ?></li>
 <?php endforeach; ?>
 </ul>
+<?php if ($state === 'ready') : ?>
+<p class="muted"><?= $tr('backup.assets_note', ['link' => '<a href="' . $e($home) . 'admin/backup">' . $t('backup.assets_link') . '</a>']) ?></p>
+<?php endif; ?>
 <?php if ($active) : ?>
 <form method="post" action="<?= $e($action) ?>" id="step-form">
 <?= $hidden('step') ?>

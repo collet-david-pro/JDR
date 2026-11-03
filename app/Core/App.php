@@ -10,6 +10,7 @@ use JDR\Core\Errors\MaintenanceException;
 use JDR\Core\Session\CookieJar;
 use JDR\Core\Session\NativeCookieJar;
 use JDR\Core\Session\NativeSessionBackend;
+use JDR\Core\Session\SessionOptions;
 use JDR\Core\Session\SessionBackend;
 use JDR\Domain\Assets\AssetUserData;
 use JDR\Domain\Assets\ImageProcessor;
@@ -18,6 +19,7 @@ use JDR\Domain\Auth\Authenticator;
 use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Games\GameUserData;
 use JDR\Domain\Maps\MapUserData;
+use JDR\Domain\Users\User;
 use JDR\Domain\Settings\SecretBox;
 use JDR\Domain\Settings\Settings;
 use JDR\Domain\Support\AppPaths;
@@ -257,15 +259,42 @@ final class App
             $this->container->get(RateLimit::class),
         ]);
 
-        return $pipeline->handle($request, function (Request $r) use ($match): Response {
-            $handler = $match->handler;
-            if ($handler instanceof \Closure) {
-                return $handler($r);
-            }
-            [$class, $method] = $handler;
+        try {
+            return $pipeline->handle($request, function (Request $r) use ($match): Response {
+                $handler = $match->handler;
+                if ($handler instanceof \Closure) {
+                    return $handler($r);
+                }
+                [$class, $method] = $handler;
 
-            return $this->container->get($class)->{$method}($r);
-        });
+                return $this->container->get($class)->{$method}($r);
+            });
+        } catch (MaintenanceException $e) {
+            // Database behind the code: an administrator is told where the update is (the others get the plain 503).
+            if ($e->updatePending && $this->isAdmin($request)) {
+                throw new MaintenanceException('', true, $request->basePath . '/update.php');
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Reads the session only when the request carries a session cookie; any failure means "not an administrator".
+     */
+    private function isAdmin(Request $request): bool
+    {
+        if (!is_string($request->cookies[SessionOptions::COOKIE_NAME] ?? null)) {
+            return false;
+        }
+        try {
+            (new Pipeline([$this->container->get(Session::class), $this->container->get(Auth::class)]))
+                ->handle($request, static fn (): Response => Response::noContent());
+            $user = $request->attribute('user');
+        } catch (\Throwable) {
+            return false;
+        }
+
+        return $user instanceof User && $user->isAdmin();
     }
 
     private function dispatchPage(Request $request, string $nonce): Response
@@ -285,7 +314,11 @@ final class App
         $status = $this->container->get(SystemStatus::class);
         if ($status->needsMaintenance(\REQUIRED_DB_VERSION)) {
             // Database behind the code: the 503 page links administrators to update.php.
-            throw new MaintenanceException('', !$status->maintenanceFlagOnly(\REQUIRED_DB_VERSION));
+            $updatePending = !$status->maintenanceFlagOnly(\REQUIRED_DB_VERSION);
+            if ($updatePending && $this->isAdmin($request)) {
+                return Response::redirect($request->basePath . '/update.php'); // 302: the update goes on there
+            }
+            throw new MaintenanceException('', $updatePending);
         }
 
         return $this->container->get(Shell::class)->render(

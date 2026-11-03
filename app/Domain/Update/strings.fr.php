@@ -152,5 +152,13 @@ return [
     'error.manifest_version' => 'Le manifest.json installé ne correspond pas à la version attendue.',
     'error.verify_files' => '{count} fichier(s) ne correspondent pas au manifeste : {files}.',
     'error.db_still_behind' => 'La base de données reste en retard sur le code (migration {required} attendue) : des fichiers de migration manquent.',
+    'backup.title' => 'Sauvegarde de la base d\'avant la mise à jour',
+    'backup.text' => 'Téléchargez-la pour la garder : elle est supprimée après le téléchargement, et au plus tard une heure après la fin de la mise à jour. Elle se restaure depuis Administration › Sauvegarde.',
+    'backup.text_auto' => 'Mise à jour automatique : téléchargez-la pour la garder. Sinon elle est supprimée au bout de 7 jours. Elle se restaure depuis Administration › Sauvegarde.',
+    'backup.download' => 'Télécharger la sauvegarde de la base d\'avant la mise à jour',
+    'backup.discard' => 'Ne pas garder',
+    'backup.gone' => 'Cette sauvegarde n\'existe plus ou le lien a expiré.',
+    'backup.assets_note' => 'La sauvegarde ci-dessus ne contient pas les assets (images, sons) : sauvegardez-les depuis {link}.',
+    'backup.assets_link' => 'Administration › Sauvegarde',
     'error.no_backup' => 'Aucune sauvegarde complète de la base de données pour cette mise à jour.',
 ];

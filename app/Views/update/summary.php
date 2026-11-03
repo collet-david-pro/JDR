@@ -32,6 +32,7 @@ $unverified = ($summary['authenticity'] ?? '') !== 'verified';
 <div class="notice warn"><?= $e((string) ($warning['message'] ?? '')) ?></div>
 <?php endforeach; ?>
 <p><?= $t('summary.backup_hint') ?></p>
+<p class="muted"><?= $tr('backup.assets_note', ['link' => '<a href="' . $e($home) . 'admin/backup">' . $t('backup.assets_link') . '</a>']) ?></p>
 <form method="post" action="<?= $e($action) ?>">
 <input type="hidden" name="_csrf" value="<?= $e($csrf) ?>">
 <input type="hidden" name="action" value="start">

@@ -125,7 +125,8 @@
     "maintenance": {
       "title": "Maintenance en cours",
       "hint": "La page se rechargera d'elle-même quand le site sera de nouveau disponible.",
-      "update_link": "Administrateur : terminer la mise à jour"
+      "update_link": "Administrateur : terminer la mise à jour",
+      "open_update": "Ouvrir la mise à jour"
     },
     "no_build": {
       "title": "Front-end non compilé",
@@ -440,7 +441,7 @@
       "ext_imagick": "Optionnelle : améliore la qualité des images et gère le WebP animé.",
       "ext_apcu": "Optionnelle : accélère les signaux temps réel.",
       "ext_zip": "Optionnelle : sinon les archives sont écrites en PHP pur (plus lent).",
-      "ext_sodium": "Optionnelle : sinon le chiffrement utilise OpenSSL.",
+      "ext_sodium": "Optionnelle, mais nécessaire à la mise à jour automatique (vérification de la signature des versions) ; sans elle, la mise à jour reste possible en envoyant l'archive à la main.",
       "gd_formats": "GD doit gérer PNG, JPEG, WebP et GIF.",
       "upload_max_filesize": "Inférieur à la taille maximale d'import réglée : augmentez upload_max_filesize ou baissez la limite d'import.",
       "post_max_size": "Inférieur à la taille maximale d'import réglée : augmentez post_max_size.",
@@ -756,7 +757,10 @@
         "running": "Mise à jour automatique en cours.",
         "failed": "La mise à jour automatique vers la version {version} a échoué :",
         "done": "Dernière mise à jour automatique : version {version}.",
-        "unsupported": "Mise à jour automatique désactivée sur une copie de développement."
+        "unsupported": "Mise à jour automatique désactivée sur une copie de développement.",
+        "blocked_sodium_missing": "Mise à jour automatique désactivée : l'extension PHP sodium est absente (elle vérifie la signature des versions). L'envoi manuel de l'archive reste possible.",
+        "blocked_unsigned": "Mise à jour automatique impossible pour cette version : la release n'est pas signée. L'envoi manuel de l'archive reste possible.",
+        "blocked_bad_signature": "Mise à jour automatique refusée : la signature de cette release est invalide. N'installez pas cette archive sans vérification."
       },
       "check": {
         "title": "Nouvelle version",
@@ -823,6 +827,15 @@
       },
       "errors": {
         "no_crypto": "Ce navigateur ne peut pas calculer l'empreinte du fichier (connexion HTTPS requise)."
+      },
+      "backup": {
+        "title": "Sauvegarde de la base d'avant la mise à jour {from} → {to}",
+        "manual": "Téléchargez-la pour la garder : elle est supprimée après le téléchargement, et au plus tard une heure après la mise à jour. Elle se restaure depuis l'onglet Sauvegarde.",
+        "auto": "Mise à jour automatique : téléchargez-la pour la garder, sinon elle sera supprimée le {date} au plus tard. Elle se restaure depuis l'onglet Sauvegarde.",
+        "download": "Télécharger la sauvegarde de la base d'avant la mise à jour",
+        "discard": "Ne pas garder",
+        "assets_note": "La sauvegarde faite avant une mise à jour ne contient pas les assets (images, sons) :",
+        "assets_link": "sauvegardez-les depuis l'onglet Sauvegarde."
       }
     },
     "backup": {

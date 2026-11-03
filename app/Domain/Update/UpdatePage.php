@@ -27,7 +27,8 @@ use JDR\Middleware\Session as SessionMiddleware;
  * update.php: server-rendered pages, usable without JavaScript, reserved to a logged-in administrator.
  * Reads the application session (same cookie, same handler) without the maintenance middleware.
  * Every POST carries the session CSRF token (_csrf field). Actions (POST "action"):
- * login, start (id, confirm_unverified), start_disk, step (id), retry (id), restore (id).
+ * login, start (id, confirm_unverified), start_disk, step (id), retry (id), restore (id), discard_backup (id).
+ * GET ?backup=<token>: downloads the database backup taken before the last update (token tied to the session).
  * GET: ?id=<id> (summary of a package / progress of a run) or nothing (what is there to do).
  */
 final class UpdatePage
@@ -38,6 +39,8 @@ final class UpdatePage
         private UpdateStorage $storage,
         private AuthService $auth,
         private Logger $logger,
+        private ?PreUpdateBackup $backup = null,
+        private ?\Closure $now = null,
     ) {
     }
 
@@ -102,6 +105,10 @@ final class UpdatePage
                 return $this->action($request, (string) ($fields['action'] ?? ''), $fields, $user->id, $self, $json);
             }
 
+            if (is_string($request->query['backup'] ?? null)) {
+                return $this->downloadBackup($view, (string) $request->query['backup'], $session->csrfToken(), $self);
+            }
+
             return $this->show($view, (string) ($request->query['id'] ?? ''), $session->csrfToken(), $self, $request->basePath);
         } catch (UpdateException $e) {
             return $json
@@ -116,6 +123,11 @@ final class UpdatePage
     private function action(Request $request, string $action, array $fields, int $userId, string $self, bool $json): Response
     {
         $id = (string) ($fields['id'] ?? '');
+        if ($action === 'discard_backup') {
+            $this->preUpdateBackup()->discard();
+
+            return $json ? Response::json(['ok' => true]) : Response::redirect($self . ($id === '' ? '' : '?id=' . rawurlencode($id)), 303);
+        }
         $run = match ($action) {
             'start' => $this->runner->prepare($id, $userId, ($fields['confirm_unverified'] ?? '') === '1'),
             'start_disk' => $this->runner->prepareDisk($userId, \REQUIRED_DB_VERSION),
@@ -129,6 +141,43 @@ final class UpdatePage
         }
 
         return Response::redirect($self . '?id=' . rawurlencode((string) $run['id']), 303);
+    }
+
+    private function downloadBackup(UpdateView $view, string $token, string $csrf, string $self): Response
+    {
+        $response = $this->preUpdateBackup()->download($this->time(), $csrf, $token);
+
+        return $response ?? $this->page($view, 'message', ['level' => 'warn', 'message' => UpdateText::t('backup.gone'), 'home' => $self], 404);
+    }
+
+    private function preUpdateBackup(): PreUpdateBackup
+    {
+        return $this->backup ??= new PreUpdateBackup($this->storage);
+    }
+
+    private function time(): int
+    {
+        return $this->now === null ? time() : ($this->now)();
+    }
+
+    /**
+     * What the "done" screen offers: the backup of the database taken before this update.
+     *
+     * @param array<string, mixed> $run
+     * @return array{name:string,size:int,url:string,auto:bool}|null
+     */
+    private function backupFor(array $run, string $csrf, string $self): ?array
+    {
+        if (($run['state'] ?? null) !== 'done') {
+            return null;
+        }
+        $status = $this->preUpdateBackup()->status($this->time());
+        if ($status === null || $status['to'] !== (string) $run['to']) {
+            return null;
+        }
+
+        return ['name' => $status['name'], 'size' => $status['size'], 'auto' => $status['auto'],
+            'url' => $self . '?backup=' . $this->preUpdateBackup()->token($csrf, $status['name'])];
     }
 
     private function show(UpdateView $view, string $id, string $csrf, string $self, string $basePath): Response
@@ -149,14 +198,14 @@ final class UpdatePage
         }
         $run = $this->runner->state($id);
         if ($run !== null && $run['state'] !== 'ready') {
-            return $this->page($view, 'run', $common + ['run' => RunState::view($run), 'raw' => $run]);
+            return $this->page($view, 'run', $common + ['run' => RunState::view($run), 'raw' => $run, 'backup' => $this->backupFor($run, $csrf, $self)]);
         }
         $package = $this->packages->load($id);
         if ($package === null) {
             return $this->page($view, 'message', ['level' => 'warn', 'message' => UpdateText::t('page.unknown_id'), 'home' => $self], 404);
         }
         if ($run !== null) { // prepared from the admin page: ready to start
-            return $this->page($view, 'run', $common + ['run' => RunState::view($run), 'raw' => $run]);
+            return $this->page($view, 'run', $common + ['run' => RunState::view($run), 'raw' => $run, 'backup' => null]);
         }
 
         return $this->page($view, 'summary', $common + ['summary' => $package['summary'] ?? []]);

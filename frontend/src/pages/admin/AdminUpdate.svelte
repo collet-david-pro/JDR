@@ -17,7 +17,8 @@
   import { t } from '../../lib/i18n';
   import { services } from '../../lib/services';
 
-  const model = new UpdateModel(services().api, t);
+  const { api, boot } = services();
+  const model = new UpdateModel(api, t);
   const uid = $props.id();
 
   onMount(() => {
@@ -29,6 +30,13 @@
   const newer = $derived(isNewerRelease(check));
   const run = $derived(model.run);
   const uploading = $derived(model.phase !== 'idle');
+  const backup = $derived(info?.backup ?? null);
+  const backupUrl = $derived(
+    backup === null
+      ? ''
+      : `${boot.basePath}${boot.apiBase}/admin/update/backup?t=${encodeURIComponent(backup.token)}`,
+  );
+  const backupPage = $derived(`${boot.basePath}/admin/backup`);
 
   function onFile(event: Event): void {
     const input = event.currentTarget as HTMLInputElement;
@@ -68,6 +76,35 @@
       </div>
     {/if}
 
+    {#if backup !== null}
+      <div class="alert alert-success stack" role="status" data-testid="update-backup">
+        <p>
+          <strong
+            >{t('admin.update.backup.title', { from: backup.from ?? '?', to: backup.to })}</strong
+          >
+        </p>
+        <p>
+          {backup.auto
+            ? t('admin.update.backup.auto', {
+                date: formatDateTime(new Date(backup.expires_at * 1000).toISOString()),
+              })
+            : t('admin.update.backup.manual')}
+        </p>
+        <p class="links">
+          <a class="button button-primary" href={backupUrl} download={backup.name}
+            >{t('admin.update.backup.download')}</a
+          >
+          <span class="muted">({formatBytes(backup.size)})</span>
+          <Button onclick={() => model.discardBackup()}>{t('admin.update.backup.discard')}</Button>
+        </p>
+      </div>
+    {/if}
+
+    <p class="small muted">
+      {t('admin.update.backup.assets_note')}
+      <a href={backupPage}>{t('admin.update.backup.assets_link')}</a>
+    </p>
+
     <div class="field">
       <label for="{uid}-channel">{t('admin.update.channel')}</label>
       <select id="{uid}-channel" value={info.channel} onchange={onChannel}>
@@ -84,6 +121,11 @@
           checked={info.auto.enabled}
           onchange={(enabled) => void model.setAuto(enabled)}
         />
+        {#if info.auto.blocked}
+          <p class="alert alert-warning" role="status" data-testid="update-auto-blocked">
+            {t(`admin.update.auto.blocked_${info.auto.blocked}`)}
+          </p>
+        {/if}
         {#if info.auto.running}
           <p class="muted" role="status">{t('admin.update.auto.running')}</p>
         {/if}

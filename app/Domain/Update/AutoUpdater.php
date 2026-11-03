@@ -16,7 +16,8 @@ use JDR\Domain\Settings\Settings;
  * Automatic update, driven by the cron (real, or pseudo-cron after the response). Two cases:
  * - files uploaded by FTP, newer than the database: the disk-mode run of update.php;
  * - a newer GitHub release on the channel: download, official SHA-256 of SHA256SUMS required
- *   (never an unverified archive), then the regular package run.
+ *   (never an unverified archive) AND a valid Ed25519 signature of SHA256SUMS (sodium required),
+ *   then the regular package run.
  * Everything else is the regular runner: maintenance, backups, rollback. A failed migration is
  * restored at once and not tried again for that version; other failures: 3 attempts, 1 h apart.
  * Nothing starts during a session started in the last 12 h, over a package an admin uploaded, or
@@ -36,6 +37,7 @@ final class AutoUpdater
     private const DOWNLOAD_FILE = 'auto-download.zip';
 
     private ReleaseDownloader $downloader;
+    private ReleaseSignature $signature;
 
     public function __construct(
         private UpdateStorage $storage,
@@ -48,8 +50,10 @@ final class AutoUpdater
         private AuditLog $audit,
         private Logger $logger,
         ?ReleaseDownloader $downloader = null,
+        ?ReleaseSignature $signature = null,
     ) {
         $this->downloader = $downloader ?? new NativeReleaseDownloader();
+        $this->signature = $signature ?? new ReleaseSignature();
     }
 
     public function enabled(): bool
@@ -73,7 +77,9 @@ final class AutoUpdater
     /**
      * For the admin page.
      *
-     * @return array{enabled:bool,supported:bool,running:bool,last_done:mixed,last_error:mixed}
+     * blocked: why no automatic update can start (null = nothing in the way): sodium_missing | unsigned | bad_signature.
+     *
+     * @return array{enabled:bool,supported:bool,running:bool,last_done:mixed,last_error:mixed,blocked:?string}
      */
     public function status(): array
     {
@@ -85,7 +91,26 @@ final class AutoUpdater
             'running' => is_file($this->path(self::RUN_FILE)),
             'last_done' => $state['last_done'] ?? null,
             'last_error' => $state['last_error'] ?? null,
+            'blocked' => $this->blocked(),
         ];
+    }
+
+    private function blocked(): ?string
+    {
+        if (!$this->signature->available()) {
+            return 'sodium_missing';
+        }
+        $latest = $this->checker->cached()['latest'] ?? null;
+        $asset = is_array($latest) ? ($latest['update_asset'] ?? null) : null;
+        if (!is_array($asset)) {
+            return null;
+        }
+
+        return match ($asset['signature'] ?? 'absent') {
+            'valid' => null,
+            'invalid' => 'bad_signature',
+            default => 'unsigned',
+        };
     }
 
     /**
@@ -182,7 +207,8 @@ final class AutoUpdater
     {
         $prefix = 'https://github.com/' . UpdateChecker::REPOSITORY . '/releases/download/';
 
-        return is_string($asset['url'] ?? null) && str_starts_with($asset['url'], $prefix)
+        return $this->signature->available() && ($asset['signature'] ?? null) === 'valid'
+            && is_string($asset['url'] ?? null) && str_starts_with($asset['url'], $prefix)
             && is_string($asset['sha256'] ?? null) && preg_match('/^[0-9a-f]{64}$/', $asset['sha256']) === 1;
     }
 
@@ -238,6 +264,7 @@ final class AutoUpdater
             }
             if ($s['state'] === 'done') {
                 @unlink($this->path(self::RUN_FILE));
+                (new PreUpdateBackup($this->storage))->markAuto();
                 $this->writeState(['last_done' => ['version' => $to, 'at' => $this->clock->timestamp()]]);
 
                 return 'done';

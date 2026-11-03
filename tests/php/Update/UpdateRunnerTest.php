@@ -121,6 +121,10 @@ final class UpdateRunnerTest extends ApiTestCase
         self::assertSame(['0007'], $s['migrations']);
         self::assertFileDoesNotExist($this->storage->runDir($s['id']) . '/package.zip');
         self::assertDirectoryDoesNotExist($this->storage->runDir($s['id']) . '/rollback');
+        $backup = (new \JDR\Domain\Update\PreUpdateBackup($this->storage))->status(time());
+        self::assertNotNull($backup, 'the backup of the database is offered after a successful update');
+        self::assertFalse($backup['auto']);
+        self::assertLessThanOrEqual(time() + 3600, $backup['expires_at']);
         self::assertSame(1, $this->rows('audit_log', "`action` = 'update.applied'"));
         self::assertSame(1, $this->rows('audit_log', "`action` = 'update.started'"));
     }

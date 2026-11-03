@@ -14,8 +14,10 @@ use JDR\Install\HttpResult;
  * "Is there a newer version?" — reads the GitHub releases of REPOSITORY (never downloads an archive).
  *
  * Result: {current, channel, latest: {version, name, published_at, notes, html_url,
- * update_asset: {name, url, size, sha256|null}|null}|null, checked_at, error: null|'unreachable'|'invalid_response'}.
+ * update_asset: {name, url, size, sha256|null, signature}|null}|null, checked_at, error: null|'unreachable'|'invalid_response'}.
  * Cached in the free setting "update_check" (6 h; 15 min after an error); force bypasses the cache.
+ * signature: valid | invalid | absent | unchecked (sodium missing) | legacy (release <= ReleaseSignature::LAST_UNSIGNED).
+ * From a signed release on, sha256 is only given when the signature of SHA256SUMS is valid.
  * Never throws: hosts that block outgoing connections just get error = 'unreachable'.
  */
 final class UpdateChecker
@@ -28,16 +30,20 @@ final class UpdateChecker
     public const ERROR_CACHE_SECONDS = 900;
     public const NOTES_MAX = 20000;
     public const SUMS_ASSET = 'SHA256SUMS';
+    public const SIGNATURE_ASSET = 'SHA256SUMS.sig';
 
     private ReleaseHttpClient $http;
     private string $current;
+    private ReleaseSignature $signature;
 
     public function __construct(
         private Settings $settings,
         private Clock $clock,
         ?ReleaseHttpClient $http = null,
         ?string $currentVersion = null,
+        ?ReleaseSignature $signature = null,
     ) {
+        $this->signature = $signature ?? new ReleaseSignature();
         $this->http = $http ?? new NativeReleaseHttpClient(5);
         $this->current = $currentVersion ?? \APP_VERSION;
     }
@@ -190,7 +196,7 @@ final class UpdateChecker
 
     /**
      * @param array<string, mixed> $release
-     * @return array{name:string,url:?string,size:int,sha256:?string}|null
+     * @return array{name:string,url:?string,size:int,sha256:?string,signature:string}|null
      */
     private function updateAsset(array $release, string $version): ?array
     {
@@ -198,6 +204,7 @@ final class UpdateChecker
         $name = self::updateAssetName($version);
         $asset = null;
         $sums = null;
+        $sig = null;
         foreach ($assets as $item) {
             if (!is_array($item) || !is_string($item['name'] ?? null)) {
                 continue;
@@ -206,18 +213,26 @@ final class UpdateChecker
                 $asset = $item;
             } elseif ($item['name'] === self::SUMS_ASSET) {
                 $sums = $item;
+            } elseif ($item['name'] === self::SIGNATURE_ASSET) {
+                $sig = $item;
             }
         }
         if ($asset === null) {
             return null;
         }
         $sha = null;
+        $listing = null;
         $sumsUrl = self::httpsUrl($sums['browser_download_url'] ?? null);
         if ($sumsUrl !== null) {
             $answer = $this->http->get($sumsUrl, $this->headers('application/octet-stream'));
             if ($answer instanceof HttpResult && $answer->status === 200) {
-                $sha = self::sumFor($answer->body, $name);
+                $listing = $answer->body;
+                $sha = self::sumFor($listing, $name);
             }
+        }
+        $status = $this->signatureStatus($version, $listing, $sig);
+        if ($status !== 'legacy' && $status !== 'valid') {
+            $sha = null; // a sum is only official when its signature is valid
         }
 
         return [
@@ -225,7 +240,31 @@ final class UpdateChecker
             'url' => self::httpsUrl($asset['browser_download_url'] ?? null),
             'size' => is_int($asset['size'] ?? null) ? $asset['size'] : 0,
             'sha256' => $sha,
+            'signature' => $status,
         ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $sig the SHA256SUMS.sig asset
+     */
+    private function signatureStatus(string $version, ?string $listing, ?array $sig): string
+    {
+        if (!ReleaseSignature::expectedFor($version)) {
+            return 'legacy';
+        }
+        $sigUrl = self::httpsUrl($sig['browser_download_url'] ?? null);
+        if ($listing === null || $sigUrl === null) {
+            return 'absent';
+        }
+        if (!$this->signature->available()) {
+            return 'unchecked';
+        }
+        $answer = $this->http->get($sigUrl, $this->headers('application/octet-stream'));
+        if (!$answer instanceof HttpResult || $answer->status !== 200) {
+            return 'absent';
+        }
+
+        return $this->signature->verify($listing, $answer->body) ? 'valid' : 'invalid';
     }
 
     /**

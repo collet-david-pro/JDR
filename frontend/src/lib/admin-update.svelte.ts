@@ -10,6 +10,8 @@ export interface UpdateAsset {
   readonly url: string;
   readonly size: number;
   readonly sha256: string | null;
+  /** Signature of SHA256SUMS: valid, invalid, absent, unchecked (no sodium) or legacy (release <= 0.2.0). */
+  readonly signature?: 'valid' | 'invalid' | 'absent' | 'unchecked' | 'legacy';
 }
 
 export interface UpdateRelease {
@@ -82,8 +84,24 @@ export interface UpdateRun {
   readonly updated_at: string;
 }
 
+/** Database backup taken before the last update, offered for download. */
+export interface UpdateBackup {
+  readonly name: string;
+  readonly size: number;
+  readonly from: string | null;
+  readonly to: string;
+  readonly finished_at: number;
+  readonly expires_at: number;
+  readonly auto: boolean;
+  readonly token: string;
+}
+
+export type AutoBlocked = 'sodium_missing' | 'unsigned' | 'bad_signature';
+
 export interface UpdateAuto {
   readonly enabled: boolean;
+  /** Why no automatic update can start (null: nothing in the way). */
+  readonly blocked?: AutoBlocked | null;
   readonly supported: boolean;
   readonly running: boolean;
   readonly last_done: { readonly version: string; readonly at: number } | null;
@@ -102,6 +120,7 @@ export interface UpdateInfo {
   readonly auto: UpdateAuto;
   readonly check: UpdateCheck | null;
   readonly pending: UpdateSummary | null;
+  readonly backup?: UpdateBackup | null;
   readonly run: UpdateRun | null;
   readonly upload_max_bytes: number;
   readonly chunk_bytes: number;
@@ -255,6 +274,17 @@ export class UpdateModel implements UploadTransport {
       }
     } finally {
       this.checking = false;
+    }
+  }
+
+  /** "Do not keep it": deletes the backup of the last update from the server. */
+  async discardBackup(): Promise<void> {
+    this.actionFailure = null;
+    try {
+      await this.api.delete('/admin/update/backup');
+      if (this.info !== null) this.info = { ...this.info, backup: null };
+    } catch (error) {
+      this.actionFailure = updateError(error, this.t);
     }
   }
 

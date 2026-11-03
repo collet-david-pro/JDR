@@ -40,7 +40,7 @@ final class FakeReleaseHttp implements ReleaseHttpClient
     /**
      * @return array<string, mixed>
      */
-    public static function release(string $tag, bool $prerelease = false, bool $draft = false, bool $withSums = true): array
+    public static function release(string $tag, bool $prerelease = false, bool $draft = false, bool $withSums = true, bool $withSig = false): array
     {
         $version = ltrim($tag, 'v');
         $assets = [[
@@ -52,11 +52,20 @@ final class FakeReleaseHttp implements ReleaseHttpClient
             $assets[] = ['name' => 'SHA256SUMS', 'browser_download_url' => 'https://github.com/x/releases/download/' . $tag . '/SHA256SUMS', 'size' => 200];
         }
 
+        if ($withSig) {
+            $assets[] = ['name' => 'SHA256SUMS.sig', 'browser_download_url' => self::sigUrl($tag), 'size' => 90];
+        }
+
         return [
             'tag_name' => $tag, 'name' => 'JDR ' . $tag, 'draft' => $draft, 'prerelease' => $prerelease,
             'published_at' => '2026-10-20T10:00:00Z', 'body' => 'Notes ' . $tag,
             'html_url' => 'https://github.com/x/releases/tag/' . $tag, 'assets' => $assets,
         ];
+    }
+
+    public static function sigUrl(string $tag): string
+    {
+        return 'https://github.com/x/releases/download/' . $tag . '/SHA256SUMS.sig';
     }
 
     public static function sumsUrl(string $tag): string

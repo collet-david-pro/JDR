@@ -51,8 +51,9 @@ function start(): void {
         router.navigate(loginPath(location), { replace: true });
       }
     },
-    onMaintenance: () => {
+    onMaintenance: (error) => {
       appStatus.maintenance = true;
+      appStatus.updateUrl = error.fields['update_url'] ?? null;
     },
     refreshCsrf: (): Promise<void> => auth.bootstrap(),
   });

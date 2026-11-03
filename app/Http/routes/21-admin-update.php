@@ -15,6 +15,8 @@ return static function (Router $r): void {
 
     $r->get('/admin/update', [AdminUpdateController::class, 'show'], $admin);
     $r->patch('/admin/update', [AdminUpdateController::class, 'update'], $admin);
+    $r->get('/admin/update/backup', [AdminUpdateController::class, 'downloadBackup'], $admin);
+    $r->delete('/admin/update/backup', [AdminUpdateController::class, 'discardBackup'], $admin);
     $r->post('/admin/update/check', [AdminUpdateController::class, 'check'], $admin);
     $r->post('/admin/update/uploads', [AdminUpdateController::class, 'createUpload'], $admin);
     $r->put('/admin/update/uploads/{upload:[0-9a-f]+}', [AdminUpdateController::class, 'chunk'], $admin + ['raw_body' => true]);

@@ -6,6 +6,7 @@ namespace JDR\Tests\Update;
 
 use JDR\Core\Clock;
 use JDR\Domain\Settings\Settings;
+use JDR\Domain\Update\ReleaseSignature;
 use JDR\Domain\Update\UpdateChecker;
 use JDR\Install\HttpResult;
 use JDR\Tests\Api\ApiTestCase;
@@ -14,19 +15,41 @@ final class UpdateCheckerTest extends ApiTestCase
 {
     private const SHA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
-    private function checker(FakeReleaseHttp $http, string $current = '0.1.0', string $at = '2026-10-28 12:00:00'): UpdateChecker
+    private ?string $secret = null;
+    private ?string $public = null;
+
+    private function publicKey(): string
+    {
+        if ($this->public === null) {
+            $pair = sodium_crypto_sign_keypair();
+            $this->secret = sodium_crypto_sign_secretkey($pair);
+            $this->public = base64_encode(sodium_crypto_sign_publickey($pair));
+        }
+
+        return $this->public;
+    }
+
+    private function checker(FakeReleaseHttp $http, string $current = '0.1.0', string $at = '2026-10-28 12:00:00', ?ReleaseSignature $signature = null): UpdateChecker
     {
         $clock = new Clock(new \DateTimeImmutable($at, new \DateTimeZone('UTC')));
 
-        return new UpdateChecker(new Settings($this->db, $clock), $clock, $http, $current);
+        return new UpdateChecker(new Settings($this->db, $clock), $clock, $http, $current, $signature ?? new ReleaseSignature($this->publicKey(), true));
+    }
+
+    private function signed(string $sums): string
+    {
+        $this->publicKey();
+
+        return base64_encode(sodium_crypto_sign_detached($sums, (string) $this->secret)) . "\n";
     }
 
     private function http(): FakeReleaseHttp
     {
+        $this->publicKey();
         return new FakeReleaseHttp([
             UpdateChecker::apiUrl() => FakeReleaseHttp::releases([
                 FakeReleaseHttp::release('v0.4.0', false, true),          // draft: ignored
-                FakeReleaseHttp::release('v0.3.0-beta.1', true),          // pre-release
+                FakeReleaseHttp::release('v0.3.0-beta.1', true, false, true, true),          // pre-release
                 FakeReleaseHttp::release('v0.2.0'),
                 FakeReleaseHttp::release('v0.1.0'),
                 FakeReleaseHttp::release('not-a-version'),
@@ -34,6 +57,7 @@ final class UpdateCheckerTest extends ApiTestCase
             FakeReleaseHttp::sumsUrl('v0.2.0') => new HttpResult(200, self::SHA . "  jdr-v0.2.0-full.zip\n"
                 . strtoupper(str_repeat('b', 64)) . "  jdr-update-v0.2.0.zip\n"),
             FakeReleaseHttp::sumsUrl('v0.3.0-beta.1') => new HttpResult(200, self::SHA . " *jdr-update-v0.3.0-beta.1.zip\n"),
+            FakeReleaseHttp::sigUrl('v0.3.0-beta.1') => new HttpResult(200, $this->signed(self::SHA . " *jdr-update-v0.3.0-beta.1.zip\n")),
         ]);
     }
 
@@ -115,5 +139,38 @@ final class UpdateCheckerTest extends ApiTestCase
     {
         self::assertNull(UpdateChecker::sumFor("garbage\n", 'x.zip'));
         self::assertSame(self::SHA, UpdateChecker::sumFor("\r\n" . self::SHA . "  x.zip\r\n", 'x.zip'));
+    }
+
+    public function testSumsAreOfficialOnlyWithAValidSignatureFromTheSignedReleasesOn(): void
+    {
+        $http = $this->http();
+        $checker = $this->checker($http, '0.1.0-alpha.1');
+        $asset = $checker->check()['latest']['update_asset'];
+        self::assertSame('valid', $asset['signature']);
+        self::assertSame(self::SHA, $asset['sha256']);
+
+        // Tampered listing: the signature no longer matches, the sum is not official.
+        $http->responses[FakeReleaseHttp::sumsUrl('v0.3.0-beta.1')] = new HttpResult(200, self::SHA . " *jdr-update-v0.3.0-beta.1.zip\n# x\n");
+        $asset = $this->checker($http, '0.1.0-alpha.1')->check(true)['latest']['update_asset'];
+        self::assertSame('invalid', $asset['signature']);
+        self::assertNull($asset['sha256']);
+
+        // Not signed at all.
+        unset($http->responses[FakeReleaseHttp::sigUrl('v0.3.0-beta.1')]);
+        $asset = $this->checker($http, '0.1.0-alpha.1')->check(true)['latest']['update_asset'];
+        self::assertSame('absent', $asset['signature']);
+        self::assertNull($asset['sha256']);
+
+        // Without sodium nothing can be verified.
+        $asset = $this->checker($this->http(), '0.1.0-alpha.1', '2026-10-28 12:00:00', new ReleaseSignature(null, false))->check(true)['latest']['update_asset'];
+        self::assertSame('unchecked', $asset['signature']);
+        self::assertNull($asset['sha256']);
+    }
+
+    public function testUnsignedReleasesUpTo020KeepTheirSha256ForTheManualCheck(): void
+    {
+        $asset = $this->checker($this->http())->check()['latest']['update_asset'];
+        self::assertSame('legacy', $asset['signature']);
+        self::assertSame(str_repeat('b', 64), $asset['sha256']);
     }
 }

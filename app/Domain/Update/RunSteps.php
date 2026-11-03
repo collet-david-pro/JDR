@@ -269,6 +269,11 @@ final class RunSteps
             @unlink($this->runDir($s) . '/package.zip');
             UpdateStorage::removeTree($this->runDir($s) . '/rollback');
         }
+        if (is_array($s['backup']) && is_string($s['backup']['file'] ?? null)) {
+            (new PreUpdateBackup($this->storage))->register(
+                $s['backup']['file'], is_string($s['from']) ? $s['from'] : null, (string) $s['to'], $this->runner->timestamp(),
+            );
+        }
         RecoverySteps::resetOpcache();
         $s['state'] = 'done';
         $s['error'] = null;

@@ -12,9 +12,10 @@ final class MaintenanceException extends HttpException
 
     /**
      * @param bool $updatePending the database is behind the code: the page offers update.php to administrators
+     * @param string|null $updateUrl set for an administrator only: the body then carries fields.update_url
      */
-    public function __construct(string $message = '', public readonly bool $updatePending = false)
+    public function __construct(string $message = '', public readonly bool $updatePending = false, ?string $updateUrl = null)
     {
-        parent::__construct(503, 'maintenance', $message, [], ['Retry-After' => (string) self::RETRY_AFTER]);
+        parent::__construct(503, 'maintenance', $message, $updateUrl === null ? [] : ['update_url' => $updateUrl], ['Retry-After' => (string) self::RETRY_AFTER]);
     }
 }

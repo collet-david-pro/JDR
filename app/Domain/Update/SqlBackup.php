@@ -23,7 +23,7 @@ use JDR\Core\Db;
  */
 final class SqlBackup
 {
-    public const KEEP = 3;
+    public const KEEP = 1;
     private const BATCH_ROWS = 500;
     private const BATCH_BYTES = 1048576;
     private const SKIPPED = ['php_sessions'];
@@ -136,7 +136,7 @@ final class SqlBackup
     }
 
     /**
-     * Keeps the KEEP most recent backups (plus $protect).
+     * Keeps the KEEP most recent backups (plus $protect): a single one, the update backup.
      */
     public function prune(?string $protect = null): void
     {

@@ -3,7 +3,8 @@
 //
 //   node dev/release.mjs manifest   write manifest.json (SHA-256 of every shipped file)
 //   node dev/release.mjs package    regenerate manifest.json, then build
-//                                   dist/jdr-vX.Y.Z-full.zip, dist/jdr-update-vX.Y.Z.zip and dist/SHA256SUMS
+//                                   dist/jdr-vX.Y.Z-full.zip, dist/jdr-update-vX.Y.Z.zip, dist/SHA256SUMS
+//                                   and, when the release key exists, dist/SHA256SUMS.sig (Ed25519)
 //   node dev/release.mjs verify     recompute hashes and compare with manifest.json (exit 1 on drift)
 //
 // Options: --root <dir>  repository root (default: parent of this script's folder)
@@ -11,9 +12,10 @@
 // Environment: SOURCE_DATE_EPOCH (seconds) forces the timestamp stored in ZIP entries
 // and in manifest.generated_at, for reproducible archives.
 
-import { createHash } from 'node:crypto';
+import { createHash, createPrivateKey, sign as cryptoSign } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -438,6 +440,29 @@ function packageRelease(root) {
   const sums = names.map((name) => `${sha256(fs.readFileSync(path.join(dist, name)))}  ${name}\n`).join('');
   fs.writeFileSync(path.join(dist, 'SHA256SUMS'), sums);
   console.log('dist/SHA256SUMS written');
+  signSums(dist, sums);
+}
+
+/** Path of the Ed25519 private key (dev/release-key.mjs): JDR_RELEASE_KEY or ~/.config/jdr/release-ed25519.pem. */
+function releaseKeyPath() {
+  return process.env.JDR_RELEASE_KEY || path.join(os.homedir(), '.config', 'jdr', 'release-ed25519.pem');
+}
+
+/**
+ * dist/SHA256SUMS.sig: detached Ed25519 signature (64 bytes, base64, one line) of the exact bytes of SHA256SUMS.
+ * Without a key the release is built unsigned (the automatic update refuses it) and the warning is loud.
+ */
+function signSums(dist, sums) {
+  const keyFile = releaseKeyPath();
+  const sigFile = path.join(dist, 'SHA256SUMS.sig');
+  fs.rmSync(sigFile, { force: true });
+  if (!fs.existsSync(keyFile)) {
+    console.warn(`WARNING: no release key at ${keyFile}: this release is UNSIGNED (run node dev/release-key.mjs once).`);
+    return;
+  }
+  const signature = cryptoSign(null, Buffer.from(sums, 'utf8'), createPrivateKey(fs.readFileSync(keyFile)));
+  fs.writeFileSync(sigFile, signature.toString('base64') + '\n');
+  console.log('dist/SHA256SUMS.sig written');
 }
 
 // ---------------------------------------------------------------------------

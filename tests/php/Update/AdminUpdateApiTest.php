@@ -8,6 +8,8 @@ use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Domain\Support\AppPaths;
 use JDR\Domain\Update\ReleaseHttpClient;
+use JDR\Domain\Update\PreUpdateBackup;
+use JDR\Domain\Update\UpdateStorage;
 use JDR\Domain\Update\UpdateChecker;
 use JDR\Install\HttpResult;
 use JDR\Tests\Api\ApiClient;
@@ -175,7 +177,9 @@ final class AdminUpdateApiTest extends ApiTestCase
         $check = $admin->post('/admin/update/check', ['force' => true]);
         self::assertSame(200, $check->status(), $check->body());
         self::assertSame('9.0.0', $check->payload()['data']['latest']['version']);
-        self::assertSame(str_repeat('d', 64), $check->payload()['data']['latest']['update_asset']['sha256']);
+        // 9.0.0 is a signed-era release published without SHA256SUMS.sig: its sum is not official.
+        self::assertNull($check->payload()['data']['latest']['update_asset']['sha256']);
+        self::assertSame('absent', $check->payload()['data']['latest']['update_asset']['signature']);
         self::assertSame(429, $admin->post('/admin/update/check', ['force' => true])->status(), '1 forced check / 30 s');
         self::assertSame(200, $admin->post('/admin/update/check', [])->status(), 'cached check still allowed');
         self::assertSame('9.0.0', $admin->get('/admin/update')->payload()['data']['check']['latest']['version']);
@@ -190,4 +194,29 @@ final class AdminUpdateApiTest extends ApiTestCase
         self::assertSame(422, $admin->patch('/admin/update', ['auto' => 'oui'])->status());
         self::assertSame('9.1.0-beta.1', $admin->post('/admin/update/check', [])->payload()['data']['latest']['version']);
     }
+
+    public function testTheBackupOfTheLastUpdateIsOfferedForDownloadThenDeleted(): void
+    {
+        $admin = $this->admin();
+        self::assertNull($admin->get('/admin/update')->payload()['data']['backup']);
+
+        $storage = UpdateStorage::for($this->install, $this->install . '/storage');
+        $file = 'jdr-20261103-101500-v0.1.0.sql.gz';
+        file_put_contents($storage->backupsDir() . '/' . $file, gzencode('-- sql'));
+        (new PreUpdateBackup($storage))->register($file, '0.1.0', '0.2.0', time());
+
+        $backup = $admin->get('/admin/update')->payload()['data']['backup'];
+        self::assertSame($file, $backup['name']);
+        self::assertSame('0.2.0', $backup['to']);
+        self::assertSame(404, $admin->get('/admin/update/backup?t=forged')->status());
+        $download = $admin->get('/admin/update/backup?t=' . $backup['token']);
+        self::assertSame(200, $download->status());
+        self::assertSame(gzencode('-- sql'), $download->contents());
+        self::assertSame(401, $this->client()->get('/admin/update/backup?t=' . $backup['token'])->status(), 'anonymous');
+
+        self::assertSame(204, $admin->delete('/admin/update/backup')->status());
+        self::assertNull($admin->get('/admin/update')->payload()['data']['backup']);
+        self::assertFileDoesNotExist($storage->backupsDir() . '/' . $file);
+    }
 }
+
