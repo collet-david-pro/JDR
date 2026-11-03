@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JDR\Tests\Api;
 
+use JDR\Core\AfterResponse;
 use JDR\Core\Router;
 use JDR\Domain\Settings\SecretBox;
 use JDR\Mail\Mailer;
@@ -250,12 +251,16 @@ final class AdminApiTest extends ApiTestCase
         self::assertStringNotContainsString('Smtp-Secret-Value', $test->body());
         self::assertStringContainsString(base64_encode("\0mailer\0Smtp-Secret-Value"), $transports[0]->transcript());
 
-        // Forgot password now sends an e-mail with a working link; same answer for unknown e-mails.
+        // Forgot password now sends an e-mail with a working link (after the response); same answer for unknown e-mails.
+        $after = $this->app->container()->get(AfterResponse::class);
         $guest = $this->client('203.0.113.70');
         $guest->me();
         self::assertSame(['mode' => 'email'], $guest->post('/auth/password/forgot', ['email' => 'nobody@example.org'])->payload()['data']);
+        $after->run();
         self::assertCount(1, $transports);
         self::assertSame(['mode' => 'email'], $guest->post('/auth/password/forgot', ['email' => 'bob@example.org'])->payload()['data']);
+        self::assertCount(1, $transports, 'nothing is sent before the response');
+        $after->run();
         self::assertCount(2, $transports);
         $mail = quoted_printable_decode($transports[1]->transcript());
         self::assertSame(1, preg_match('#http://jdr\.test/reset-password/([A-Za-z0-9._-]+)#', $mail, $m), $mail);

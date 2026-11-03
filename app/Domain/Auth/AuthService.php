@@ -6,6 +6,7 @@ namespace JDR\Domain\Auth;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Core\AfterResponse;
 use JDR\Core\Clock;
 use JDR\Core\Db;
 use JDR\Core\Errors\ForbiddenException;
@@ -51,6 +52,7 @@ final class AuthService
         private Mailer $mailer,
         private I18n $i18n,
         private Logger $logger,
+        private AfterResponse $after,
     ) {
     }
 
@@ -190,6 +192,8 @@ final class AuthService
 
     /**
      * Sends a reset link when SMTP is configured and the account exists; the answer never tells.
+     * The lookup, the link and the e-mail run after the response (AfterResponse): both paths answer
+     * with the same work and the same delay (no account enumeration by timing).
      *
      * @return string "email" | "contact_admin"
      */
@@ -198,23 +202,31 @@ final class AuthService
         if (!$this->mailer->isEnabled()) {
             return 'contact_admin';
         }
-        $user = $this->users->findByEmail($email);
-        if ($user !== null && $user->isActive()) {
-            $link = $this->resets->create($user->id, null);
-            $site = $this->settings->string('site_name');
-            try {
-                $params = ['site' => $site, 'username' => $user->username, 'url' => $link['url']];
-                $this->mailer->send(
-                    $user->email,
-                    $this->text('mail.reset.subject', self::RESET_SUBJECT, $params),
-                    $this->text('mail.reset.body', self::RESET_BODY, $params),
-                );
-            } catch (\RuntimeException $e) {
-                $this->logger->warning('Password reset e-mail not sent', ['error' => $e->getMessage()]);
-            }
-        }
+        $this->after->defer(function () use ($email): void {
+            $this->sendResetLink($email);
+        });
 
         return 'email';
+    }
+
+    private function sendResetLink(string $email): void
+    {
+        $user = $this->users->findByEmail($email);
+        if ($user === null || !$user->isActive()) {
+            return;
+        }
+        $link = $this->resets->create($user->id, null);
+        $site = $this->settings->string('site_name');
+        try {
+            $params = ['site' => $site, 'username' => $user->username, 'url' => $link['url']];
+            $this->mailer->send(
+                $user->email,
+                $this->text('mail.reset.subject', self::RESET_SUBJECT, $params),
+                $this->text('mail.reset.body', self::RESET_BODY, $params),
+            );
+        } catch (\RuntimeException $e) {
+            $this->logger->warning('Password reset e-mail not sent', ['error' => $e->getMessage()]);
+        }
     }
 
     /**

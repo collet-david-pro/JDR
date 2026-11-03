@@ -15,6 +15,10 @@ final class Passwords
     public const MIN_LENGTH = 10;
     public const MAX_LENGTH = 256;
 
+    private const DUMMY_ARGON2ID =
+        '$argon2id$v=19$m=65536,t=4,p=1$dUxpWHI0U2RWR0IudW0wRw$B2zGZY8fuhGoFe+yW+efYPAYAOqRYvIb+LRQonrwIY0';
+    private const DUMMY_BCRYPT = '$2y$12$kj6an8Vw5TUttLW6d.RzkOtGRcq/9NqrXE3QOD/cgX4xyupZopuVS';
+
     /** @var array<string, true>|null */
     private static ?array $common = null;
 
@@ -58,9 +62,24 @@ final class Passwords
      */
     public static function dummyVerify(string $password): void
     {
+        password_verify($password, self::dummyHash());
+    }
+
+    /**
+     * Precomputed hash with the current algorithm and cost: an unknown account costs one verification, like a
+     * known one (computing the hash here would cost a second Argon2id run, a timing tell; docs/securite.md, A07).
+     */
+    public static function dummyHash(): string
+    {
         static $dummy = null;
-        $dummy ??= self::hash('dummy-password-for-timing');
-        password_verify($password, $dummy);
+        if ($dummy === null) {
+            $dummy = defined('PASSWORD_ARGON2ID') ? self::DUMMY_ARGON2ID : self::DUMMY_BCRYPT;
+            if (self::needsRehash($dummy)) {
+                $dummy = self::hash('dummy-password-for-timing'); // other PHP defaults: once per process
+            }
+        }
+
+        return $dummy;
     }
 
     private static function algorithm(): string

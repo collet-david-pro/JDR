@@ -195,10 +195,25 @@ final class App
     public function run(): void
     {
         $request = Request::fromGlobals($this->config);
-        $this->handle($request)->send($request->method !== 'HEAD');
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
+        $response = $this->handle($request);
+        $after = $this->container->get(AfterResponse::class);
+        $fpm = function_exists('fastcgi_finish_request');
+        if (!$fpm && $after->pending() > 0 && !headers_sent()) {
+            // No FastCGI: a complete, closed response lets the client go before the deferred work (A07).
+            ignore_user_abort(true);
+            $response->withHeader('Connection', 'close');
+            $response->withHeader('Content-Length', (string) strlen($response->body()));
         }
+        $response->send($request->method !== 'HEAD');
+        if ($fpm) {
+            fastcgi_finish_request();
+        } elseif ($after->pending() > 0) {
+            while (ob_get_level() > 0) {
+                @ob_end_flush();
+            }
+            flush();
+        }
+        $after->run();
         $this->container->get(Cron::class)->maybeRunPseudo();
     }
 

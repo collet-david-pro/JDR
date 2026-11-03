@@ -12,7 +12,9 @@ defined('JDR_BOOT') || exit;
  */
 final class Logger
 {
-    private const LEVELS = ['debug' => 0, 'info' => 1, 'warning' => 2, 'error' => 3, 'critical' => 4];
+    public const RETENTION_DAYS = 14;
+
+    private const LEVELS =['debug' => 0, 'info' => 1, 'warning' => 2, 'error' => 3, 'critical' => 4];
 
     private const SECRET_PATTERN =
         '/pass|pwd|secret|token|cookie|csrf|authorization|cron_key|session_code|pair_code|signature/i';
@@ -166,6 +168,27 @@ final class Logger
         }
 
         return $out;
+    }
+
+    /**
+     * Deletes the daily files (app-YYYY-MM-DD.log) older than $days days (projet.md 6.6, retention 14 days).
+     * Returns how many files were deleted.
+     */
+    public function purge(int $days = self::RETENTION_DAYS): int
+    {
+        if ($this->directory === null || $this->directory === '') {
+            return 0;
+        }
+        $dir = $this->directory;
+        $limit =$this->clock->now()->modify('-' . $days . ' days')->format('Y-m-d');
+        $deleted = 0;
+        foreach (glob($dir . '/app-*.log') ?: [] as $file) {
+            if (preg_match('/^app-(\d{4}-\d{2}-\d{2})\.log$/D', basename($file), $m) === 1 && $m[1] < $limit && @unlink($file)) {
+                $deleted++;
+            }
+        }
+
+        return $deleted;
     }
 
     private function write(string $line): void

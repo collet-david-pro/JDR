@@ -183,6 +183,7 @@ final class Cron
             'presence' => static fn (): int => $c->get(SessionHousekeeping::class)->sweepPresence(),
             'sessions' => static fn (): int => $c->get(SessionHousekeeping::class)->purgeEnded(),
             'update_backup' => static fn (): int => $c->get(PreUpdateBackup::class)->purge(time()),
+            'logs' => static fn (): int => $c->get(Logger::class)->purge(),
         ];
     }
 }
