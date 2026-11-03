@@ -20,6 +20,12 @@ server {
     location = /config.php                        { deny all; }
     location ~ /\.(?!well-known/)                  { deny all; }   # .htaccess, .git…
 
+    # --- Compression (le flux SSE l'exclut plus bas) ---------------------------
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 512;
+    gzip_types text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml;
+
     # --- Flux temps réel (SSE) : aucune mise en tampon, aucune compression --
     location = /api/v1/stream {
         gzip off;

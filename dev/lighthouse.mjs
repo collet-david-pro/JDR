@@ -10,7 +10,9 @@
 // Needs e2e/node_modules (Playwright + its Chromium, used both to install the copy and as Chrome).
 // Lighthouse is fetched by npx at the pinned version.
 
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import http from 'node:http';
+import zlib from 'node:zlib';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import os from 'node:os';
@@ -23,7 +25,11 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { chromium } = createRequire(path.join(root, 'e2e', 'package.json'))('@playwright/test');
 
 const port = Number(process.env.E2E_PORT ?? 8090);
-const base = process.env.LH_BASE ?? `http://127.0.0.1:${port}`;
+const origin = process.env.LH_BASE ?? `http://127.0.0.1:${port}`;
+// Like a real host, audit through a small gzip proxy (never on the SSE stream); --no-gzip measures the bare server.
+const useGzip = !process.argv.includes('--no-gzip');
+const proxyPort = port + 1;
+const base = useGzip ? `http://127.0.0.1:${proxyPort}` : origin;
 const admin = {
   email: process.env.LH_EMAIL ?? 'mj@example.org',
   username: 'Maitre MJ',
@@ -31,6 +37,53 @@ const admin = {
 };
 const chromePath = process.env.CHROME_PATH ?? chromium.executablePath();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const GZIP_TYPE =
+  /^(text\/|application\/javascript|text\/javascript|application\/json|image\/svg\+xml)/;
+let proxy = null;
+function startProxy() {
+  const target = new URL(origin);
+  proxy = http.createServer((req, res) => {
+    const up = http.request(
+      {
+        host: target.hostname,
+        port: target.port,
+        path: req.url,
+        method: req.method,
+        headers: req.headers,
+      },
+      (r) => {
+        const type = String(r.headers['content-type'] ?? '');
+        const gz =
+          /gzip/.test(String(req.headers['accept-encoding'] ?? '')) &&
+          GZIP_TYPE.test(type) &&
+          !r.headers['content-encoding'] &&
+          r.statusCode !== 204 &&
+          r.statusCode !== 304 &&
+          req.method !== 'HEAD' &&
+          !req.url.includes('/api/v1/stream') &&
+          !/text\/event-stream/.test(type);
+        const headers = { ...r.headers };
+        if (gz) {
+          delete headers['content-length'];
+          headers['content-encoding'] = 'gzip';
+          headers.vary = 'Accept-Encoding';
+          res.writeHead(r.statusCode, headers);
+          r.pipe(zlib.createGzip({ level: 6 })).pipe(res);
+        } else {
+          res.writeHead(r.statusCode, headers);
+          r.pipe(res);
+        }
+      },
+    );
+    up.on('error', () => {
+      res.statusCode = 502;
+      res.end();
+    });
+    req.pipe(up);
+  });
+  return new Promise((resolve) => proxy.listen(proxyPort, '127.0.0.1', resolve));
+}
 
 let server = null;
 async function startServer() {
@@ -41,7 +94,7 @@ async function startServer() {
   });
   for (let i = 0; i < 120; i++) {
     try {
-      if ((await fetch(`${base}/install.php`)).status < 500) return;
+      if ((await fetch(`${origin}/install.php`)).status < 500) return;
     } catch {
       /* not up yet */
     }
@@ -51,11 +104,12 @@ async function startServer() {
 }
 function stopServer() {
   if (server && !server.killed) server.kill('SIGTERM');
+  if (proxy) proxy.close();
 }
 
 /** Installs the blank copy through install.php, then returns the session cookie and a game id. */
 async function prepare(browser) {
-  const ctx = await browser.newContext({ baseURL: base, locale: 'fr-FR' });
+  const ctx = await browser.newContext({ baseURL: origin, locale: 'fr-FR' });
   const page = await ctx.newPage();
   if (!process.env.LH_BASE) {
     await page.goto('/install.php');
@@ -93,26 +147,51 @@ async function prepare(browser) {
   return { cookie, gameId: game.id };
 }
 
-function lighthouse(url, mobile, cookie, outFile) {
+/** Async: the gzip proxy lives in this process, a blocking spawnSync would freeze it. */
+function run(cmd, args, env) {
+  return new Promise((resolve) => {
+    const child = spawn(cmd, args, { env });
+    let stderr = '';
+    child.stderr.on('data', (d) => (stderr += d));
+    child.on('close', (status) => resolve({ status, stderr }));
+  });
+}
+
+async function lighthouse(url, mobile, cookie, outFile) {
   const args = [
-    '--yes', LIGHTHOUSE, url,
-    '--quiet', '--output=json', `--output-path=${outFile}`,
+    '--yes',
+    LIGHTHOUSE,
+    url,
+    '--quiet',
+    '--output=json',
+    `--output-path=${outFile}`,
     '--only-categories=performance,accessibility,best-practices',
     '--chrome-flags=--headless=new --no-sandbox',
   ];
   if (!mobile) args.push('--preset=desktop');
   if (cookie) args.push(`--extra-headers=${JSON.stringify({ Cookie: cookie })}`);
-  const r = spawnSync('npx', args, { env: { ...process.env, CHROME_PATH: chromePath }, encoding: 'utf8' });
-  if (r.status !== 0 || !existsSync(outFile)) throw new Error(`lighthouse failed on ${url}: ${r.stderr.slice(-400)}`);
+  let r;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Chrome sometimes dies under load ("Target closed"): retry.
+    r = await run('npx', args, { ...process.env, CHROME_PATH: chromePath });
+    if (r.status === 0 && existsSync(outFile)) break;
+  }
+  if (r.status !== 0 || !existsSync(outFile))
+    throw new Error(`lighthouse failed on ${url}: ${r.stderr.slice(-400)}`);
   const lhr = JSON.parse(readFileSync(outFile, 'utf8'));
   const score = (k) => Math.round((lhr.categories[k]?.score ?? 0) * 100);
-  return { perf: score('performance'), a11y: score('accessibility'), bp: score('best-practices') };
+  return {
+    perf: score('performance'),
+    a11y: score('accessibility'),
+    bp: score('best-practices'),
+  };
 }
 
 let failed = false;
 process.on('exit', stopServer);
 try {
   if (!process.env.LH_BASE) await startServer();
+  if (useGzip) await startProxy();
   const browser = await chromium.launch();
   const { cookie, gameId } = await prepare(browser);
   await browser.close();
@@ -127,10 +206,22 @@ try {
   const rows = [];
   for (const [label, p, auth] of pages) {
     for (const mobile of [false, true]) {
-      const s = lighthouse(base + p, mobile, auth ? cookie : '', path.join(tmp, `${label}-${mobile}.json`));
+      const s = await lighthouse(
+        base + p,
+        mobile,
+        auth ? cookie : '',
+        path.join(tmp, `${label}-${mobile}.json`),
+      );
       const bad = Object.values(s).some((v) => v < THRESHOLD);
       failed ||= bad;
-      rows.push({ page: label, device: mobile ? 'mobile' : 'desktop', performance: s.perf, accessibilité: s.a11y, 'bonnes pratiques': s.bp, ok: bad ? 'NON' : 'oui' });
+      rows.push({
+        page: label,
+        device: mobile ? 'mobile' : 'desktop',
+        performance: s.perf,
+        accessibilité: s.a11y,
+        'bonnes pratiques': s.bp,
+        ok: bad ? 'NON' : 'oui',
+      });
     }
   }
   console.table(rows);
