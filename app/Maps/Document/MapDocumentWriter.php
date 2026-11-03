@@ -9,6 +9,7 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Db;
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapFloorRepository;
+use JDR\Domain\Maps\MapAssetRefs;
 use JDR\Domain\Maps\MapFloors;
 use JDR\Domain\Maps\MapLinks;
 use JDR\Domain\Maps\MapNotes;
@@ -248,12 +249,7 @@ final class MapDocumentWriter
                 ChunkCodec::compress($chunk['raw']),
                 $revision,
             );
-            foreach (ChunkCodec::indexCounts($chunk['raw']) as $index => $n) {
-                $assetId = $palette[$index]['asset_id'] ?? null;
-                if ($assetId !== null) {
-                    $counts[$assetId] = ($counts[$assetId] ?? 0) + $n;
-                }
-            }
+            MapAssetRefs::addChunk($chunk['raw'], $palette, $counts);
         }
         $this->maps->applyRefDeltas($mapId, $counts);
     }

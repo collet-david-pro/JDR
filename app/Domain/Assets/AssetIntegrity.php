@@ -103,4 +103,40 @@ final class AssetIntegrity
 
         return $total;
     }
+
+    /**
+     * Problem of one asset row (as check() sees it): "missing" (file or thumbnail absent, trash included),
+     * "size" (live asset whose files do not have the recorded size) or null.
+     *
+     * @param array<string, mixed> $row uuid, ext, size_bytes, thumb_size_bytes, deleted_at
+     */
+    public function assetProblem(array $row): ?string
+    {
+        $uuid = (string) $row['uuid'];
+        $path = $this->storage->path($uuid, (string) $row['ext']);
+        $thumb = $this->storage->findThumb($uuid);
+        if (!is_file($path) || $thumb === null) {
+            return 'missing';
+        }
+        if ($row['deleted_at'] !== null) {
+            return null;
+        }
+
+        return (int) filesize($path) !== (int) $row['size_bytes'] || (int) filesize($thumb['path']) !== (int) $row['thumb_size_bytes']
+            ? 'size' : null;
+    }
+
+    /**
+     * Real size (file + thumbnail) of one asset row.
+     *
+     * @param array<string, mixed> $row uuid, ext
+     * @return array{0: int, 1: int} file bytes, thumbnail bytes
+     */
+    public function assetSizes(array $row): array
+    {
+        $path = $this->storage->path((string) $row['uuid'], (string) $row['ext']);
+        $thumb = $this->storage->findThumb((string) $row['uuid']);
+
+        return [is_file($path) ? (int) filesize($path) : 0, $thumb === null ? 0 : (int) filesize($thumb['path'])];
+    }
 }
