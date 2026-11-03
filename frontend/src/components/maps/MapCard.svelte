@@ -72,7 +72,7 @@
           type="button"
           class="button button-small"
           disabled={busy}
-          aria-label={t('games.maps.edit_label', { name: map.name })}
+          aria-label={`${t('games.maps.edit')} : ${map.name}`}
           data-testid="map-edit"
           onclick={() => onedit(map)}>{t('games.maps.edit')}</button
         >
@@ -90,7 +90,7 @@
             class="button button-small"
             disabled={busy}
             aria-haspopup="dialog"
-            aria-label={t('games.maps.template.save_label', { name: map.name })}
+            aria-label={`${t('games.maps.template.save')} : ${map.name}`}
             data-testid="map-save-template"
             onclick={() => onsavetemplate(map)}>{t('games.maps.template.save')}</button
           >

@@ -10,7 +10,7 @@ defined('JDR_BOOT') || exit;
 ?>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--text:#1d2330;--muted:#5d6676;--line:#e2e5ea;--accent:#3557d6;--accent-ink:#fff;
---ok:#1f8a4c;--ok-bg:#e7f6ed;--warn:#a46200;--warn-bg:#fff4e0;--err:#c22f2f;--err-bg:#fdecec;--code:#f0f2f5;
+--ok:#17703c;--ok-bg:#e7f6ed;--warn:#8a5200;--warn-bg:#fff4e0;--err:#c22f2f;--err-bg:#fdecec;--code:#f0f2f5;
 --radius:10px;--shadow:0 1px 2px rgba(16,24,40,.06),0 4px 16px rgba(16,24,40,.06)}
 @media (prefers-color-scheme:dark){:root{--bg:#12151b;--card:#1b2029;--text:#e6e9ef;--muted:#9aa3b2;--line:#2c3340;
 --accent:#7d97ff;--accent-ink:#0d1220;--ok:#5cd28f;--ok-bg:#15301f;--warn:#f0b357;--warn-bg:#33270f;--err:#ff7b7b;
