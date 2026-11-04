@@ -21,6 +21,7 @@ final class Installer
         private State $state,
         private HttpClient $http,
         string $nonce,
+        private ?\Closure $packRunner = null,
     ) {
         $this->page = new Page($nonce);
     }
@@ -186,7 +187,7 @@ final class Installer
         if (!is_array($run)) {
             return Reply::html($this->page->render('summary', $this->summary(), 'run'));
         }
-        $installation = new Installation($this->env, $this->state);
+        $installation = new Installation($this->env, $this->state, $this->packRunner);
         $json = ($get['format'] ?? '') === 'json';
         if (($get['do'] ?? '') === '1') {
             if (!$this->state->checkToken($get['k'] ?? null)) {
@@ -239,7 +240,7 @@ final class Installer
             'site' => $site,
             'admin' => $admin,
             'routing' => (string) ($req['routing_mode'] ?? 'query'),
-            'storage' => (new Installation($this->env, $this->state))->storagePath(),
+            'storage' => (new Installation($this->env, $this->state, $this->packRunner))->storagePath(),
             'token' => $this->state->token(),
         ];
     }
@@ -266,6 +267,7 @@ final class Installer
             'cronUrl' => $base . '/cron.php?key=' . rawurlencode((string) ($run['cron_key'] ?? '')),
             'duration' => (float) ($run['duration_s'] ?? 0),
             'deleted' => $deleted,
+            'packFailed' => ($run['pack_failed'] ?? false) === true,
         ], 'done');
         $this->state->clear();
 

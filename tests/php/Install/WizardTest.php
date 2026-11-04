@@ -48,7 +48,7 @@ final class WizardTest extends InstallDbTestCase
             $post += ['_token' => $this->state->token()];
         }
 
-        return (new Installer($env, $this->state, $this->http, 'test-nonce'))->handle($get, $post);
+        return (new Installer($env, $this->state, $this->http, 'test-nonce', static fn (): array => ['complete' => true, 'total' => 0, 'remaining' => 0, 'failed' => []]))->handle($get, $post);
     }
 
     private function post(string $step, array $post): Reply
@@ -140,7 +140,7 @@ final class WizardTest extends InstallDbTestCase
             }
         }
         // One "migrate" step per migration (0001 to 0006) plus the last one that moves on.
-        self::assertSame(['migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'site', 'storage', 'config', 'lock', 'done'], $phases);
+        self::assertSame(['migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'migrate', 'site', 'storage', 'config', 'pack', 'lock', 'done'], $phases);
     }
 
     public function testExistingTablesNeedAnExplicitChoice(): void

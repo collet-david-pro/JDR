@@ -55,7 +55,7 @@ final class InstallationTest extends InstallDbTestCase
 
     private function installation(State $state): Installation
     {
-        return new Installation(new Env($this->root, ['HTTP_HOST' => 'example.org', 'SCRIPT_NAME' => '/jdr/install.php']), $state);
+        return new Installation(new Env($this->root, ['HTTP_HOST' => 'example.org', 'SCRIPT_NAME' => '/jdr/install.php']), $state, static fn (): array => ['complete' => true, 'total' => 0, 'remaining' => 0, 'failed' => []]);
     }
 
     /**
@@ -88,8 +88,8 @@ final class InstallationTest extends InstallDbTestCase
         $results = $this->runUntil($state, 'done');
         $migrations = count(MigrationFile::discover(self::migrationsDir()));
 
-        // start, one request per migration, the "nothing left" request, site, storage, config, lock.
-        self::assertCount(1 + $migrations + 1 + 4, $results);
+        // start, one request per migration, the "nothing left" request, site, storage, config, pack, lock.
+        self::assertCount(1 + $migrations + 1 + 5, $results);
         $done = array_column(array_column($results, 'progress'), 'done');
         self::assertSame(end($results)['progress']['total'], end($results)['progress']['done']);
         for ($i = 1; $i < count($done); $i++) {
@@ -132,6 +132,45 @@ final class InstallationTest extends InstallDbTestCase
         }
         $haystack .= (string) file_get_contents($this->root . '/config.php');
         self::assertStringNotContainsString(self::PASSWORD, $haystack);
+    }
+
+    public function testBasePackIsInstalledBySlicesThenTheRunGoesOn(): void
+    {
+        $state = $this->state();
+        $this->runUntil($state, 'config');
+        $calls = 0;
+        $runner = static function () use (&$calls): array {
+            $calls++;
+
+            return ['installed' => 2, 'present' => 0, 'failed' => [], 'remaining' => $calls < 3 ? 4 : 0, 'total' => 6, 'complete' => $calls >= 3, 'busy' => false];
+        };
+        $phases = [];
+        for ($i = 0; $i < 10 && end($phases) !== 'done'; $i++) {
+            $r = (new Installation(new Env($this->root, ['HTTP_HOST' => 'example.org', 'SCRIPT_NAME' => '/jdr/install.php']), $state, $runner))->run();
+            self::assertNull($r['error']);
+            $phases[] = $r['phase'];
+        }
+        self::assertSame(['pack', 'pack', 'pack', 'lock', 'done'], $phases);
+        self::assertSame(3, $calls);
+        self::assertArrayNotHasKey('pack_failed', (array) $state->get('run'));
+    }
+
+    public function testABasePackFailureDoesNotBlockTheEndOfTheInstallation(): void
+    {
+        $state = $this->state();
+        $this->runUntil($state, 'config');
+        $runner = static function (): array {
+            throw new \RuntimeException('disk full');
+        };
+        $installation = new Installation(new Env($this->root, ['HTTP_HOST' => 'example.org', 'SCRIPT_NAME' => '/jdr/install.php']), $state, $runner);
+        $r = $installation->run();
+        $phases = [$r['phase']];
+        while (end($phases) !== 'done' && count($phases) < 5) {
+            $phases[] = $installation->run()['phase'];
+        }
+        self::assertSame('done', end($phases));
+        self::assertTrue((bool) ((array) $state->get('run'))['pack_failed']);
+        self::assertStringContainsString('disk full', implode("\n", ((array) $state->get('run'))['log']));
     }
 
     public function testInterruptedRunResumesWithTheSameState(): void

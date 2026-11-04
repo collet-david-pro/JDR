@@ -11,6 +11,7 @@ use JDR\Domain\Auth\LoginAttempts;
 use JDR\Domain\Backup\BackupStorage;
 use JDR\Domain\Games\GameHousekeeping;
 use JDR\Domain\Maps\MapHousekeeping;
+use JDR\Domain\Procgen\BasePackInstaller;
 use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Maps\Versions\MapVersionService;
 use JDR\Domain\Auth\PasswordResets;
@@ -52,6 +53,7 @@ final class Cron
             return 403;
         }
         $this->runTasks(30.0);
+        $this->basePack(20.0);
         $this->autoUpdate();
 
         return 204;
@@ -70,11 +72,42 @@ final class Cron
 
             return;
         }
+        // After an update that changed the base pack, finish it quickly (a few images per request).
+        if ($this->basePack(self::PSEUDO_BUDGET_S, true)) {
+            return;
+        }
         if (mt_rand() / mt_getrandmax() >= self::PSEUDO_PROBABILITY) {
             return;
         }
         $this->runTasks(self::PSEUDO_BUDGET_S);
+        $this->basePack(self::PSEUDO_BUDGET_S);
         $this->autoUpdate();
+    }
+
+    /**
+     * Base pack not installed for the current version (update) or failures to retry: one slice.
+     *
+     * @param bool $onlyNewVersion pseudo-cron on every request: only an outdated version triggers it
+     * @return bool a slice ran
+     */
+    private function basePack(float $budget, bool $onlyNewVersion = false): bool
+    {
+        if ($this->container === null || !$this->container->has(Db::class)) {
+            return false;
+        }
+        try {
+            $installer = $this->container->get(BasePackInstaller::class);
+            if (!$installer->pending() || ($onlyNewVersion && !$installer->outdated())) {
+                return false;
+            }
+            $installer->tick($budget);
+
+            return true;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Base pack tick failed', ['error' => $e->getMessage()]);
+
+            return false;
+        }
     }
 
     /**

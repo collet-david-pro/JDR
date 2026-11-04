@@ -38,7 +38,7 @@ final class Guard
         $run = $state->get('run');
         $phase = is_array($run) ? ($run['phase'] ?? '') : '';
         $secret = is_array($run) ? (string) ($run['app_secret'] ?? '') : '';
-        if (!in_array($phase, ['await_config', 'lock'], true) || $secret === '') {
+        if (!in_array($phase, ['await_config', 'pack', 'lock'], true) || $secret === '') {
             return false;
         }
         if ($phase === 'await_config') {

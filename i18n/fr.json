@@ -954,6 +954,19 @@
         "delete_chunk": "Supprimer le bloc",
         "delete_fog": "Supprimer le brouillard"
       }
+    },
+    "basepack": {
+      "title": "Pack d'images de base",
+      "intro": "Le pack de base (sols, décors, tokens) s'installe dans la bibliothèque générale à l'installation et après une mise à jour. Si des images manquent ou ont échoué, ce bouton les installe ou les réinstalle, sans doublon.",
+      "button": "Installer / réparer le pack de base",
+      "confirm_title": "Installer / réparer le pack de base ?",
+      "confirm_message": "Les images absentes de la bibliothèque générale sont importées et les échecs précédents sont retentés. Les images déjà présentes ne sont pas dupliquées.",
+      "confirm_button": "Installer / réparer",
+      "running": "Installation en cours : {done} / {total}",
+      "busy": "Une installation du pack est déjà en cours, réessayez dans un instant.",
+      "report": "Pack de base : {installed} installée(s), {present} déjà présente(s), {failed} en échec.",
+      "failed_title": "Images en échec",
+      "failed_item": "{name} ({key}) : {reason}"
     }
   },
   "asset_picker": {

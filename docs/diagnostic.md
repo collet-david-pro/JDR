@@ -19,6 +19,10 @@ Elle vérifie notamment :
 
 Chaque ligne en orange ou en rouge s'accompagne d'une explication. Corrigez d'abord les rouges.
 
+## Bibliothèque générale vide : le pack de base
+
+Le pack d'images de base s'installe à la fin de l'installation et après une mise à jour qui le modifie (par tranches, au passage du cron ou du pseudo-cron). Si la bibliothèque générale est vide ou incomplète, ouvrez **Administration > Intégrité** et cliquez sur **Installer / réparer le pack de base**. Après confirmation, le site importe les images manquantes, retente celles qui avaient échoué et affiche un compte rendu : installées, déjà présentes, en échec (avec la raison). L'action est inscrite au journal d'audit. Causes fréquentes d'un échec : dossier `app/Seed/base-pack/` incomplet après un envoi FTP, droits d'écriture sur `storage/`, extension GD sans PNG/WebP, `memory_limit` trop bas ; voir `storage/logs/`.
+
 ### Tester le flux temps réel
 
 Dans la section « Flux temps réel », le bouton **Tester le flux temps réel** envoie 3 messages à une seconde d'intervalle. Trois résultats possibles :

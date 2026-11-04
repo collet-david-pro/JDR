@@ -83,7 +83,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 - Quatre générateurs déterministes : donjons, grottes, extérieurs (biomes, rivières, routes, ponts et gués) et villages.
 - Une graine reproductible : la même graine redonne la même map. Préréglages, aperçu, progression et annulation.
 - Génération dans une nouvelle map, dans la map actuelle ou dans une sélection (donjon, grotte). Une seule commande « annuler » défait tout.
-- Textures raccordables, à enregistrer dans la bibliothèque. Pack de base de 39 images installé automatiquement.
+- Textures raccordables, à enregistrer dans la bibliothèque. Pack de base d'images installé dans la bibliothèque générale à la fin de l'installation (par tranches) et après une mise à jour qui le change ; réparable depuis Administration > Intégrité.
 - Détails : [docs/procgen.md](docs/procgen.md).
 
 ### Séances en ligne

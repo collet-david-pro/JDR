@@ -72,7 +72,7 @@ Un récapitulatif s'affiche ; cliquez sur « Lancer l'installation ». L'assista
 4. écriture de `config.php` (droits `0640`) ;
 5. verrouillage (`storage/install.lock`).
 
-La page avance toute seule, **avec ou sans JavaScript** (sans JavaScript, elle se recharge automatiquement). Un journal affiche chaque étape.
+La page avance toute seule, **avec ou sans JavaScript** (sans JavaScript, elle se recharge automatiquement). Un journal affiche chaque étape. Après l'écriture de `config.php`, le **pack d'images de base** est importé dans la bibliothèque générale par tranches (quelques images par requête, reprise là où l'on s'est arrêté). S'il échoue en tout ou partie, l'installation se termine quand même et la page finale vous l'indique : réparez-le ensuite depuis **Administration > Intégrité > Installer / réparer le pack de base**.
 
 **En cas d'erreur ou d'interruption** (coupure réseau, onglet fermé, délai dépassé) : corrigez la cause si besoin, puis cliquez sur « Réessayer » ou rouvrez simplement `install.php`. L'installation **reprend là où elle s'est arrêtée** : les migrations déjà appliquées ne sont pas rejouées. Si vous avez fermé le navigateur, refaites les étapes 1 à 4 avec les mêmes informations et choisissez « Reprendre » à l'étape 2.
 

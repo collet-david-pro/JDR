@@ -107,6 +107,7 @@ final class RouteCoverageTest extends ApiTestCase
             'POST /admin/backup/restore/assets' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'POST /admin/integrity/check' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'POST /admin/integrity/fix' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
+            'POST /admin/base-pack/install' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'GET /assets/limits' => [self::USER, self::OWN_ACCOUNT],
             'GET /assets' => [self::USER, RightsMatrixTest::class],
             'POST /assets' => [self::USER, RightsMatrixTest::class],

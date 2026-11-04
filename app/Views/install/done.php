@@ -23,5 +23,8 @@ defined('JDR_BOOT') || exit;
 <p><?= $t('done.cron.text') ?></p>
 <pre><?= $e($cronUrl) ?></pre>
 <p class="help"><?= $t('done.cron.note') ?></p>
+<?php if (!empty($packFailed)) : ?>
+<p><strong><?= $t('done.pack') ?></strong></p>
+<?php endif; ?>
 <p><?= $t('done.backup') ?></p>
 <div class="actions"><span></span><a class="btn" href="<?= $e($loginUrl) ?>"><?= $t('btn.login') ?></a></div>

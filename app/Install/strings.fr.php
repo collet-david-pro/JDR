@@ -191,6 +191,9 @@ return [
     'run.log.config_written' => 'Fichier config.php écrit.',
     'run.log.config_manual' => 'Le dossier du site n\'est pas inscriptible : config.php doit être déposé à la main.',
     'run.log.config_found' => 'Fichier config.php trouvé et vérifié.',
+    'run.log.pack' => 'Pack d\'images de base : {done} / {total}.',
+    'run.log.pack_partial' => 'Pack de base incomplet ({n} image(s) en échec) : l\'installation continue ; utilisez Administration > Intégrité > « Installer / réparer le pack de base ».',
+    'run.log.pack_failed' => 'Pack de base non installé ({message}) : l\'installation continue ; utilisez Administration > Intégrité > « Installer / réparer le pack de base ».',
     'run.log.locked_install' => 'Installation verrouillée (storage/install.lock).',
     'run.error.migration' => '{message}',
     'run.error.generic' => 'Erreur : {message}',
@@ -212,6 +215,7 @@ return [
     'done.cron.title' => 'Tâches planifiées (facultatif)',
     'done.cron.text' => 'Si votre hébergeur propose des tâches « cron », programmez toutes les 5 minutes l\'appel de cette adresse :',
     'done.cron.note' => 'Sans cron, les tâches de fond s\'exécutent pendant la navigation. Gardez cette adresse secrète.',
+    'done.pack' => 'Le pack d\'images de base n\'a pas pu être installé en entier : après connexion, ouvrez Administration > Intégrité et cliquez sur « Installer / réparer le pack de base ».',
     'done.backup' => 'Conservez une copie de config.php en lieu sûr et sauvegardez régulièrement le site depuis l\'administration.',
 
     // Locked

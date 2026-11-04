@@ -22,12 +22,19 @@ use JDR\Migrate\Runner;
  */
 final class Installation
 {
-    public const PHASES = ['start', 'migrate', 'site', 'storage', 'config', 'await_config', 'lock', 'done'];
+    public const PHASES = ['start', 'migrate', 'site', 'storage', 'config', 'await_config', 'pack', 'lock', 'done'];
 
     private ?Db $db = null;
 
-    public function __construct(private Env $env, private State $state)
+    /** @var ?\Closure(): array<string, mixed> */
+    private ?\Closure $packRunner;
+
+    /**
+     * @param ?\Closure(): array<string, mixed> $packRunner one slice of the base pack installation (tests)
+     */
+    public function __construct(private Env $env, private State $state, ?\Closure $packRunner = null)
     {
+        $this->packRunner = $packRunner;
     }
 
     /**
@@ -45,6 +52,7 @@ final class Installation
                 'site' => $this->site($run),
                 'storage' => $this->storage($run),
                 'config', 'await_config' => $this->config($run),
+                'pack' => $this->pack($run),
                 'lock' => $this->lock($run),
                 default => $run,
             };
@@ -228,13 +236,13 @@ final class Installation
                 throw new \RuntimeException(Strings::t('run.error.foreign_config'));
             }
             $run['log'][] = Strings::t('run.log.config_found');
-            $run['phase'] = 'lock';
+            $run['phase'] = 'pack';
 
             return $run;
         }
         if ($run['phase'] === 'config' && ConfigWriter::writeAtomic($path, $content)) {
             $run['log'][] = Strings::t('run.log.config_written');
-            $run['phase'] = 'lock';
+            $run['phase'] = 'pack';
 
             return $run;
         }
@@ -244,6 +252,56 @@ final class Installation
         $run['phase'] = 'await_config';
 
         return $run;
+    }
+
+    /**
+     * Base pack, by slices (one per request). A failure never blocks the end of the installation:
+     * it is logged and repairable from the administration.
+     *
+     * @param array<string, mixed> $run
+     * @return array<string, mixed>
+     */
+    private function pack(array $run): array
+    {
+        try {
+            $report = ($this->packRunner ?? $this->defaultPackRunner(...))();
+        } catch (\Throwable $e) {
+            $run['log'][] = Strings::t('run.log.pack_failed', ['message' => self::clean($e->getMessage())]);
+            $run['pack_failed'] = true;
+            $run['phase'] = 'lock';
+
+            return $run;
+        }
+        $failed = is_array($report['failed'] ?? null) ? count($report['failed']) : 0;
+        $run['log'][] = Strings::t('run.log.pack', [
+            'done' => (int) ($report['total'] ?? 0) - (int) ($report['remaining'] ?? 0) - $failed,
+            'total' => (int) ($report['total'] ?? 0),
+        ]);
+        if (($report['complete'] ?? false) === true || ($report['busy'] ?? false) === true) {
+            if ($failed > 0 || ($report['busy'] ?? false) === true) {
+                $run['pack_failed'] = true;
+                $run['log'][] = Strings::t('run.log.pack_partial', ['n' => $failed]);
+            }
+            $run['phase'] = 'lock';
+        }
+
+        return $run;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function defaultPackRunner(): array
+    {
+        $root = $this->env->root;
+        $config = \JDR\Core\Config::load($root . '/config.php');
+        if ($config === null) {
+            throw new \RuntimeException('config.php missing');
+        }
+        $logger = new \JDR\Core\Logger($config->storagePath($root) . '/logs', new \JDR\Core\Clock());
+        $app = \JDR\Core\App::create($root, $config, $logger);
+
+        return $app->container()->get(\JDR\Domain\Procgen\BasePackInstaller::class)->installSlice(\JDR\Domain\Procgen\BasePackInstaller::SLICE, 8.0);
     }
 
     /**
@@ -285,11 +343,11 @@ final class Installation
      */
     private function progress(array $run): array
     {
-        $after = ['site' => 0, 'storage' => 1, 'config' => 2, 'await_config' => 2, 'lock' => 3, 'done' => 4];
+        $after = ['site' => 0, 'storage' => 1, 'config' => 2, 'await_config' => 2, 'pack' => 3, 'lock' => 4, 'done' => 5];
         $migrations = (int) ($run['migrations_total'] ?? 0);
         $done = (int) ($run['migrations_done'] ?? 0);
         $phase = (string) $run['phase'];
-        $total = max(1, $migrations) + 4;
+        $total = max(1, $migrations) + 5;
         $current = isset($after[$phase]) ? max(1, $migrations) + $after[$phase] : $done;
 
         return ['done' => min($total, $current), 'total' => $total];

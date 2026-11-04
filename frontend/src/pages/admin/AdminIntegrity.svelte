@@ -1,6 +1,7 @@
 <script lang="ts">
   import ConfirmDialog from '../../components/ConfirmDialog.svelte';
   import ErrorAlert from '../../components/ErrorAlert.svelte';
+  import AdminBasePack from './AdminBasePack.svelte';
   import {
     buildFixBody,
     groupIssues,
@@ -102,6 +103,7 @@
 </script>
 
 <div class="stack">
+  <AdminBasePack />
   <section class="card stack" aria-labelledby="integrity-title">
     <h2 id="integrity-title">{t('admin.integrity.title')}</h2>
     <p class="muted">{t('admin.integrity.intro')}</p>
