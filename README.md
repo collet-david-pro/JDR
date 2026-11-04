@@ -10,7 +10,7 @@ Outil web pour construire, révéler et projeter des cartes de jeu de rôle, en 
 ![Statut](https://img.shields.io/badge/statut-alpha-orange)
 
 > [!WARNING]
-> **Version alpha `0.3.2`.** Release publique, utilisable pour des essais entre amis. La revue de sécurité OWASP est faite ([docs/securite.md](docs/securite.md)), mais l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
+> **Version alpha `0.3.3`.** Release publique, utilisable pour des essais entre amis. La revue de sécurité OWASP est faite ([docs/securite.md](docs/securite.md)), mais l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
 
 ## Sommaire
 
@@ -125,7 +125,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 
 ## Démarrage rapide
 
-1. Téléchargez `jdr-v0.3.2-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.3.2) et décompressez-le.
+1. Téléchargez `jdr-v0.3.3-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.3.3) et décompressez-le.
 2. Envoyez **tout le contenu** du dossier dans le dossier web de votre hébergement (souvent `www/` ou `public_html/`), fichiers cachés compris.
 3. Créez une base MySQL ou MariaDB dans le panneau de l'hébergeur, et notez serveur, port, nom, utilisateur et mot de passe.
 4. Ouvrez `https://votre-site/install.php` et suivez les 6 étapes : prérequis, base de données, site, administrateur, installation, fin.

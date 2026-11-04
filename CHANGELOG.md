@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.3] - 2026-11-04
+
+### Added
+- **Installer la dernière version en un clic** (**Administration > Mise à jour**) : quand une version plus récente est publiée, le bouton « Installer la version X » la télécharge depuis GitHub, vérifie son empreinte et sa signature, puis enchaîne sur le parcours habituel (résumé, sauvegarde proposée, mise à jour). Il fonctionne même si la mise à jour automatique est désactivée ou qu'une séance a été lancée récemment.
+- **État de la mise à jour automatique** dans le même onglet : activée ou non, dernière vérification et prochaine au plus tôt, rythme réel, et raison du blocage s'il y en a une.
+
+### Fixed
+- **Envoi d'une archive de mise à jour ou d'une sauvegarde** : un serveur qui limite la taille des envois (erreur 413, par exemple 1 Mo par défaut sur YunoHost) ne bloque plus l'envoi : les morceaux sont automatiquement réduits.
+
 ## [0.3.2] - 2026-11-04
 
 ### Fixed
@@ -90,6 +99,7 @@ Première version publiée (alpha) : phases 0 à 8 de la feuille de route et mod
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
+[0.3.3]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.3
 [0.3.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.2
 [0.3.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.0
 [0.2.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0
