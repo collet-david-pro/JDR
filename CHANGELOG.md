@@ -6,6 +6,11 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.5] - 2026-11-05
+
+### Changed
+- **Tests de bout en bout sur les trois navigateurs** (Chromium, Firefox, WebKit) : toute la suite passe. Aucun défaut du site trouvé ; le parcours au clavier utilise Option+Tab sous WebKit, comme Safari.
+
 ## [0.3.4] - 2026-11-05
 
 ### Added
