@@ -6,6 +6,33 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.0] - 2026-11-04
+
+Phase 10 « Durcissement » terminée : sauvegarde, intégrité, releases signées, revue de sécurité, accessibilité, performances.
+
+### Added
+- **Sauvegarde et restauration** (**Administration > Sauvegarde**) : sauvegarde de la base (`.sql.gz`) et des assets (`.zip`) à part, téléchargées puis supprimées du serveur (aucune copie gardée). Restauration uniquement depuis un fichier envoyé, avec double confirmation (case à cocher et mot à taper), site en maintenance pendant l'opération. Voir `docs/sauvegarde.md`.
+- **Vérification d'intégrité** (**Administration > Intégrité**) : quotas, tailles, fichiers manquants ou orphelins, références de maps, blocs et brouillards illisibles, révisions. Une correction par type de problème ; toute suppression demande une confirmation. Voir `docs/diagnostic.md`.
+- **Mise à jour plus sûre** : la sauvegarde de la base faite avant une mise à jour peut être téléchargée (supprimée ensuite ; 7 jours au plus après une mise à jour automatique). Un administrateur est redirigé vers `update.php` si la base est en retard. Les releases sont **signées** (Ed25519, fichier `SHA256SUMS.sig`) et la signature est vérifiée avant toute mise à jour automatique.
+- **Limite de connexions en direct** : réglage `realtime_max_waiting` (4 par défaut). Au-delà, les appareils passent à l'interrogation toutes les 2 s. Affichée dans le diagnostic.
+- Documentation d'exploitation : `docs/prerequis.md`, `docs/mise-a-jour.md`, `docs/sauvegarde.md`, `docs/diagnostic.md`, `docs/securite.md`, `docs/accessibilite.md`.
+
+### Changed
+- **L'extension PHP `sodium` est désormais nécessaire à la mise à jour automatique** (vérification de la signature). Elle reste facultative à l'installation : sans elle, le site fonctionne et la mise à jour manuelle reste possible.
+- Pages, scripts et styles compressés par le serveur, fichiers à empreinte mis en cache : le site se charge plus vite, surtout sur téléphone.
+- Lectures de la base mémorisées pendant une requête : moins de requêtes SQL par action.
+
+### Fixed
+- Accessibilité (WCAG 2.2 AA) : étiquettes manquantes et contrastes corrigés sur les pages d'installation et de cartes, parcours au clavier vérifié, toutes les pages hors éditeur auditées.
+
+### Security
+- **Revue OWASP Top 10** (voir `docs/securite.md`) : aucune faille critique.
+- « Mot de passe oublié » : l'e-mail est envoyé après la réponse, pour qu'on ne puisse pas deviner si une adresse a un compte d'après le temps de réponse.
+- Connexion avec un identifiant inconnu : le temps de réponse est aligné sur celui d'un compte existant.
+- Les journaux applicatifs sont désormais supprimés après 14 jours.
+- Chaque route de l'API est vérifiée par un test de couverture (droits d'accès).
+- Restauration : le fichier SQL n'est jamais exécuté tel quel (liste blanche de commandes) ; les archives ZIP refusent chemins dangereux.
+
 ## [0.2.0] - 2026-11-03
 
 La numérotation passe aux versions et sous-versions : plus de numéro d'alpha.
@@ -57,6 +84,7 @@ Première version publiée (alpha) : phases 0 à 8 de la feuille de route et mod
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
+[0.3.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.0
 [0.2.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0
 [0.1.0-alpha.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.1

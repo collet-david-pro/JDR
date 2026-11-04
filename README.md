@@ -10,7 +10,7 @@ Outil web pour construire, révéler et projeter des cartes de jeu de rôle, en 
 ![Statut](https://img.shields.io/badge/statut-alpha-orange)
 
 > [!WARNING]
-> **Version alpha `0.2.0`.** Release publique, utilisable pour des essais entre amis. Il n'y a pas encore de revue de sécurité complète, et l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
+> **Version alpha `0.3.0`.** Release publique, utilisable pour des essais entre amis. La revue de sécurité OWASP est faite ([docs/securite.md](docs/securite.md)), mais l'installation n'a pas encore été éprouvée sur un grand nombre d'hébergeurs. Des changements incompatibles sont possibles avant la version stable.
 
 ## Sommaire
 
@@ -120,12 +120,12 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 
 - Installeur web en 6 étapes, qui reprend là où il s'est arrêté.
 - Comptes : inscription ouverte, fermée ou sur invitation ; connexion, « se souvenir de moi », réinitialisation de mot de passe (SMTP optionnel), export et suppression des données personnelles.
-- Console d'administration : comptes, quotas, invitations, réglages, e-mail de test, diagnostic, journal d'audit, migrations, mise à jour.
+- Console d'administration : comptes, quotas, invitations, réglages, e-mail de test, diagnostic, intégrité, sauvegarde et restauration, journal d'audit, migrations, mise à jour.
 - Interface en français, thème clair, sombre ou automatique, trois styles (moderne, fantasy, science-fiction).
 
 ## Démarrage rapide
 
-1. Téléchargez `jdr-v0.2.0-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0) et décompressez-le.
+1. Téléchargez `jdr-v0.3.0-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.3.0) et décompressez-le.
 2. Envoyez **tout le contenu** du dossier dans le dossier web de votre hébergement (souvent `www/` ou `public_html/`), fichiers cachés compris.
 3. Créez une base MySQL ou MariaDB dans le panneau de l'hébergeur, et notez serveur, port, nom, utilisateur et mot de passe.
 4. Ouvrez `https://votre-site/install.php` et suivez les 6 étapes : prérequis, base de données, site, administrateur, installation, fin.
@@ -137,13 +137,13 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 |---|---|
 | PHP | 8.1 ou plus récent |
 | Extensions PHP obligatoires | `pdo_mysql`, `mbstring`, `json`, `fileinfo`, `gd`, `zlib`, `openssl`, `ctype`, `session` |
-| Extensions facultatives | `imagick`, `apcu`, `zip`, `sodium` |
+| Extensions facultatives | `imagick`, `apcu`, `zip`, `sodium` (conseillée : sans elle, pas de mise à jour automatique) |
 | Base de données | MySQL 5.7 ou plus, ou MariaDB 10.3 ou plus ; moteur InnoDB ; jeu de caractères `utf8mb4` |
 | Droits de l'utilisateur de la base | `SELECT`, `INSERT`, `UPDATE`, `DELETE`, `CREATE`, `ALTER`, `INDEX`, `REFERENCES`, `DROP` |
 | Serveur web | Apache (fichiers `.htaccess`), LiteSpeed, ou Nginx ([docs/nginx.md](docs/nginx.md)) |
 | Conseillé | HTTPS ; `memory_limit` de 128 Mo ou plus ; `upload_max_filesize` et `post_max_size` de 10 Mo ou plus |
 
-La réécriture d'adresses (`mod_rewrite`) est conseillée mais pas obligatoire.
+La réécriture d'adresses (`mod_rewrite`) est conseillée mais pas obligatoire. Détails, modules Apache, place disque et cron : [docs/prerequis.md](docs/prerequis.md).
 
 Le développement demande en plus Node.js 20.19 ou plus (22 LTS conseillé). Node ne sert qu'à construire le front : il n'est pas requis en production.
 
@@ -219,7 +219,7 @@ Le site se met à jour tout seul. Deux voies manuelles restent possibles. L'arch
 
 Une fois installé, le site consulte les releases GitHub (toutes les 6 h au plus) et installe seul les nouvelles versions, en arrière-plan, avec les mêmes sauvegardes et le même retour arrière que la voie manuelle. Le site passe en maintenance le temps de la mise à jour.
 
-- L'archive doit venir de ce dépôt et correspondre au `SHA256SUMS` de la release, sinon elle est refusée. Ce contrôle protège d'un fichier corrompu, pas d'une prise de contrôle du dépôt GitHub : les archives signées sont prévues en phase 10.
+- L'archive doit venir de ce dépôt et correspondre au `SHA256SUMS` de la release, sinon elle est refusée. Depuis la version 0.3.0, la signature Ed25519 de `SHA256SUMS` (`SHA256SUMS.sig`) est aussi vérifiée avec l'extension PHP `sodium` ; sans elle, ou sans release signée, la mise à jour automatique est désactivée et l'envoi manuel reste possible.
 - Rien ne démarre pendant une séance lancée depuis moins de 12 h.
 - Le contrôle tourne sur une fraction des visites : un site sans visites ne se met à jour qu'avec une tâche cron (`cron.php?key=<clé>`, toutes les 5 minutes).
 - Une migration en échec est restaurée et n'est pas retentée pour cette version ; les autres échecs sont retentés 3 fois, à 1 h d'intervalle. Le résultat s'affiche dans **Administration > Mise à jour**, où la fonction se désactive.
@@ -243,7 +243,7 @@ Une fois installé, le site consulte les releases GitHub (toutes les 6 h au plus
 - Si la copie des fichiers échoue, les fichiers précédents sont remis en place automatiquement.
 - Si une migration échoue, le site reste en maintenance et `update.php` propose **Réessayer** ou **Restaurer** la version précédente.
 - Une mise à jour interrompue se reprend depuis l'onglet Mise à jour ou en rouvrant `update.php`.
-- Les archives signées sont prévues en phase 10 (voir la [feuille de route](#feuille-de-route)).
+- Les releases sont signées (Ed25519) à partir de la version 0.3.0. Le site propose de télécharger la sauvegarde de la base faite avant chaque mise à jour. Détails : [docs/mise-a-jour.md](docs/mise-a-jour.md).
 
 ## Sécurité
 
@@ -255,11 +255,13 @@ Mesures en place dans la version actuelle :
 - **Fichiers** : stockés hors base, servis par PHP avec des liens signés (HMAC).
 - **Anti-fuite en séance** : le serveur filtre tout ce qu'il envoie aux joueurs et aux écrans (tokens cachés, objets du MJ, portes secrètes non révélées, code de séance). Un joueur ne peut révéler du brouillard que dans la vision de ses tokens.
 - **Écrans de projection** : cookie `jdr_display` HttpOnly, SameSite=Strict, révocation immédiate.
-- **Mise à jour** : contrôle des chemins, du manifeste et des empreintes de l'archive, sauvegarde préalable.
+- **Mise à jour** : contrôle des chemins, du manifeste et des empreintes de l'archive, releases signées (Ed25519), sauvegarde préalable.
+- **Sauvegarde et restauration** : base et assets, depuis l'administration, sans copie gardée sur le serveur.
+- **Intégrité** : vérification et correction des données depuis l'administration.
 - **Journal d'audit** dans l'administration.
 - **Installeur** verrouillé après usage.
 
-Limites connues : pas de revue de sécurité complète à ce stade (prévue en phase 10, revue OWASP).
+La revue de sécurité OWASP Top 10 est faite : voir [docs/securite.md](docs/securite.md). Accessibilité (WCAG 2.2 AA) : [docs/accessibilite.md](docs/accessibilite.md).
 
 ### Signaler une vulnérabilité
 
@@ -406,7 +408,7 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 | P7 | Mode présentiel : écrans appairés, échelle réelle | Terminée |
 | P8 | Génération procédurale : donjons, grottes, extérieurs, villages, textures | Terminée |
 | P9 | MJ en séance : étages et escaliers, liens entre maps, notes et épingles du MJ, zones de texte à lire, secrets et pièges, modèles de maps, palette de commandes (Cmd/Ctrl+K) | Terminée |
-| P10 | Durcissement : revue de sécurité OWASP, accessibilité, performances et tests de charge, mise à jour automatique avec archives signées, sauvegarde et restauration, documentation d'exploitation | À venir |
+| P10 | Durcissement : revue de sécurité OWASP, accessibilité, performances et tests de charge, mise à jour automatique avec archives signées, sauvegarde et restauration, documentation d'exploitation | Terminée (0.3.0) |
 | P11 | Grille hexagonale (option) | À venir |
 | P12 | Ajouts et retours d'expérience : demandes et défauts remontés à l'usage | À venir |
 | P13 | Tutoriels : aide intégrée au site et tutoriel | À venir |
@@ -420,6 +422,12 @@ Retirés du projet : traduction anglaise, co-édition en direct, carte du monde,
 | Fichier | Contenu |
 |---|---|
 | [docs/installation.md](docs/installation.md) | Installation, configuration, dépannage, mise à jour |
+| [docs/prerequis.md](docs/prerequis.md) | Prérequis du serveur : PHP, extensions, base, modules Apache, disque, HTTPS, cron |
+| [docs/mise-a-jour.md](docs/mise-a-jour.md) | Mise à jour automatique, manuelle ou par FTP, signature, retour arrière |
+| [docs/sauvegarde.md](docs/sauvegarde.md) | Sauvegarde et restauration de la base et des assets |
+| [docs/diagnostic.md](docs/diagnostic.md) | Diagnostic, intégrité, journaux, limite de connexions en direct, dépannage |
+| [docs/securite.md](docs/securite.md) | Revue de sécurité OWASP Top 10 |
+| [docs/accessibilite.md](docs/accessibilite.md) | Accessibilité : garanties et tests |
 | [docs/nginx.md](docs/nginx.md) | Configuration Nginx, protection des dossiers privés, flux temps réel, vérifications |
 | [docs/yunohost.md](docs/yunohost.md) | Installation sur YunoHost avec My Webapp |
 | [docs/realtime.md](docs/realtime.md) | Temps réel des séances : SSE, long polling, polling, anti-fuite |
