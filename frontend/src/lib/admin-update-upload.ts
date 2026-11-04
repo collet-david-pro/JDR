@@ -19,6 +19,8 @@ export interface ChunkedUploadOptions {
 }
 
 const MAX_RESYNC = 5;
+/** Smallest chunk tried after `413` from a proxy limit (nginx client_max_body_size, 1 MiB by default). */
+const MIN_CHUNK_BYTES = 65536;
 const NETWORK_CODES = new Set(['network_error', 'timeout']);
 /** Resume codes of the update upload and of the backup upload (same protocol). */
 const BAD_OFFSET_CODES = new Set(['update.bad_offset', 'backup.bad_offset']);
@@ -39,10 +41,12 @@ export async function sha256Hex(file: Blob): Promise<string> {
 /**
  * Sends the file chunk by chunk (PUT ?offset=n). `409 update.bad_offset` (or `backup.bad_offset`) resumes at the offset the
  * server reports (fields.received); a network error is retried `retries` times for the same chunk.
+ * `413` (a proxy in front of PHP refusing the body) halves the chunk size, down to 64 KiB.
  * Any other error is thrown as is.
  */
 export async function uploadInChunks(options: ChunkedUploadOptions): Promise<void> {
-  const { file, uploadId, chunkBytes, transport, onProgress, signal } = options;
+  const { file, uploadId, transport, onProgress, signal } = options;
+  let chunkBytes = options.chunkBytes;
   const retries = options.retries ?? 2;
   const sleep = options.sleep ?? defaultSleep;
   const total = file.size;
@@ -75,6 +79,12 @@ export async function uploadInChunks(options: ChunkedUploadOptions): Promise<voi
         resyncs += 1;
         offset = received;
         onProgress?.(offset, total);
+      } else if (
+        error instanceof ApiError &&
+        error.status === 413 &&
+        chunkBytes > MIN_CHUNK_BYTES
+      ) {
+        chunkBytes = Math.max(MIN_CHUNK_BYTES, Math.floor(chunkBytes / 2));
       } else if (error instanceof ApiError && NETWORK_CODES.has(error.code) && failures < retries) {
         failures += 1;
         await sleep(400 * failures);

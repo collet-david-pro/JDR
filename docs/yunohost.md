@@ -9,7 +9,7 @@ Remplacez `/jdr/` par le chemin que vous avez choisi pour l'application, et `<do
 ## 1. Installer l'application et envoyer les fichiers
 
 1. Installez l'application **My Webapp** sur votre domaine, avec le chemin voulu (par exemple `/jdr`).
-2. Envoyez **tout le contenu** de `jdr-v0.3.2-full.zip` dans le dossier web de l'application, sans oublier les fichiers cachés. Voir [installation.md](installation.md) pour la préparation de la base de données.
+2. Envoyez **tout le contenu** de `jdr-v0.3.3-full.zip` dans le dossier web de l'application, sans oublier les fichiers cachés. Voir [installation.md](installation.md) pour la préparation de la base de données.
 3. Ne lancez pas encore l'installation : protégez d'abord les dossiers privés (étape 3).
 
 ## 2. Trouver le fichier de configuration Nginx de l'application
@@ -68,7 +68,17 @@ La réponse doit commencer par `HTTP/2 403` (ou `HTTP/1.1 403`). Vérifiez de la
 
 Ouvrez ensuite `https://<domaine>/jdr/install.php` et suivez l'assistant. Le diagnostic de l'étape des prérequis ne doit plus signaler de dossier privé lisible.
 
-## 5. Temps réel (facultatif)
+## 5. Taille des envois
+
+Par défaut, Nginx refuse tout envoi de plus de 1 Mo (erreur 413). Les archives de mise à jour et les sauvegardes s'adaptent toutes seules (envoi en petits morceaux), mais l'import d'une image ou d'une map de plus de 1 Mo échoue. Ajoutez dans le dossier `<app>.d/` un fichier `01-jdr-upload.conf` :
+
+```nginx
+client_max_body_size 16m;
+```
+
+puis rechargez : `sudo nginx -t && sudo systemctl reload nginx`.
+
+## 6. Temps réel (facultatif)
 
 Sans configuration particulière, les séances fonctionnent : le navigateur bascule automatiquement du flux SSE vers le long polling. C'est un peu moins réactif (voir [realtime.md](realtime.md)).
 

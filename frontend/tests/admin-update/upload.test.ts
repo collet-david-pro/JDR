@@ -102,6 +102,29 @@ describe('uploadInChunks', () => {
     ).rejects.toMatchObject({ code: 'update.too_large' });
     expect(attempts).toBe(1);
   });
+
+  it('halves the chunk on 413 from a proxy body limit, down to 64 KiB', async () => {
+    const MiB = 1048576;
+    const sizes: number[] = [];
+    const transport: UploadTransport = {
+      putChunk: async (_id, offset, chunk) => {
+        sizes.push(chunk.size);
+        if (chunk.size > MiB) throw err('http_error', 413);
+        return { received: offset + chunk.size };
+      },
+    };
+    await uploadInChunks({ file: blob(3 * MiB), uploadId: 'u', chunkBytes: 2 * MiB, transport });
+    expect(sizes).toEqual([2 * MiB, MiB, MiB, MiB]);
+
+    const tiny: UploadTransport = {
+      putChunk: async () => {
+        throw err('http_error', 413);
+      },
+    };
+    await expect(
+      uploadInChunks({ file: blob(MiB), uploadId: 'u', chunkBytes: 65536, transport: tiny }),
+    ).rejects.toMatchObject({ status: 413 });
+  });
 });
 
 describe('sha256Hex', () => {
