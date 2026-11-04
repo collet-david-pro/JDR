@@ -79,7 +79,10 @@ final class AutoUpdater
      *
      * blocked: why no automatic update can start (null = nothing in the way): sodium_missing | unsigned | bad_signature.
      *
-     * @return array{enabled:bool,supported:bool,running:bool,last_done:mixed,last_error:mixed,blocked:?string}
+     * session_guard: a session started in the last 12 h holds the automatic start back. check_ttl: seconds a
+     * GitHub answer is kept before the automatic update looks again.
+     *
+     * @return array{enabled:bool,supported:bool,running:bool,last_done:mixed,last_error:mixed,blocked:?string,session_guard:bool,check_ttl:int}
      */
     public function status(): array
     {
@@ -92,6 +95,8 @@ final class AutoUpdater
             'last_done' => $state['last_done'] ?? null,
             'last_error' => $state['last_error'] ?? null,
             'blocked' => $this->blocked(),
+            'session_guard' => $this->sessionInProgress(),
+            'check_ttl' => UpdateChecker::CACHE_SECONDS,
         ];
     }
 
@@ -157,6 +162,69 @@ final class AutoUpdater
         }
     }
 
+    /**
+     * The administrator's explicit "Install now": forces the GitHub check, downloads the newer release
+     * (SHA-256 of SHA256SUMS and Ed25519 signature required, like the automatic path) and accepts it as the
+     * pending package, exactly like an uploaded archive. Ignores the session guard, retry_at and the attempt
+     * counter, and works with the automatic update switched off. Never an unverified archive.
+     *
+     * @return array<string, mixed> package summary
+     * @throws UpdateException 409 update.* when nothing can be installed
+     */
+    public function installLatest(int $adminId): array
+    {
+        if (!$this->supported()) {
+            throw new UpdateException('update.install_unsupported', [], 409);
+        }
+        if (!$this->signature->available()) {
+            throw new UpdateException('update.sodium_missing', [], 409);
+        }
+        $lock = substr('jdr_auto_update:' . $this->db->prefix(), 0, 64);
+        if ((int) $this->db->fetchValue('SELECT GET_LOCK(?, 0)', [$lock]) !== 1) {
+            throw new UpdateException('update.run_in_progress', [], 409);
+        }
+        try {
+            if ($this->storage->busyRun() !== null || is_file($this->path(self::RUN_FILE))) {
+                throw new UpdateException('update.run_in_progress', [], 409);
+            }
+            if ($this->packages->pending() !== null) {
+                throw new UpdateException('update.package_pending', [], 409);
+            }
+            $check = $this->checker->check(true);
+            if ($check['error'] !== null) {
+                throw new UpdateException('update.check_failed', [], 409);
+            }
+            $latest = $check['latest'] ?? null;
+            if (!is_array($latest) || !Semver::greaterThan((string) $latest['version'], (string) $check['current'])) {
+                throw new UpdateException('update.no_newer', [], 409);
+            }
+            $asset = $latest['update_asset'] ?? null;
+            if (!is_array($asset)) {
+                throw new UpdateException('update.no_asset', [], 409);
+            }
+            $refusal = $this->assetRefusal($asset);
+            if ($refusal !== null) {
+                throw new UpdateException($refusal, [], 409);
+            }
+            try {
+                return $this->packages->accept($this->fetch($asset), $adminId);
+            } catch (UpdateException $e) {
+                @unlink($this->path(self::DOWNLOAD_FILE));
+                throw $e;
+            } catch (\RuntimeException $e) {
+                @unlink($this->path(self::DOWNLOAD_FILE));
+                $this->logger->error('Install now failed', ['error' => $e->getMessage()]);
+                throw new UpdateException('update.download_failed', [], 409);
+            }
+        } finally {
+            try {
+                $this->db->fetchValue('SELECT RELEASE_LOCK(?)', [$lock]);
+            } catch (\Throwable) {
+                // Connection lost: the lock is released with it.
+            }
+        }
+    }
+
     private function start(float $budget): string
     {
         if ($this->storage->busyRun() !== null) {
@@ -205,11 +273,29 @@ final class AutoUpdater
      */
     private function acceptableAsset(array $asset): bool
     {
+        return $this->assetRefusal($asset) === null;
+    }
+
+    /**
+     * Why this asset must not be installed without a human looking at it (null: acceptable).
+     *
+     * @param array<string, mixed> $asset
+     */
+    private function assetRefusal(array $asset): ?string
+    {
+        if (!$this->signature->available()) {
+            return 'update.sodium_missing';
+        }
+        if (($asset['signature'] ?? null) === 'invalid') {
+            return 'update.bad_signature';
+        }
         $prefix = 'https://github.com/' . UpdateChecker::REPOSITORY . '/releases/download/';
 
-        return $this->signature->available() && ($asset['signature'] ?? null) === 'valid'
+        return ($asset['signature'] ?? null) === 'valid'
             && is_string($asset['url'] ?? null) && str_starts_with($asset['url'], $prefix)
-            && is_string($asset['sha256'] ?? null) && preg_match('/^[0-9a-f]{64}$/', $asset['sha256']) === 1;
+            && is_string($asset['sha256'] ?? null) && preg_match('/^[0-9a-f]{64}$/', $asset['sha256']) === 1
+            ? null
+            : 'update.unsigned';
     }
 
     /**

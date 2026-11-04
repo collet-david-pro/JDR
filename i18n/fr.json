@@ -95,7 +95,16 @@
       "run_in_progress": "Une mise à jour est déjà en cours.",
       "unverified": "Cette archive n'est pas vérifiée : cochez la case de confirmation pour l'installer.",
       "no_package": "Aucune archive en attente : envoyez-en une.",
-      "version_changed": "La version installée a changé depuis l'envoi : envoyez de nouveau l'archive."
+      "version_changed": "La version installée a changé depuis l'envoi : envoyez de nouveau l'archive.",
+      "install_unsupported": "Installation impossible sur une copie de développement.",
+      "sodium_missing": "L'extension PHP sodium est absente : la signature de la release ne peut pas être vérifiée. L'envoi manuel de l'archive reste possible.",
+      "unsigned": "Cette release n'est pas signée : envoyez l'archive à la main après l'avoir vérifiée.",
+      "bad_signature": "La signature de cette release est invalide : ne l'installez pas.",
+      "no_newer": "Aucune version plus récente que celle installée.",
+      "no_asset": "La release ne contient pas d'archive de mise à jour.",
+      "check_failed": "Impossible de lire la dernière release sur GitHub : réessayez plus tard.",
+      "download_failed": "Le téléchargement a échoué ou l'archive ne correspond pas à son empreinte officielle : réessayez plus tard.",
+      "package_pending": "Une archive est déjà en attente : lancez-la ou supprimez-la d'abord."
     },
     "backup": {
       "invalid_file": "Ce fichier n'est pas une sauvegarde valide de JDR (ou il est incomplet).",
@@ -769,7 +778,15 @@
         "unsupported": "Mise à jour automatique désactivée sur une copie de développement.",
         "blocked_sodium_missing": "Mise à jour automatique désactivée : l'extension PHP sodium est absente (elle vérifie la signature des versions). L'envoi manuel de l'archive reste possible.",
         "blocked_unsigned": "Mise à jour automatique impossible pour cette version : la release n'est pas signée. L'envoi manuel de l'archive reste possible.",
-        "blocked_bad_signature": "Mise à jour automatique refusée : la signature de cette release est invalide. N'installez pas cette archive sans vérification."
+        "blocked_bad_signature": "Mise à jour automatique refusée : la signature de cette release est invalide. N'installez pas cette archive sans vérification.",
+        "state": "Mise à jour automatique {state}.",
+        "state_on": "activée",
+        "state_off": "désactivée",
+        "last_check": "Dernière vérification : {date}.",
+        "never_checked": "Aucune vérification récente.",
+        "next_check": "Prochaine au plus tôt : {date}.",
+        "rhythm": "Elle avance à l'occasion d'une visite (environ 1 requête sur 50), ou toutes les 5 minutes avec la tâche cron.",
+        "session_guard": "Séance lancée il y a moins de 12 h : la mise à jour automatique attend la fin."
       },
       "check": {
         "title": "Nouvelle version",
@@ -783,7 +800,9 @@
         "download": "Télécharger le zip de mise à jour",
         "release_page": "Page de la release",
         "up_to_date": "Vous avez la dernière version.",
-        "checked_at": "Dernière vérification : {date}"
+        "checked_at": "Dernière vérification : {date}",
+        "install": "Installer la version {version}",
+        "installing": "Téléchargement et vérification de la signature en cours…"
       },
       "upload": {
         "title": "Envoyer un zip de mise à jour",

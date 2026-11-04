@@ -10,6 +10,7 @@
     UpdateModel,
     isNewerRelease,
     isResumable,
+    nextAutoCheck,
     resumeUrl,
     type UpdateChannel,
   } from '../../lib/admin-update.svelte';
@@ -29,6 +30,7 @@
   const check = $derived(model.check);
   const newer = $derived(isNewerRelease(check));
   const run = $derived(model.run);
+  const nextCheck = $derived(info === null ? null : nextAutoCheck(check, info.auto.check_ttl));
   const uploading = $derived(model.phase !== 'idle');
   const backup = $derived(info?.backup ?? null);
   const backupUrl = $derived(
@@ -126,6 +128,29 @@
             {t(`admin.update.auto.blocked_${info.auto.blocked}`)}
           </p>
         {/if}
+        {#if info.auto.session_guard}
+          <p class="muted" role="status" data-testid="update-auto-session">
+            {t('admin.update.auto.session_guard')}
+          </p>
+        {/if}
+        <p class="small muted" data-testid="update-auto-rhythm">
+          {t('admin.update.auto.state', {
+            state: t(
+              info.auto.enabled ? 'admin.update.auto.state_on' : 'admin.update.auto.state_off',
+            ),
+          })}
+          {#if check !== null}
+            {t('admin.update.auto.last_check', { date: formatDateTime(check.checked_at) })}
+          {:else}
+            {t('admin.update.auto.never_checked')}
+          {/if}
+          {#if nextCheck !== null}
+            {t('admin.update.auto.next_check', {
+              date: formatDateTime(new Date(nextCheck).toISOString()),
+            })}
+          {/if}
+          {t('admin.update.auto.rhythm')}
+        </p>
         {#if info.auto.running}
           <p class="muted" role="status">{t('admin.update.auto.running')}</p>
         {/if}
@@ -179,6 +204,21 @@
             </p>
             {#if check.latest.notes}
               <UpdateNotes notes={check.latest.notes} />
+            {/if}
+            {#if model.pending === null}
+              <p>
+                <Button
+                  variant="primary"
+                  loading={model.installing}
+                  onclick={() => model.installLatest()}
+                  data-testid="update-install-latest"
+                >
+                  {t('admin.update.check.install', { version: check.latest.version })}
+                </Button>
+              </p>
+              {#if model.installing}
+                <p class="muted" role="status">{t('admin.update.check.installing')}</p>
+              {/if}
             {/if}
             <p class="links">
               {#if check.latest.update_asset !== null}

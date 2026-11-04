@@ -127,6 +127,30 @@ final class AdminUpdateController
     }
 
     /**
+     * POST /admin/update/install-latest -> 201 {pending: summary} | 409 update.* — "Install now": forced check,
+     * verified download of the newer release, accepted as the pending package. Limited like a forced check.
+     */
+    public function installLatest(Request $request): Response
+    {
+        $admin = CurrentUser::require($request);
+        $wait = $this->limiter->attempt(RateLimiter::key('update_check', (string) $admin->id), 1, 30);
+        if ($wait !== null) {
+            throw new RateLimitedException($wait);
+        }
+        try {
+            $summary = $this->auto->installLatest($admin->id);
+        } catch (UpdateException $e) {
+            $this->audit->record($admin->id, 'update.install_latest_refused', 'update', null, ['code' => $e->errorCode()], $request->ip());
+            throw $e;
+        }
+        $this->audit->record($admin->id, 'update.install_latest', 'update', null, [
+            'version' => $summary['version'], 'sha256' => $summary['sha256'], 'authenticity' => $summary['authenticity'],
+        ], $request->ip());
+
+        return Response::ok(['pending' => $summary], [], 201);
+    }
+
+    /**
      * PATCH /admin/update {channel?: stable|prerelease, auto?: bool}
      */
     public function update(Request $request): Response

@@ -33,6 +33,16 @@ La mise à jour automatique ne démarre que si :
 
 La mise à jour n'avance que lorsque le site reçoit des visites ou qu'une tâche cron est configurée (voir [prerequis.md](prerequis.md)).
 
+### Le rythme réel
+
+- Elle est examinée à l'occasion d'une visite (environ **1 requête sur 50**), ou toutes les **5 minutes** avec la tâche cron.
+- Elle lit la dernière release gardée en mémoire : au plus **6 heures** d'ancienneté. La « prochaine vérification au plus tôt » s'affiche dans l'onglet, avec la raison de tout blocage (sodium absent, release non signée, séance lancée il y a moins de 12 h, dernière erreur).
+- Si vous ne voulez pas attendre, utilisez le bouton ci-dessous.
+
+### Installer maintenant
+
+Quand une version plus récente est annoncée, l'onglet propose **Installer la version X**. Le serveur force la vérification sur GitHub, télécharge l'archive, contrôle son empreinte `SHA256SUMS` **et** la signature, puis la présente comme une archive envoyée à la main : lisez le récapitulatif, choisissez de garder ou non la sauvegarde proposée, puis lancez l'installation. Ce bouton ignore la garde de 12 heures après une séance et les retentatives, et fonctionne même si la mise à jour automatique est désactivée. Il est refusé, avec une explication, si l'extension `sodium` est absente, si la release n'est pas signée ou sa signature invalide, s'il n'y a pas de version plus récente, si une archive ou une mise à jour est déjà en cours, ou sur une copie de développement.
+
 ### Les retentatives
 
 - Si une **migration** de la base échoue, le site est restauré aussitôt et la mise à jour **n'est pas retentée** pour cette version.

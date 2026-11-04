@@ -6,9 +6,11 @@ import {
   compareVersions,
   isNewerRelease,
   isResumable,
+  nextAutoCheck,
   resumeUrl,
   updateError,
   type UpdateApiClient,
+  type UpdateCheck,
   type UpdateInfo,
   type UpdateRun,
 } from '../../src/lib/admin-update.svelte';
@@ -263,5 +265,41 @@ describe('error messages and translations', () => {
       ...['added', 'changed', 'removed'].map((k) => `admin.update.summary.files_${k}`),
     ];
     for (const key of keys) expect(t(key, { count: 2 }), key).not.toBe(key);
+  });
+});
+
+describe('install the latest release', () => {
+  it('stores the pending package returned by the server', async () => {
+    const { api, calls } = fakeApi({
+      'POST /admin/update/install-latest': () => ({ pending: summary }),
+    });
+    const model = new UpdateModel(api, t);
+    model.info = info;
+    await model.installLatest();
+    expect(calls).toEqual(['POST /admin/update/install-latest']);
+    expect(model.pending?.version).toBe('0.2.0');
+    expect(model.installing).toBe(false);
+    expect(model.actionFailure).toBeNull();
+  });
+
+  it('keeps the page and reports a refusal', async () => {
+    const { api } = fakeApi({
+      'POST /admin/update/install-latest': () => {
+        throw new ApiError({ code: 'update.bad_signature', message: '', status: 409 });
+      },
+    });
+    const model = new UpdateModel(api, t);
+    model.info = info;
+    await model.installLatest();
+    expect(model.pending).toBeNull();
+    expect(model.actionFailure).not.toBeNull();
+    expect(model.installing).toBe(false);
+  });
+
+  it('computes the earliest next automatic check', () => {
+    const check = { checked_at: '2026-11-04T10:00:00Z' } as UpdateCheck;
+    expect(nextAutoCheck(check, 21600)).toBe(Date.parse('2026-11-04T16:00:00Z'));
+    expect(nextAutoCheck(null, 21600)).toBeNull();
+    expect(nextAutoCheck(check, undefined)).toBeNull();
   });
 });

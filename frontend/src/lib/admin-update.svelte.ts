@@ -104,6 +104,10 @@ export interface UpdateAuto {
   readonly blocked?: AutoBlocked | null;
   readonly supported: boolean;
   readonly running: boolean;
+  /** A session started in the last 12 h holds the automatic start back. */
+  readonly session_guard?: boolean;
+  /** Seconds a GitHub answer is kept before the automatic update looks again. */
+  readonly check_ttl?: number;
   readonly last_done: { readonly version: string; readonly at: number } | null;
   readonly last_error: {
     readonly version: string;
@@ -177,6 +181,16 @@ export function isNewerRelease(check: UpdateCheck | null): boolean {
   return (compareVersions(check.latest.version, check.current) ?? 0) > 0;
 }
 
+/** Earliest time the automatic update looks at GitHub again (last check + cache lifetime, ms); null when unknown. */
+export function nextAutoCheck(
+  check: UpdateCheck | null,
+  ttlSeconds: number | undefined,
+): number | null {
+  if (check === null || ttlSeconds === undefined) return null;
+  const at = Date.parse(check.checked_at);
+  return Number.isNaN(at) ? null : at + ttlSeconds * 1000;
+}
+
 const FILE_HASH_REASONS = ['mismatch', 'unlisted', 'missing'];
 const shortHash = (value: string | undefined): string =>
   value === undefined ? '' : value.length > 16 ? `${value.slice(0, 16)}…` : value;
@@ -221,6 +235,8 @@ export class UpdateModel implements UploadTransport {
   failure = $state.raw<ErrorSummary | null>(null);
   check = $state.raw<UpdateCheck | null>(null);
   checking = $state(false);
+  /** "Install now" in progress (forced check, download, verification). */
+  installing = $state(false);
   /** Seconds before the next forced check is accepted (429), null when not limited. */
   retryAfter = $state<number | null>(null);
   phase = $state<UploadPhase>('idle');
@@ -274,6 +290,23 @@ export class UpdateModel implements UploadTransport {
       }
     } finally {
       this.checking = false;
+    }
+  }
+
+  /** "Install version X": the server downloads and verifies the release; the summary then shows as for an upload. */
+  async installLatest(): Promise<void> {
+    if (this.installing) return;
+    this.installing = true;
+    this.actionFailure = null;
+    try {
+      const { data } = await this.api.post<{ pending: UpdateSummary }>(
+        '/admin/update/install-latest',
+      );
+      if (this.info !== null) this.info = { ...this.info, pending: data.pending };
+    } catch (error) {
+      this.actionFailure = updateError(error, this.t);
+    } finally {
+      this.installing = false;
     }
   }
 

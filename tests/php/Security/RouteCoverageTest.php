@@ -92,6 +92,7 @@ final class RouteCoverageTest extends ApiTestCase
             'GET /admin/update/backup' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'DELETE /admin/update/backup' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'POST /admin/update/check' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
+            'POST /admin/update/install-latest' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'POST /admin/update/uploads' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'PUT /admin/update/uploads/{upload:[0-9a-f]+}' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
             'POST /admin/update/uploads/{upload:[0-9a-f]+}/complete' => [self::ADMIN, self::ADMIN_CHECKED_HERE],
