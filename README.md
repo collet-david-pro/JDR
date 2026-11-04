@@ -409,7 +409,7 @@ node dev/release.mjs package             # dist/jdr-vX.Y.Z-full.zip et dist/jdr-
 | P8 | Génération procédurale : donjons, grottes, extérieurs, villages, textures | Terminée |
 | P9 | MJ en séance : étages et escaliers, liens entre maps, notes et épingles du MJ, zones de texte à lire, secrets et pièges, modèles de maps, palette de commandes (Cmd/Ctrl+K) | Terminée |
 | P10 | Durcissement : revue de sécurité OWASP, accessibilité, performances et tests de charge, mise à jour automatique avec archives signées, sauvegarde et restauration, documentation d'exploitation | Terminée (0.3.0) |
-| P11 | Grille hexagonale (option) | À venir |
+| P11 | Grille hexagonale (option) | Abandonnée |
 | P12 | Ajouts et retours d'expérience : demandes et défauts remontés à l'usage | À venir |
 | P13 | Tutoriels : aide intégrée au site et tutoriel | À venir |
 
