@@ -6,6 +6,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.2] - 2026-11-04
+
+### Fixed
+- **Mode maintenance** : un administrateur qui activait ce mode restait bloqué sur la page de maintenance. Il se connecte maintenant depuis cette page et utilise le site normalement, avec un bandeau qui rappelle que la maintenance est active. Les autres utilisateurs voient toujours la page de maintenance.
+- **Liste des maps d'une partie** : tous les boutons d'action (modifier, dupliquer, enregistrer comme modèle, corbeille) restent visibles, même sur un écran étroit ; les libellés longs passent à la ligne au lieu d'être coupés.
+
 ## [0.3.0] - 2026-11-04
 
 Phase 10 « Durcissement » terminée : sauvegarde, intégrité, releases signées, revue de sécurité, accessibilité, performances.
@@ -84,6 +90,7 @@ Première version publiée (alpha) : phases 0 à 8 de la feuille de route et mod
 - Intégration continue GitHub Actions (lint PHP, PHPUnit sur PHP 8.1/8.3 × MariaDB 10.3/MySQL 8.0, front, migrations figées).
 - Environnement de développement : serveur PHP local, Docker Compose (Apache + MariaDB + Mailpit), documentation Nginx.
 
+[0.3.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.2
 [0.3.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.3.0
 [0.2.0]: https://github.com/collet-david-pro/JDR/releases/tag/v0.2.0
 [0.1.0-alpha.2]: https://github.com/collet-david-pro/JDR/releases/tag/v0.1.0-alpha.2
