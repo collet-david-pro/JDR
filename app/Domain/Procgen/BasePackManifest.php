@@ -16,6 +16,7 @@ use JDR\Domain\Support\AppPaths;
 final class BasePackManifest
 {
     public const RELATIVE_FILE = '/app/Seed/base-pack/pack.json';
+    public const TOKENS_FILE = 'tokens.json';
 
     private string $file;
 
@@ -61,9 +62,28 @@ final class BasePackManifest
         if ($this->data !== null) {
             return $this->data;
         }
-        $json = is_file($this->file) ? file_get_contents($this->file) : false;
+        $tiles = $this->read($this->file);
+        // tokens.json (dev/base-tokens/generate.php) sits beside pack.json (tile generator of the front);
+        // the version is the sum: it grows whenever either part grows.
+        $tokensFile = $this->directory() . '/' . self::TOKENS_FILE;
+        $tokens = is_file($tokensFile) ? $this->read($tokensFile) : ['version' => 0, 'entries' => []];
+        $seen = [];
+        $entries = [];
+        foreach (array_merge($tiles['entries'], $tokens['entries']) as $i => $e) {
+            $entries[] = $this->entry($e, (int) $i, $seen);
+        }
+
+        return $this->data = ['version' => $tiles['version'] + $tokens['version'], 'entries' => $entries];
+    }
+
+    /**
+     * @return array{version: int, entries: array<mixed>}
+     */
+    private function read(string $file): array
+    {
+        $json = is_file($file) ? file_get_contents($file) : false;
         if ($json === false) {
-            throw new \RuntimeException('Base pack manifest not readable: ' . $this->file);
+            throw new \RuntimeException('Base pack manifest not readable: ' . $file);
         }
         try {
             $raw = json_decode($json, true, 16, JSON_THROW_ON_ERROR);
@@ -73,13 +93,8 @@ final class BasePackManifest
         if (!is_array($raw) || !is_int($raw['version'] ?? null) || $raw['version'] < 1 || !is_array($raw['entries'] ?? null)) {
             throw new \RuntimeException('Base pack manifest: bad header.');
         }
-        $seen = [];
-        $entries = [];
-        foreach ($raw['entries'] as $i => $e) {
-            $entries[] = $this->entry($e, (int) $i, $seen);
-        }
 
-        return $this->data = ['version' => $raw['version'], 'entries' => $entries];
+        return ['version' => $raw['version'], 'entries' => $raw['entries']];
     }
 
     /**
@@ -93,7 +108,7 @@ final class BasePackManifest
             throw $fail('not an object');
         }
         $key = $e['key'] ?? null;
-        if (!is_string($key) || preg_match('/^(floor|terrain|decor)\.[a-z0-9_]{1,40}$/', $key) !== 1 || isset($seen[$key])) {
+        if (!is_string($key) || preg_match('/^(floor|terrain|decor|token)\.[a-z0-9_]{1,40}$/', $key) !== 1 || isset($seen[$key])) {
             throw $fail('bad or duplicate key');
         }
         $seen[$key] = true;
