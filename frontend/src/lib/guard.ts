@@ -74,3 +74,12 @@ export function requiresLogin(access: RouteAccess | undefined): boolean {
   const rule = access ?? 'protected';
   return rule === 'protected' || rule === 'admin';
 }
+
+/**
+ * Maintenance flag set by an administrator: everyone but administrators gets the maintenance
+ * screen, except on the sign-in page (an administrator must be able to sign in).
+ */
+export function maintenanceLocked(flag: boolean, auth: AuthSnapshot, path: string): boolean {
+  if (!flag || auth.user?.role === 'admin') return false;
+  return path !== '/login';
+}

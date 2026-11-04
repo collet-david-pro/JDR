@@ -58,6 +58,7 @@ function start(): void {
     refreshCsrf: (): Promise<void> => auth.bootstrap(),
   });
 
+  appStatus.maintenanceFlag = boot.maintenance;
   const auth: AuthStore = new AuthStore(api, prefs);
   setServices({ boot, api, router, auth });
   router.start();

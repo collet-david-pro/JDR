@@ -3,11 +3,11 @@
   import AppHeader from './components/AppHeader.svelte';
   import Toasts from './components/Toasts.svelte';
   import { describeError } from './lib/errors';
-  import { decideAccess } from './lib/guard';
+  import { decideAccess, maintenanceLocked } from './lib/guard';
   import { t } from './lib/i18n';
   import type { PageComponent } from './lib/page';
   import { RouteView } from './lib/route-view.svelte';
-  import { services } from './lib/services';
+  import { href, services } from './lib/services';
   import Forbidden from './pages/Forbidden.svelte';
   import NotFound from './pages/NotFound.svelte';
   import { appStatus } from './stores/app.svelte';
@@ -30,6 +30,9 @@
 
   let main: HTMLElement | undefined = $state();
   let path = $state(router.state.location.path);
+  const locked = $derived(
+    maintenanceLocked(appStatus.maintenanceFlag, { status: auth.status, user: auth.user }, path),
+  );
   const bootError = $derived(auth.status === 'error' ? describeError(auth.error, t) : null);
 
   $effect(() => untrack(() => view.connect()));
@@ -69,13 +72,26 @@
   </div>
 {/if}
 
+{#if appStatus.maintenanceFlag && auth.isAdmin}
+  <div class="banner" role="status">
+    <span>{t('app.maintenance_banner')}</span>
+    <a class="button" href={href('/admin/settings')}>{t('app.maintenance_settings')}</a>
+  </div>
+{/if}
+
 <AppHeader {path} />
 
 <main id="main" tabindex="-1" bind:this={main}>
-  {#if appStatus.maintenance}
+  {#if appStatus.maintenance || locked}
     <section class="system-page" role="alert">
       <h1>{t('pages.maintenance.title')}</h1>
       <p>{t('errors.maintenance')}</p>
+      {#if locked && auth.user === null}
+        <p>
+          <a class="button button-primary" href={href('/login')}>{t('pages.maintenance.sign_in')}</a
+          >
+        </p>
+      {/if}
       {#if appStatus.updateUrl !== null}
         <p>
           <a class="button button-primary" href={appStatus.updateUrl}

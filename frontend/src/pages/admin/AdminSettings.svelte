@@ -18,6 +18,7 @@
     type SettingsFormValues,
   } from '../../lib/settings-form';
   import type { SiteSettings } from '../../lib/types';
+  import { appStatus } from '../../stores/app.svelte';
   import { toasts } from '../../stores/toasts.svelte';
   import SmtpSettings from './SmtpSettings.svelte';
 
@@ -38,6 +39,7 @@
   function loaded(settings: SiteSettings): void {
     original = settings;
     values = toFormValues(settings);
+    appStatus.maintenanceFlag = settings.maintenance;
   }
 
   onMount(() => {

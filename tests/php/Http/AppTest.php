@@ -139,14 +139,25 @@ final class AppTest extends TestCase
         self::assertSame('GET, HEAD', $response->header('Allow'));
     }
 
-    public function testMaintenanceReturns503WithRetryAfter(): void
+    public function testMaintenanceFlagServesTheShellWith503(): void
     {
+        // The shell still loads so an administrator can sign in (the SPA shows the others its maintenance screen).
+        file_put_contents($this->root . '/assets/vite-manifest.json', '{"src/main.ts":{"file":"assets/m.js"}}');
         $app = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION, true));
         $page = $app->handle(Request::create('GET', '/games/12'));
         self::assertSame(503, $page->status());
         self::assertSame('120', $page->header('Retry-After'));
-        self::assertStringContainsString('Maintenance', $page->body());
+        preg_match('#<script id="jdr-boot" type="application/json">(.+?)</script>#', $page->body(), $boot);
+        self::assertTrue(json_decode($boot[1], true)['maintenance']);
         self::assertCommonHeaders($page);
+    }
+
+    public function testDatabaseBehindCodeShowsTheMaintenancePage(): void
+    {
+        $page = $this->app(self::config(), SystemStatus::fixed('ok', '0000'))->handle(Request::create('GET', '/games/12'));
+        self::assertSame(503, $page->status());
+        self::assertSame('120', $page->header('Retry-After'));
+        self::assertStringContainsString('Maintenance', $page->body());
     }
 
     public function testDatabaseBehindCodeTriggersMaintenance(): void
@@ -199,6 +210,7 @@ final class AppTest extends TestCase
             'routing_mode' => 'rewrite',
             'base_path' => '/jdr',
             'csrf' => null,
+            'maintenance' => false,
         ], json_decode($boot[1], true));
         self::assertSame('max-age=15552000', $response->header('Strict-Transport-Security'));
     }

@@ -27,9 +27,9 @@ final class Shell
     }
 
     /**
-     * @return array{version: string, api_base: string, routing_mode: string, base_path: string, csrf: string|null}
+     * @return array{version: string, api_base: string, routing_mode: string, base_path: string, csrf: string|null, maintenance: bool}
      */
-    public static function bootData(string $basePath, string $routingMode, ?string $csrf): array
+    public static function bootData(string $basePath, string $routingMode, ?string $csrf, bool $maintenance = false): array
     {
         return [
             'version' => \APP_VERSION,
@@ -37,6 +37,7 @@ final class Shell
             'routing_mode' => $routingMode,
             'base_path' => $basePath,
             'csrf' => $csrf,
+            'maintenance' => $maintenance,
         ];
     }
 
@@ -50,7 +51,11 @@ final class Shell
         return json_encode($data, self::JSON_FLAGS);
     }
 
-    public function render(string $basePath, string $routingMode, string $nonce, ?string $csrf = null): Response
+    /**
+     * $maintenance: maintenance flag alone (schema up to date); the SPA shows its maintenance screen to
+     * everyone but administrators, with a sign-in link.
+     */
+    public function render(string $basePath, string $routingMode, string $nonce, ?string $csrf = null, bool $maintenance = false): Response
     {
         $manifest = ViteManifest::load($this->publicRoot . '/' . self::MANIFEST);
         $entry = $manifest?->entry(self::ENTRY);
@@ -64,7 +69,7 @@ final class Shell
             'script' => $assetUrl($entry['file']),
             'styles' => array_map($assetUrl, $entry['css']),
             'preloads' => array_map($assetUrl, $entry['preload']),
-            'bootJson' => self::encodeBootData(self::bootData($basePath, $routingMode, $csrf)),
+            'bootJson' => self::encodeBootData(self::bootData($basePath, $routingMode, $csrf, $maintenance)),
         ]));
     }
 }

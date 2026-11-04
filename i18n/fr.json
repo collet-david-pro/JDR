@@ -4,6 +4,8 @@
     "tagline": "Cartographie et projection de maps pour le jeu de rôle",
     "skip_to_content": "Aller au contenu",
     "update_available": "Une nouvelle version est disponible.",
+    "maintenance_banner": "Mode maintenance actif : le site est fermé aux autres utilisateurs.",
+    "maintenance_settings": "Réglages",
     "boot_error": "Configuration de l'application invalide. Rechargez la page."
   },
   "common": {
@@ -126,7 +128,8 @@
       "title": "Maintenance en cours",
       "hint": "La page se rechargera d'elle-même quand le site sera de nouveau disponible.",
       "update_link": "Administrateur : terminer la mise à jour",
-      "open_update": "Ouvrir la mise à jour"
+      "open_update": "Ouvrir la mise à jour",
+      "sign_in": "Se connecter (administrateurs)"
     },
     "no_build": {
       "title": "Front-end non compilé",

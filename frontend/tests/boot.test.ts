@@ -19,7 +19,13 @@ describe('parseBootConfig', () => {
       routingMode: 'rewrite',
       basePath: '/base',
       csrf: null,
+      maintenance: false,
     });
+  });
+
+  it('reads the maintenance flag (absent or not true = off)', () => {
+    expect(parse({ ...valid, maintenance: true }).maintenance).toBe(true);
+    expect(parse({ ...valid, maintenance: 'yes' }).maintenance).toBe(false);
   });
 
   it('accepts the query-mode shell payload at the domain root', () => {

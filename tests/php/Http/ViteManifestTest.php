@@ -69,6 +69,7 @@ final class ViteManifestTest extends TestCase
             'routing_mode' => 'query',
             'base_path' => '',
             'csrf' => null,
+            'maintenance' => false,
         ], Shell::bootData('', 'query', null));
     }
 }

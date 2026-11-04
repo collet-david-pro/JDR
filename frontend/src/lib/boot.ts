@@ -2,7 +2,7 @@
  * Boot configuration injected by the PHP shell (app/Views/shell.php):
  *
  *   <script id="jdr-boot" type="application/json">
- *     {"version":"1.0.0","api_base":"/base/api/v1","routing_mode":"rewrite","base_path":"/base","csrf":null}
+ *     {"version":"1.0.0","api_base":"/base/api/v1","routing_mode":"rewrite","base_path":"/base","csrf":null,"maintenance":false}
  *   </script>
  *
  * In query routing mode api_base is "/base/index.php?r=/api/v1".
@@ -19,6 +19,8 @@ export interface BootConfig {
   /** Installation sub-folder, "" at the domain root, otherwise "/folder" (no trailing "/"). */
   readonly basePath: string;
   readonly csrf: string | null;
+  /** Maintenance flag set by an administrator (schema up to date): only administrators use the site. */
+  readonly maintenance: boolean;
 }
 
 export const BOOT_ELEMENT_ID = 'jdr-boot';
@@ -29,6 +31,7 @@ export const DEV_BOOT_CONFIG: BootConfig = Object.freeze({
   routingMode: 'rewrite',
   basePath: '',
   csrf: null,
+  maintenance: false,
 });
 
 export class BootConfigError extends Error {
@@ -66,7 +69,9 @@ export function parseBootConfig(text: string): BootConfig {
     throw new BootConfigError('Boot configuration: "csrf" must be null or a non-empty string');
   }
 
-  return Object.freeze({ version, apiBase, routingMode, basePath, csrf });
+  const maintenance = obj['maintenance'] === true;
+
+  return Object.freeze({ version, apiBase, routingMode, basePath, csrf, maintenance });
 }
 
 function normalizeBasePath(value: unknown): string {

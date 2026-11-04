@@ -330,11 +330,18 @@ final class App
         $status = $this->container->get(SystemStatus::class);
         if ($status->needsMaintenance(\REQUIRED_DB_VERSION)) {
             // Database behind the code: the 503 page links administrators to update.php.
-            $updatePending = !$status->maintenanceFlagOnly(\REQUIRED_DB_VERSION);
-            if ($updatePending && $this->isAdmin($request)) {
+            if ($status->maintenanceFlagOnly(\REQUIRED_DB_VERSION)) {
+                // Flag alone: the shell still loads so an administrator can sign in and keep using the
+                // site (the API lets them through, MaintenanceGate); the others get the SPA maintenance screen.
+                return $this->container->get(Shell::class)
+                    ->render($request->basePath, $this->config->routingMode(), $nonce, null, true)
+                    ->withStatus(503)
+                    ->withHeader('Retry-After', (string) MaintenanceException::RETRY_AFTER);
+            }
+            if ($this->isAdmin($request)) {
                 return Response::redirect($request->basePath . '/update.php'); // 302: the update goes on there
             }
-            throw new MaintenanceException('', $updatePending);
+            throw new MaintenanceException('', true);
         }
 
         return $this->container->get(Shell::class)->render(

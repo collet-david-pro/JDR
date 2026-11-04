@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   decideAccess,
   loginPath,
+  maintenanceLocked,
   requiresLogin,
   safeNext,
   type AuthSnapshot,
@@ -164,5 +165,21 @@ describe('RouteView with the guard', () => {
     setAuth(admin);
     await vi.waitFor(() => expect(view.component).toBe('Admin'));
     expect(view.params).toEqual({ rest: 'users' });
+  });
+});
+
+describe('maintenanceLocked', () => {
+  const ready = (role: string | null) => ({
+    status: 'ready' as const,
+    user: role === null ? null : { role },
+  });
+
+  it('locks everyone but administrators while the flag is set, except the sign-in page', () => {
+    expect(maintenanceLocked(true, ready(null), '/games/1')).toBe(true);
+    expect(maintenanceLocked(true, ready('user'), '/')).toBe(true);
+    expect(maintenanceLocked(true, { status: 'loading', user: null }, '/')).toBe(true);
+    expect(maintenanceLocked(true, ready(null), '/login')).toBe(false);
+    expect(maintenanceLocked(true, ready('admin'), '/admin')).toBe(false);
+    expect(maintenanceLocked(false, ready(null), '/')).toBe(false);
   });
 });
