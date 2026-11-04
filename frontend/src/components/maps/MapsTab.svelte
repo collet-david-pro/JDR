@@ -335,6 +335,9 @@
     padding: 0;
     list-style: none;
   }
+  .grid > li {
+    min-width: 0;
+  }
   .empty {
     padding: var(--space-6) var(--space-4);
     text-align: center;

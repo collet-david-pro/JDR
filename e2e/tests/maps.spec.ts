@@ -267,6 +267,22 @@ test("Maps tab: create, rename, duplicate, trash and restore; the drawing surviv
   await expect(
     page.getByRole("region", { name: "Acte 1/Crypte" }),
   ).toBeVisible();
+  // V032a: every action stays fully inside the viewport and its card.
+  for (const size of [
+    { width: 375, height: 800 },
+    { width: 1280, height: 800 },
+  ]) {
+    await page.setViewportSize(size);
+    const cardBox = await card.boundingBox();
+    for (const id of ["map-edit", "map-duplicate", "map-trash"]) {
+      const btn = card.getByTestId(id);
+      await expect(btn).toBeVisible();
+      const b = await btn.boundingBox();
+      expect(b!.x).toBeGreaterThanOrEqual(0);
+      expect(b!.x + b!.width).toBeLessThanOrEqual(size.width);
+      expect(b!.x + b!.width).toBeLessThanOrEqual(cardBox!.x + cardBox!.width + 1);
+    }
+  }
   await card.getByTestId("map-edit").click();
   const edit = page.getByTestId("map-edit-form");
   await edit.locator('input[name="name"]').fill("Crypte basse");

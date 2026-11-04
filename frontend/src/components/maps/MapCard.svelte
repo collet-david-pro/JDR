@@ -112,7 +112,8 @@
   .map-card {
     display: grid;
     grid-template-rows: auto 1fr;
-    overflow: hidden;
+    min-width: 0;
+    height: 100%;
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-surface);
@@ -122,6 +123,8 @@
     display: grid;
     place-items: center;
     background: var(--color-surface-sunken);
+    overflow: hidden;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
   .thumb img {
     width: 100%;
@@ -152,5 +155,17 @@
     flex-wrap: wrap;
     gap: var(--space-1);
     margin-top: var(--space-2);
+  }
+  /* Never clip an action: labels wrap inside the button instead. */
+  .actions :global(.button) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .body {
+    min-width: 0;
   }
 </style>
