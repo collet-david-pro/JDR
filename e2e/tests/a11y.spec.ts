@@ -149,8 +149,12 @@ async function paletteShortcut(page: Page): Promise<string> {
   return `${mac ? 'Meta' : 'Control'}+k`;
 }
 
-/** Presses Tab until `locator` has the focus (at most `max` presses). */
+/**
+ * Presses Tab until `locator` has the focus (at most `max` presses). WebKit, like Safari, skips
+ * links on Tab unless Option is held: the walkthrough uses Option+Tab there.
+ */
 async function tabTo(page: Page, locator: ReturnType<Page['locator']>, max = 60, key = 'Tab'): Promise<void> {
+  if (page.context().browser()?.browserType().name() === 'webkit') key = key.replace('Tab', 'Alt+Tab');
   for (let i = 0; i < max; i++) {
     if (await locator.evaluate((el) => el === document.activeElement).catch(() => false)) return;
     await page.keyboard.press(key);
