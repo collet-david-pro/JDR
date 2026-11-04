@@ -6,6 +6,16 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.4] - 2026-11-05
+
+### Added
+- **Pack de tokens de base** : 40 tokens générés (héros, monstres, PNJ, animaux), rangés dans les catégories générales Héros, Monstres, PNJ et Animaux, créées si besoin.
+- **Installation automatique du pack de base** (tuiles et tokens) à la fin de l'installation et après une mise à jour qui le modifie ; les éléments en échec sont retentés environ toutes les heures.
+- **Réparer le pack de base** (**Administration > Intégrité**) : bouton « Installer / réparer le pack de base ».
+
+### Changed
+- **Maps générées** : test de bout en bout ajouté pour la corbeille, la restauration et la suppression définitive.
+
 ## [0.3.3] - 2026-11-04
 
 ### Added
