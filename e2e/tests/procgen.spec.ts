@@ -448,6 +448,80 @@ test.describe("P8 generation", () => {
     expect(errors).toEqual([]);
   });
 
+  test("a generated map (new map or current map) can be trashed, restored and deleted for good", async ({
+    page,
+    browserName,
+  }) => {
+    const errors = watchErrors(page);
+    const gm = await gmWithGame(page);
+    const mapId = await createMap(page, gm, 40, 40);
+    const ready = await openEditor(page, gm, mapId);
+    test.skip(
+      !ready,
+      `${browserName}: neither WebGPU nor WebGL 2 in this headless browser`,
+    );
+
+    // "Current map" target.
+    await openPanel(page);
+    await page.getByTestId("gen-generator").selectOption("cave");
+    await page.getByTestId("gen-seed").fill("poubelle-1");
+    await expect(preview(page)).toHaveAttribute("data-state", "ready", {
+      timeout: 30_000,
+    });
+    await page.getByTestId("gen-apply").click();
+    await expectSaved(page);
+    await expect
+      .poll(async () => (await mapDetail(page, mapId)).generation?.seed ?? null)
+      .toBe("poubelle-1");
+
+    // "New map" target (the panel stays open after applying).
+    if (!(await page.getByTestId("generate-panel").isVisible()))
+      await openPanel(page);
+    await page.getByTestId("gen-target-new").check();
+    await page.getByTestId("gen-new-name").fill("Grotte jetable");
+    await page.getByTestId("gen-seed").fill("poubelle-2");
+    await expect(preview(page)).toHaveAttribute("data-state", "ready", {
+      timeout: 30_000,
+    });
+    await page.getByTestId("gen-apply").click();
+    await expect(page).toHaveURL(
+      new RegExp(`/games/${gm.gameId}/maps/(?!${mapId}/)\\d+/edit$`),
+    );
+    const newId = new URL(page.url()).pathname.split("/")[4]!;
+    expect(await editorReady(page)).toBe(true);
+    await expectSaved(page);
+    await expect
+      .poll(async () => (await mapDetail(page, newId)).generation?.seed ?? null)
+      .toBe("poubelle-2");
+
+    // Maps tab: trash both, restore both, trash again.
+    await page.locator("a.back").click();
+    await expect(page).toHaveURL(new RegExp(`/games/${gm.gameId}\\?tab=maps`));
+    const cards = page.getByTestId("map-card");
+    await expect(cards).toHaveCount(2);
+    for (const id of [newId, mapId]) {
+      await page
+        .locator(`[data-testid="map-card"][data-map-id="${id}"]`)
+        .getByTestId("map-trash")
+        .click();
+    }
+    await expect(page.getByTestId("maps-empty")).toBeVisible();
+    await page.getByTestId("maps-view-trash").click();
+    await expect(cards).toHaveCount(2);
+    await expect(page.getByText("poubelle", { exact: false })).toHaveCount(0);
+    await cards.first().getByTestId("map-restore").click();
+    await cards.first().getByTestId("map-restore").click();
+    await page.getByTestId("maps-view-active").click();
+    await expect(cards).toHaveCount(2);
+    for (const id of [newId, mapId]) {
+      const del = await page.request.delete(`/api/v1/maps/${id}`, {
+        headers: gm.headers,
+      });
+      expect(del.status(), await del.text()).toBe(204);
+    }
+    expect(errors).toEqual([]);
+  });
+
   test("a generation in a selection replaces only the selected rectangle", async ({
     page,
     browserName,
