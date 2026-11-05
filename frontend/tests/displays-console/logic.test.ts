@@ -4,6 +4,7 @@ import {
   formatCountdown,
   formatPairingCode,
   formFromDisplay,
+  formKey,
   patchFromForm,
   remainingMs,
   seenAgo,
@@ -103,6 +104,16 @@ describe('settings form', () => {
     expect(
       'errors' in patchFromForm({ ...formFromDisplay(display), diagonal: '300', mm: '5' }),
     ).toBe(false);
+  });
+  it('keys the form on its values, not on the order of the settings', () => {
+    const reordered = {
+      ...display,
+      settings: Object.fromEntries(Object.entries(display.settings).reverse()),
+    } as typeof display;
+    expect(formKey(reordered)).toBe(formKey(display));
+    expect(formKey({ ...display, settings: { ...display.settings, show_tokens: false } })).not.toBe(
+      formKey(display),
+    );
   });
 });
 

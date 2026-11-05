@@ -98,6 +98,15 @@ export function formFromDisplay(d: Pick<DisplayInfo, 'name' | 'settings'>): Sett
   };
 }
 
+/**
+ * What the form shows, as a stable string: the form is reset only when it changes. The raw
+ * settings are not enough: their key order differs between a save reply and a reload, and a
+ * reset there would undo an edit not yet saved.
+ */
+export function formKey(d: Pick<DisplayInfo, 'name' | 'settings'>): string {
+  return JSON.stringify(formFromDisplay(d));
+}
+
 export type FormErrors = Partial<Record<'name' | 'diagonal_in' | 'mm_per_cell', 'name' | 'range'>>;
 
 export interface FormPatch {

@@ -9,6 +9,7 @@
   import { t } from '../../lib/i18n';
   import {
     formFromDisplay,
+    formKey,
     patchFromForm,
     seenAgo,
     shortUserAgent,
@@ -38,7 +39,7 @@
   let now = $state(Date.now());
 
   // The form follows the screen when it changes elsewhere (event, other save).
-  const key = $derived(JSON.stringify([display.name, display.settings]));
+  const key = $derived(formKey(display));
   $effect(() => {
     void key;
     untrack(() => {
