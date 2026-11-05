@@ -18,8 +18,14 @@ interface SseOutput
      */
     public function start(array $headers): void;
 
+    /**
+     * Writes raw SSE data to the client.
+     */
     public function write(string $data): void;
 
+    /**
+     * Pushes buffered data to the client.
+     */
     public function flush(): void;
 
     /**

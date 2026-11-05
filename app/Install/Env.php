@@ -20,6 +20,9 @@ final class Env
     {
     }
 
+    /**
+     * Builds the environment from PHP superglobals.
+     */
     public static function fromGlobals(string $root): self
     {
         /** @var array<string, mixed> $server */
@@ -28,6 +31,9 @@ final class Env
         return new self($root, $server);
     }
 
+    /**
+     * Tells whether the installer is served over HTTPS.
+     */
     public function isHttps(): bool
     {
         $https = strtolower((string) ($this->server['HTTPS'] ?? ''));
@@ -69,16 +75,25 @@ final class Env
         return Config::normalizeBasePath(dirname($script));
     }
 
+    /**
+     * Guesses the public base URL from the request.
+     */
     public function baseUrl(): string
     {
         return ($this->isHttps() ? 'https' : 'http') . '://' . $this->host() . $this->basePath();
     }
 
+    /**
+     * Returns the HTTP method.
+     */
     public function method(): string
     {
         return strtoupper((string) ($this->server['REQUEST_METHOD'] ?? 'GET'));
     }
 
+    /**
+     * Returns the resolved document root, or null when unknown.
+     */
     public function documentRoot(): ?string
     {
         $docRoot = (string) ($this->server['DOCUMENT_ROOT'] ?? '');
@@ -87,6 +102,9 @@ final class Env
         return $real === false ? null : $real;
     }
 
+    /**
+     * Returns a request header value, or null.
+     */
     public function header(string $name): ?string
     {
         $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));

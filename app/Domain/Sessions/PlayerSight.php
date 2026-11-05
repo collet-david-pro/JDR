@@ -66,16 +66,25 @@ final class PlayerSight
         return $this->view->objects([$object], $revealed ? [$uid] : [], $scope, $bboxes, $hidden, $visible)[0] ?? null;
     }
 
+    /**
+     * Sets the note visibility rules used to filter linked notes.
+     */
     public function setNotes(NoteVisibility $notes): void
     {
         $this->notes = $notes;
     }
 
+    /**
+     * Records that the object is no longer visible to players.
+     */
     public function markHidden(string $uid): void
     {
         unset($this->revealed[$uid]);
     }
 
+    /**
+     * Records that the object is now visible to players.
+     */
     public function markRevealed(string $uid): void
     {
         $this->revealed[$uid] = true;

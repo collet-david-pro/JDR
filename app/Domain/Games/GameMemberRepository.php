@@ -60,6 +60,9 @@ final class GameMemberRepository
         ];
     }
 
+    /**
+     * Adds a user to the game with a role.
+     */
     public function add(int $gameId, int $userId, string $role): void
     {
         $this->db->execute(
@@ -68,6 +71,9 @@ final class GameMemberRepository
         );
     }
 
+    /**
+     * Changes a member's role.
+     */
     public function setRole(int $gameId, int $userId, string $role): void
     {
         $this->db->execute(
@@ -76,6 +82,9 @@ final class GameMemberRepository
         );
     }
 
+    /**
+     * Removes a user from the game.
+     */
     public function remove(int $gameId, int $userId): void
     {
         $this->db->execute(

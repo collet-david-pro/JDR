@@ -29,6 +29,9 @@ final class AfterResponse
         $this->tasks[] = $task;
     }
 
+    /**
+     * Returns how many callbacks are queued to run after the response is sent.
+     */
     public function pending(): int
     {
         return count($this->tasks);

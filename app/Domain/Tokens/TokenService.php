@@ -93,6 +93,9 @@ final class TokenService
         return $this->tokens->find($token->id) ?? $token;
     }
 
+    /**
+     * Soft-deletes a token the user may edit.
+     */
     public function delete(User $user, int $tokenId): void
     {
         $token = $this->requireEdit($user, $tokenId);

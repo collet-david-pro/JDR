@@ -68,6 +68,9 @@ final class Input
         return [$cursor, $limit];
     }
 
+    /**
+     * Returns the public API base URL for the request, used to build asset URLs.
+     */
     public static function apiBase(Request $request, ?Config $config): string
     {
         return Config::apiBase($request->basePath, $config?->routingMode() ?? Config::ROUTING_REWRITE);

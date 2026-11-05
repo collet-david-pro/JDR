@@ -114,6 +114,9 @@ final class GameService
         $this->games->softDelete($game->id);
     }
 
+    /**
+     * Archives the game for the user's view and returns it.
+     */
     public function archive(User $user, int $gameId): Game
     {
         $game = $this->policy->requireManage($user, $gameId);

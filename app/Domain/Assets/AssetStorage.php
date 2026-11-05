@@ -21,6 +21,9 @@ final class AssetStorage
     {
     }
 
+    /**
+     * Generates a new random asset UUID.
+     */
     public static function newUuid(): string
     {
         $b = random_bytes(16);
@@ -32,26 +35,41 @@ final class AssetStorage
             . substr($hex, 16, 4) . '-' . substr($hex, 20, 12);
     }
 
+    /**
+     * Tells whether the string is a well-formed asset UUID.
+     */
     public static function isUuid(string $value): bool
     {
         return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/D', $value) === 1;
     }
 
+    /**
+     * Returns the storage root without trailing slash.
+     */
     public function root(): string
     {
         return $this->paths->storage;
     }
 
+    /**
+     * Returns the root directory of stored assets, creating it if needed.
+     */
     public function assetsDir(): string
     {
         return $this->paths->storage . '/assets';
     }
 
+    /**
+     * Returns the temporary directory, creating it if needed.
+     */
     public function tmpDir(): string
     {
         return $this->ensureDir($this->paths->storage . '/tmp');
     }
 
+    /**
+     * Returns the directory of background job files, creating it if needed.
+     */
     public function jobsDir(): string
     {
         return $this->ensureDir($this->paths->storage . '/jobs');
@@ -65,6 +83,11 @@ final class AssetStorage
         return $this->tmpDir() . '/' . bin2hex(random_bytes(12)) . $suffix;
     }
 
+    /**
+     * Creates a unique working directory under storage/tmp.
+     *
+     * @throws \RuntimeException When the directory cannot be created.
+     */
     public function newWorkDir(): string
     {
         $dir = $this->newTmpPath('.work');
@@ -75,16 +98,25 @@ final class AssetStorage
         return $dir;
     }
 
+    /**
+     * Returns the sharded directory (relative to storage) holding the asset, derived from the first UUID characters.
+     */
     public static function relativeDir(string $uuid): string
     {
         return 'assets/' . substr($uuid, 0, 2) . '/' . substr($uuid, 2, 2);
     }
 
+    /**
+     * Returns the absolute path of the asset file.
+     */
     public function path(string $uuid, string $ext): string
     {
         return $this->paths->storage . '/' . self::relativeDir($uuid) . '/' . $uuid . '.' . $ext;
     }
 
+    /**
+     * Returns the absolute path of the asset thumbnail.
+     */
     public function thumbPath(string $uuid, string $thumbExt): string
     {
         return $this->paths->storage . '/' . self::relativeDir($uuid) . '/' . $uuid . '_thumb.' . $thumbExt;
@@ -119,6 +151,9 @@ final class AssetStorage
         }
     }
 
+    /**
+     * Deletes the asset file and its thumbnail from disk.
+     */
     public function deleteFiles(string $uuid, string $ext): void
     {
         @unlink($this->path($uuid, $ext));

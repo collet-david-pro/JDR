@@ -18,6 +18,9 @@ use JDR\Domain\Auth\CurrentUser;
  */
 final class MaintenanceGate implements Middleware
 {
+    /**
+     * While maintenance is on, lets only admins and login routes through.
+     */
     public function process(Request $request, callable $next): Response
     {
         if ($request->attribute('maintenance_flag') !== true) {

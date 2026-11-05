@@ -22,6 +22,9 @@ final class NoteVisibility
     {
     }
 
+    /**
+     * Tells whether the viewer may see the note with this uid.
+     */
     public function visibleTo(string $uid, int $viewer): bool
     {
         $note = $this->notes[$uid] ?? null;

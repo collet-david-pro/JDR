@@ -77,6 +77,9 @@ final class EncounterService
         return $this->encounters->find($encounter->id) ?? $encounter;
     }
 
+    /**
+     * Deletes an encounter the user is allowed to manage.
+     */
     public function delete(User $user, int $encounterId): void
     {
         [$encounter] = $this->editable($user, $encounterId);

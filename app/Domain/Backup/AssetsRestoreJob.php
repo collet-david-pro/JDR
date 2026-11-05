@@ -28,6 +28,9 @@ final class AssetsRestoreJob implements JobHandler
     {
     }
 
+    /**
+     * Restores asset files from the uploaded archive until the deadline, keeping its position in the job.
+     */
     public function step(Job $job, float $deadline): void
     {
         $state = $job->state;
@@ -99,6 +102,9 @@ final class AssetsRestoreJob implements JobHandler
         }
     }
 
+    /**
+     * Deletes the extraction directory after a cancellation or failure.
+     */
     public function cleanup(Job $job): void
     {
         $work = $job->state['work'] ?? null;

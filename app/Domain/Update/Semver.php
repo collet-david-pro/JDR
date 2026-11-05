@@ -35,6 +35,9 @@ final class Semver
         ];
     }
 
+    /**
+     * Tells whether the string is a valid semantic version.
+     */
     public static function isValid(string $version): bool
     {
         return self::parse($version) !== null;
@@ -48,6 +51,9 @@ final class Semver
         return self::parse($version)['version'] ?? null;
     }
 
+    /**
+     * Tells whether the version carries a pre-release suffix.
+     */
     public static function isPrerelease(string $version): bool
     {
         $parsed = self::parse($version);
@@ -96,6 +102,9 @@ final class Semver
         return count($pa['pre']) <=> count($pb['pre']);
     }
 
+    /**
+     * Compares two semantic versions: true when the first is newer.
+     */
     public static function greaterThan(string $a, string $b): bool
     {
         return self::compare($a, $b) > 0;

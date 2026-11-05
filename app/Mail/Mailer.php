@@ -36,6 +36,9 @@ final class Mailer
         $this->transportFactory = $factory;
     }
 
+    /**
+     * Tells whether SMTP delivery is enabled in the settings.
+     */
     public function isEnabled(): bool
     {
         return $this->settings->smtpEnabled();

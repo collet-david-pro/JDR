@@ -15,6 +15,9 @@ final class NativeReleaseDownloader implements ReleaseDownloader
     {
     }
 
+    /**
+     * Streams the URL to the file, giving up when it exceeds the byte limit; returns success.
+     */
     public function download(string $url, string $path, int $maxBytes): bool
     {
         if (preg_match('#^https://#i', $url) !== 1) {

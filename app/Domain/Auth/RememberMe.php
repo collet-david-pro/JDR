@@ -37,6 +37,9 @@ final class RememberMe
     ) {
     }
 
+    /**
+     * Tells whether the request carries a remember-me cookie.
+     */
     public function hasCookie(Request $request): bool
     {
         return is_string($request->cookies[self::COOKIE] ?? null);
@@ -145,6 +148,9 @@ final class RememberMe
         }
     }
 
+    /**
+     * Expires the remember-me cookie.
+     */
     public function clear(CookieParams $params): void
     {
         $this->cookies->set(self::COOKIE, '', 1, $params->path, $params->secure);

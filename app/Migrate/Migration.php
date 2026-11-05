@@ -16,5 +16,8 @@ defined('JDR_BOOT') || exit;
  */
 interface Migration
 {
+    /**
+     * Applies the migration.
+     */
     public function up(Db $db, MigrationLogger $log): void;
 }

@@ -128,6 +128,9 @@ final class SseStream
         return [$since, $result->more];
     }
 
+    /**
+     * Encodes a wire event as one SSE frame (id, event and data lines).
+     */
     public static function frame(WireEvent $event): string
     {
         return 'id: ' . $event->id . "\nevent: " . $event->type . "\ndata: " . $event->toJson() . "\n\n";

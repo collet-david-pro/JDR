@@ -25,6 +25,9 @@ final class GamePolicy
     {
     }
 
+    /**
+     * Tells whether the user may see the game.
+     */
     public function canView(User $user, Game $game): bool
     {
         if ($game->gmUserId === $user->id) {
@@ -35,11 +38,17 @@ final class GamePolicy
         return $isMember && $game->deletedAt === null;
     }
 
+    /**
+     * Tells whether the user may edit the game content.
+     */
     public function canEdit(User $user, Game $game): bool
     {
         return $this->canView($user, $game) && $game->deletedAt === null && $game->isEditor();
     }
 
+    /**
+     * Tells whether the user may manage the game (members, deletion).
+     */
     public function canManage(User $user, Game $game): bool
     {
         return $this->canView($user, $game) && $game->gmUserId === $user->id;

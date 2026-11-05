@@ -19,6 +19,9 @@ final class SecretBox
         }
     }
 
+    /**
+     * Encrypts a secret (for example the SMTP password) with a key derived from the app secret, using libsodium when available.
+     */
     public function encrypt(#[\SensitiveParameter] string $plain): string
     {
         if (function_exists('sodium_crypto_secretbox')) {

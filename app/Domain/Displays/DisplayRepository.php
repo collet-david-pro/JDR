@@ -21,21 +21,33 @@ final class DisplayRepository
     {
     }
 
+    /**
+     * Returns the database handle, for collaborators sharing the transaction.
+     */
     public function db(): Db
     {
         return $this->db;
     }
 
+    /**
+     * Finds a display by id, optionally locking the row.
+     */
     public function find(int $id, bool $lock = false): ?Display
     {
         return $this->one('d.`id` = ?', [$id], $lock);
     }
 
+    /**
+     * Finds a display by its token hash, or null.
+     */
     public function findByTokenHash(string $hash): ?Display
     {
         return $this->one('d.`device_token_hash` = ?', [$hash], false);
     }
 
+    /**
+     * Counts the displays of a session.
+     */
     public function countForSession(int $sessionId): int
     {
         return (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('session_displays') . ' WHERE `session_id` = ?', [$sessionId]);
@@ -78,6 +90,9 @@ final class DisplayRepository
         $this->db->execute('UPDATE ' . $this->db->t('session_displays') . ' SET ' . implode(', ', $sets) . ' WHERE `id` = ?', $params);
     }
 
+    /**
+     * Deletes a display.
+     */
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('session_displays') . ' WHERE `id` = ?', [$id]);

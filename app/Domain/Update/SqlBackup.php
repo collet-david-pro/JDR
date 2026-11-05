@@ -32,6 +32,9 @@ final class SqlBackup
     {
     }
 
+    /**
+     * Returns the full path of a backup file, stripping any directory part.
+     */
     public function path(string $file): string
     {
         return $this->dir . '/' . basename($file);

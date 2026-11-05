@@ -182,16 +182,25 @@ final class App
         }
     }
 
+    /**
+     * Returns the service container wired during bootstrap.
+     */
     public function container(): Container
     {
         return $this->container;
     }
 
+    /**
+     * Returns the loaded configuration, or null before the app is installed.
+     */
     public function config(): ?Config
     {
         return $this->config;
     }
 
+    /**
+     * Handles the current HTTP request end to end and sends the response.
+     */
     public function run(): void
     {
         $request = Request::fromGlobals($this->config);
@@ -217,11 +226,17 @@ final class App
         $this->container->get(Cron::class)->maybeRunPseudo();
     }
 
+    /**
+     * Runs the scheduled tasks for the given cron key and returns the HTTP-like exit status.
+     */
     public function cron(string $key): int
     {
         return $this->container->get(Cron::class)->run($key);
     }
 
+    /**
+     * Dispatches a request through middleware and router and returns the response without sending it.
+     */
     public function handle(Request $request): Response
     {
         $nonce = SecurityHeaders::nonce();

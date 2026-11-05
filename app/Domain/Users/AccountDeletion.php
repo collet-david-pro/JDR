@@ -31,6 +31,9 @@ final class AccountDeletion
     ) {
     }
 
+    /**
+     * Deletes the account and its data in one transaction, asking each registered extension to remove its part, and audits who did it.
+     */
     public function delete(User $user, ?int $actorId, ?string $ip): void
     {
         $this->db->transaction(function () use ($user, $actorId, $ip): void {

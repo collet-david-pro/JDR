@@ -66,6 +66,9 @@ final class Sniffer
         return $type;
     }
 
+    /**
+     * Detects the image type from the first bytes of the file; null when unrecognised.
+     */
     public static function bySignature(string $head): ?string
     {
         if (str_starts_with($head, "\x89PNG\r\n\x1A\n")) {

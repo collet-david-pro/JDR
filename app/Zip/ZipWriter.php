@@ -36,11 +36,17 @@ final class ZipWriter
         fseek($this->handle, $offset);
     }
 
+    /**
+     * Closes the archive if still open.
+     */
     public function __destruct()
     {
         $this->close();
     }
 
+    /**
+     * Creates a new archive at the path.
+     */
     public static function create(string $path): self
     {
         return new self($path, 0, []);
@@ -84,11 +90,17 @@ final class ZipWriter
         return ['offset' => $this->offset, 'entries' => $this->entries];
     }
 
+    /**
+     * Returns the number of entries added.
+     */
     public function count(): int
     {
         return count($this->entries);
     }
 
+    /**
+     * Tells whether an entry with this name was already added.
+     */
     public function has(string $name): bool
     {
         foreach ($this->entries as $entry) {
@@ -129,6 +141,9 @@ final class ZipWriter
         }
     }
 
+    /**
+     * Adds an entry from a string, compressed unless disabled, with an optional modification time.
+     */
     public function addString(string $name, string $data, bool $compress = true, ?int $mtime = null): void
     {
         $method = 0;
@@ -183,6 +198,9 @@ final class ZipWriter
         $this->close();
     }
 
+    /**
+     * Finalises the archive (central directory) and closes the file.
+     */
     public function close(): void
     {
         if (is_resource($this->handle)) {

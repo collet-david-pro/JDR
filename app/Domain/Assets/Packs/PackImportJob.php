@@ -37,6 +37,9 @@ final class PackImportJob implements JobHandler
     ) {
     }
 
+    /**
+     * Imports pack entries until the deadline, keeping its position in the job.
+     */
     public function step(Job $job, float $deadline): void
     {
         $state = $job->state;
@@ -69,6 +72,9 @@ final class PackImportJob implements JobHandler
         }
     }
 
+    /**
+     * Deletes the extraction files after a cancellation or failure.
+     */
     public function cleanup(Job $job): void
     {
         $zip = $job->state['zip'] ?? null;

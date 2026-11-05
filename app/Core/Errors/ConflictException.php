@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 409 conflict with the current state.
+ */
 final class ConflictException extends HttpException
 {
     /**

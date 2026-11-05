@@ -64,6 +64,9 @@ final class DisplayPresenter
         return array_diff_key($this->withoutPairing($d), array_flip(['user_agent', 'last_seen_at', 'paired_at', 'online']));
     }
 
+    /**
+     * Tells whether the display has been seen recently enough to count as online.
+     */
     public function online(Display $d): bool
     {
         $seen = Dates::timestamp($d->lastSeenAt);

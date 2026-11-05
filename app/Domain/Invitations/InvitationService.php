@@ -87,6 +87,9 @@ final class InvitationService
         return array_map(static fn (array $r): array => self::present($r), $this->invitations->all());
     }
 
+    /**
+     * Revokes an invitation; returns whether it existed.
+     */
     public function delete(int $id): bool
     {
         return $this->invitations->delete($id);
@@ -109,6 +112,9 @@ final class InvitationService
         ];
     }
 
+    /**
+     * Normalises a code typed by a user: removes spaces and dashes, upper-cases.
+     */
     public static function normalize(string $code): string
     {
         return strtoupper((string) preg_replace('/[\s-]+/', '', $code));

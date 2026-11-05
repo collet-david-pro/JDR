@@ -224,6 +224,9 @@ final class Requirements
         };
     }
 
+    /**
+     * Formats a byte count for display.
+     */
     public static function human(int $bytes): string
     {
         if ($bytes >= 1024 ** 3) {

@@ -120,6 +120,9 @@ final class UploadStore
         return $file;
     }
 
+    /**
+     * Deletes an uploaded package and its metadata.
+     */
     public function discard(string $uploadId): void
     {
         if (UpdateStorage::isId($uploadId)) {

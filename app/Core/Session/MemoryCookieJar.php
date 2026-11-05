@@ -17,6 +17,9 @@ final class MemoryCookieJar implements CookieJar
     /** @var array<string, array{value: string, expires: int, path: string, secure: bool, samesite: string}> */
     private array $last = [];
 
+    /**
+     * Records the cookie in memory instead of sending it, for tests.
+     */
     public function set(string $name, string $value, int $expires, string $path, bool $secure, string $sameSite = 'Lax'): void
     {
         $this->sent[$name] = ['value' => $value, 'expires' => $expires, 'path' => $path, 'secure' => $secure, 'samesite' => $sameSite];

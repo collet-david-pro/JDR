@@ -47,6 +47,9 @@ final class Subscription
         return array_keys($this->grants);
     }
 
+    /**
+     * Returns the role granted on the channel, or null when not subscribed.
+     */
     public function roleOn(string $channel): ?string
     {
         return ($this->grants[$channel] ?? null)?->role;
@@ -62,11 +65,17 @@ final class Subscription
         return array_values(array_filter($this->grants, static fn (ChannelGrant $g): bool => $g->role === $role));
     }
 
+    /**
+     * Marks the subscription closed so the loop stops serving it.
+     */
     public function close(): void
     {
         $this->closed = true;
     }
 
+    /**
+     * Tells whether the subscription was closed (for example after a permission change).
+     */
     public function isClosed(): bool
     {
         return $this->closed;

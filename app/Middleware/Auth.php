@@ -39,6 +39,9 @@ final class Auth implements Middleware
     ) {
     }
 
+    /**
+     * Resolves the current user (or display) and rejects the request when the route requires authentication or a role.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

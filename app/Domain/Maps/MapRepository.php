@@ -30,11 +30,17 @@ final class MapRepository
     {
     }
 
+    /**
+     * Returns the database handle, for collaborators sharing the transaction.
+     */
     public function db(): Db
     {
         return $this->db;
     }
 
+    /**
+     * Finds a map by id, or null.
+     */
     public function find(int $id): ?Map
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('maps') . ' WHERE `id` = ?', [$id]);
@@ -104,6 +110,9 @@ final class MapRepository
         return array_map(static fn (array $r): Map => Map::fromRow($r), $this->db->fetchAll($sql, [$gameId]));
     }
 
+    /**
+     * Returns the sort order to append a map at the end of the game.
+     */
     public function nextSortOrder(int $gameId): int
     {
         $max = $this->db->fetchValue(
@@ -184,6 +193,9 @@ final class MapRepository
         ) === 1;
     }
 
+    /**
+     * Takes a map out of the trash and gives it the sort order.
+     */
     public function restore(int $id, int $sortOrder): void
     {
         $this->db->execute(
@@ -271,6 +283,9 @@ final class MapRepository
 
     // ---- Floors ----------------------------------------------------------------------------
 
+    /**
+     * Inserts a floor and returns its id.
+     */
     public function insertFloor(int $mapId, string $uid, int $level, string $name, int $sortOrder): int
     {
         $this->db->execute(
@@ -354,6 +369,9 @@ final class MapRepository
         ], $rows);
     }
 
+    /**
+     * Inserts a chunk.
+     */
     public function insertChunk(int $mapId, int $floorId, string $layer, int $cx, int $cy, string $data, int $revision): void
     {
         $this->db->execute(
@@ -363,6 +381,9 @@ final class MapRepository
         );
     }
 
+    /**
+     * Overwrites the data of a chunk.
+     */
     public function updateChunk(int $mapId, int $floorId, string $layer, int $cx, int $cy, string $data, int $revision): void
     {
         $this->db->execute(
@@ -372,6 +393,9 @@ final class MapRepository
         );
     }
 
+    /**
+     * Deletes a chunk.
+     */
     public function deleteChunk(int $mapId, int $floorId, string $layer, int $cx, int $cy): void
     {
         $this->db->execute(
@@ -510,6 +534,9 @@ final class MapRepository
         );
     }
 
+    /**
+     * Copies the asset reference counts from one map to another.
+     */
     public function copyRefs(int $fromMapId, int $toMapId): void
     {
         $t = $this->db->t('map_asset_refs');
@@ -592,6 +619,9 @@ final class MapRepository
         );
     }
 
+    /**
+     * Deletes processed operation records older than the date, at most $limit.
+     */
     public function purgeProcessed(string $before, int $limit): int
     {
         return $this->db->execute(

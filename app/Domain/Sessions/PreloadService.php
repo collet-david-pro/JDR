@@ -156,6 +156,9 @@ final class PreloadService
         return ['map_id' => null, 'floor_id' => null, 'assets' => [], 'total_bytes' => 0];
     }
 
+    /**
+     * Returns the map currently shown in the session, or null when none is set.
+     */
     public function currentMap(Session $session): ?Map
     {
         if ($session->currentMapId === null) {

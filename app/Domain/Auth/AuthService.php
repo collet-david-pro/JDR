@@ -179,11 +179,17 @@ final class AuthService
         return $fallback;
     }
 
+    /**
+     * Returns the rate-limit bucket key for a login identifier and client IP.
+     */
     public static function loginBucket(string $identifier, string $ip): string
     {
         return RateLimiter::key('login', $identifier, $ip);
     }
 
+    /**
+     * Ends the session, revokes the remember-me token and clears the cookies.
+     */
     public function logout(Request $request, Session $session, CookieParams $cookies): void
     {
         $this->remember->forget($request, $cookies);

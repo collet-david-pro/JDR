@@ -34,6 +34,9 @@ final class AssetPacksController
     ) {
     }
 
+    /**
+     * Imports an uploaded asset pack ZIP, rejecting oversized bodies before parsing.
+     */
     public function import(Request $request): Response
     {
         $user = CurrentUser::require($request);
@@ -70,6 +73,9 @@ final class AssetPacksController
         return Response::ok(['job' => $job->toPublic()], [], 202);
     }
 
+    /**
+     * Builds and streams a ZIP pack of the selected assets or category.
+     */
     public function export(Request $request): Response
     {
         $user = CurrentUser::require($request);

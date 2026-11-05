@@ -33,6 +33,9 @@ final class Strings
         return strtr($text, $replace);
     }
 
+    /**
+     * Tells whether the translation key exists.
+     */
     public static function has(string $key): bool
     {
         self::$strings ??= require __DIR__ . '/strings.fr.php';

@@ -37,11 +37,17 @@ final class DisplayAuth
         return $display !== null && $display->isActive() ? $display : null;
     }
 
+    /**
+     * Generates a new random display token.
+     */
     public static function newToken(): string
     {
         return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
     }
 
+    /**
+     * Hashes a display token for storage and lookup.
+     */
     public static function hashToken(string $token): string
     {
         return hash('sha256', $token);

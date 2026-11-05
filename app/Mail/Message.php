@@ -25,6 +25,9 @@ final class Message
         }
     }
 
+    /**
+     * Tells whether the string is a valid e-mail address without header-injection characters.
+     */
     public static function validAddress(string $address): bool
     {
         return preg_match('/[\r\n<>"]/', $address) !== 1 && filter_var($address, FILTER_VALIDATE_EMAIL) !== false;

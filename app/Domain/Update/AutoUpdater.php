@@ -56,11 +56,17 @@ final class AutoUpdater
         $this->signature = $signature ?? new ReleaseSignature();
     }
 
+    /**
+     * Tells whether automatic updates are enabled.
+     */
     public function enabled(): bool
     {
         return $this->settings->get(self::SETTING) !== false;
     }
 
+    /**
+     * Turns automatic updates on or off.
+     */
     public function setEnabled(bool $enabled): void
     {
         $this->settings->set(self::SETTING, $enabled);

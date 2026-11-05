@@ -499,16 +499,25 @@ final class ObjectRules
         return $out;
     }
 
+    /**
+     * Tells whether the value is a known object layer.
+     */
     public static function isLayer(mixed $value): bool
     {
         return is_string($value) && in_array($value, MapInput::OBJECT_LAYERS, true);
     }
 
+    /**
+     * Tells whether the value is a known visibility.
+     */
     public static function isVisibility(mixed $value): bool
     {
         return is_string($value) && in_array($value, self::VISIBILITIES, true);
     }
 
+    /**
+     * Tells whether the value is a well-formed object uid.
+     */
     public static function isUid(mixed $value): bool
     {
         return is_string($value) && preg_match(self::UID_PATTERN, $value) === 1;

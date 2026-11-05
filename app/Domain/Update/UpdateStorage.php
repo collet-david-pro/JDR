@@ -32,21 +32,35 @@ final class UpdateStorage
         return new self(new AppPaths($root, $storage, $root));
     }
 
+    /**
+     * Returns the code root that updates overwrite.
+     */
     public function root(): string
     {
         return rtrim($this->paths->codeRoot, '/');
     }
 
+    /**
+     * Returns the update working directory under storage, creating it if needed.
+     */
     public function dir(): string
     {
         return $this->ensureDir($this->paths->storage . '/updates');
     }
 
+    /**
+     * Returns the directory of uploaded update packages, creating it if needed.
+     */
     public function uploadsDir(): string
     {
         return $this->ensureDir($this->dir() . '/uploads');
     }
 
+    /**
+     * Returns the working directory of an update run.
+     *
+     * @throws \InvalidArgumentException When the id is malformed.
+     */
     public function runDir(string $id): string
     {
         if (!self::isId($id)) {
@@ -56,16 +70,25 @@ final class UpdateStorage
         return $this->dir() . '/' . $id;
     }
 
+    /**
+     * Returns the directory of pre-update SQL backups, creating it if needed.
+     */
     public function backupsDir(): string
     {
         return $this->ensureDir($this->paths->storage . '/backups');
     }
 
+    /**
+     * Generates a new update run id.
+     */
     public static function newId(): string
     {
         return bin2hex(random_bytes(16));
     }
 
+    /**
+     * Tells whether the value is a well-formed update run id.
+     */
     public static function isId(mixed $id): bool
     {
         return is_string($id) && preg_match('/^[0-9a-f]{32}$/', $id) === 1;
@@ -174,6 +197,9 @@ final class UpdateStorage
         }
     }
 
+    /**
+     * Recursively deletes a directory.
+     */
     public static function removeTree(string $dir): void
     {
         if (is_link($dir) || is_file($dir)) {

@@ -29,6 +29,9 @@ final class PackExportJob implements JobHandler
     ) {
     }
 
+    /**
+     * Adds assets to the pack archive until the deadline, keeping its position in the job.
+     */
     public function step(Job $job, float $deadline): void
     {
         $state = $job->state;
@@ -97,6 +100,9 @@ final class PackExportJob implements JobHandler
         $job->done = $index;
     }
 
+    /**
+     * Deletes the partial pack archive after a cancellation or failure.
+     */
     public function cleanup(Job $job): void
     {
         $zip = $job->state['zip'] ?? null;

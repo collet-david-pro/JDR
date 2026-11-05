@@ -24,6 +24,9 @@ final class FileServer
     {
     }
 
+    /**
+     * Serves the asset file after verifying its signed URL, with cache and range headers.
+     */
     public function serve(Request $request, string $uuid): Response
     {
         $type = $request->query['t'] ?? null;

@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 410 resource permanently gone.
+ */
 final class GoneException extends HttpException
 {
     /**

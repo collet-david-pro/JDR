@@ -21,6 +21,9 @@ final class SessionActionsController
     {
     }
 
+    /**
+     * POST /sessions/{id}/actions: applies one game action (move, reveal, ...) and returns the resulting state.
+     */
     public function apply(Request $request): Response
     {
         $body = $request->parsedBody();

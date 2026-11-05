@@ -27,6 +27,9 @@ final class RateLimit implements Middleware
     {
     }
 
+    /**
+     * Applies the route's rate-limit bucket and answers 429 when exceeded.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

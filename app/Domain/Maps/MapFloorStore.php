@@ -17,16 +17,25 @@ final class MapFloorStore implements FloorStore
     {
     }
 
+    /**
+     * Inserts a floor and returns its id.
+     */
     public function insert(string $uid, int $level, string $name, int $sortOrder): int
     {
         return $this->maps->insertFloor($this->mapId, $uid, $level, $name, $sortOrder);
     }
 
+    /**
+     * Updates the given fields of the floor.
+     */
     public function update(int $floorId, array $fields): void
     {
         $this->floors->update($floorId, $fields);
     }
 
+    /**
+     * Moves the sessions of the floor to another floor, deletes the floor and returns the moved sessions.
+     */
     public function remove(int $floorId, int $toFloorId): array
     {
         $moved = $this->floors->moveSessions($this->mapId, $floorId, $toFloorId);

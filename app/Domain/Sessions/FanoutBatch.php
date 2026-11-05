@@ -61,11 +61,17 @@ final class FanoutBatch
         }
     }
 
+    /**
+     * Tells whether the session is in the running state (players only receive scene events then).
+     */
     public function running(): bool
     {
         return $this->ctx->session->state === Session::RUNNING;
     }
 
+    /**
+     * Sets the scene revision stamped on the events of this batch.
+     */
     public function setRevision(int $revision): void
     {
         $this->revision = $revision;

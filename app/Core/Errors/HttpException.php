@@ -28,11 +28,17 @@ class HttpException extends \RuntimeException
         parent::__construct($message, 0, $previous);
     }
 
+    /**
+     * Returns the HTTP status code carried by the exception.
+     */
     public function status(): int
     {
         return $this->status;
     }
 
+    /**
+     * Returns the stable machine-readable error code exposed in API error bodies.
+     */
     public function errorCode(): string
     {
         return $this->errorCode;

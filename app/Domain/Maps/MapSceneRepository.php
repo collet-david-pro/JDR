@@ -94,6 +94,9 @@ final class MapSceneRepository
         return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'object' => self::objectFromRow($r)], $rows);
     }
 
+    /**
+     * Counts the objects of the map.
+     */
     public function countObjects(int $mapId): int
     {
         return (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ?', [$mapId]);
@@ -142,6 +145,9 @@ final class MapSceneRepository
         );
     }
 
+    /**
+     * Deletes an object.
+     */
     public function deleteObject(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('map_objects') . ' WHERE `id` = ?', [$id]);
@@ -249,6 +255,9 @@ final class MapSceneRepository
         return array_map(static fn (array $r): array => ['id' => (int) $r['id'], 'token' => self::tokenFromRow($r)], $rows);
     }
 
+    /**
+     * Counts the tokens of the map.
+     */
     public function countTokens(int $mapId): int
     {
         return (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('map_tokens') . ' WHERE `map_id` = ?', [$mapId]);
@@ -291,6 +300,9 @@ final class MapSceneRepository
         );
     }
 
+    /**
+     * Deletes a token.
+     */
     public function deleteToken(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('map_tokens') . ' WHERE `id` = ?', [$id]);
@@ -409,6 +421,9 @@ final class MapSceneRepository
         return $out;
     }
 
+    /**
+     * Inserts a fog chunk.
+     */
     public function insertFog(int $mapId, int $floorId, int $cx, int $cy, string $data): void
     {
         $this->db->execute(
@@ -417,6 +432,9 @@ final class MapSceneRepository
         );
     }
 
+    /**
+     * Overwrites the data of a fog chunk.
+     */
     public function updateFog(int $mapId, int $floorId, int $cx, int $cy, string $data): void
     {
         $this->db->execute(
@@ -425,6 +443,9 @@ final class MapSceneRepository
         );
     }
 
+    /**
+     * Deletes one fog chunk.
+     */
     public function deleteFog(int $mapId, int $floorId, int $cx, int $cy): void
     {
         $this->db->execute(
@@ -433,11 +454,17 @@ final class MapSceneRepository
         );
     }
 
+    /**
+     * Deletes all fog chunks of the floor and returns how many.
+     */
     public function clearFog(int $mapId, int $floorId): int
     {
         return $this->db->execute('DELETE FROM ' . $this->db->t('map_fog') . ' WHERE `map_id` = ? AND `floor_id` = ?', [$mapId, $floorId]);
     }
 
+    /**
+     * Deletes fog chunks lying beyond the given chunk coordinates.
+     */
     public function deleteFogBeyond(int $mapId, int $minCx, int $minCy): void
     {
         $this->db->execute(

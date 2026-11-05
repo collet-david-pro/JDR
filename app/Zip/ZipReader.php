@@ -61,11 +61,17 @@ final class ZipReader
         }
     }
 
+    /**
+     * Closes the archive.
+     */
     public function __destruct()
     {
         $this->close();
     }
 
+    /**
+     * Releases the archive handle.
+     */
     public function close(): void
     {
         if (is_resource($this->handle)) {
@@ -77,6 +83,9 @@ final class ZipReader
         }
     }
 
+    /**
+     * Tells whether the PHP zip extension backs this reader (otherwise the pure PHP reader is used).
+     */
     public function usesExtension(): bool
     {
         return $this->archive !== null;
@@ -100,6 +109,9 @@ final class ZipReader
         return array_values(array_filter($this->entries, static fn (ZipEntry $e): bool => !$e->isDir));
     }
 
+    /**
+     * Returns the entry with this name, or null.
+     */
     public function find(string $name): ?ZipEntry
     {
         foreach ($this->entries as $entry) {

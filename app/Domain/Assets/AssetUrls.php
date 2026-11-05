@@ -42,6 +42,9 @@ final class AssetUrls
         return ['full' => $this->url($apiBase, $uuid, 'full'), 'thumb' => $this->url($apiBase, $uuid, 'thumb')];
     }
 
+    /**
+     * Checks the signature and expiry of an asset URL; false for any malformed or tampered value.
+     */
     public function verify(string $uuid, mixed $type, mixed $expires, mixed $signature): bool
     {
         if (!is_string($type) || !in_array($type, self::TYPES, true)

@@ -10,6 +10,9 @@ use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Domain\Invitations\InvitationService;
 
+/**
+ * Public endpoint used by the registration page to validate an invitation code.
+ */
 final class InvitationController
 {
     public function __construct(private InvitationService $invitations)

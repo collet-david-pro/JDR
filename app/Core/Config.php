@@ -39,6 +39,9 @@ final class Config
         return new self($values);
     }
 
+    /**
+     * Reads a configuration value by key, falling back to the default when absent.
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         return array_key_exists($key, $this->values) ? $this->values[$key] : $default;
@@ -62,6 +65,9 @@ final class Config
         ];
     }
 
+    /**
+     * Returns the public base URL without trailing slash.
+     */
     public function baseUrl(): string
     {
         return rtrim((string) $this->get('base_url', ''), '/');
@@ -77,11 +83,17 @@ final class Config
         return self::normalizeBasePath(is_string($path) ? $path : '');
     }
 
+    /**
+     * Returns the URL routing mode (front controller or rewritten paths).
+     */
     public function routingMode(): string
     {
         return $this->get('routing_mode') === self::ROUTING_QUERY ? self::ROUTING_QUERY : self::ROUTING_REWRITE;
     }
 
+    /**
+     * Resolves the storage directory, relative paths being anchored at the given root.
+     */
     public function storagePath(string $root): string
     {
         $path = $this->get('storage_path');
@@ -89,26 +101,41 @@ final class Config
         return is_string($path) && $path !== '' ? rtrim($path, '/\\') : $root . '/storage';
     }
 
+    /**
+     * Returns the secret used to sign URLs and tokens.
+     */
     public function appSecret(): string
     {
         return (string) $this->get('app_secret', '');
     }
 
+    /**
+     * Returns the key that authorises HTTP-triggered cron calls.
+     */
     public function cronKey(): string
     {
         return (string) $this->get('cron_key', '');
     }
 
+    /**
+     * Tells whether verbose error output is enabled.
+     */
     public function debug(): bool
     {
         return (bool) $this->get('debug', false);
     }
 
+    /**
+     * Tells whether cookies must carry the Secure flag.
+     */
     public function cookieSecure(): bool
     {
         return (bool) $this->get('cookie_secure', false);
     }
 
+    /**
+     * Tells whether the configured base URL uses HTTPS.
+     */
     public function isHttpsBaseUrl(): bool
     {
         return str_starts_with(strtolower($this->baseUrl()), 'https://');

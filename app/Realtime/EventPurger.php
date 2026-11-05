@@ -42,6 +42,9 @@ final class EventPurger
             + $this->purgeEphemeral(gmdate('Y-m-d H:i:s', $now - self::EPHEMERAL_SECONDS));
     }
 
+    /**
+     * Returns the highest event id already purged; readers older than this need a resync.
+     */
     public function purgedUpto(): int
     {
         return (int) $this->db->fetchValue('SELECT `purged_upto` FROM ' . $this->db->t('event_seq') . ' WHERE `id` = 1');

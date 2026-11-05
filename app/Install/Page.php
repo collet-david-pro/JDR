@@ -19,6 +19,9 @@ final class Page
         $this->directory ??= dirname(__DIR__) . '/Views/install';
     }
 
+    /**
+     * Escapes a value for HTML output.
+     */
     public static function e(string|int|float|null $value): string
     {
         return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

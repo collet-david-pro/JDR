@@ -94,6 +94,11 @@ final class MapService
         return $this->maps->find($id) ?? throw new \RuntimeException('Map lost after insert.');
     }
 
+    /**
+     * Returns the map when the user may view it.
+     *
+     * @throws NotFoundException When the map does not exist or is not visible to the user.
+     */
     public function show(User $user, int $mapId): Map
     {
         return $this->policy->requireEdit($user, $mapId)[0];

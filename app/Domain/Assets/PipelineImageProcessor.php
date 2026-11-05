@@ -24,6 +24,9 @@ final class PipelineImageProcessor implements ImageProcessor
     {
     }
 
+    /**
+     * Validates and re-encodes an image in the work directory, producing the stored file and thumbnail.
+     */
     public function process(string $path, Limits $limits, string $workDir): ProcessedImage
     {
         if (!class_exists(ImagePipeline::class)) {

@@ -18,6 +18,9 @@ final class Every
     {
     }
 
+    /**
+     * Returns true at most once per interval, recording the call time when it does.
+     */
     public function due(float $now): bool
     {
         if ($this->last !== null && $now - $this->last < $this->seconds) {

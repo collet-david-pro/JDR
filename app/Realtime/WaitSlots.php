@@ -32,11 +32,17 @@ final class WaitSlots
     {
     }
 
+    /**
+     * Returns the configured maximum number of simultaneous waiting connections.
+     */
     public function max(): int
     {
         return max(0, $this->settings->int('realtime_max_waiting'));
     }
 
+    /**
+     * Returns the lock name used for a slot (prefixed with the table prefix).
+     */
     public function name(int $slot): string
     {
         return $this->db->prefix() . 'rt_slot_' . $slot;
@@ -64,6 +70,9 @@ final class WaitSlots
         return null;
     }
 
+    /**
+     * Releases the named database lock held for the slot.
+     */
     public function release(int $slot): void
     {
         if (!isset($this->held[$slot])) {

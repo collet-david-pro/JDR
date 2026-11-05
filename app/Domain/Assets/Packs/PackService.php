@@ -46,6 +46,9 @@ final class PackService
     ) {
     }
 
+    /**
+     * Returns the ZIP extraction limits applied to packs.
+     */
     public function zipLimits(): ZipLimits
     {
         return new ZipLimits(
@@ -123,6 +126,9 @@ final class PackService
         ]);
     }
 
+    /**
+     * Tells whether the value is a valid generated job file name (guards against path traversal).
+     */
     public static function isJobFileName(mixed $name): bool
     {
         return is_string($name) && preg_match('/^[0-9a-f]{24}\.zip$/D', $name) === 1;

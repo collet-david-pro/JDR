@@ -6,6 +6,9 @@ namespace JDR\Core;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * Result of a successful route lookup: handler, captured parameters and route options.
+ */
 final class RouteMatch
 {
     /**
@@ -21,6 +24,9 @@ final class RouteMatch
     ) {
     }
 
+    /**
+     * Reads a route option (for example the required auth level), with a default.
+     */
     public function option(string $name, mixed $default = null): mixed
     {
         return $this->options[$name] ?? $default;

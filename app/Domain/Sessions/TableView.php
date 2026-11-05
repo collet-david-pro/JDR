@@ -33,6 +33,9 @@ final class TableView
         return array_fill_keys($this->queries->tableDefinitions($ctx->session->id, $ctx->session->gameId), self::USER);
     }
 
+    /**
+     * Returns the fog scope of the table screen for a map.
+     */
     public function scope(SessionContext $ctx, int $mapId): FogScope
     {
         return $this->scopes->forTable($ctx, $mapId);

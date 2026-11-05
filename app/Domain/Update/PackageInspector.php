@@ -28,6 +28,9 @@ final class PackageInspector
     {
     }
 
+    /**
+     * Returns the ZIP extraction limits applied to update packages.
+     */
     public static function limits(): ZipLimits
     {
         return new ZipLimits(self::MAX_ENTRIES, 536870912, self::MAX_BYTES, 100, 65536);

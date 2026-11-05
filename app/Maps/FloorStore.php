@@ -11,6 +11,9 @@ defined('JDR_BOOT') || exit;
  */
 interface FloorStore
 {
+    /**
+     * Inserts a floor and returns its id.
+     */
     public function insert(string $uid, int $level, string $name, int $sortOrder): int;
 
     /**

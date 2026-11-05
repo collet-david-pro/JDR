@@ -14,6 +14,9 @@ final class UserDataExtensions
     /** @var list<UserDataExtension> */
     private array $extensions = [];
 
+    /**
+     * Registers a module that contributes to personal data export and deletion.
+     */
     public function add(UserDataExtension $extension): void
     {
         $this->extensions[] = $extension;

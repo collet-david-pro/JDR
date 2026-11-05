@@ -27,11 +27,17 @@ final class AssetHousekeeping
     ) {
     }
 
+    /**
+     * Deletes stale files in the temporary upload directory and returns how many were removed.
+     */
     public function purgeTmp(): int
     {
         return $this->storage->purgeDir('tmp', self::TMP_MAX_AGE, $this->clock->timestamp());
     }
 
+    /**
+     * Deletes stale job working files and returns how many were removed.
+     */
     public function purgeJobFiles(): int
     {
         return $this->storage->purgeDir('jobs', self::JOB_FILES_MAX_AGE, $this->clock->timestamp());

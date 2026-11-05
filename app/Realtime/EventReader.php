@@ -87,6 +87,9 @@ final class EventReader
         );
     }
 
+    /**
+     * Builds the 410 error telling a client its cursor predates the retained events.
+     */
     public static function gone(Subscription $sub): GoneException
     {
         return new GoneException('', ['channels' => implode(',', $sub->channels())]);

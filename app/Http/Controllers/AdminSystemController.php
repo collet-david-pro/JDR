@@ -30,11 +30,17 @@ final class AdminSystemController
     ) {
     }
 
+    /**
+     * GET /admin/stats (admin): returns instance-wide usage counters.
+     */
     public function stats(Request $request): Response
     {
         return Response::ok($this->stats->compute());
     }
 
+    /**
+     * GET /admin/diagnostic (admin): returns environment and health checks.
+     */
     public function diagnostic(Request $request): Response
     {
         return Response::ok(['checks' => $this->diagnostic->run($request)]);

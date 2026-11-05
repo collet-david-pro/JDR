@@ -22,16 +22,25 @@ final class Passwords
     /** @var array<string, true>|null */
     private static ?array $common = null;
 
+    /**
+     * Hashes a password for storage.
+     */
     public static function hash(string $password): string
     {
         return password_hash($password, self::algorithm(), self::options());
     }
 
+    /**
+     * Checks a password against its hash.
+     */
     public static function verify(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }
 
+    /**
+     * Tells whether the hash uses outdated parameters and should be recomputed.
+     */
     public static function needsRehash(string $hash): bool
     {
         return password_needs_rehash($hash, self::algorithm(), self::options());

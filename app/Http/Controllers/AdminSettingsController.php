@@ -27,6 +27,9 @@ final class AdminSettingsController
     ) {
     }
 
+    /**
+     * GET /admin/settings (admin): returns the current instance settings.
+     */
     public function show(Request $request): Response
     {
         return Response::ok(['settings' => $this->settings->view()]);

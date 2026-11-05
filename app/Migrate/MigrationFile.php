@@ -66,17 +66,26 @@ final class MigrationFile
         return array_values($files);
     }
 
+    /**
+     * Returns the checksum recorded to detect edited migrations.
+     */
     public function checksum(): string
     {
         return $this->checksum ??= Checksums::ofFile($this->path);
     }
 
+    /**
+     * Tells whether an SQL file is flagged "@idempotent-ddl", i.e. safe to replay after a partial run.
+     */
     public function idempotentDdl(): bool
     {
         return $this->type === 'sql'
             && preg_match('/^[ \t]*--[ \t]+@idempotent-ddl\b/m', $this->contents()) === 1;
     }
 
+    /**
+     * Returns the file contents.
+     */
     public function contents(): string
     {
         $content = @file_get_contents($this->path);

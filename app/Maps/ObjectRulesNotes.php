@@ -34,6 +34,9 @@ final class ObjectRulesNotes
     public const OBJECT_LAYER = 'props';
     public const HIDDEN = 'hidden_until_revealed';
 
+    /**
+     * Tells whether the object type is a note type.
+     */
     public static function handles(mixed $type): bool
     {
         return is_string($type) && in_array($type, self::TYPES, true);

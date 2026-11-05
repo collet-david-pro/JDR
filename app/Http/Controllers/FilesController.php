@@ -19,6 +19,9 @@ final class FilesController
     {
     }
 
+    /**
+     * GET /files/{uuid}: serves an asset file; access is checked by the file service (signed URL), not by the session.
+     */
     public function show(Request $request): Response
     {
         return $this->files->serve($request, (string) $request->param('uuid'));

@@ -32,16 +32,25 @@ final class Logger
         $this->startedAt = microtime(true);
     }
 
+    /**
+     * Returns a logger that drops every record, for tests and early bootstrap.
+     */
     public static function discard(): self
     {
         return new self(null, new Clock());
     }
 
+    /**
+     * Sets the directory where log files are written, or null to disable file output.
+     */
     public function setDirectory(?string $directory): void
     {
         $this->directory = $directory;
     }
 
+    /**
+     * Sets the minimum severity that is recorded.
+     */
     public function setMinLevel(string $level): void
     {
         if (isset(self::LEVELS[$level])) {
@@ -49,6 +58,9 @@ final class Logger
         }
     }
 
+    /**
+     * Attaches the request id, route and start time added to each record.
+     */
     public function setRequestContext(?string $requestId, ?string $route = null, ?float $startedAt = null): void
     {
         $this->requestId = $requestId;
@@ -58,11 +70,17 @@ final class Logger
         }
     }
 
+    /**
+     * Records the matched route pattern for subsequent log lines.
+     */
     public function setRoute(?string $route): void
     {
         $this->route = $route;
     }
 
+    /**
+     * Records the authenticated user id for subsequent log lines.
+     */
     public function setUserId(int|string|null $userId): void
     {
         $this->userId = $userId === null ? null : (string) $userId;

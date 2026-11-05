@@ -27,6 +27,9 @@ final class GameHousekeeping
     ) {
     }
 
+    /**
+     * Permanently deletes games left in the trash past retention, at most $limit, and returns how many.
+     */
     public function purgeTrash(int $limit = self::BATCH): int
     {
         $days = max(0, $this->settings->int('trash_days'));

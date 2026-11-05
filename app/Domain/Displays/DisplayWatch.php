@@ -36,6 +36,9 @@ final class DisplayWatch implements LoopListener
         $this->checks = new \WeakMap();
     }
 
+    /**
+     * Periodically checks that the display behind a subscription is still active and closes the subscription otherwise.
+     */
     public function onLoopTick(Subscription $sub, float $now): void
     {
         if ($sub->displayId === null || $sub->isClosed()) {

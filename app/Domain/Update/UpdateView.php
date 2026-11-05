@@ -17,6 +17,9 @@ final class UpdateView
         $this->directory ??= dirname(__DIR__, 2) . '/Views/update';
     }
 
+    /**
+     * Escapes a value for HTML output.
+     */
     public static function e(string|int|float|null $value): string
     {
         return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

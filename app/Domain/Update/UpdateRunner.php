@@ -238,16 +238,25 @@ final class UpdateRunner
         $this->storage->writeJson($this->storage->runDir((string) $s['id']) . '/state.json', $s);
     }
 
+    /**
+     * Returns the current UTC time in ISO 8601.
+     */
     public function now(): string
     {
         return $this->clock->now()->format('Y-m-d\TH:i:s\Z');
     }
 
+    /**
+     * Returns the current Unix timestamp.
+     */
     public function timestamp(): int
     {
         return $this->clock->timestamp();
     }
 
+    /**
+     * Returns the audit log used to record update steps.
+     */
     public function audit(): AuditLog
     {
         return $this->audit;

@@ -32,6 +32,9 @@ final class Gd
         }
     }
 
+    /**
+     * Tells whether GD can encode WebP.
+     */
     public static function canWriteWebp(): bool
     {
         if (!function_exists('imagewebp') || !function_exists('gd_info')) {
@@ -42,6 +45,9 @@ final class Gd
         return !empty($info['WebP Support']);
     }
 
+    /**
+     * Tells whether the Imagick extension is loaded.
+     */
     public static function hasImagick(): bool
     {
         return extension_loaded('imagick') && class_exists('Imagick');

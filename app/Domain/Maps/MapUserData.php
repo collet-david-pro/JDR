@@ -22,11 +22,17 @@ final class MapUserData implements UserDataExtension
     {
     }
 
+    /**
+     * Returns the section name used in the data export.
+     */
     public function name(): string
     {
         return 'maps';
     }
 
+    /**
+     * Returns the user's map data for the personal data export.
+     */
     public function export(User $user): mixed
     {
         return array_map(static fn (array $m): array => [
@@ -37,6 +43,9 @@ final class MapUserData implements UserDataExtension
         ], $this->maps->ownedBy($user->id));
     }
 
+    /**
+     * Deletes the user's map data (account deletion).
+     */
     public function deleteUserData(User $user): void
     {
         $this->maps->reassignToGameGm($user->id);

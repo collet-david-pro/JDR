@@ -20,26 +20,41 @@ final class BufferSseOutput implements SseOutput
     {
     }
 
+    /**
+     * Records the response headers without sending them.
+     */
     public function start(array $headers): void
     {
         $this->headers = $headers;
     }
 
+    /**
+     * Appends the data to the in-memory buffer.
+     */
     public function write(string $data): void
     {
         $this->buffer .= $data;
     }
 
+    /**
+     * Counts the flush instead of pushing data to a client.
+     */
     public function flush(): void
     {
         $this->flushes++;
     }
 
+    /**
+     * Tells whether the simulated client has disconnected.
+     */
     public function aborted(): bool
     {
         return $this->abortAfterFlushes !== null && $this->flushes >= $this->abortAfterFlushes;
     }
 
+    /**
+     * Returns everything written so far.
+     */
     public function contents(): string
     {
         return $this->buffer;
@@ -53,6 +68,9 @@ final class BufferSseOutput implements SseOutput
         return $this->headers;
     }
 
+    /**
+     * Returns how many times flush() was called.
+     */
     public function flushes(): int
     {
         return $this->flushes;

@@ -23,6 +23,9 @@ final class GameRepository
     {
     }
 
+    /**
+     * Finds a game as seen by the viewer, or null.
+     */
     public function find(int $gameId, int $viewerId): ?Game
     {
         [$sql, $params] = $this->select($viewerId);
@@ -66,6 +69,9 @@ final class GameRepository
         return array_map(static fn (array $r): Game => Game::fromRow($r, $viewerId), $rows);
     }
 
+    /**
+     * Inserts a game and returns its id.
+     */
     public function insert(int $gmUserId, string $name, ?string $description, string $settingsJson): int
     {
         $now = $this->clock->sql();
@@ -95,6 +101,9 @@ final class GameRepository
         );
     }
 
+    /**
+     * Archives or unarchives the game.
+     */
     public function setArchived(int $id, bool $archived): void
     {
         $now = $this->clock->sql();
@@ -128,6 +137,9 @@ final class GameRepository
         );
     }
 
+    /**
+     * Changes the game master of the game.
+     */
     public function setGm(int $id, int $gmUserId): void
     {
         $this->db->execute(

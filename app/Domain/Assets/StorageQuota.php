@@ -40,6 +40,9 @@ final class StorageQuota
         }
     }
 
+    /**
+     * Gives bytes back to the user's quota, never going below zero.
+     */
     public function release(int $userId, int $bytes): void
     {
         if ($bytes <= 0) {

@@ -38,21 +38,33 @@ final class Session
         }
     }
 
+    /**
+     * Tells whether the request carried a session cookie.
+     */
     public function hasCookie(): bool
     {
         return $this->cookieId !== null;
     }
 
+    /**
+     * Tells whether the session has been opened for this request.
+     */
     public function isStarted(): bool
     {
         return $this->started;
     }
 
+    /**
+     * Returns the session id, or null when no session is started.
+     */
     public function id(): ?string
     {
         return $this->id;
     }
 
+    /**
+     * Reads a session value, with a default when absent.
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         if (!$this->ensureStarted(false)) {
@@ -62,6 +74,9 @@ final class Session
         return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
     }
 
+    /**
+     * Stores a value in the session.
+     */
     public function set(string $key, mixed $value): void
     {
         $this->assertWritable();
@@ -69,6 +84,9 @@ final class Session
         $this->data[$key] = $value;
     }
 
+    /**
+     * Deletes a key from the session.
+     */
     public function remove(string $key): void
     {
         if ($this->ensureStarted(false)) {
@@ -116,6 +134,9 @@ final class Session
         return $this->rotateCsrfToken();
     }
 
+    /**
+     * Generates and stores a new CSRF token, returning it.
+     */
     public function rotateCsrfToken(): string
     {
         $token = bin2hex(random_bytes(32));
@@ -136,6 +157,9 @@ final class Session
         $this->closed = true;
     }
 
+    /**
+     * Tells whether the session was committed and can no longer be written.
+     */
     public function isClosed(): bool
     {
         return $this->closed;

@@ -128,6 +128,9 @@ final class RateLimiter
         return $left > 0 ? $left : null;
     }
 
+    /**
+     * Resets the counter of the bucket, e.g. after a successful login.
+     */
     public function clear(string $bucket): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('rate_limits') . ' WHERE `bucket` = ?', [$bucket]);

@@ -22,6 +22,9 @@ final class AssetTagsController
     {
     }
 
+    /**
+     * GET /asset-tags: lists the user's tags.
+     */
     public function index(Request $request): Response
     {
         return Response::ok($this->tags->list(CurrentUser::require($request)));
@@ -45,6 +48,9 @@ final class AssetTagsController
         return Response::ok($this->tags->create($user, (string) $name, $scope), [], 201);
     }
 
+    /**
+     * DELETE /asset-tags/{id}: deletes a tag.
+     */
     public function delete(Request $request): Response
     {
         $this->tags->delete(CurrentUser::require($request), (int) $request->param('id'));

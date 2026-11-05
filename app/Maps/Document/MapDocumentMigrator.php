@@ -33,6 +33,9 @@ final class MapDocumentMigrator
         $this->steps = $steps ?? self::defaultSteps();
     }
 
+    /**
+     * Returns the current map document schema version.
+     */
     public function current(): int
     {
         return $this->current;

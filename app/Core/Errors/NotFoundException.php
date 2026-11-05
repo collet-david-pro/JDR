@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 404 not found.
+ */
 final class NotFoundException extends HttpException
 {
     /**

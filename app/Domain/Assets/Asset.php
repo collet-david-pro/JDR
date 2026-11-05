@@ -67,11 +67,17 @@ final class Asset
         );
     }
 
+    /**
+     * Tells whether the asset belongs to the shared library (no owner).
+     */
     public function isGeneral(): bool
     {
         return $this->ownerId === null;
     }
 
+    /**
+     * Returns "general" for shared assets (no owner) or "personal" for user-owned ones.
+     */
     public function scope(): string
     {
         return $this->ownerId === null ? self::SCOPE_GENERAL : self::SCOPE_PERSONAL;

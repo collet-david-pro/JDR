@@ -38,6 +38,9 @@ final class Session implements Middleware
     ) {
     }
 
+    /**
+     * Attaches a lazily opened session to the request, except on routes that opt out of sessions.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

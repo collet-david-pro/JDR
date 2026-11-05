@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 403 forbidden.
+ */
 final class ForbiddenException extends HttpException
 {
     /**

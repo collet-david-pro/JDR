@@ -23,6 +23,9 @@ final class CallbackLogger implements MigrationLogger
         $this->callback = $callback;
     }
 
+    /**
+     * Records the message and forwards it to the optional callback.
+     */
     public function info(string $msg, array $ctx = []): void
     {
         $this->entries[] = ['ts' => gmdate('Y-m-d H:i:s'), 'msg' => $msg, 'ctx' => $ctx];

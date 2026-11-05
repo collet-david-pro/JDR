@@ -18,16 +18,25 @@ final class Clock
         $this->fixed = $fixed?->setTimezone(new \DateTimeZone('UTC'));
     }
 
+    /**
+     * Builds a frozen clock fixed at the given time, for tests.
+     */
     public static function at(string $time): self
     {
         return new self(new \DateTimeImmutable($time, new \DateTimeZone('UTC')));
     }
 
+    /**
+     * Returns the current instant as an immutable date.
+     */
     public function now(): \DateTimeImmutable
     {
         return $this->fixed ?? new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
     }
 
+    /**
+     * Returns the current Unix timestamp.
+     */
     public function timestamp(): int
     {
         return $this->now()->getTimestamp();

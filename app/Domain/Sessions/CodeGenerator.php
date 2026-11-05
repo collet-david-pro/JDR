@@ -30,6 +30,9 @@ final class CodeGenerator
         throw new \RuntimeException('No free session code after ' . self::TRIES . ' tries.');
     }
 
+    /**
+     * Generates a random session join code.
+     */
     public static function random(): string
     {
         $max = strlen(self::ALPHABET) - 1;

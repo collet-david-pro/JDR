@@ -17,6 +17,9 @@ final class RememberTokenRepository
     {
     }
 
+    /**
+     * Stores a new remember-me token and returns its id.
+     */
     public function insert(int $userId, string $selector, string $validatorHash, ?string $userAgent, string $expiresAt, string $now): int
     {
         $this->db->execute(
@@ -41,6 +44,9 @@ final class RememberTokenRepository
         );
     }
 
+    /**
+     * Replaces the validator hash and expiry of a token after use.
+     */
     public function rotate(int $id, string $validatorHash, string $expiresAt, string $now): void
     {
         $this->db->execute(
@@ -50,11 +56,17 @@ final class RememberTokenRepository
         );
     }
 
+    /**
+     * Deletes a token.
+     */
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('remember_tokens') . ' WHERE `id` = ?', [$id]);
     }
 
+    /**
+     * Deletes all tokens of the user, optionally keeping one, and returns how many.
+     */
     public function deleteForUser(int $userId, ?int $exceptId = null): int
     {
         if ($exceptId === null) {
@@ -70,6 +82,9 @@ final class RememberTokenRepository
         );
     }
 
+    /**
+     * Deletes the token only if it belongs to the user; returns whether one was removed.
+     */
     public function deleteOwned(int $userId, int $id): bool
     {
         return $this->db->execute(

@@ -14,6 +14,9 @@ defined('JDR_BOOT') || exit;
  */
 final class Checksums
 {
+    /**
+     * Returns the checksum of a file.
+     */
     public static function ofFile(string $path): string
     {
         $content = @file_get_contents($path);
@@ -24,6 +27,9 @@ final class Checksums
         return self::ofString($content);
     }
 
+    /**
+     * Returns the checksum of a string, with normalised line endings.
+     */
     public static function ofString(string $content): string
     {
         return hash('sha256', str_replace(["\r\n", "\r"], "\n", $content));

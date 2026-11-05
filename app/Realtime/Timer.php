@@ -21,6 +21,9 @@ class Timer
         return microtime(true);
     }
 
+    /**
+     * Pauses for the given number of microseconds.
+     */
     public function sleep(int $microseconds): void
     {
         if ($microseconds > 0) {

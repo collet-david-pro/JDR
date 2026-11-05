@@ -10,6 +10,9 @@ use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Core\SystemStatus;
 
+/**
+ * Public system endpoints (health check, version).
+ */
 final class SystemController
 {
     public function __construct(private SystemStatus $status)

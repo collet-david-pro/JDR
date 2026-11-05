@@ -25,16 +25,25 @@ final class TemplatesController
     {
     }
 
+    /**
+     * GET /templates: lists the templates available to the user.
+     */
     public function index(Request $request): Response
     {
         return Response::ok($this->templates->list(CurrentUser::require($request)));
     }
 
+    /**
+     * POST /maps/{id}/save-as-template: stores a copy of the map as a template.
+     */
     public function save(Request $request): Response
     {
         return Response::ok($this->templates->saveAs(CurrentUser::require($request), (int) $request->param('id'), self::body($request)), [], 201);
     }
 
+    /**
+     * POST /templates/{id}/instantiate: creates a new map from a template and returns it.
+     */
     public function instantiate(Request $request): Response
     {
         $map = $this->templates->instantiate(CurrentUser::require($request), (int) $request->param('id'), self::body($request));
@@ -42,6 +51,9 @@ final class TemplatesController
         return Response::ok($this->presenter->full($map, Input::apiBase($request, $this->config), true), [], 201);
     }
 
+    /**
+     * DELETE /templates/{id}: deletes a map template.
+     */
     public function delete(Request $request): Response
     {
         $this->templates->delete(CurrentUser::require($request), (int) $request->param('id'));

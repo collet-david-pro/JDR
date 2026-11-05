@@ -27,6 +27,9 @@ final class UserRepository
     {
     }
 
+    /**
+     * Finds a user by id, or null.
+     */
     public function find(int $id): ?User
     {
         $row = $this->db->fetchOne(
@@ -37,6 +40,9 @@ final class UserRepository
         return $row === null ? null : User::fromRow($row);
     }
 
+    /**
+     * Finds a user by e-mail address, or null.
+     */
     public function findByEmail(string $email): ?User
     {
         $row = $this->db->fetchOne(
@@ -76,11 +82,17 @@ final class UserRepository
         return $this->taken('email', mb_strtolower($email, 'UTF-8'), $exceptId);
     }
 
+    /**
+     * Tells whether the username is used by another user.
+     */
     public function usernameTaken(string $username, ?int $exceptId = null): bool
     {
         return $this->taken('username', $username, $exceptId);
     }
 
+    /**
+     * Inserts a user and returns its id.
+     */
     public function insert(
         string $email,
         string $username,
@@ -185,6 +197,9 @@ final class UserRepository
         return ['items' => array_map(static fn (array $r): User => User::fromRow($r), $rows), 'next_cursor' => $next];
     }
 
+    /**
+     * Counts active admin accounts (used to protect the last admin).
+     */
     public function countActiveAdmins(): int
     {
         return (int) $this->db->fetchValue(

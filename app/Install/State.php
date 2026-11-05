@@ -80,17 +80,26 @@ final class State
         return $state;
     }
 
+    /**
+     * Reads a value from the installer state.
+     */
     public function get(string $key, mixed $default = null): mixed
     {
         return $this->data[$key] ?? $default;
     }
 
+    /**
+     * Stores a value in the installer state.
+     */
     public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
         $this->save();
     }
 
+    /**
+     * Deletes a key from the installer state.
+     */
     public function remove(string $key): void
     {
         unset($this->data[$key]);
@@ -111,6 +120,9 @@ final class State
         return $token;
     }
 
+    /**
+     * Compares the provided CSRF token with the installer token in constant time.
+     */
     public function checkToken(mixed $provided): bool
     {
         return is_string($provided) && $provided !== '' && hash_equals($this->token(), $provided);

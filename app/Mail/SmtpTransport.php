@@ -35,5 +35,8 @@ interface SmtpTransport
      */
     public function write(string $data): void;
 
+    /**
+     * Closes the connection.
+     */
     public function close(): void;
 }

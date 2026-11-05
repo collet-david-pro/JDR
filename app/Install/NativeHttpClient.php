@@ -21,6 +21,9 @@ final class NativeHttpClient implements HttpClient
     {
     }
 
+    /**
+     * Performs a GET request; null when the request fails.
+     */
     public function get(string $url): ?HttpResult
     {
         if (preg_match('#^https?://#i', $url) !== 1) {

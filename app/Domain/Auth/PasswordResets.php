@@ -91,6 +91,9 @@ final class PasswordResets
         );
     }
 
+    /**
+     * Deletes expired reset tokens and returns how many.
+     */
     public function purgeExpired(): int
     {
         return $this->db->execute(

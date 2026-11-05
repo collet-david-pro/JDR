@@ -18,6 +18,9 @@ final class LoginAttempts
     {
     }
 
+    /**
+     * Records a login attempt for the identifier and IP.
+     */
     public function record(string $identifier, string $ip, bool $success): void
     {
         $this->db->execute(
@@ -32,6 +35,9 @@ final class LoginAttempts
         );
     }
 
+    /**
+     * Deletes attempts older than the given number of days and returns how many.
+     */
     public function purge(int $days = 30): int
     {
         return $this->db->execute(

@@ -71,6 +71,9 @@ final class MapState
         return null;
     }
 
+    /**
+     * Marks a column as modified so it is written on save.
+     */
     public function change(string $column): void
     {
         $this->changed[$column] = true;

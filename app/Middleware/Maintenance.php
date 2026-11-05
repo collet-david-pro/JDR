@@ -30,6 +30,9 @@ final class Maintenance implements Middleware
     ) {
     }
 
+    /**
+     * Answers 503 when the app is not installed, in maintenance or behind the database version.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

@@ -27,11 +27,17 @@ final class Container
         unset($this->instances[$id]);
     }
 
+    /**
+     * Registers an already built service under the given id.
+     */
     public function instance(string $id, object $service): void
     {
         $this->instances[$id] = $service;
     }
 
+    /**
+     * Tells whether a service or factory is registered under the id.
+     */
     public function has(string $id): bool
     {
         return isset($this->instances[$id]) || isset($this->factories[$id]);

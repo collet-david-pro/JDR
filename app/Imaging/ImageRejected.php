@@ -39,26 +39,41 @@ final class ImageRejected extends HttpException
         parent::__construct(self::STATUS[$code], $code, '');
     }
 
+    /**
+     * Builds the rejection for an unsupported or unrecognised image type.
+     */
     public static function unsupportedType(string $reason, string $detail): self
     {
         return new self(self::UNSUPPORTED_TYPE, $reason, $detail);
     }
 
+    /**
+     * Builds the rejection for an image above the pixel limit.
+     */
     public static function imageTooLarge(string $reason, string $detail): self
     {
         return new self(self::IMAGE_TOO_LARGE, $reason, $detail);
     }
 
+    /**
+     * Builds the rejection for an animation above the duration or frame limit.
+     */
     public static function animationTooLong(string $reason, string $detail): self
     {
         return new self(self::ANIMATION_TOO_LONG, $reason, $detail);
     }
 
+    /**
+     * Builds the rejection for a file above the size limit.
+     */
     public static function fileTooLarge(string $reason, string $detail): self
     {
         return new self(self::FILE_TOO_LARGE, $reason, $detail);
     }
 
+    /**
+     * Returns the stable reason code of the rejection.
+     */
     public function reason(): string
     {
         return $this->reason;

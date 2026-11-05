@@ -27,6 +27,9 @@ final class Authenticator
     {
     }
 
+    /**
+     * Resolves the current user from the session or the remember-me cookie; null when anonymous or deactivated.
+     */
     public function resolve(Request $request, Session $session, CookieParams $cookies): ?User
     {
         $uid = $session->get(self::KEY_USER);
@@ -85,6 +88,9 @@ final class Authenticator
         $session->set(self::KEY_FINGERPRINT, $user->sessionFingerprint());
     }
 
+    /**
+     * Returns the id of the remember-me token that authenticated the session, or null.
+     */
     public function rememberTokenId(Session $session): ?int
     {
         $rid = $session->get(self::KEY_REMEMBER);

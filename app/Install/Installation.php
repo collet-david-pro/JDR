@@ -115,6 +115,9 @@ final class Installation
         ], (string) $run['generated_at']);
     }
 
+    /**
+     * Returns the storage directory chosen for the installation.
+     */
     public function storagePath(): string
     {
         $site = (array) $this->state->get('site', []);

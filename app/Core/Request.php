@@ -49,6 +49,9 @@ final class Request
         $this->bodyReader = $bodyReader;
     }
 
+    /**
+     * Builds the request from PHP superglobals and the input stream.
+     */
     public static function fromGlobals(?Config $config): self
     {
         /** @var array<string, mixed> $server */
@@ -170,6 +173,9 @@ final class Request
         return explode('#', explode('?', $uri, 2)[0], 2)[0];
     }
 
+    /**
+     * Normalises a request path to a leading slash without trailing slash.
+     */
     public static function normalizePath(string $path): string
     {
         $path = '/' . ltrim((string) preg_replace('#/+#', '/', str_replace('\\', '/', $path)), '/');
@@ -177,6 +183,9 @@ final class Request
         return $path === '/' ? '/' : rtrim($path, '/');
     }
 
+    /**
+     * Generates a random id used to correlate logs and error responses.
+     */
     public static function newId(): string
     {
         return bin2hex(random_bytes(8));
@@ -203,21 +212,33 @@ final class Request
         return $headers;
     }
 
+    /**
+     * Returns a header value, matched case-insensitively, or null.
+     */
     public function header(string $name): ?string
     {
         return $this->headers[strtolower($name)] ?? null;
     }
 
+    /**
+     * Tells whether the path targets the JSON API.
+     */
     public function isApi(): bool
     {
         return $this->path === '/api' || str_starts_with($this->path, '/api/');
     }
 
+    /**
+     * Tells whether the method is GET, HEAD or OPTIONS, i.e. exempt from CSRF checks.
+     */
     public function isSafeMethod(): bool
     {
         return in_array($this->method, ['GET', 'HEAD', 'OPTIONS'], true);
     }
 
+    /**
+     * Tells whether the request came over HTTPS, optionally trusting X-Forwarded-Proto.
+     */
     public function isHttps(bool $trustForwardedProto = false): bool
     {
         $https = strtolower((string) ($this->server['HTTPS'] ?? ''));
@@ -234,6 +255,9 @@ final class Request
         return $trustForwardedProto && strtolower((string) $this->header('x-forwarded-proto')) === 'https';
     }
 
+    /**
+     * Returns the client IP address.
+     */
     public function ip(): string
     {
         return (string) ($this->server['REMOTE_ADDR'] ?? '');
@@ -256,11 +280,17 @@ final class Request
         return $this->body;
     }
 
+    /**
+     * Stores the decoded request body (set by the body-parsing middleware).
+     */
     public function setParsedBody(mixed $data): void
     {
         $this->parsedBody = $data;
     }
 
+    /**
+     * Returns the decoded request body, or null when none was parsed.
+     */
     public function parsedBody(): mixed
     {
         return $this->parsedBody;
@@ -274,6 +304,9 @@ final class Request
         $this->params = $params;
     }
 
+    /**
+     * Returns a route parameter captured by the router, or null.
+     */
     public function param(string $name): ?string
     {
         return $this->params[$name] ?? null;
@@ -287,11 +320,17 @@ final class Request
         return $this->params;
     }
 
+    /**
+     * Attaches a value computed during the request (current user, route, ...).
+     */
     public function setAttribute(string $name, mixed $value): void
     {
         $this->attributes[$name] = $value;
     }
 
+    /**
+     * Reads a request attribute, with a default when unset.
+     */
     public function attribute(string $name, mixed $default = null): mixed
     {
         return $this->attributes[$name] ?? $default;

@@ -110,6 +110,9 @@ final class BackupUploads
         return $file;
     }
 
+    /**
+     * Deletes an uploaded backup archive and its metadata.
+     */
     public function discard(string $uploadId): void
     {
         if (UpdateStorage::isId($uploadId)) {

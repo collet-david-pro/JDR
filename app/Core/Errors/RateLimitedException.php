@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 429 too many requests.
+ */
 final class RateLimitedException extends HttpException
 {
     public function __construct(int $retryAfterSeconds, string $message = '')

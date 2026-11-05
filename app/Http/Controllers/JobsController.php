@@ -33,6 +33,9 @@ final class JobsController
     ) {
     }
 
+    /**
+     * GET /jobs/{id}: returns the state and progress of a background job.
+     */
     public function show(Request $request): Response
     {
         return Response::ok(['job' => $this->own($request)->toPublic()]);
@@ -46,6 +49,9 @@ final class JobsController
         return Response::ok(['job' => $this->runner->step($this->own($request))->toPublic()]);
     }
 
+    /**
+     * POST /jobs/{id}/cancel: cancels a background job owned by the user.
+     */
     public function cancel(Request $request): Response
     {
         return Response::ok(['job' => $this->runner->cancel($this->own($request))->toPublic()]);

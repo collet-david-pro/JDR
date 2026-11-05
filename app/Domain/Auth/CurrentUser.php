@@ -16,6 +16,9 @@ use JDR\Domain\Users\User;
  */
 final class CurrentUser
 {
+    /**
+     * Returns the authenticated user of the request, or null.
+     */
     public static function of(Request $request): ?User
     {
         $user = $request->attribute('user');
@@ -31,6 +34,11 @@ final class CurrentUser
         return self::of($request) ?? throw new UnauthenticatedException();
     }
 
+    /**
+     * Returns the session attached to the request.
+     *
+     * @throws \LogicException When the session middleware has not run.
+     */
     public static function session(Request $request): Session
     {
         $session = $request->attribute('session');

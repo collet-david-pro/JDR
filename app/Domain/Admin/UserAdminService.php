@@ -38,6 +38,11 @@ final class UserAdminService
     ) {
     }
 
+    /**
+     * Returns a user by id.
+     *
+     * @throws NotFoundException When the user does not exist.
+     */
     public function get(int $id): User
     {
         return $this->users->find($id) ?? throw new NotFoundException();
@@ -159,6 +164,9 @@ final class UserAdminService
         return $this->get($id);
     }
 
+    /**
+     * Reactivates a suspended user on behalf of an admin and audits it.
+     */
     public function unsuspend(User $admin, int $id, string $ip): User
     {
         $this->get($id);
@@ -180,6 +188,9 @@ final class UserAdminService
         return ['url' => $link['url'], 'expires_at' => $link['expires_at']];
     }
 
+    /**
+     * Deletes a user on behalf of an admin, refusing to remove the last active admin, and audits it.
+     */
     public function delete(User $admin, int $id, string $ip): void
     {
         $user = $this->get($id);

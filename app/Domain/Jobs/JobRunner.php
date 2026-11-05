@@ -42,6 +42,9 @@ final class JobRunner
     ) {
     }
 
+    /**
+     * Runs one time-boxed slice of the job under its lock; returns the job unchanged when another worker holds it.
+     */
     public function step(Job $job, float $budgetSeconds = self::DEFAULT_BUDGET_S): Job
     {
         if ($job->isFinished()) {
@@ -74,6 +77,9 @@ final class JobRunner
         }
     }
 
+    /**
+     * Cancels the job under its lock and lets its handler clean up.
+     */
     public function cancel(Job $job): Job
     {
         $lock = $this->lockName($job->id);

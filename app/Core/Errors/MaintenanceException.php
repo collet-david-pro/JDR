@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 503 maintenance mode active.
+ */
 final class MaintenanceException extends HttpException
 {
     public const RETRY_AFTER = 120;

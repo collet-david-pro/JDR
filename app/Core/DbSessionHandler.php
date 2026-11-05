@@ -30,11 +30,17 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         $this->userId = $userId;
     }
 
+    /**
+     * SessionHandlerInterface hook; nothing to open because the database is already connected.
+     */
     public function open(string $path, string $name): bool
     {
         return true;
     }
 
+    /**
+     * SessionHandlerInterface hook; nothing to release.
+     */
     public function close(): bool
     {
         $this->releaseLock();
@@ -42,6 +48,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         return true;
     }
 
+    /**
+     * Loads the serialized session payload, or an empty string when the session is unknown or expired.
+     */
     public function read(string $id): string|false
     {
         $this->acquireLock($id);
@@ -53,6 +62,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         return is_string($data) ? $data : '';
     }
 
+    /**
+     * Stores the serialized payload and refreshes the session activity time.
+     */
     public function write(string $id, string $data): bool
     {
         $this->db->execute(
@@ -65,6 +77,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         return true;
     }
 
+    /**
+     * Deletes the session row.
+     */
     public function destroy(string $id): bool
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('php_sessions') . ' WHERE `id` = ?', [$id]);
@@ -72,6 +87,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         return true;
     }
 
+    /**
+     * Deletes sessions idle for longer than the lifetime and returns how many were removed.
+     */
     public function gc(int $max_lifetime): int|false
     {
         return $this->db->execute(
@@ -80,6 +98,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         );
     }
 
+    /**
+     * Accepts only well-formed session ids so arbitrary cookie values never reach the query.
+     */
     public function validateId(string $id): bool
     {
         return $this->db->fetchValue(
@@ -88,6 +109,9 @@ final class DbSessionHandler implements \SessionHandlerInterface, \SessionUpdate
         ) !== null;
     }
 
+    /**
+     * Refreshes the session activity time without rewriting the payload.
+     */
     public function updateTimestamp(string $id, string $data): bool
     {
         $this->db->execute(

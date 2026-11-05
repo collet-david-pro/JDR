@@ -25,6 +25,9 @@ final class NativeSessionBackend implements SessionBackend
     {
     }
 
+    /**
+     * Opens the PHP session with the given options and returns its id and data.
+     */
     public function start(SessionOptions $options, ?string $cookieId): array
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -40,6 +43,9 @@ final class NativeSessionBackend implements SessionBackend
         return [(string) session_id(), $data];
     }
 
+    /**
+     * Writes the data and releases the session lock.
+     */
     public function commit(string $id, array $data): void
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -53,6 +59,9 @@ final class NativeSessionBackend implements SessionBackend
         session_write_close();
     }
 
+    /**
+     * Issues a new session id while keeping the data (fixation protection).
+     */
     public function regenerate(SessionOptions $options, string $id, array $data): string
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -64,6 +73,9 @@ final class NativeSessionBackend implements SessionBackend
         return (string) session_id();
     }
 
+    /**
+     * Destroys the PHP session and closes it.
+     */
     public function destroy(SessionOptions $options, string $id): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {

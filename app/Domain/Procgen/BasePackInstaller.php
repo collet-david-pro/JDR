@@ -70,6 +70,9 @@ final class BasePackInstaller
             || ($state['failed'] !== [] && $state['retry_at'] <= time());
     }
 
+    /**
+     * Tells whether the installed base pack version differs from the bundled one.
+     */
     public function outdated(): bool
     {
         return $this->state()['version'] !== $this->manifest->version();

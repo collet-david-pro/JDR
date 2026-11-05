@@ -57,6 +57,9 @@ final class Job
         );
     }
 
+    /**
+     * Tells whether the job reached a terminal state (done, failed or cancelled).
+     */
     public function isFinished(): bool
     {
         return in_array($this->status, [self::DONE, self::FAILED, self::CANCELLED], true);

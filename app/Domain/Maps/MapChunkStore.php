@@ -17,16 +17,27 @@ final class MapChunkStore implements ChunkStore
     {
     }
 
+    /**
+     * Selects and locks the chunks of a layer identified by their keys.
+     */
     public function lock(int $floorId, string $layer, array $keys): array
     {
         return $this->maps->chunksForUpdate($this->mapId, $floorId, $layer, $keys);
     }
 
+    /**
+     * Selects and locks the chunks lying beyond the given chunk coordinates.
+     */
     public function lockBeyond(int $minCx, int $minCy): array
     {
         return $this->maps->chunksBeyondForUpdate($this->mapId, $minCx, $minCy);
     }
 
+    /**
+     * Selects and locks (FOR UPDATE) every chunk of the floor.
+     *
+     * @throws \LogicException When no floor repository was provided.
+     */
     public function lockFloor(int $floorId): array
     {
         return ($this->floors ?? throw new \LogicException('No floor repository.'))->chunksForUpdate($this->mapId, $floorId);

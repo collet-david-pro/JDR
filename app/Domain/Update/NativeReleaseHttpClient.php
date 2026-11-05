@@ -21,6 +21,9 @@ final class NativeReleaseHttpClient implements ReleaseHttpClient
     {
     }
 
+    /**
+     * Performs a GET with the given headers; null on transport failure.
+     */
     public function get(string $url, array $headers = []): ?HttpResult
     {
         if (preg_match('#^https://#i', $url) !== 1) {

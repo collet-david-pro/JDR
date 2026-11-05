@@ -162,6 +162,9 @@ final class Validator
         return [['email' => $email, 'username' => $username, 'password' => $password], $errors];
     }
 
+    /**
+     * Tells whether the string is an acceptable http(s) base URL.
+     */
     public static function isBaseUrl(string $url): bool
     {
         if (preg_match('#^https?://[^\s/?\#]+(/[^\s?\#]*)?$#i', $url) !== 1) {
@@ -171,6 +174,9 @@ final class Validator
         return filter_var($url, FILTER_VALIDATE_URL) !== false && strlen($url) <= 255;
     }
 
+    /**
+     * Tells whether the path is absolute.
+     */
     public static function isAbsolutePath(string $path): bool
     {
         if (str_contains($path, "\0") || str_contains($path, '..')) {

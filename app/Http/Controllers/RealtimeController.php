@@ -44,6 +44,9 @@ final class RealtimeController
     ) {
     }
 
+    /**
+     * GET /events: long-polling fallback returning events after a cursor, waiting up to a capped delay.
+     */
     public function events(Request $request): Response
     {
         $reader = DisplayAuth::of($request) ?? CurrentUser::require($request);
@@ -63,6 +66,9 @@ final class RealtimeController
         );
     }
 
+    /**
+     * GET /stream: Server-Sent Events feed of the requested channels, resuming after Last-Event-ID.
+     */
     public function stream(Request $request): Response
     {
         $reader = DisplayAuth::of($request) ?? CurrentUser::require($request);

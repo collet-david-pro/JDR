@@ -24,6 +24,9 @@ final class SessionRepository
     {
     }
 
+    /**
+     * Returns the database handle, for collaborators sharing the transaction.
+     */
     public function db(): Db
     {
         return $this->db;
@@ -31,6 +34,9 @@ final class SessionRepository
 
     // ---- Sessions --------------------------------------------------------------------------
 
+    /**
+     * Finds a session by id, or null.
+     */
     public function find(int $id): ?Session
     {
         $row = $this->db->fetchOne('SELECT ' . self::COLUMNS . ' FROM ' . $this->db->t('play_sessions') . ' WHERE `id` = ?', [$id]);
@@ -38,6 +44,9 @@ final class SessionRepository
         return $row === null ? null : Session::fromRow($row);
     }
 
+    /**
+     * Finds a session and locks its row for the current transaction.
+     */
     public function findForUpdate(int $id): ?Session
     {
         $row = $this->db->fetchOne(
@@ -48,6 +57,9 @@ final class SessionRepository
         return $row === null ? null : Session::fromRow($row);
     }
 
+    /**
+     * Finds a session by its join code, or null.
+     */
     public function findByCode(string $code): ?Session
     {
         $row = $this->db->fetchOne('SELECT ' . self::COLUMNS . ' FROM ' . $this->db->t('play_sessions') . ' WHERE `code` = ?', [$code]);
@@ -55,6 +67,9 @@ final class SessionRepository
         return $row === null ? null : Session::fromRow($row);
     }
 
+    /**
+     * Tells whether a session already uses the join code.
+     */
     public function codeExists(string $code): bool
     {
         return $this->db->fetchValue('SELECT 1 FROM ' . $this->db->t('play_sessions') . ' WHERE `code` = ?', [$code]) !== null;
@@ -93,11 +108,17 @@ final class SessionRepository
         return $id === null ? null : (int) $id;
     }
 
+    /**
+     * Locks the game row (FOR UPDATE) to serialise session changes of that game.
+     */
     public function lockGame(int $gameId): void
     {
         $this->db->fetchValue('SELECT `id` FROM ' . $this->db->t('games') . ' WHERE `id` = ? FOR UPDATE', [$gameId]);
     }
 
+    /**
+     * Inserts a session and returns its id.
+     */
     public function insert(int $gameId, string $code, ?string $name, ?int $mapId, ?int $floorId, int $createdBy): int
     {
         $this->db->execute(
@@ -211,6 +232,9 @@ final class SessionRepository
         return $row === null ? null : ['status' => (string) $row['status'], 'ready' => (int) $row['ready'] === 1, 'username' => (string) $row['username']];
     }
 
+    /**
+     * Adds a user to the session as a player.
+     */
     public function insertPlayer(int $sessionId, int $userId): void
     {
         $now = $this->clock->sql();
@@ -221,6 +245,9 @@ final class SessionRepository
         );
     }
 
+    /**
+     * Sets a player's connection status (clearing ready unless connected), optionally refreshing the last-seen time.
+     */
     public function setPlayerStatus(int $sessionId, int $userId, string $status, bool $seen = true): void
     {
         $this->db->execute(
@@ -230,6 +257,9 @@ final class SessionRepository
         );
     }
 
+    /**
+     * Sets the ready flag of a player.
+     */
     public function setReady(int $sessionId, int $userId, bool $ready): void
     {
         $this->db->execute(
@@ -238,11 +268,17 @@ final class SessionRepository
         );
     }
 
+    /**
+     * Clears the ready flag of every player.
+     */
     public function resetReady(int $sessionId): void
     {
         $this->db->execute('UPDATE ' . $this->db->t('session_players') . ' SET `ready` = 0 WHERE `session_id` = ?', [$sessionId]);
     }
 
+    /**
+     * Tells whether the user is a member of the game.
+     */
     public function isGameMember(int $gameId, int $userId): bool
     {
         return $this->db->fetchValue(
@@ -275,6 +311,9 @@ final class SessionRepository
         return $out;
     }
 
+    /**
+     * Returns the user assigned to the token, or null.
+     */
     public function assignmentUser(int $sessionId, int $tokenId): ?int
     {
         $id = $this->db->fetchValue(
@@ -285,6 +324,9 @@ final class SessionRepository
         return $id === null ? null : (int) $id;
     }
 
+    /**
+     * Assigns a token to a player in the session.
+     */
     public function setAssignment(int $sessionId, int $tokenId, int $userId): void
     {
         $this->db->execute(
@@ -294,6 +336,9 @@ final class SessionRepository
         );
     }
 
+    /**
+     * Removes the user assignment of a token in the session.
+     */
     public function removeAssignment(int $sessionId, int $tokenId): void
     {
         $this->db->execute(

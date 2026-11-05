@@ -31,11 +31,17 @@ final class GameUserData implements UserDataExtension
     ) {
     }
 
+    /**
+     * Returns the section name used in the data export.
+     */
     public function name(): string
     {
         return 'games';
     }
 
+    /**
+     * Returns the user's game data for the personal data export.
+     */
     public function export(User $user): mixed
     {
         $run = [];
@@ -82,6 +88,9 @@ final class GameUserData implements UserDataExtension
         ];
     }
 
+    /**
+     * Deletes the user's game data (account deletion).
+     */
     public function deleteUserData(User $user): void
     {
         foreach ($this->games->idsRunBy($user->id) as $gameId) {

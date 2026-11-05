@@ -25,6 +25,9 @@ final class AssetsArchive
     /** Extensions of the original files (AssetImporter) and of the thumbnails (AssetStorage::THUMB_TYPES). */
     public const EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 
+    /**
+     * Returns the ZIP extraction limits applied to asset backups.
+     */
     public static function limits(): ZipLimits
     {
         return new ZipLimits(65535, 4294967295, 1073741824, 100, 65536);
@@ -80,6 +83,9 @@ final class AssetsArchive
         return $m[4] === '' ? in_array($m[5], self::EXTENSIONS, true) : isset(AssetStorage::THUMB_TYPES[$m[5]]);
     }
 
+    /**
+     * Extracts the asset UUID from an archive entry name; null when the name is not an asset file.
+     */
     public static function uuidOf(string $name): ?string
     {
         return preg_match('/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:_thumb)?\.[a-z0-9]{2,5}$/D', $name, $m) === 1 ? $m[1] : null;

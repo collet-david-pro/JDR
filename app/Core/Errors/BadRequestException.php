@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 400 bad request.
+ */
 final class BadRequestException extends HttpException
 {
     /**

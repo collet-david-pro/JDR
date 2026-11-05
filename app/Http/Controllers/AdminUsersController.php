@@ -94,6 +94,9 @@ final class AdminUsersController
         return Response::ok(['user' => $user->toPublic()]);
     }
 
+    /**
+     * POST /admin/users/{id}/suspend (admin): suspends an account and ends its sessions.
+     */
     public function suspend(Request $request): Response
     {
         $user = $this->admin->suspend(CurrentUser::require($request), self::id($request), $request->ip());
@@ -101,6 +104,9 @@ final class AdminUsersController
         return Response::ok(['user' => $user->toPublic()]);
     }
 
+    /**
+     * POST /admin/users/{id}/unsuspend (admin): lifts a suspension.
+     */
     public function unsuspend(Request $request): Response
     {
         $user = $this->admin->unsuspend(CurrentUser::require($request), self::id($request), $request->ip());
@@ -116,6 +122,9 @@ final class AdminUsersController
         return Response::ok($this->admin->resetLink(CurrentUser::require($request), self::id($request), $request->ip()));
     }
 
+    /**
+     * DELETE /admin/users/{id} (admin): deletes a user account.
+     */
     public function delete(Request $request): Response
     {
         $this->admin->delete(CurrentUser::require($request), self::id($request), $request->ip());
@@ -128,6 +137,9 @@ final class AdminUsersController
         return (int) $request->param('id');
     }
 
+    /**
+     * Reads a trimmed, length-capped string from the query string; null when absent or blank.
+     */
     public static function queryString(Request $request, string $key, int $max): ?string
     {
         $value = $request->query[$key] ?? null;

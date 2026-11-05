@@ -19,6 +19,9 @@ final class InvitationRepository
     {
     }
 
+    /**
+     * Inserts an invitation (only the hash of the code is stored) and returns its id.
+     */
     public function insert(string $codeHash, ?string $email, int $createdBy, int $maxUses, ?string $expiresAt, string $now): int
     {
         $this->db->execute(
@@ -65,16 +68,25 @@ final class InvitationRepository
         );
     }
 
+    /**
+     * Increments the use counter of an invitation.
+     */
     public function incrementUses(int $id): void
     {
         $this->db->execute('UPDATE ' . $this->db->t('invitations') . ' SET `uses` = `uses` + 1 WHERE `id` = ?', [$id]);
     }
 
+    /**
+     * Deletes an invitation; returns whether it existed.
+     */
     public function delete(int $id): bool
     {
         return $this->db->execute('DELETE FROM ' . $this->db->t('invitations') . ' WHERE `id` = ?', [$id]) > 0;
     }
 
+    /**
+     * Deletes the invitations created by a user.
+     */
     public function deleteCreatedBy(int $userId): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('invitations') . ' WHERE `created_by` = ?', [$userId]);

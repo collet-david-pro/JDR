@@ -44,6 +44,9 @@ final class PresenceService implements LoopListener
     ) {
     }
 
+    /**
+     * Refreshes the presence of the connected user on each realtime loop tick.
+     */
     public function onLoopTick(Subscription $sub, float $now): void
     {
         foreach ($sub->grants as $grant) {

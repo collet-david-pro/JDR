@@ -25,6 +25,9 @@ final class ErrorHandler
     ) {
     }
 
+    /**
+     * Installs the exception, error and shutdown handlers.
+     */
     public function register(): void
     {
         ini_set('display_errors', '0');
@@ -33,11 +36,17 @@ final class ErrorHandler
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
+    /**
+     * Switches detailed error output on or off.
+     */
     public function setDebug(bool $debug): void
     {
         $this->debug = $debug;
     }
 
+    /**
+     * Records whether the current request is an API call and its request id, to shape error output.
+     */
     public function setRequestContext(bool $api, ?string $requestId): void
     {
         $this->apiContext = $api;
@@ -60,12 +69,18 @@ final class ErrorHandler
         throw new \ErrorException($message, 0, $severity, $file, $line);
     }
 
+    /**
+     * Logs an uncaught throwable and renders the matching error response.
+     */
     public function handleUncaught(\Throwable $e): void
     {
         $this->logger->critical('Uncaught exception', Logger::exceptionContext($e));
         $this->emergencyOutput();
     }
 
+    /**
+     * Reports fatal errors that bypass exceptions once the script ends.
+     */
     public function handleShutdown(): void
     {
         $error = error_get_last();

@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 405 method not allowed.
+ */
 final class MethodNotAllowedException extends HttpException
 {
     /**

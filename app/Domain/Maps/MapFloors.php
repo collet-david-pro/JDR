@@ -59,6 +59,9 @@ final class MapFloors
         return $this->cache[$mapId] ??= $this->maps->floors($mapId);
     }
 
+    /**
+     * Drops the cached floor list of the map.
+     */
     public function forget(int $mapId): void
     {
         unset($this->cache[$mapId]);
@@ -78,6 +81,9 @@ final class MapFloors
         return null;
     }
 
+    /**
+     * Returns the uid of a floor, or null when the map has no such floor.
+     */
     public function uidOf(int $mapId, int $floorId): ?string
     {
         foreach ($this->list($mapId) as $floor) {

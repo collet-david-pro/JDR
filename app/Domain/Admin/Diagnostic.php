@@ -279,6 +279,9 @@ final class Diagnostic
             : version_compare($m[1], '5.7', '>=');
     }
 
+    /**
+     * Converts a php.ini size such as "8M" to bytes.
+     */
     public static function iniBytes(string $value): int
     {
         $value = trim($value);

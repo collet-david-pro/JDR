@@ -104,6 +104,9 @@ final class DisplayService
         });
     }
 
+    /**
+     * Revokes a display on behalf of its session owner.
+     */
     public function revoke(User $user, int $displayId): void
     {
         $this->ownRights($user, $displayId);

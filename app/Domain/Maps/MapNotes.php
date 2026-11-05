@@ -114,6 +114,9 @@ final class MapNotes
         return array_values($out);
     }
 
+    /**
+     * Returns who may see each non-GM note of the map (cached).
+     */
     public function visibility(int $mapId): NoteVisibility
     {
         $rows = $this->memo->remember('note_visibility:' . $mapId, ['map_notes', 'map_note_users'], fn (): array => $this->db->fetchAll(
@@ -202,6 +205,9 @@ final class MapNotes
         $this->addUsers($id, $row['users']);
     }
 
+    /**
+     * Deletes a note.
+     */
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('map_notes') . ' WHERE `id` = ?', [$id]);
@@ -247,6 +253,9 @@ final class MapNotes
         return array_map(static fn (array $r): string => (string) $r['uid'], $rows);
     }
 
+    /**
+     * Links a map object to a note, or unlinks it when $noteId is null.
+     */
     public function linkObject(int $mapId, string $objectUid, ?int $noteId): void
     {
         $this->db->execute(
@@ -377,6 +386,9 @@ final class MapNotes
         return $refs;
     }
 
+    /**
+     * Deletes every note of the map.
+     */
     public function clear(int $mapId): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('map_notes') . ' WHERE `map_id` = ?', [$mapId]);

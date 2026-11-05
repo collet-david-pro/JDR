@@ -55,6 +55,9 @@ final class Display
         );
     }
 
+    /**
+     * Tells whether the display is paired and not revoked.
+     */
     public function isActive(): bool
     {
         return $this->state === self::ACTIVE;

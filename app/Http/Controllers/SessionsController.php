@@ -77,21 +77,33 @@ final class SessionsController
         return Response::noContent();
     }
 
+    /**
+     * POST /sessions/{id}/start: starts the session.
+     */
     public function start(Request $request): Response
     {
         return $this->transition($request, 'start');
     }
 
+    /**
+     * POST /sessions/{id}/pause: pauses the session.
+     */
     public function pause(Request $request): Response
     {
         return $this->transition($request, 'pause');
     }
 
+    /**
+     * POST /sessions/{id}/resume: resumes a paused session.
+     */
     public function resume(Request $request): Response
     {
         return $this->transition($request, 'resume');
     }
 
+    /**
+     * POST /sessions/{id}/end: ends the session.
+     */
     public function end(Request $request): Response
     {
         return $this->transition($request, 'end');

@@ -19,6 +19,9 @@ final class CookieParams
     {
     }
 
+    /**
+     * Derives cookie attributes (secure flag, path) from the request and configuration.
+     */
     public static function fromRequest(Request $request, ?Config $config): self
     {
         $secure = ($config?->cookieSecure() ?? false) || $request->isHttps($config?->isHttpsBaseUrl() ?? false);

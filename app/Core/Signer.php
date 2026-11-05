@@ -21,6 +21,9 @@ final class Signer
         }
     }
 
+    /**
+     * Returns an HMAC signature over the ordered parts.
+     */
     public function sign(string ...$parts): string
     {
         foreach ($parts as $part) {
@@ -32,6 +35,9 @@ final class Signer
         return self::base64url(hash_hmac('sha256', implode('|', $parts), $this->secret, true));
     }
 
+    /**
+     * Checks a signature over the parts in constant time.
+     */
     public function verify(string $signature, string ...$parts): bool
     {
         try {
@@ -49,6 +55,9 @@ final class Signer
         return $this->sign(...[...$parts, (string) $expiresAt]);
     }
 
+    /**
+     * Verifies a signature and that the expiry timestamp has not passed at the given time.
+     */
     public function verifyWithExpiry(string $signature, int $expiresAt, int $now, string ...$parts): bool
     {
         if ($expiresAt < $now) {

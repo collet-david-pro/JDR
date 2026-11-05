@@ -48,16 +48,25 @@ final class AssetLimits
         return min($upload, $post);
     }
 
+    /**
+     * Returns the maximum size of a single uploaded file.
+     */
     public function maxUploadBytes(): int
     {
         return max(1, min($this->settings->int('max_upload_bytes'), $this->phpUploadBytes()));
     }
 
+    /**
+     * Returns the maximum size of an imported asset pack.
+     */
     public function maxPackBytes(): int
     {
         return max(1, min(self::MAX_PACK_BYTES, $this->phpUploadBytes()));
     }
 
+    /**
+     * Returns the pixel and size limits applied when decoding images.
+     */
     public function imageLimits(): Limits
     {
         return Limits::fromSettings([

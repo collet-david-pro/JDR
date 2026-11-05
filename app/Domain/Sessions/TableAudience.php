@@ -38,11 +38,17 @@ final class TableAudience
         $this->scope = $scopes->forTable($ctx, $mapId);
     }
 
+    /**
+     * Returns what the table screen may see of objects and notes.
+     */
     public function sight(): PlayerSight
     {
         return $this->sight;
     }
 
+    /**
+     * Returns the fog scope of the shared table screen.
+     */
     public function scope(): FogScope
     {
         return $this->scope;

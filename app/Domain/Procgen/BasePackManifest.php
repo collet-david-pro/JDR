@@ -35,11 +35,17 @@ final class BasePackManifest
         $this->file = $resolved;
     }
 
+    /**
+     * Returns the directory containing the manifest and its files.
+     */
     public function directory(): string
     {
         return dirname($this->file);
     }
 
+    /**
+     * Returns the base pack version number.
+     */
     public function version(): int
     {
         return $this->load()['version'];

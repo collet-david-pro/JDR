@@ -20,6 +20,9 @@ final class Links
     {
     }
 
+    /**
+     * Returns the public base URL, from settings or configuration, without trailing slash.
+     */
     public function base(): string
     {
         $base = rtrim($this->settings->string('base_url'), '/');
@@ -27,6 +30,9 @@ final class Links
         return $base !== '' ? $base : ($this->config?->baseUrl() ?? '');
     }
 
+    /**
+     * Builds the absolute URL of an application page, honouring the routing mode.
+     */
     public function page(string $path): string
     {
         $query = $this->config?->routingMode() === Config::ROUTING_QUERY;
@@ -34,11 +40,17 @@ final class Links
         return $this->base() . ($query ? '/#' : '') . $path;
     }
 
+    /**
+     * Builds the absolute registration link for an invitation code.
+     */
     public function invitation(string $code): string
     {
         return $this->page('/invite/' . rawurlencode($code));
     }
 
+    /**
+     * Builds the absolute password reset link for a token.
+     */
     public function passwordReset(string $token): string
     {
         return $this->page('/reset-password/' . rawurlencode($token));

@@ -129,6 +129,9 @@ final class MapTemplates
         return $this->maps->find($id) ?? throw new \RuntimeException('Map lost after instantiation.');
     }
 
+    /**
+     * Deletes a template owned by the user.
+     */
     public function delete(User $user, int $templateId): void
     {
         $this->db->transaction(function () use ($user, $templateId): void {

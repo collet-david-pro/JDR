@@ -30,6 +30,9 @@ final class ReleaseSignature
         $this->available = $available ?? function_exists('sodium_crypto_sign_verify_detached');
     }
 
+    /**
+     * Tells whether signature verification can run (libsodium and a public key are present).
+     */
     public function available(): bool
     {
         return $this->available;

@@ -12,6 +12,9 @@ defined('JDR_BOOT') || exit;
  */
 final class PhpSseOutput implements SseOutput
 {
+    /**
+     * Sends the status and SSE headers.
+     */
     public function start(array $headers): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -36,16 +39,25 @@ final class PhpSseOutput implements SseOutput
         }
     }
 
+    /**
+     * Echoes the data to the client.
+     */
     public function write(string $data): void
     {
         echo $data;
     }
 
+    /**
+     * Flushes the output buffers to the client.
+     */
     public function flush(): void
     {
         flush();
     }
 
+    /**
+     * Tells whether the client closed the connection.
+     */
     public function aborted(): bool
     {
         return connection_aborted() === 1;

@@ -25,6 +25,9 @@ final class Json implements Middleware
     {
     }
 
+    /**
+     * Checks the JSON content type and body size of unsafe requests and exposes the decoded body.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

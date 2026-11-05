@@ -19,6 +19,9 @@ use JDR\Core\Session\Session;
  */
 final class Csrf implements Middleware
 {
+    /**
+     * Rejects unsafe-method requests whose CSRF token header does not match the session token.
+     */
     public function process(Request $request, callable $next): Response
     {
         $route = $request->attribute('route');

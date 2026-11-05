@@ -45,6 +45,11 @@ final class FogCodec
         return $bytes === false ? null : self::decode($bytes);
     }
 
+    /**
+     * Compresses a raw fog block for storage.
+     *
+     * @throws \RuntimeException When compression fails.
+     */
     public static function encode(string $raw): string
     {
         $data = gzdeflate($raw, self::LEVEL);
@@ -55,11 +60,17 @@ final class FogCodec
         return $data;
     }
 
+    /**
+     * Tells whether the raw fog block has no revealed cell.
+     */
     public static function isEmpty(string $raw): bool
     {
         return strspn($raw, "\0") === strlen($raw);
     }
 
+    /**
+     * Returns an empty (fully fogged) raw fog block.
+     */
     public static function blank(): string
     {
         return str_repeat("\0", self::RAW_BYTES);

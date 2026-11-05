@@ -86,31 +86,49 @@ final class Response
         );
     }
 
+    /**
+     * Builds an HTML response.
+     */
     public static function html(string $html, int $status = 200): self
     {
         return new self($html, $status, ['Content-Type' => 'text/html; charset=utf-8']);
     }
 
+    /**
+     * Builds a plain-text response.
+     */
     public static function text(string $text, int $status = 200): self
     {
         return new self($text, $status, ['Content-Type' => 'text/plain; charset=utf-8']);
     }
 
+    /**
+     * Builds an empty 204 response.
+     */
     public static function noContent(): self
     {
         return new self('', 204);
     }
 
+    /**
+     * Builds a redirect response to the given location.
+     */
     public static function redirect(string $location, int $status = 302): self
     {
         return new self('', $status, ['Location' => $location]);
     }
 
+    /**
+     * Returns the HTTP status code.
+     */
     public function status(): int
     {
         return $this->status;
     }
 
+    /**
+     * Returns the response body as a string.
+     */
     public function body(): string
     {
         return $this->body;
@@ -132,6 +150,9 @@ final class Response
         return $this->headers;
     }
 
+    /**
+     * Returns a header value, matched case-insensitively, or null.
+     */
     public function header(string $name): ?string
     {
         foreach ($this->headers as $key => $value) {
@@ -143,11 +164,17 @@ final class Response
         return null;
     }
 
+    /**
+     * Tells whether the header is set.
+     */
     public function hasHeader(string $name): bool
     {
         return $this->header($name) !== null;
     }
 
+    /**
+     * Returns a copy of the response with the header set.
+     */
     public function withHeader(string $name, string $value): self
     {
         if (preg_match('/[\r\n]/', $name . $value) === 1) {
@@ -218,6 +245,9 @@ final class Response
         return $this;
     }
 
+    /**
+     * Returns a copy of the response with another status code.
+     */
     public function withStatus(int $status): self
     {
         $this->status = $status;
@@ -225,6 +255,9 @@ final class Response
         return $this;
     }
 
+    /**
+     * Emits status, headers and body (the body is skipped for HEAD requests).
+     */
     public function send(bool $withBody = true): void
     {
         if (!headers_sent()) {

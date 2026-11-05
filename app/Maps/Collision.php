@@ -30,6 +30,9 @@ final class Collision
     private const OPENING_MAX_SIN = 0.1;
     private const ITERATIONS = 60;
 
+    /**
+     * Returns the collision radius of a token from its size and scale.
+     */
     public static function radius(float $sizeW, float $sizeH, float $scale): float
     {
         return self::RADIUS_FACTOR * min($sizeW, $sizeH) * $scale;

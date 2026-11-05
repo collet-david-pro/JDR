@@ -22,6 +22,9 @@ final class AdminBasePackController
     {
     }
 
+    /**
+     * POST /admin/base-pack/install (admin): installs one time-boxed slice of the bundled base asset pack; send {"resume": true} to continue a previous run.
+     */
     public function install(Request $request): Response
     {
         $admin = CurrentUser::require($request);

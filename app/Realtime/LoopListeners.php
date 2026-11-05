@@ -29,6 +29,9 @@ final class LoopListeners
     {
     }
 
+    /**
+     * Registers a listener to be called on each loop tick.
+     */
     public function add(LoopListener $listener): void
     {
         $this->listeners = [...$this->all(), $listener];
@@ -52,6 +55,9 @@ final class LoopListeners
         return $this->listeners;
     }
 
+    /**
+     * Calls every listener for this loop iteration; a failing listener is logged and does not stop the others.
+     */
     public function tick(Subscription $sub, float $now): void
     {
         foreach ($this->all() as $listener) {

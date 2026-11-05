@@ -27,6 +27,9 @@ final class AssetsBackupJob implements JobHandler
     {
     }
 
+    /**
+     * Adds asset files to the archive until the deadline, keeping its position in the job.
+     */
     public function step(Job $job, float $deadline): void
     {
         $state = $job->state;
@@ -116,6 +119,9 @@ final class AssetsBackupJob implements JobHandler
         $job->done = $index + ($job->status === Job::DONE ? 1 : 0);
     }
 
+    /**
+     * Deletes the partial archive after a cancellation or failure.
+     */
     public function cleanup(Job $job): void
     {
         $work = $job->state['work'] ?? null;

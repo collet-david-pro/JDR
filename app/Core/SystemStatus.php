@@ -29,6 +29,9 @@ final class SystemStatus
     {
     }
 
+    /**
+     * Returns the status used when the app has no configuration yet.
+     */
     public static function notConfigured(): self
     {
         $status = new self(null);
@@ -64,6 +67,9 @@ final class SystemStatus
         return $status;
     }
 
+    /**
+     * Returns the database state label (ok, missing, outdated, ...).
+     */
     public function db(): string
     {
         $this->load();
@@ -71,6 +77,9 @@ final class SystemStatus
         return $this->db;
     }
 
+    /**
+     * Returns the schema version recorded in the database, or null.
+     */
     public function dbVersion(): ?string
     {
         $this->load();
@@ -78,6 +87,9 @@ final class SystemStatus
         return $this->dbVersion;
     }
 
+    /**
+     * Tells whether maintenance mode is active.
+     */
     public function maintenance(): bool
     {
         $this->load();
@@ -113,6 +125,9 @@ final class SystemStatus
             && !self::isBehind($this->dbVersion, $requiredDbVersion);
     }
 
+    /**
+     * Tells whether the current version is older than the required one.
+     */
     public static function isBehind(?string $current, string $required): bool
     {
         if ($current === null || preg_match('/^\d+$/', $current) !== 1) {

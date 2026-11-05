@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 422 validation failure with per-field details.
+ */
 final class ValidationException extends HttpException
 {
     /**

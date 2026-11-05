@@ -62,16 +62,25 @@ final class User
         );
     }
 
+    /**
+     * Returns the stored password hash.
+     */
     public function passwordHash(): string
     {
         return $this->passwordHash;
     }
 
+    /**
+     * Tells whether the user has the admin role.
+     */
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
     }
 
+    /**
+     * Tells whether the account is active (not suspended).
+     */
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE && $this->deletedAt === null;

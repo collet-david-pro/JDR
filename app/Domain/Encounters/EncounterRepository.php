@@ -18,6 +18,9 @@ final class EncounterRepository
     {
     }
 
+    /**
+     * Finds an encounter by id, or null.
+     */
     public function find(int $id): ?Encounter
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('encounters') . ' WHERE `id` = ?', [$id]);
@@ -82,6 +85,9 @@ final class EncounterRepository
         });
     }
 
+    /**
+     * Deletes an encounter.
+     */
     public function delete(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('encounters') . ' WHERE `id` = ?', [$id]);

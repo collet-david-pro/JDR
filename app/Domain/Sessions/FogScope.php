@@ -25,6 +25,9 @@ final class FogScope
     {
     }
 
+    /**
+     * Builds a scope with no fog restriction, optionally limited to one floor.
+     */
     public static function unrestricted(?int $floorId = null): self
     {
         return new self(null, $floorId);
@@ -46,16 +49,25 @@ final class FogScope
         return $this->floor === null || $this->floor === $floorId;
     }
 
+    /**
+     * Tells whether the scope limits what can be seen, as opposed to showing everything.
+     */
     public function isRestricted(): bool
     {
         return $this->blocks !== null;
     }
 
+    /**
+     * Tells whether the fog block (chunk coordinates) is within the scope.
+     */
     public function allowsBlock(int $floorId, int $cx, int $cy): bool
     {
         return $this->allowsFloor($floorId) && ($this->blocks === null || isset($this->blocks[$floorId][$cx . ':' . $cy]));
     }
 
+    /**
+     * Tells whether the world point lies in a fog block the scope may see.
+     */
     public function allowsPoint(int $floorId, float $x, float $y): bool
     {
         return $this->allowsFloor($floorId) && ($this->blocks === null || ($x >= 0 && $y >= 0

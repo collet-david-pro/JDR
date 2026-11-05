@@ -40,6 +40,9 @@ final class GifParser
         }
     }
 
+    /**
+     * Returns the frame delay in centiseconds, replacing too-short delays by the default one as browsers do.
+     */
     public static function effectiveDelayCs(int $delayCs): int
     {
         return $delayCs < self::MIN_DELAY_CS ? self::DEFAULT_DELAY_CS : $delayCs;

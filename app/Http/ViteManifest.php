@@ -19,6 +19,9 @@ final class ViteManifest
     {
     }
 
+    /**
+     * Loads the Vite manifest file; null when it is missing or invalid.
+     */
     public static function load(string $file): ?self
     {
         if (!is_file($file)) {

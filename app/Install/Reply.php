@@ -18,6 +18,9 @@ final class Reply
     {
     }
 
+    /**
+     * Builds an HTML reply.
+     */
     public static function html(string $body, int $status = 200): self
     {
         return new self($status, ['Content-Type' => 'text/html; charset=utf-8'], $body);

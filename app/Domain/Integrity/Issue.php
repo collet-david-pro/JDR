@@ -37,11 +37,17 @@ final class Issue
     ) {
     }
 
+    /**
+     * Returns the stable identifier "kind:key" of the issue.
+     */
     public function id(): string
     {
         return $this->kind . ':' . $this->key;
     }
 
+    /**
+     * Tells whether fixing this kind of issue deletes data.
+     */
     public static function destructive(string $kind): bool
     {
         return (self::FIXES[$kind][1] ?? false) === true;

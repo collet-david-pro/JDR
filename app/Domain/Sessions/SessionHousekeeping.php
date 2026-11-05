@@ -25,6 +25,9 @@ final class SessionHousekeeping
     ) {
     }
 
+    /**
+     * Deletes ended sessions past retention, at most $limit, and returns how many.
+     */
     public function purgeEnded(int $limit = self::BATCH): int
     {
         $before = gmdate('Y-m-d H:i:s', $this->clock->timestamp() - self::RETENTION_DAYS * 86400);
@@ -32,6 +35,9 @@ final class SessionHousekeeping
         return $this->sessions->purgeEnded($before, $limit);
     }
 
+    /**
+     * Marks players whose connection went silent as disconnected and returns how many.
+     */
     public function sweepPresence(): int
     {
         return $this->presence->sweep();

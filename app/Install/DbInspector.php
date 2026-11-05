@@ -116,6 +116,9 @@ final class DbInspector
         return array_map('strval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
     }
 
+    /**
+     * Checks the server version against the minimum supported MySQL or MariaDB release.
+     */
     public static function versionCheck(string $version): Check
     {
         $maria = stripos($version, 'mariadb') !== false;
@@ -272,6 +275,9 @@ final class DbInspector
         return mb_substr(preg_replace('/^SQLSTATE\[[^\]]*\]\s*(\[\d+\]\s*)?/', '', $message) ?? $message, 0, 300);
     }
 
+    /**
+     * Quotes an SQL identifier with backticks.
+     */
     public static function quoteIdent(string $name): string
     {
         return '`' . str_replace('`', '``', $name) . '`';

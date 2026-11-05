@@ -20,11 +20,17 @@ final class PairingCode
     {
     }
 
+    /**
+     * Generates a short pairing code.
+     */
     public function generate(): string
     {
         return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Hashes a pairing code for storage and lookup.
+     */
     public function hash(string $code): string
     {
         return $this->signer->sign('display-pair', $code);

@@ -81,6 +81,9 @@ final class TagService
         return self::present((array) $this->db->fetchOne('SELECT * FROM ' . $this->db->t('asset_tags') . ' WHERE `id` = ?', [$id]));
     }
 
+    /**
+     * Deletes one of the user's tags and detaches it from assets.
+     */
     public function delete(User $user, int $id): void
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('asset_tags') . ' WHERE `id` = ?', [$id]);

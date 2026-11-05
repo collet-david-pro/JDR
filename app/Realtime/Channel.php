@@ -17,11 +17,17 @@ final class Channel
     /** Maximum number of channels in one subscription (contract P6a). */
     public const MAX_PER_REQUEST = 4;
 
+    /**
+     * Returns the channel name of a session.
+     */
     public static function session(int $id): string
     {
         return self::SESSION . ':' . $id;
     }
 
+    /**
+     * Returns the channel name of a map.
+     */
     public static function map(int $id): string
     {
         return self::MAP . ':' . $id;
@@ -40,6 +46,9 @@ final class Channel
         return $id === false ? null : [$m[1], $id];
     }
 
+    /**
+     * Tells whether the string is a well-formed "session:{id}" or "map:{id}" channel name.
+     */
     public static function isValid(string $channel): bool
     {
         return self::parse($channel) !== null;

@@ -88,6 +88,9 @@ final class ActionScene
         }
     }
 
+    /**
+     * Tells whether the acting user is the game master.
+     */
     public function isGm(): bool
     {
         return $this->ctx->isGm();

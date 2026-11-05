@@ -44,11 +44,17 @@ final class WebpParser
         }
     }
 
+    /**
+     * Returns the frame duration in milliseconds, replacing too-short values by the default one as browsers do.
+     */
     public static function effectiveDurationMs(int $durationMs): int
     {
         return $durationMs < self::MIN_DURATION_MS ? self::DEFAULT_DURATION_MS : $durationMs;
     }
 
+    /**
+     * Builds a RIFF chunk (fourcc, size, payload, padding to even length).
+     */
     public static function chunk(string $fourcc, string $payload): string
     {
         $size = strlen($payload);
@@ -56,6 +62,9 @@ final class WebpParser
         return $fourcc . Bytes::pack32le($size) . $payload . ($size % 2 === 1 ? "\0" : '');
     }
 
+    /**
+     * Wraps WebP chunks in a RIFF container.
+     */
     public static function riff(string $chunks): string
     {
         return 'RIFF' . Bytes::pack32le(4 + strlen($chunks)) . 'WEBP' . $chunks;

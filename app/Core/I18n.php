@@ -20,6 +20,9 @@ final class I18n
     {
     }
 
+    /**
+     * Builds a translator for the locale, loading its catalogue from the i18n directory.
+     */
     public static function forLocale(string $locale = 'fr'): self
     {
         $locale = preg_match('/^[a-z]{2}(?:-[A-Z]{2})?$/', $locale) === 1 ? $locale : 'fr';
@@ -27,6 +30,9 @@ final class I18n
         return new self(dirname(__DIR__, 2) . '/i18n/' . $locale . '.json');
     }
 
+    /**
+     * Tells whether the key exists in the catalogue.
+     */
     public function has(string $key): bool
     {
         return is_string($this->lookup($key));

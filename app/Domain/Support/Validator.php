@@ -27,6 +27,9 @@ final class Validator
     {
     }
 
+    /**
+     * Builds a validator over the JSON body of the request.
+     */
     public static function fromRequest(Request $request): self
     {
         $body = $request->parsedBody();
@@ -34,11 +37,17 @@ final class Validator
         return new self(is_array($body) ? $body : []);
     }
 
+    /**
+     * Tells whether the key is present in the input.
+     */
     public function has(string $key): bool
     {
         return array_key_exists($key, $this->data);
     }
 
+    /**
+     * Returns the unvalidated input value, or null.
+     */
     public function raw(string $key): mixed
     {
         return $this->data[$key] ?? null;
@@ -98,6 +107,9 @@ final class Validator
         return $value;
     }
 
+    /**
+     * Reads an integer field within the given bounds.
+     */
     public function int(string $key, bool $required = true, int $min = PHP_INT_MIN, int $max = PHP_INT_MAX): ?int
     {
         $value = $this->data[$key] ?? null;
@@ -120,6 +132,9 @@ final class Validator
         return $value;
     }
 
+    /**
+     * Reads a boolean field.
+     */
     public function bool(string $key, bool $required = true): ?bool
     {
         $value = $this->data[$key] ?? null;
@@ -241,11 +256,17 @@ final class Validator
         return $value;
     }
 
+    /**
+     * Records an error code for a field; the first error of a field wins.
+     */
     public function error(string $field, string $code): void
     {
         $this->errors[$field] ??= $code;
     }
 
+    /**
+     * Tells whether any field failed validation.
+     */
     public function hasErrors(): bool
     {
         return $this->errors !== [];

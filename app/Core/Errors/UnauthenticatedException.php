@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 401 authentication required.
+ */
 final class UnauthenticatedException extends HttpException
 {
     /**

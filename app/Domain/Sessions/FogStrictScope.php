@@ -22,6 +22,9 @@ final class FogStrictScope
     {
     }
 
+    /**
+     * Returns the fog scope of one user, derived from the tokens assigned to them.
+     */
     public function forUser(SessionContext $ctx, int $userId, int $mapId): FogScope
     {
         return $this->forUsers($ctx, $mapId, [$userId])[$userId];

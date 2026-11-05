@@ -73,6 +73,9 @@ final class Installer
         };
     }
 
+    /**
+     * Builds the URL of an installer step.
+     */
     public static function url(string $step, array $query = []): string
     {
         return 'install.php?' . http_build_query(['step' => $step] + $query, '', '&', PHP_QUERY_RFC3986);

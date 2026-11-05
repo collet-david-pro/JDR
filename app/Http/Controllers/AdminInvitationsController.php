@@ -23,6 +23,9 @@ final class AdminInvitationsController
     {
     }
 
+    /**
+     * GET /admin/invitations (admin): lists invitations.
+     */
     public function index(Request $request): Response
     {
         return Response::ok($this->invitations->list());
@@ -50,6 +53,9 @@ final class AdminInvitationsController
         return Response::ok($result, [], 201);
     }
 
+    /**
+     * DELETE /admin/invitations/{id} (admin): revokes an invitation.
+     */
     public function delete(Request $request): Response
     {
         $admin = CurrentUser::require($request);

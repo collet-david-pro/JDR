@@ -11,6 +11,9 @@ defined('JDR_BOOT') || exit;
  */
 final class Dates
 {
+    /**
+     * Converts an SQL datetime to an ISO 8601 UTC string; null when empty or invalid.
+     */
     public static function iso(mixed $sql): ?string
     {
         if (!is_string($sql) || $sql === '') {
@@ -21,16 +24,25 @@ final class Dates
         return $dt === false ? null : $dt->format('Y-m-d\TH:i:s\Z');
     }
 
+    /**
+     * Formats a Unix timestamp as an ISO 8601 UTC string.
+     */
     public static function isoFromTimestamp(int $timestamp): string
     {
         return gmdate('Y-m-d\TH:i:s\Z', $timestamp);
     }
 
+    /**
+     * Formats a Unix timestamp as an SQL UTC datetime.
+     */
     public static function sql(int $timestamp): string
     {
         return gmdate('Y-m-d H:i:s', $timestamp);
     }
 
+    /**
+     * Converts an SQL datetime (UTC) to a Unix timestamp; null when empty or invalid.
+     */
     public static function timestamp(mixed $sql): ?int
     {
         if (!is_string($sql) || $sql === '') {

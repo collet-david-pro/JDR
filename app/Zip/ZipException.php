@@ -17,6 +17,9 @@ final class ZipException extends \RuntimeException
         parent::__construct($message !== '' ? $message : 'Invalid ZIP archive: ' . $reason);
     }
 
+    /**
+     * Returns the stable reason code of the failure.
+     */
     public function reason(): string
     {
         return $this->reason;

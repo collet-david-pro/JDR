@@ -71,6 +71,9 @@ final class UpdatePage
         return $response;
     }
 
+    /**
+     * Serves the standalone update page, usable even when the app itself is outdated or broken.
+     */
     public function handle(Request $request, string $nonce): Response
     {
         $view = new UpdateView($nonce);

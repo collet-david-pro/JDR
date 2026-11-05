@@ -18,6 +18,9 @@ final class View
         $this->directory ??= dirname(__DIR__) . '/Views';
     }
 
+    /**
+     * Escapes a value for safe HTML output.
+     */
     public static function e(string|int|float|null $value): string
     {
         return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

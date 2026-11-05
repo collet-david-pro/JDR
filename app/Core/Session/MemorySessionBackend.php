@@ -18,6 +18,9 @@ final class MemorySessionBackend implements SessionBackend
     {
     }
 
+    /**
+     * Loads the session for the cookie id, or starts an empty one; returns the id and data.
+     */
     public function start(SessionOptions $options, ?string $cookieId): array
     {
         if ($cookieId !== null && isset($this->sessions[$cookieId])) {
@@ -30,6 +33,9 @@ final class MemorySessionBackend implements SessionBackend
         return [$id, []];
     }
 
+    /**
+     * Stores the session data in memory.
+     */
     public function commit(string $id, array $data): void
     {
         if (isset($this->sessions[$id])) {
@@ -37,6 +43,9 @@ final class MemorySessionBackend implements SessionBackend
         }
     }
 
+    /**
+     * Moves the data to a new id and drops the old one.
+     */
     public function regenerate(SessionOptions $options, string $id, array $data): string
     {
         unset($this->sessions[$id]);
@@ -47,6 +56,9 @@ final class MemorySessionBackend implements SessionBackend
         return $new;
     }
 
+    /**
+     * Drops the in-memory session.
+     */
     public function destroy(SessionOptions $options, string $id): void
     {
         unset($this->sessions[$id]);

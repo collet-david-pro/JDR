@@ -18,6 +18,9 @@ final class AssetRepository
     {
     }
 
+    /**
+     * Finds an asset by id, or null.
+     */
     public function find(int $id): ?Asset
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [$id]);
@@ -25,6 +28,9 @@ final class AssetRepository
         return $row === null ? null : Asset::fromRow($row);
     }
 
+    /**
+     * Finds an asset by its public UUID, or null.
+     */
     public function findByUuid(string $uuid): ?Asset
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('assets') . ' WHERE `uuid` = ?', [$uuid]);
@@ -96,6 +102,9 @@ final class AssetRepository
         ) === 1;
     }
 
+    /**
+     * Permanently deletes the asset row.
+     */
     public function hardDelete(int $id): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [$id]);
@@ -225,6 +234,9 @@ final class AssetRepository
         return $out;
     }
 
+    /**
+     * Adds or removes the asset from the user's favorites.
+     */
     public function setFavorite(int $userId, int $assetId, bool $favorite): void
     {
         $table = $this->db->t('asset_favorites');

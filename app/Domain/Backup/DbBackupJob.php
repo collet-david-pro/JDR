@@ -24,6 +24,9 @@ final class DbBackupJob implements JobHandler
     {
     }
 
+    /**
+     * Dumps database tables until the deadline, keeping its position in the job.
+     */
     public function step(Job $job, float $deadline): void
     {
         $work = $job->state['work'] ?? null;
@@ -57,6 +60,9 @@ final class DbBackupJob implements JobHandler
         ];
     }
 
+    /**
+     * Deletes the partial dump after a cancellation or failure.
+     */
     public function cleanup(Job $job): void
     {
         $work = $job->state['work'] ?? null;

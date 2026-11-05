@@ -13,6 +13,9 @@ defined('JDR_BOOT') || exit;
  */
 interface JobHandler
 {
+    /**
+     * Works for the job until the deadline (microtime) and saves its progress in the job.
+     */
     public function step(Job $job, float $deadline): void;
 
     /**

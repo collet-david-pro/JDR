@@ -15,6 +15,9 @@ final class SocketTransport implements SmtpTransport
     private $stream = null;
     private string $host = '';
 
+    /**
+     * Opens the connection, with implicit TLS when requested.
+     */
     public function connect(string $host, int $port, bool $implicitTls, int $timeout): void
     {
         $this->host = $host;
@@ -41,6 +44,9 @@ final class SocketTransport implements SmtpTransport
         $this->stream = $stream;
     }
 
+    /**
+     * Upgrades the connection to TLS (STARTTLS).
+     */
     public function enableTls(): void
     {
         $method = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
@@ -52,6 +58,9 @@ final class SocketTransport implements SmtpTransport
         }
     }
 
+    /**
+     * Reads one line from the server.
+     */
     public function readLine(): string
     {
         $line = fgets($this->stream(), 2048);
@@ -63,6 +72,9 @@ final class SocketTransport implements SmtpTransport
         return $line;
     }
 
+    /**
+     * Sends raw data to the server.
+     */
     public function write(string $data): void
     {
         $length = strlen($data);
@@ -76,6 +88,9 @@ final class SocketTransport implements SmtpTransport
         }
     }
 
+    /**
+     * Closes the socket.
+     */
     public function close(): void
     {
         if ($this->stream !== null) {

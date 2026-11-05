@@ -6,6 +6,9 @@ namespace JDR\Install;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * Status and body of an HTTP response, as returned by the installer HTTP client.
+ */
 final class HttpResult
 {
     public function __construct(public readonly int $status, public readonly string $body)

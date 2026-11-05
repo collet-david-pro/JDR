@@ -30,26 +30,41 @@ final class BackupStorage
     {
     }
 
+    /**
+     * Returns the storage root without trailing slash.
+     */
     public function storageDir(): string
     {
         return rtrim($this->paths->storage, '/');
     }
 
+    /**
+     * Returns the temporary backup directory under storage, creating it if needed.
+     */
     public function dir(): string
     {
         return $this->ensureDir($this->storageDir() . '/backup-tmp');
     }
 
+    /**
+     * Returns the directory of generated backup files, creating it if needed.
+     */
     public function filesDir(): string
     {
         return $this->ensureDir($this->dir() . '/files');
     }
 
+    /**
+     * Returns the directory of uploaded backup archives, creating it if needed.
+     */
     public function uploadsDir(): string
     {
         return $this->ensureDir($this->dir() . '/uploads');
     }
 
+    /**
+     * Returns the temporary directory used while restoring, creating it if needed.
+     */
     public function restoreDir(): string
     {
         return $this->ensureDir($this->dir() . '/restore');

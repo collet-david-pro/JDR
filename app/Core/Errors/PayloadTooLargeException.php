@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 413 payload too large.
+ */
 final class PayloadTooLargeException extends HttpException
 {
     /**

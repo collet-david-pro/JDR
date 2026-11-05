@@ -6,6 +6,9 @@ namespace JDR\Core\Errors;
 
 defined('JDR_BOOT') || exit;
 
+/**
+ * HTTP 415 unsupported media type.
+ */
 final class UnsupportedMediaTypeException extends HttpException
 {
     /**

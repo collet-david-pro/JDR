@@ -22,6 +22,9 @@ final class MapLinksController
     {
     }
 
+    /**
+     * GET /maps/{id}/links: reports the incoming and outgoing links of a map (editor access required).
+     */
     public function show(Request $request): Response
     {
         [$map] = $this->policy->requireEdit(CurrentUser::require($request), (int) $request->param('id'));

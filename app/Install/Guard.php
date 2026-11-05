@@ -11,16 +11,25 @@ defined('JDR_BOOT') || exit;
  */
 final class Guard
 {
+    /**
+     * Returns the path of the generated configuration file.
+     */
     public static function configPath(string $root): string
     {
         return $root . '/config.php';
     }
 
+    /**
+     * Returns the path of the installation lock file.
+     */
     public static function lockPath(string $root): string
     {
         return $root . '/storage/' . StorageSetup::LOCK_FILE;
     }
 
+    /**
+     * Tells whether the instance is already installed (config or lock file present).
+     */
     public static function isInstalled(string $root): bool
     {
         return is_file(self::configPath($root)) || is_file(self::lockPath($root));

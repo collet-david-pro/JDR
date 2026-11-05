@@ -34,6 +34,9 @@ final class MapThumbnailController
     ) {
     }
 
+    /**
+     * PUT /maps/{id}/thumbnail: stores an uploaded thumbnail for the map.
+     */
     public function update(Request $request): Response
     {
         $user = CurrentUser::require($request);
@@ -80,6 +83,9 @@ final class MapThumbnailController
         return Response::ok(['thumb_url' => $this->thumbs->url(Input::apiBase($request, $this->config), $map)]);
     }
 
+    /**
+     * GET /map-thumbs/{id}: serves the stored map thumbnail (no session needed).
+     */
     public function show(Request $request): Response
     {
         return $this->thumbs->serve($request, (int) $request->param('id'));

@@ -13,11 +13,17 @@ final class SecurityHeaders
 {
     public const HSTS = 'max-age=15552000';
 
+    /**
+     * Generates a fresh random nonce for inline scripts.
+     */
     public static function nonce(): string
     {
         return base64_encode(random_bytes(16));
     }
 
+    /**
+     * Builds the Content-Security-Policy header value for the given script nonce.
+     */
     public static function csp(string $nonce): string
     {
         return implode('; ', [

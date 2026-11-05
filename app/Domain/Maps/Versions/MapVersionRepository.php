@@ -51,6 +51,9 @@ final class MapVersionRepository
         );
     }
 
+    /**
+     * Returns the stored snapshot of a version, or null.
+     */
     public function snapshot(int $versionId): ?string
     {
         $value = $this->db->fetchValue('SELECT `snapshot` FROM ' . $this->db->t('map_versions') . ' WHERE `id` = ?', [$versionId]);
@@ -58,6 +61,9 @@ final class MapVersionRepository
         return is_string($value) ? $value : null;
     }
 
+    /**
+     * Replaces the stored snapshot of a version.
+     */
     public function replaceSnapshot(int $versionId, string $snapshot): void
     {
         $this->db->execute(
@@ -66,6 +72,9 @@ final class MapVersionRepository
         );
     }
 
+    /**
+     * Inserts a version row and returns its id.
+     */
     public function insert(int $mapId, int $revision, string $kind, ?string $label, string $snapshot, ?int $userId): int
     {
         $this->db->execute(

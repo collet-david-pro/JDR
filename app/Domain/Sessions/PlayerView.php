@@ -86,6 +86,9 @@ final class PlayerView
         }));
     }
 
+    /**
+     * Returns the note visibility rules of the map.
+     */
     public function noteVisibility(int $mapId): NoteVisibility
     {
         return $this->notes->visibility($mapId);

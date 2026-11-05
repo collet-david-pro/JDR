@@ -12,6 +12,9 @@ defined('JDR_BOOT') || exit;
  */
 final class HttpProbe
 {
+    /**
+     * Requests the URL and returns the HTTP status, or null when unreachable.
+     */
     public function status(string $url, int $timeout = 2): ?int
     {
         $parts = parse_url($url);

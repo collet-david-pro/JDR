@@ -104,6 +104,9 @@ final class AccountService
         ], $this->tokens->forUser($user->id, $this->clock->sql()));
     }
 
+    /**
+     * Revokes one of the user's remembered devices; returns whether it existed.
+     */
     public function revokeDevice(User $user, int $deviceId): bool
     {
         return $this->tokens->deleteOwned($user->id, $deviceId);

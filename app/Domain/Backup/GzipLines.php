@@ -17,6 +17,9 @@ final class GzipLines
 {
     private const READ = 65536;
 
+    /**
+     * Tells whether the file starts with the gzip magic bytes.
+     */
     public static function isGzip(string $path): bool
     {
         $h = @fopen($path, 'rb');

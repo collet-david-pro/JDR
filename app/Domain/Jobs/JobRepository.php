@@ -9,6 +9,9 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Clock;
 use JDR\Core\Db;
 
+/**
+ * Persistence of background jobs.
+ */
 final class JobRepository
 {
     private const JSON = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
@@ -32,6 +35,9 @@ final class JobRepository
         return $this->find((int) $this->db->lastInsertId()) ?? throw new \RuntimeException('Job not created.');
     }
 
+    /**
+     * Finds a job by id, or null.
+     */
     public function find(int $id): ?Job
     {
         $row = $this->db->fetchOne('SELECT * FROM ' . $this->db->t('background_jobs') . ' WHERE `id` = ?', [$id]);
@@ -39,6 +45,9 @@ final class JobRepository
         return $row === null ? null : Job::fromRow($row);
     }
 
+    /**
+     * Writes the job state and progress.
+     */
     public function save(Job $job): void
     {
         $this->db->execute(

@@ -24,6 +24,9 @@ final class AssetPolicy
     {
     }
 
+    /**
+     * Tells whether the user may see the asset (general, or their own).
+     */
     public function canView(User $user, Asset $asset): bool
     {
         return $asset->ownerId === null || $asset->ownerId === $user->id
@@ -44,6 +47,9 @@ final class AssetPolicy
             || in_array($asset->id, $this->assets->gameAssetIds($gameId, null), true);
     }
 
+    /**
+     * Tells whether the user may modify or delete the asset (owner, or admin for general assets).
+     */
     public function canEdit(User $user, Asset $asset): bool
     {
         return $asset->ownerId === null ? $user->isAdmin() : $asset->ownerId === $user->id;

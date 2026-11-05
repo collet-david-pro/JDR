@@ -75,6 +75,9 @@ final class AssetService
         return null;
     }
 
+    /**
+     * Marks or unmarks the asset as a favorite of the user.
+     */
     public function setFavorite(User $user, Asset $asset, bool $favorite): void
     {
         $this->assets->setFavorite($user->id, $asset->id, $favorite);
@@ -125,6 +128,9 @@ final class AssetService
         return ['asset_id' => $data['asset_id'], 'duplicate' => ($data['duplicate'] ?? false) === true];
     }
 
+    /**
+     * Records the outcome of an upload under its client operation id so a retry returns the same result.
+     */
     public function remember(User $user, string $clientOpId, Asset $asset, bool $duplicate): void
     {
         $this->db->execute(

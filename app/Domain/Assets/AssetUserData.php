@@ -21,11 +21,17 @@ final class AssetUserData implements UserDataExtension
     {
     }
 
+    /**
+     * Returns the section name used in the data export.
+     */
     public function name(): string
     {
         return 'assets';
     }
 
+    /**
+     * Returns the user's asset data for the personal data export.
+     */
     public function export(User $user): mixed
     {
         return array_map(static fn (Asset $a): array => [
@@ -42,6 +48,9 @@ final class AssetUserData implements UserDataExtension
         ], $this->assets->liveOfOwner($user->id));
     }
 
+    /**
+     * Deletes the user's assets and favorites (account deletion).
+     */
     public function deleteUserData(User $user): void
     {
         $now = gmdate('Y-m-d H:i:s');

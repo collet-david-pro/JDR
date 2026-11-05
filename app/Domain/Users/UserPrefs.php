@@ -78,6 +78,9 @@ final class UserPrefs
         );
     }
 
+    /**
+     * Deletes all preferences of the user.
+     */
     public function deleteAll(int $userId): void
     {
         $this->db->execute('DELETE FROM ' . $this->db->t('user_prefs') . ' WHERE `user_id` = ?', [$userId]);

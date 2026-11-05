@@ -29,6 +29,9 @@ final class ChannelWatch
     ) {
     }
 
+    /**
+     * Takes the baseline fingerprint and starts the safety clock.
+     */
     public function start(): void
     {
         $this->fingerprint = $this->signal->fingerprint($this->channels);

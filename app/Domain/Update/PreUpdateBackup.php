@@ -25,6 +25,9 @@ final class PreUpdateBackup
     {
     }
 
+    /**
+     * Records the SQL backup taken before updating from one version to another, and whether the update was automatic.
+     */
     public function register(string $file, ?string $from, string $to, int $now, bool $auto = false): void
     {
         $file = basename($file);
@@ -91,6 +94,9 @@ final class PreUpdateBackup
         return 1;
     }
 
+    /**
+     * Forgets the registered pre-update backup.
+     */
     public function discard(): void
     {
         $m = $this->read();

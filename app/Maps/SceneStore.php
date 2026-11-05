@@ -15,6 +15,9 @@ defined('JDR_BOOT') || exit;
  */
 interface SceneStore
 {
+    /**
+     * Counts the objects of the map.
+     */
     public function objectCount(): int;
 
     /**
@@ -45,8 +48,14 @@ interface SceneStore
      */
     public function updateObject(int $id, array $object, array $bbox): void;
 
+    /**
+     * Deletes an object.
+     */
     public function deleteObject(int $id): void;
 
+    /**
+     * Counts the tokens of the map.
+     */
     public function tokenCount(): int;
 
     /**
@@ -70,6 +79,9 @@ interface SceneStore
      */
     public function updateToken(int $id, array $token): void;
 
+    /**
+     * Deletes a token.
+     */
     public function deleteToken(int $id): void;
 
     /**

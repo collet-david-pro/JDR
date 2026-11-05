@@ -48,11 +48,17 @@ final class UpdateChecker
         $this->current = $currentVersion ?? \APP_VERSION;
     }
 
+    /**
+     * Returns the URL of the release listing API.
+     */
     public static function apiUrl(): string
     {
         return 'https://api.github.com/repos/' . self::REPOSITORY . '/releases?per_page=10';
     }
 
+    /**
+     * Returns the expected file name of the update package for a version.
+     */
     public static function updateAssetName(string $version): string
     {
         return 'jdr-update-v' . $version . '.zip';
@@ -71,6 +77,9 @@ final class UpdateChecker
         return Semver::isPrerelease($this->current) ? 'prerelease' : 'stable';
     }
 
+    /**
+     * Selects the release channel (stable or pre-release) to look at.
+     */
     public function setChannel(string $channel): void
     {
         if (!in_array($channel, self::CHANNELS, true)) {

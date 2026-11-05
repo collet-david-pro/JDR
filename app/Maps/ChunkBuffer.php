@@ -24,6 +24,9 @@ final class ChunkBuffer
     ) {
     }
 
+    /**
+     * Builds the buffer key of a chunk from its floor, layer and coordinates.
+     */
     public static function key(int $floorId, string $layer, int $cx, int $cy): string
     {
         return $floorId . '|' . $layer . '|' . $cx . ':' . $cy;

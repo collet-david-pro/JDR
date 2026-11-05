@@ -28,21 +28,33 @@ final class SessionContext
     ) {
     }
 
+    /**
+     * Tells whether the context is the game master.
+     */
     public function isGm(): bool
     {
         return $this->role === self::GM;
     }
 
+    /**
+     * Tells whether the context is a table display rather than a user.
+     */
     public function isDisplay(): bool
     {
         return $this->role === self::DISPLAY;
     }
 
+    /**
+     * Tells whether strict fog of war is enabled for the game.
+     */
     public function fogStrict(): bool
     {
         return ($this->gameSettings['fog_strict'] ?? true) === true;
     }
 
+    /**
+     * Reads a boolean game setting (enabled by default).
+     */
     public function setting(string $key): bool
     {
         return ($this->gameSettings[$key] ?? true) === true;

@@ -31,6 +31,9 @@ final class ObjectRulesP9
     /** Props that may be absent (and are then not stored). */
     public const OPTIONAL_PROPS = ['link', 'label'];
 
+    /**
+     * Tells whether the object type is one of the stairs / portal types.
+     */
     public static function handles(string $type): bool
     {
         return in_array($type, self::TYPES, true);

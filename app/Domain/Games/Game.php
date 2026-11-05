@@ -73,11 +73,17 @@ final class Game
         );
     }
 
+    /**
+     * Tells whether the game is in the trash.
+     */
     public function isDeleted(): bool
     {
         return $this->deletedAt !== null;
     }
 
+    /**
+     * Tells whether the viewer is the game master.
+     */
     public function isGm(): bool
     {
         return $this->role === self::ROLE_GM;

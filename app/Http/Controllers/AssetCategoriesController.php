@@ -24,6 +24,9 @@ final class AssetCategoriesController
     {
     }
 
+    /**
+     * GET /asset-categories: lists the categories visible to the user.
+     */
     public function index(Request $request): Response
     {
         return Response::ok($this->categories->list(CurrentUser::require($request)));
@@ -66,6 +69,9 @@ final class AssetCategoriesController
         return Response::ok($this->categories->update($user, (int) $request->param('id'), $changes));
     }
 
+    /**
+     * DELETE /asset-categories/{id}: deletes a category.
+     */
     public function delete(Request $request): Response
     {
         $this->categories->delete(CurrentUser::require($request), (int) $request->param('id'));

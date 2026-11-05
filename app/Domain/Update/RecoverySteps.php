@@ -108,6 +108,9 @@ final class RecoverySteps
             $this->settings->set('maintenance', (bool) $s['maintenance_was']);
         }
     }
+    /**
+     * Clears the PHP opcache so freshly written files are used.
+     */
     public static function resetOpcache(): void
     {
         if (function_exists('opcache_reset')) {

@@ -23,6 +23,9 @@ final class Lock
     {
     }
 
+    /**
+     * Returns the database lock name, unique per schema and table prefix.
+     */
     public function name(): string
     {
         $schema = (string) $this->db->fetchValue('SELECT DATABASE()');
@@ -47,6 +50,9 @@ final class Lock
         return $this->held;
     }
 
+    /**
+     * Releases the lock if held.
+     */
     public function release(): void
     {
         if ($this->held) {
@@ -55,6 +61,9 @@ final class Lock
         }
     }
 
+    /**
+     * Tells whether this process holds the migration lock.
+     */
     public function isHeld(): bool
     {
         return $this->held;

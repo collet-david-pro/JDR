@@ -31,16 +31,25 @@ final class ChannelSignal
         $this->apcu = $useApcu ?? self::apcuAvailable();
     }
 
+    /**
+     * Tells whether the APCu extension can be used for signalling.
+     */
     public static function apcuAvailable(): bool
     {
         return function_exists('apcu_enabled') && function_exists('apcu_store') && apcu_enabled();
     }
 
+    /**
+     * Returns the directory holding the signal files.
+     */
     public function directory(): string
     {
         return $this->dir;
     }
 
+    /**
+     * Returns the signal file path of a channel (named after the hash of the channel).
+     */
     public function file(string $channel): string
     {
         return $this->dir . '/' . sha1($channel);

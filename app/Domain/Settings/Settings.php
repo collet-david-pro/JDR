@@ -59,6 +59,9 @@ final class Settings
     {
     }
 
+    /**
+     * Reads a setting, falling back to its default.
+     */
     public function get(string $key): mixed
     {
         $values = $this->load();
@@ -69,6 +72,9 @@ final class Settings
         return self::DEFAULTS[$key] ?? null;
     }
 
+    /**
+     * Reads a setting as an integer.
+     */
     public function int(string $key): int
     {
         $value = $this->get($key);
@@ -83,6 +89,9 @@ final class Settings
         return is_int($default) ? $default : 0;
     }
 
+    /**
+     * Reads a setting as a boolean.
+     */
     public function bool(string $key): bool
     {
         $value = $this->get($key);
@@ -90,6 +99,9 @@ final class Settings
         return $value === true || $value === 1 || $value === '1';
     }
 
+    /**
+     * Reads a setting as a string.
+     */
     public function string(string $key): string
     {
         $value = $this->get($key);
@@ -101,6 +113,9 @@ final class Settings
         return is_string($default) ? $default : '';
     }
 
+    /**
+     * Returns the registration mode (for example open, invitation or closed).
+     */
     public function registrationMode(): string
     {
         $mode = $this->string('registration_mode');
@@ -131,6 +146,9 @@ final class Settings
         return $smtp;
     }
 
+    /**
+     * Tells whether outgoing e-mail through SMTP is configured and enabled.
+     */
     public function smtpEnabled(): bool
     {
         $smtp = $this->smtp();
@@ -153,6 +171,9 @@ final class Settings
         return $out;
     }
 
+    /**
+     * Stores one setting.
+     */
     public function set(string $key, mixed $value): void
     {
         $this->setMany([$key => $value]);

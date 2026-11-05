@@ -63,6 +63,9 @@ final class Session
         );
     }
 
+    /**
+     * Tells whether the session has ended.
+     */
     public function isEnded(): bool
     {
         return $this->state === self::ENDED;

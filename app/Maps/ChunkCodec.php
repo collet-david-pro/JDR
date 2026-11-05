@@ -161,6 +161,9 @@ final class ChunkCodec
         return self::HEADER_BYTES + (($y << 5) | $x) * 4;
     }
 
+    /**
+     * Reads the 16-bit little-endian palette index at the byte offset.
+     */
     public static function indexAt(string $raw, int $offset): int
     {
         return ord($raw[$offset]) | (ord($raw[$offset + 1]) << 8);
