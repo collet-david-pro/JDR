@@ -20,20 +20,82 @@
 
 ## Ce qu'on peut faire
 
-Clairvoie est fait pour le maître de jeu qui prépare ses cartes, puis les montre à ses joueurs sans rien leur révéler d'avance. Ce n'est **pas** un outil de règles : ni dés, ni fiches de personnage.
+Clairvoie est fait pour le maître de jeu qui prépare ses cartes, puis les montre à ses joueurs sans rien leur révéler d'avance. Voici le parcours complet, de la préparation à l'administration. Le détail de chaque fonction : [docs/fonctionnalites.md](docs/fonctionnalites.md).
 
-| | |
-|---|---|
-| ![](frontend/src/help/img/editeur.webp) | **Dessiner ses maps.** Grille, calques, tuiles, étages, escaliers, notes, modèles. Enregistrement automatique, même hors ligne. |
-| ![](frontend/src/help/img/editeur-generer.webp) | **Générer des maps.** Donjons, grottes, extérieurs et villages, à partir d'une graine reproductible. |
-| ![](frontend/src/help/img/seance-console-mj.webp) | **Murs, lumière et brouillard.** Portes, torches, vision des tokens, brouillard de guerre que les joueurs explorent. |
-| ![](frontend/src/help/img/seance-vue-joueur.webp) | **Jouer en ligne.** Les joueurs rejoignent la séance avec un simple code, dans leur navigateur. Ils ne voient que ce qu'ils ont exploré. |
-| ![](frontend/src/help/img/console-ecrans.webp) | **Jouer autour de la table.** Une tablette ou un vidéoprojecteur affiche la map à l'échelle réelle, pour y poser de vraies figurines. |
-| ![](frontend/src/help/img/bibliotheque.webp) | **Ranger ses images.** Bibliothèque avec catégories, tags, quotas et contrôle strict des fichiers. |
-| ![](frontend/src/help/img/partie-tokens.webp) | **Organiser ses parties.** Maps par partie, tokens, rencontres préparées, co-MJ. |
-| ![](frontend/src/help/img/admin-mise-a-jour.webp) | **Rester chez soi.** Vos comptes, maps et images restent sur votre hébergement, qui se met à jour tout seul. |
+### Préparer : parties, joueurs, bibliothèque, tokens
 
-Le détail de chaque fonction : [docs/fonctionnalites.md](docs/fonctionnalites.md).
+Tout part d'une partie : vous y rangez vos maps, vos joueurs, vos images et vos personnages.
+
+- Des **parties** que l'on crée, archive ou remet depuis la corbeille, avec des membres et des co-MJ.
+- Des données **strictement cloisonnées** entre les parties.
+- Une **bibliothèque d'images** par glisser-déposer, avec catégories, tags, favoris et quotas ; les fichiers sont contrôlés et ré-encodés, avec miniatures.
+- Des **tokens** (image, taille, vision, lumière) et des **rencontres préparées** à l'avance.
+- Des **modèles de map**, dont 4 livrés : taverne, crypte, forêt, grotte.
+
+<table><tr><td width="50%"><img src="frontend/src/help/img/partie-maps.webp" alt="Les maps d'une partie"></td><td width="50%"><img src="frontend/src/help/img/partie-tokens.webp" alt="Les tokens d'une partie"></td></tr></table>
+
+### Créer ses maps
+
+L'éditeur dessine vos cartes à la grille, avec murs, portes et lumière, et enregistre tout seul.
+
+- **Terrain** : calques, tuiles, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
+- **Murs, portes et fenêtres** : murs en polyligne ou par pièce, portes ouvrables, verrouillées ou secrètes.
+- **Lumières et ambiance** : torche, lanterne, bougie, feu de camp, lumière magique ; obscurité, teinte, cycle jour et nuit, ombres portées.
+- **Étages** : jusqu'à 10 par map, avec escaliers et portails vers un autre étage ou une autre map.
+- **Notes et secrets** : notes, épingles, zones à lire, pièges et secrets.
+- **Génération procédurale** : donjons, grottes, extérieurs et villages, à partir d'une graine reproductible (la même graine redonne la même map).
+- **Versions** : historique restaurable, export et import JSON ou ZIP.
+- **Hors ligne** : une coupure réseau ne fait pas perdre le travail, les modifications sont resynchronisées.
+- **Export PNG** haute résolution, fond transparent, et **impression** (A4, A3, Letter).
+
+<table><tr><td width="50%"><img src="frontend/src/help/img/editeur.webp" alt="L'éditeur de maps"></td><td width="50%"><img src="frontend/src/help/img/editeur-generer.webp" alt="La génération de maps"></td></tr></table>
+
+### Jouer : la séance en temps réel
+
+Le MJ lance une séance, les joueurs la rejoignent depuis leur navigateur, sans compte à créer pour les écrans de table.
+
+- Un **code de séance** à saisir sur `/join`, puis un **lobby** avec préchargement.
+- Une **console MJ** : joueurs, affectations, tokens, révélations, ambiance, notes, maps.
+- **Brouillard et vision** : la lumière et la vue s'arrêtent aux murs, les joueurs explorent un brouillard de guerre et ne reçoivent que ce qu'ils ont vu.
+- **Révélations** : l'outil Révéler/masquer et la vue « comme le joueur ».
+- **Pause**, **notes lues à voix haute**, expulsion d'un joueur.
+- Le MJ **fait voyager la table** d'un clic par un escalier ou un portail ; joueurs et écrans suivent.
+- Les **joueurs jouent sur mobile**, sans rien installer.
+- Temps réel sans WebSocket : bascule automatique selon l'hébergement.
+
+<table><tr><td width="50%"><img src="frontend/src/help/img/seance-console-mj.webp" alt="La console du MJ"></td><td width="50%"><img src="frontend/src/help/img/seance-vue-joueur.webp" alt="La vue du joueur"></td></tr></table>
+
+### Autour de la table : écrans en présentiel
+
+Une tablette, une télévision ou un vidéoprojecteur à plat sur la table affiche la map à taille réelle, pour y poser de vraies figurines.
+
+- Des **écrans appairés** à la séance avec un code à 6 chiffres ou un QR code, sans compte (jusqu'à 8, révocation immédiate).
+- **Échelle réelle** (25 mm par case par défaut), calibrée à la diagonale ou à la règle.
+- **Rotation** et **miroir** de l'image, pilotage de la caméra, verrou de vue.
+- L'écran ne montre que la vue de table.
+
+<table><tr><td width="50%"><img src="frontend/src/help/img/console-ecrans.webp" alt="La console des écrans"></td><td width="50%"><img src="frontend/src/help/img/ecran-appairage.webp" alt="L'appairage d'un écran"></td></tr></table>
+
+### Administrer son site
+
+Le site tient sur un hébergement mutualisé ordinaire, et l'administrateur dispose de sa console.
+
+- **Comptes** : inscription ouverte, fermée ou sur invitation, quotas, réinitialisation de mot de passe, export et suppression des données personnelles.
+- **Réglages** du site, e-mail de test, journal d'audit.
+- **Mise à jour en un clic**, signée, qui applique aussi les migrations de la base.
+- **Sauvegarde et restauration**, **intégrité** (avec réparation) et **diagnostic**.
+- **Mode maintenance** pendant les mises à jour.
+
+<table><tr><td width="50%"><img src="frontend/src/help/img/admin-tableau-de-bord.webp" alt="Le tableau de bord d'administration"></td><td width="50%"><img src="frontend/src/help/img/admin-mise-a-jour.webp" alt="La mise à jour en un clic"></td></tr></table>
+
+### Accessibilité, thèmes et aide intégrée
+
+- Interface en français, thème clair, sombre ou automatique, trois styles : moderne, fantasy, science-fiction. Voir [Accessibilité](docs/accessibilite.md).
+- Une **aide intégrée** (`/aide`) pour le joueur, le MJ, l'écran de table et l'administrateur, avec recherche, raccourcis clavier et captures.
+
+### Ce que Clairvoie n'est pas
+
+Clairvoie n'est **pas un VTT de règles** : pas de dés, pas d'initiative, pas de fiches de personnage, pas de points de vie. L'outil sert à la carte, pas aux règles.
 
 ## Comment ça marche
 
@@ -64,7 +126,7 @@ Première fois ? Suivez le [tutoriel pas à pas](docs/TUTORIEL.md), de l'install
 
 ## Contribuer et développer
 
-- **Signaler un défaut ou proposer une idée** : ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues) (version, hébergement, navigateur, étapes pour reproduire).
+- **Donner son avis / signaler un problème** : [ouvrir une issue](https://github.com/collet-david-pro/JDR/issues/new/choose) (version, hébergement, navigateur, étapes pour reproduire).
 - Le projet est développé par son auteur seul et **n'accepte pas de pull requests**. Vous pouvez en revanche **forker** le dépôt, dans le respect de la [licence](#licence).
 - Pour le code : [AGENTS.md](AGENTS.md), [docs/dev/](docs/dev/) (architecture, décisions, recettes) et [dev/README.md](dev/README.md) (environnement local, tests, livraison).
 
