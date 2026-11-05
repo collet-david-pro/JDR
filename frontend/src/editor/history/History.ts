@@ -65,7 +65,9 @@ export interface HistoryState {
 /** Why ops were applied: sent to the sync queue (P4b) in every case. */
 export type OpsOrigin = 'do' | 'undo' | 'redo' | 'untracked';
 
+/** Maximum number of undo steps kept in memory. */
 export const HISTORY_LIMIT = 200;
+/** Time window in which consecutive commands sharing a merge key are coalesced. */
 export const MERGE_WINDOW_MS = 500;
 /** Merged entries are compacted once they carry this many ops. */
 const COMPACT_THRESHOLD = 256;
@@ -81,6 +83,7 @@ interface Entry {
   stamps: Map<string, number>;
 }
 
+/** Undo/redo stack of editor commands with merge support. */
 export class History {
   private readonly target: HistoryTarget;
   private readonly limit: number;

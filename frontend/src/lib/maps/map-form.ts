@@ -16,10 +16,15 @@ import {
 } from '../games/game-form';
 import { numberToInput, parseDecimal, roundTo } from '../games/units';
 
+/** Maximum length of a map name. */
 export const MAP_NAME_MAX = 120;
+/** Maximum length of a map folder name. */
 export const MAP_FOLDER_MAX = 191;
+/** Minimum map side, in cells. */
 export const MAP_SIDE_MIN = 1;
+/** Maximum map side, in cells. */
 export const MAP_SIDE_MAX = 400;
+/** Default size of a new map, in cells. */
 export const DEFAULT_MAP_SIDE = { width: 30, height: 20 } as const;
 
 const length = (value: string): number => [...value].length;
@@ -34,12 +39,14 @@ export function normalizeFolder(value: string | null | undefined): string | null
   return parts.length === 0 ? null : parts.join('/');
 }
 
+/** Validates a map name and returns an error key, or an empty string. */
 export function checkMapName(value: string): string | null {
   const v = value.trim();
   if (v === '') return 'required';
   return length(v) > MAP_NAME_MAX ? 'too_long' : null;
 }
 
+/** Validates a folder name and returns an error key, or an empty string. */
 export function checkFolder(value: string): string | null {
   const v = normalizeFolder(value);
   return v !== null && length(v) > MAP_FOLDER_MAX ? 'too_long' : null;
@@ -92,6 +99,7 @@ export type MapDraftValidation =
   | { readonly ok: true; readonly input: MapInput }
   | { readonly ok: false; readonly errors: FieldErrors };
 
+/** Validates a map draft. */
 export function validateMapDraft(draft: MapDraft): MapDraftValidation {
   const errors: Record<string, string> = {};
   const set = (field: string, code: string | null): void => {

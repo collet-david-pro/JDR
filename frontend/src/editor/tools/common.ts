@@ -4,6 +4,7 @@ import { EMPTY_CELL, tilesSet } from '../model/ops';
 import type { Point } from './raster';
 import { BRUSH_MAX, BRUSH_MIN, type ToolContext, type ToolNotice } from './types';
 
+/** Clamps a brush size to the allowed range. */
 export function clampBrushSize(size: number): number {
   return Math.max(BRUSH_MIN, Math.min(BRUSH_MAX, Math.round(size) || BRUSH_MIN));
 }
@@ -26,10 +27,12 @@ export function paintValue(ctx: ToolContext, tile: CellValue): CellValue {
   return { index: tile.index, variant, flags };
 }
 
+/** True when the cell lies inside the map. */
 export function inMap(ctx: ToolContext, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < ctx.doc.grid.width && y < ctx.doc.grid.height;
 }
 
+/** Clips points to the map bounds. */
 export function clipPoints(ctx: ToolContext, points: readonly Point[]): Point[] {
   return points.filter(([x, y]) => inMap(ctx, x, y));
 }

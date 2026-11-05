@@ -2,6 +2,7 @@
 import type { MapNote } from '../contracts-notes';
 import type { NotesState } from '../model/NotesState';
 
+/** Reactive view model of the notes panel. */
 export class NotesView {
   list = $state.raw<readonly MapNote[]>([]);
   private readonly off: () => void;

@@ -53,4 +53,5 @@ export function flickerFactor(flicker: LightFlicker, seed: number, ms: number): 
 
 /** Flicker of a token light (P3 boolean flag). */
 export const TOKEN_FLICKER: LightFlicker = Object.freeze({ type: 'torch', amp: 0.15, speed: 1 });
+/** Flicker settings meaning "no flicker". */
 export const NO_FLICKER: LightFlicker = Object.freeze({ type: 'none', amp: 0, speed: 1 });

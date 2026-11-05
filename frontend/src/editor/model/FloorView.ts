@@ -15,6 +15,7 @@ import type {
 } from '../contracts';
 import type { MapDocument } from './MapDocument';
 
+/** Read-only view of a single floor exposed through the MapView interface. */
 export class FloorView implements MapView {
   constructor(
     private readonly doc: MapDocument,

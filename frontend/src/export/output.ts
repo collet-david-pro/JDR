@@ -33,6 +33,7 @@ function picker(): SavePicker | null {
   return typeof fn === 'function' ? fn.bind(globalThis) : null;
 }
 
+/** True when the browser can show a save-file picker. */
 export function hasFilePicker(): boolean {
   return picker() !== null;
 }

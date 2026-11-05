@@ -14,6 +14,7 @@ export interface Style {
 export type Sdf = (x: number, y: number) => number;
 export type Pt = readonly [number, number];
 
+/** Builds a color from a hex value and an alpha. */
 export const rgb = (hex: number, a = 255): Color => [
   (hex >> 16) & 255,
   (hex >> 8) & 255,
@@ -22,6 +23,7 @@ export const rgb = (hex: number, a = 255): Color => [
 ];
 const cov = (d: number): number => (d <= -0.5 ? 1 : d >= 0.5 ? 0 : 0.5 - d);
 
+/** Small RGBA canvas used to draw sprites. */
 export class Canvas {
   readonly data: Uint8ClampedArray;
   constructor(readonly size: number) {

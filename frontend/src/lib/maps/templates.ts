@@ -39,6 +39,7 @@ export const PRIVATE_ASSETS = 'private_assets';
 
 const seg = (id: string): string => encodeURIComponent(id);
 
+/** Client for the map template endpoints. */
 export class TemplatesClient {
   constructor(private readonly api: Pick<ApiClient, 'get' | 'post' | 'delete'>) {}
 

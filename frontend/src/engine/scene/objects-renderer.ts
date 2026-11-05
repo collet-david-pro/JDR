@@ -64,6 +64,7 @@ interface Entry {
   layer: ObjectLayerId;
 }
 
+/** Renders walls, doors, windows and other scene objects. */
 export class ObjectsRenderer {
   /** World space (unit: pixel at zoom 1). */
   readonly root = new Container();

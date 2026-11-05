@@ -33,6 +33,7 @@ export const DAY_CURVE: readonly (readonly [number, number, string])[] = [
   [24, 0.9, '#1a2244'],
 ];
 
+/** Parses a hex color to RGB components. */
 export function parseHex(color: string): [number, number, number] {
   const m = /^#([0-9a-fA-F]{6})$/.exec(color);
   if (m === null) return [0, 0, 0];

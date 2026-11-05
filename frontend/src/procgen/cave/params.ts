@@ -15,6 +15,7 @@ export interface CaveParams {
   decor: number;
 }
 
+/** Default cave parameters. */
 export const CAVE_DEFAULTS: Readonly<CaveParams> = Object.freeze({
   width: 60,
   height: 60,
@@ -26,6 +27,7 @@ export const CAVE_DEFAULTS: Readonly<CaveParams> = Object.freeze({
   decor: 0.5,
 });
 
+/** Cave presets. */
 export const CAVE_PRESETS: Readonly<Record<string, Partial<CaveParams>>> = Object.freeze({
   small_cave: { width: 40, height: 40 },
   ice_cavern: { width: 80, height: 60, theme: 'ice' },

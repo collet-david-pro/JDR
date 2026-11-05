@@ -27,6 +27,7 @@ export interface PolygonDraw {
   readonly points: readonly Point[];
 }
 
+/** Creates a helper that draws a polygon point by point. */
 export function createPolygonDraw(ctx: ToolContext): PolygonDraw {
   let points: Point[] = [];
   const dbl = new DoubleClick(ctx);

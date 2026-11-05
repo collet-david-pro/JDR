@@ -104,6 +104,7 @@ type Gesture =
   | { readonly kind: 'move'; readonly start: Point; moved: boolean }
   | { readonly kind: 'handle'; readonly handle: HandleHit; moved: boolean };
 
+/** Creates the selection tool. */
 export function createSelectTool(ctx: ToolContext): SelectTool {
   let rects: CellRect[] = [];
   let objSel: ObjectSelection = EMPTY_OBJECT_SELECTION;

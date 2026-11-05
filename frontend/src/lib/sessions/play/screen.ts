@@ -17,6 +17,7 @@ export interface PlayScreenInput {
   readonly preloaded: boolean;
 }
 
+/** Computes what the play page shows from the session state. */
 export function playScreen(i: PlayScreenInput): PlayScreen {
   if (i.phase === 'kicked') return 'kicked';
   if (i.phase === 'error') return 'error';

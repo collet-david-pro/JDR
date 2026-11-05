@@ -74,6 +74,7 @@ function isForeign(role: SessionState['role'], view: unknown): boolean {
   return view !== undefined && view !== 'display';
 }
 
+/** Applies a wire event to the session state and returns the new state with its effects. */
 export function applyEvent(state: SessionState, e: WireEvent): Reduction {
   if (!isEventId(e.id) || compareIds(e.id, state.lastEventId) <= 0) return same(state);
   const p = rec(e.payload);

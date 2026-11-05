@@ -8,6 +8,7 @@ import type { FromVisionWorker, ToVisionWorker } from './protocol';
 
 export type PostFromWorker = (message: FromVisionWorker, transfer: Transferable[]) => void;
 
+/** Creates the host that handles vision worker messages. */
 export function createVisionHost(post: PostFromWorker): (message: ToVisionWorker) => void {
   const core = new VisionCoreImpl();
   return (message) => {

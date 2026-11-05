@@ -66,6 +66,7 @@ interface StoredBatch extends Omit<PendingBatch, 'ops'> {
   readonly ops: readonly StoredOp[];
 }
 
+/** Packs tile cells into a compact array for storage. */
 export function packCells(cells: readonly TileCell[]): Uint16Array {
   const out = new Uint16Array(cells.length * 5);
   for (let i = 0, o = 0; i < cells.length; i++, o += 5) {
@@ -79,6 +80,7 @@ export function packCells(cells: readonly TileCell[]): Uint16Array {
   return out;
 }
 
+/** Unpacks tile cells stored by packCells. */
 export function unpackCells(packed: Uint16Array): TileCell[] {
   const out: TileCell[] = [];
   for (let o = 0; o + 4 < packed.length; o += 5) {
@@ -87,6 +89,7 @@ export function unpackCells(packed: Uint16Array): TileCell[] {
   return out;
 }
 
+/** Packs a pending batch for storage. */
 export function packBatch(batch: PendingBatch): StoredBatch {
   return {
     ...batch,
@@ -98,6 +101,7 @@ export function packBatch(batch: PendingBatch): StoredBatch {
   };
 }
 
+/** Unpacks a stored batch. */
 export function unpackBatch(stored: StoredBatch): PendingBatch {
   return {
     ...stored,
@@ -139,6 +143,7 @@ export class MemoryPendingOpsStore implements PendingOpsStore {
   }
 }
 
+/** In-memory chunk cache used when IndexedDB is unavailable. */
 export class MemoryChunkCacheStore implements ChunkCacheStore {
   private readonly rows = new Map<string, ChunkCacheEntry>();
 

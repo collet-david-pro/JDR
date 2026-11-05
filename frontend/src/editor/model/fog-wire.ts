@@ -37,6 +37,7 @@ export function encodeFogData(bits: FogBitmap): string {
   return fogToBase64(deflateRawSync(bits));
 }
 
+/** Encodes a fog bitmap chunk to its wire form. */
 export function fogChunkWire(key: ChunkKey, bits: FogBitmap): FogChunkWire {
   const [cx, cy] = key.split(':').map(Number) as [number, number];
   return [cx, cy, encodeFogData(bits)];
@@ -108,6 +109,7 @@ export function mergeFog(target: Map<ChunkKey, FogBitmap>, src: ReadonlyMap<Chun
   }
 }
 
+/** Builds the chunk key used for fog chunks. */
 export function fogKey(cx: number, cy: number): ChunkKey {
   return chunkKey(cx, cy);
 }

@@ -89,6 +89,7 @@ export async function runCheck(
   return issues;
 }
 
+/** Groups integrity issues by kind. */
 export function groupIssues(issues: readonly IntegrityIssue[]): IssueGroup[] {
   const groups: IssueGroup[] = [];
   for (const kind of ISSUE_KINDS) {
@@ -103,6 +104,7 @@ export function groupIssues(issues: readonly IntegrityIssue[]): IssueGroup[] {
   return groups;
 }
 
+/** True when fixing the issue deletes data. */
 export function isDestructive(issue: IntegrityIssue): boolean {
   return issue.fix?.destructive === true;
 }

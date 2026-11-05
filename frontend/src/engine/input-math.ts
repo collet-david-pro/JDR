@@ -11,6 +11,7 @@ export interface ModifierSource {
   readonly metaKey: boolean;
 }
 
+/** Extracts keyboard modifiers from a pointer or keyboard event. */
 export function modifiersOf(e: ModifierSource): PointerModifiers {
   return { shift: e.shiftKey, alt: e.altKey, ctrlOrMeta: e.ctrlKey || e.metaKey };
 }
@@ -52,6 +53,7 @@ export interface PinchState {
   readonly distance: number;
 }
 
+/** Computes pinch zoom and pan from two touch points. */
 export function pinchState(
   a: { readonly x: number; readonly y: number },
   b: { readonly x: number; readonly y: number },

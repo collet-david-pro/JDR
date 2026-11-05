@@ -37,6 +37,7 @@ type Trial = { from: TransportMode; next: TransportMode[] };
 /** A long polling request that fails this much before `wait` was cut by a proxy. */
 const EARLY_MARGIN_MS = 2000;
 
+/** State machine of the realtime connection: modes, fallback and reconnection. */
 export class Flow {
   mode: TransportMode;
   state: NetState = 'offline';

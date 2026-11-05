@@ -4,6 +4,7 @@ import type { ShortcutAction } from '../shortcuts';
 import type { BrushShape, ShapeKind, ToolId, ToolNotice } from '../tools/types';
 import { t } from '../../lib/i18n';
 
+/** Label of a tool. */
 export function toolLabel(id: ToolId): string {
   switch (id) {
     case 'select':
@@ -47,6 +48,7 @@ export function toolLabel(id: ToolId): string {
   }
 }
 
+/** Label of a layer. */
 export function layerLabel(id: LayerId): string {
   switch (id) {
     case 'ground':
@@ -68,6 +70,7 @@ export function layerLabel(id: LayerId): string {
   }
 }
 
+/** Label of a grid theme. */
 export function themeLabel(theme: GridTheme): string {
   switch (theme) {
     case 'parchment':
@@ -83,10 +86,12 @@ export function themeLabel(theme: GridTheme): string {
   }
 }
 
+/** Label of a brush shape. */
 export function brushShapeLabel(shape: BrushShape): string {
   return shape === 'round' ? t('editor.options.shape_round') : t('editor.options.shape_square');
 }
 
+/** Label of a shape kind. */
 export function shapeKindLabel(kind: ShapeKind): string {
   switch (kind) {
     case 'rect':
@@ -174,6 +179,7 @@ export function commandLabel(key: string): string {
   }
 }
 
+/** User-facing text of a tool notice. */
 export function noticeText(notice: ToolNotice): string {
   switch (notice.code) {
     case 'layer_locked':

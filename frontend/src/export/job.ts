@@ -80,6 +80,7 @@ export function planBands(
   return bands;
 }
 
+/** Plans an export: splits the area into the steps to render. */
 export function planExport(
   options: ExportOptions,
   maxWidth = MAX_SURFACE_WIDTH,
@@ -162,6 +163,7 @@ function pngText(options: ExportOptions): { keyword: string; value: string }[] {
   ];
 }
 
+/** Runs an export plan and streams the result. */
 export async function runExport(
   snapshot: MapSnapshot,
   options: ExportOptions,

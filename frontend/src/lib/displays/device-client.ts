@@ -6,6 +6,7 @@
 import type { ApiClient } from '../api';
 import type { DeviceSettingsPatch, DisplayMe } from './types';
 
+/** Client for the endpoints used by a paired display device. */
 export class DeviceClient {
   constructor(private readonly api: ApiClient) {}
 

@@ -13,6 +13,7 @@ import type {
 } from '../../displays/types';
 import type { WireEvent } from '../../realtime/types';
 
+/** Refresh interval of the displays list, in milliseconds. */
 export const REFRESH_MS = 15_000;
 
 export type DisplaysApi = Pick<
@@ -31,6 +32,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+/** Reactive model of the displays panel of the console. */
 export class DisplaysModel {
   displays = $state.raw<readonly DisplayInfo[]>([]);
   loaded = $state(false);

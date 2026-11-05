@@ -46,6 +46,7 @@ function base(uid: string, sort: number): Omit<WallObject, 'type' | 'geometry' |
   };
 }
 
+/** Synthetic scene used by dev and performance tests. */
 export class SyntheticScene implements SceneView {
   readonly floor = FLOOR;
   sceneRevision = 1;

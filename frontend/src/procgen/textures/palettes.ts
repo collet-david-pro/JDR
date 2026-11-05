@@ -18,6 +18,7 @@ const p = (
   colors: number[],
 ): [string, PaletteInfo] => [id, { id, name, materials, colors }];
 
+/** Palettes by identifier. */
 export const PALETTES: Readonly<Record<string, PaletteInfo>> = Object.freeze(
   Object.fromEntries([
     p('stone_grey', 'Pierre grise', ['stone'], [0x4a4c52, 0x6b6d73, 0x8a8c92, 0xa9abb0]),

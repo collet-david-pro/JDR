@@ -20,6 +20,7 @@ export type HandleHit =
 /** Light gizmo radius in screen px (scene/style.ts LIGHT_GIZMO_PX + margin). */
 const LIGHT_PICK_PX = 9;
 
+/** Returns the radius of a token, in cells. */
 export function tokenRadius(scene: SceneView, t: PlacedToken): number {
   const def = scene.tokenDef(t.token_id);
   const size = def === null ? 1 : Math.max(def.sizeW, def.sizeH);
@@ -145,6 +146,7 @@ export function handleAt(
   return null;
 }
 
+/** Returns the position of the handle that resizes a light's radius. */
 export function lightRadiusHandle(x: number, y: number, dimRadius: number): Point {
   return [x + dimRadius, y];
 }

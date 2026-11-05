@@ -18,6 +18,7 @@ export interface GridThemeDef {
   readonly borderAlpha: number;
 }
 
+/** Identifiers of the grid themes. */
 export const GRID_THEME_IDS: readonly GridTheme[] = [
   'parchment',
   'slate',
@@ -26,8 +27,10 @@ export const GRID_THEME_IDS: readonly GridTheme[] = [
   'light',
 ];
 
+/** Grid theme used when none is specified. */
 export const DEFAULT_GRID_THEME: GridTheme = 'parchment';
 
+/** Definitions (colors, line style) of each grid theme. */
 export const GRID_THEMES: Readonly<Record<GridTheme, GridThemeDef>> = Object.freeze({
   parchment: {
     background: 0xf2e6c9,
@@ -71,6 +74,7 @@ export const GRID_THEMES: Readonly<Record<GridTheme, GridThemeDef>> = Object.fre
   },
 });
 
+/** Type guard for grid theme identifiers. */
 export function isGridTheme(value: unknown): value is GridTheme {
   return typeof value === 'string' && (GRID_THEME_IDS as readonly string[]).includes(value);
 }

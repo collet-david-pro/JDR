@@ -6,6 +6,7 @@
 import { normalizeText } from '../commands';
 import { helpRunsText, parseHelpMarkdown, type HelpBlock, type HelpRun } from './markdown';
 
+/** Help audiences. */
 export const AUDIENCES = ['joueur', 'mj', 'irl', 'admin'] as const;
 export type Audience = (typeof AUDIENCES)[number];
 

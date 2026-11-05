@@ -22,6 +22,7 @@ export {
   validateOutdoor,
 } from './params';
 
+/** Version of the outdoor generator algorithm. */
 export const OUTDOOR_VERSION = 1;
 
 const RULE_FILES: Readonly<Record<string, unknown>> = { temperate, desert, winter };
@@ -250,6 +251,7 @@ function generate(p: OutdoorParams, ctx: GenContext): GenResult {
   };
 }
 
+/** Outdoor generator. */
 export const outdoorGenerator: Generator<OutdoorParams> = {
   id: 'outdoor',
   version: OUTDOOR_VERSION,

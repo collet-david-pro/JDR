@@ -22,6 +22,7 @@ export function tokenCentre(
   return [round3(Math.min(width, x + w / 2)), round3(Math.min(height, y + h / 2))];
 }
 
+/** Creates the token placement tool. */
 export function createTokenTool(ctx: ToolContext): Tool {
   const def = (): TokenDefView | null => {
     const id = ctx.settings.tokenId;

@@ -26,6 +26,7 @@ export function summaryOf(map: MapDetail): MapSummary {
   };
 }
 
+/** Reactive model of the maps tab of a game. */
 export class MapsTabModel {
   status = $state<MapsTabStatus>('idle');
   error = $state.raw<unknown>(null);

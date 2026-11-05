@@ -66,6 +66,7 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Compiles a route path pattern to a regular expression and its parameter keys. */
 export function compileRoute(path: string): { regex: RegExp; keys: string[] } {
   const segments = path.split('/').filter((s) => s !== '');
   const keys: string[] = [];
@@ -105,6 +106,7 @@ function safeDecode(value: string): string | null {
   }
 }
 
+/** Finds the routes that match a path. */
 export function matchRoutes<C>(
   routes: readonly CompiledRoute<C>[],
   path: string,
@@ -257,6 +259,7 @@ export interface NavigateOptions {
 
 export type RouterListener<C> = (state: RouterState<C>) => void;
 
+/** Client-side router with nested routes, guards and history handling. */
 export class Router<C> {
   readonly mode: RoutingMode;
   readonly basePath: string;

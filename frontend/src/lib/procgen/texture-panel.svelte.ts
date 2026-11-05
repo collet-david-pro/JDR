@@ -27,6 +27,7 @@ export interface TexturePanelDeps {
   t: Translate;
 }
 
+/** Palettes available for a material. */
 export function palettesFor(material: Material): PaletteInfo[] {
   return Object.values(PALETTES).filter((p) => p.materials.includes(material));
 }
@@ -43,6 +44,7 @@ export async function encodeTexturePng(rgba: Uint8ClampedArray, size: number): P
   return new Blob(parts, { type: 'image/png' });
 }
 
+/** Reactive model of the texture panel. */
 export class TexturePanelModel {
   readonly materials = MATERIALS;
   readonly sizes = TEXTURE_SIZES;

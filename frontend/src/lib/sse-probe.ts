@@ -37,6 +37,7 @@ export interface SseProbeOptions {
 /** The test stream sends named `ping` events; unnamed ones are counted too. */
 export const SSE_EVENT_TYPES = ['message', 'ping'] as const;
 
+/** Analyzes event arrival times to tell whether the stream is buffered. */
 export function analyzeArrivals(
   arrivals: readonly number[],
   expected: number,
@@ -58,6 +59,7 @@ export function analyzeArrivals(
   };
 }
 
+/** Probes an SSE stream to detect buffering by a proxy. */
 export function runSseProbe(url: string, options: SseProbeOptions = {}): Promise<SseProbeResult> {
   const expected = options.expected ?? 3;
   const timeoutMs = options.timeoutMs ?? 10_000;

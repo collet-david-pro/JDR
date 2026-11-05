@@ -23,8 +23,10 @@ export interface ChunkWork {
   readonly cacheLevel: number | null;
 }
 
+/** Work plan meaning "nothing to do" for a chunk. */
 export const NO_WORK: ChunkWork = { build: false, cacheLevel: null };
 
+/** Decides whether a chunk must be built or cached for a render mode. */
 export function planChunkWork(s: ChunkState, mode: ChunkRenderMode): ChunkWork {
   const needsBuild = !s.hasContent || s.contentDirty;
   if (mode.kind === 'direct') return needsBuild ? { build: true, cacheLevel: null } : NO_WORK;
@@ -32,6 +34,7 @@ export function planChunkWork(s: ChunkState, mode: ChunkRenderMode): ChunkWork {
   return { build: needsBuild, cacheLevel: mode.level };
 }
 
+/** True when the plan requires some work. */
 export function hasWork(w: ChunkWork): boolean {
   return w.build || w.cacheLevel !== null;
 }

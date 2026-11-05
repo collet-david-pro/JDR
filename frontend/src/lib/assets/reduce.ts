@@ -21,6 +21,7 @@ export const HEADER_BYTES = 512 * 1024;
 /** GIF / WebP are scanned entirely (frames, duration) up to this size. */
 export const MAX_SCAN_BYTES = 64 * 1024 * 1024;
 
+/** Error raised when a file is rejected before upload. */
 export class UploadRejected extends Error {
   override readonly name = 'UploadRejected';
   constructor(readonly reason: RejectReason) {
@@ -74,6 +75,7 @@ function checkAborted(signal: AbortSignal | undefined): void {
   if (signal?.aborted === true) throw new DOMException('Aborted', 'AbortError');
 }
 
+/** Prepares a file for upload, reducing it when the plan requires. */
 export async function prepareFile(
   file: File,
   limits: AssetLimits,

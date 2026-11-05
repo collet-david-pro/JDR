@@ -25,6 +25,7 @@ export interface XhrLike {
 
 export type XhrFactory = () => XhrLike;
 
+/** Default XHR factory. */
 export const browserXhr: XhrFactory = () => new XMLHttpRequest() as unknown as XhrLike;
 
 export interface XhrUploadRequest {
@@ -39,6 +40,7 @@ export interface XhrUploadRequest {
   readonly xhr?: XhrFactory;
 }
 
+/** Uploads a body with XMLHttpRequest, reporting progress. */
 export function xhrUpload<T>(request: XhrUploadRequest): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
     const signal = request.signal;

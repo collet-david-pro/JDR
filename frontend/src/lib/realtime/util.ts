@@ -10,9 +10,11 @@ export function compareIds(a: string, b: string): number {
   return x < y ? -1 : x > y ? 1 : 0;
 }
 
+/** Type guard for event identifiers. */
 export const isEventId = (value: unknown): value is string =>
   typeof value === 'string' && /^\d{1,19}$/.test(value);
 
+/** Returns the greater of two event identifiers. */
 export function maxId(a: string | null, b: string | null): string | null {
   if (a === null) return b;
   if (b === null) return a;
@@ -56,6 +58,7 @@ export function parseWireEvent(text: string | undefined): WireEvent | null {
   return toWireEvent(value);
 }
 
+/** Validates and converts a value to a wire event. */
 export function toWireEvent(value: unknown): WireEvent | null {
   if (typeof value !== 'object' || value === null) return null;
   const v = value as Record<string, unknown>;

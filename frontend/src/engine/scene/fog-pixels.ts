@@ -10,8 +10,10 @@ import { FOG_RAW_BYTES, FOG_SIDE, FOG_SUBCELLS } from '../../formats/fog-codec';
 
 export type FogMaskKind = 'unexplored' | 'explored';
 
+/** Size of the fog texture, in bytes. */
 export const FOG_TEXTURE_BYTES = FOG_SIDE * FOG_SIDE * 4;
 
+/** Builds the RGBA pixels of the fog texture from a fog bitmap. */
 export function fogPixels(
   bits: FogBitmap | null,
   kind: FogMaskKind,

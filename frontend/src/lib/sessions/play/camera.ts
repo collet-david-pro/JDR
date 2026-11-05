@@ -23,6 +23,7 @@ function same(a: CameraState, b: CameraState): boolean {
   );
 }
 
+/** Makes the player camera follow the player's tokens or the game master camera. */
 export class CameraFollow {
   private following: boolean;
   private applied: CameraState | null = null;

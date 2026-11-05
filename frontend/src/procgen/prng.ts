@@ -35,6 +35,7 @@ export function sfc32(a: number, b: number, c: number, d: number): () => number 
   };
 }
 
+/** Seeded pseudo-random number generator, deterministic across platforms. */
 export class Rng {
   private readonly u32: () => number;
   /** Full seed string this generator was created from (used by fork). */

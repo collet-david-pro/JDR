@@ -17,6 +17,7 @@
 import type { LightCone } from '../editor/contracts';
 import type { OccluderSet } from './occluders';
 
+/** Number of segments used to approximate a circle. */
 export const CIRCLE_SEGMENTS = 64;
 const TWO_PI = Math.PI * 2;
 const STEP = TWO_PI / CIRCLE_SEGMENTS;

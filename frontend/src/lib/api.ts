@@ -33,6 +33,7 @@ export interface ApiResponse<T> {
 export type ClientErrorCode =
   'network_error' | 'timeout' | 'aborted' | 'invalid_response' | 'http_error';
 
+/** Error returned by ApiClient for failed requests, with status and error code. */
 export class ApiError extends Error {
   override readonly name = 'ApiError';
   readonly code: string;
@@ -102,8 +103,11 @@ export interface ApiClientOptions {
   readonly sleep?: (ms: number) => Promise<void>;
 }
 
+/** Default request timeout, in milliseconds. */
 export const DEFAULT_TIMEOUT_MS = 15_000;
+/** Default number of retries for idempotent requests. */
 export const DEFAULT_RETRIES = 2;
+/** Default delay between retries, in milliseconds. */
 export const DEFAULT_RETRY_DELAY_MS = 400;
 
 const RETRYABLE_STATUS = new Set([502, 504]);
@@ -140,6 +144,7 @@ const defaultSleep = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
+/** HTTP client for the JSON API: CSRF, timeouts, retries and error mapping. */
 export class ApiClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;

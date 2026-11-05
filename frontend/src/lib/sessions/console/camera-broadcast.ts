@@ -5,7 +5,9 @@
  */
 import type { SessionAction } from '../types';
 
+/** Maximum camera broadcasts per second. */
 export const MAX_PER_SECOND = 4;
+/** Minimum interval between camera broadcasts, in milliseconds. */
 export const MIN_INTERVAL_MS = 1000 / MAX_PER_SECOND;
 
 export interface CameraLike {
@@ -14,6 +16,7 @@ export interface CameraLike {
   readonly zoom: number;
 }
 
+/** Builds the camera action for a floor. */
 export function cameraAction(camera: CameraLike, floor: string | null): SessionAction {
   return {
     type: 'camera.set',
@@ -30,6 +33,7 @@ export interface BroadcasterOptions {
   readonly now?: () => number;
 }
 
+/** Throttles and sends the game master camera to players. */
 export class CameraBroadcaster {
   private last = Number.NEGATIVE_INFINITY;
   private pending: SessionAction | null = null;

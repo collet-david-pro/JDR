@@ -19,6 +19,7 @@ import type {
 import { HIDDEN_TOKEN_ALPHA } from '../../scene/style';
 import type { Viewer } from '../../vision';
 
+/** Default view options. */
 export const DEFAULT_VIEW: ViewOptions = Object.freeze({
   mode: 'gm',
   viewers: Object.freeze([]) as readonly string[],
@@ -30,6 +31,7 @@ export const DEFAULT_VIEW: ViewOptions = Object.freeze({
 /** GM view: alpha of objects players never receive (gm layer, visibility ≠ 'all'). */
 export const GM_HIDDEN_OBJECT_ALPHA = 0.6;
 
+/** Object layer identifiers in render order. */
 export const OBJECT_LAYER_IDS: readonly ObjectLayerId[] = [
   'walls',
   'props',
@@ -64,6 +66,7 @@ export function tokensDrawn(view: ViewOptions): boolean {
   return view.tokens !== false;
 }
 
+/** True when two view option sets are identical. */
 export function viewsEqual(a: ViewOptions, b: ViewOptions): boolean {
   return (
     a.mode === b.mode &&
@@ -81,6 +84,7 @@ export function viewerKind(mode: ViewMode): Viewer {
   return mode === 'gm' ? 'gm' : 'player';
 }
 
+/** True when the view mode shows what a player sees. */
 export function isPlayerLike(mode: ViewMode): boolean {
   return mode !== 'gm';
 }
@@ -105,6 +109,7 @@ export function objectShown(obj: MapObject, mode: ViewMode): boolean {
   return true;
 }
 
+/** Opacity of an object for a view mode. */
 export function objectAlpha(obj: MapObject, mode: ViewMode): number {
   return mode === 'gm' && isGmOnlyObject(obj) ? GM_HIDDEN_OBJECT_ALPHA : 1;
 }
@@ -130,10 +135,12 @@ export function lightIncluded(obj: LightObject, mode: ViewMode): boolean {
   return mode === 'gm' || !isGmOnlyObject(obj);
 }
 
+/** True when the token is shown for a view mode. */
 export function tokenShown(token: PlacedToken, mode: ViewMode): boolean {
   return mode === 'gm' || !token.hidden;
 }
 
+/** Opacity of a token for a view mode. */
 export function tokenAlpha(token: PlacedToken, mode: ViewMode): number {
   return mode === 'gm' && token.hidden ? HIDDEN_TOKEN_ALPHA : 1;
 }

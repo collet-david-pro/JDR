@@ -32,7 +32,9 @@ import type {
 } from './types';
 import { tableViewers } from './viewers';
 
+/** Polling interval of the device state, in milliseconds. */
 export const ME_POLL_MS = 30_000;
+/** Polling interval while waiting for pairing, in milliseconds. */
 export const ME_POLL_WAITING_MS = 10_000;
 /** Delay before reading `/display/me` again after a 404 (screen moved). */
 const MOVED_RETRY_MS = 2_000;
@@ -63,6 +65,7 @@ const rec = (v: unknown): Record<string, unknown> =>
 /** 401 `display_unpaired`: unknown or revoked screen. */
 const isUnpaired = (e: unknown): boolean => e instanceof ApiError && e.status === 401;
 
+/** State machine of a display device: pairing, waiting, showing a session. */
 export class DisplayRun {
   /** The first `/display/me` has not answered yet. */
   loading = $state(true);

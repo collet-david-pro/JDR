@@ -7,6 +7,7 @@
 import { ApiError } from './api';
 import type { Translate } from './translator';
 
+/** Validation error codes. */
 export const VALIDATION_CODES = [
   'required',
   'invalid',
@@ -26,9 +27,13 @@ export type ValidationCode = (typeof VALIDATION_CODES)[number];
 /** Field name → validation code. */
 export type FieldErrors = Readonly<Record<string, string>>;
 
+/** Minimum password length. */
 export const PASSWORD_MIN = 10;
+/** Maximum password length. */
 export const PASSWORD_MAX = 256;
+/** Accepted pattern for user names. */
 export const USERNAME_PATTERN = /^[\p{L}\p{N}_ .-]{3,40}$/u;
+/** Maximum e-mail length. */
 export const EMAIL_MAX = 254;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,10 +41,12 @@ function length(value: string): number {
   return [...value].length;
 }
 
+/** Checks that a value is not empty. */
 export function checkRequired(value: string): ValidationCode | null {
   return value.trim() === '' ? 'required' : null;
 }
 
+/** Checks an e-mail address. */
 export function checkEmail(value: string): ValidationCode | null {
   const v = value.trim();
   if (v === '') return 'required';
@@ -47,6 +54,7 @@ export function checkEmail(value: string): ValidationCode | null {
   return EMAIL_PATTERN.test(v) ? null : 'invalid';
 }
 
+/** Checks a user name. */
 export function checkUsername(value: string): ValidationCode | null {
   const v = value.trim();
   if (v === '') return 'required';
@@ -55,6 +63,7 @@ export function checkUsername(value: string): ValidationCode | null {
   return USERNAME_PATTERN.test(v) ? null : 'invalid';
 }
 
+/** Checks a password. */
 export function checkPassword(value: string): ValidationCode | null {
   if (value === '') return 'required';
   if (length(value) < PASSWORD_MIN) return 'too_short';
@@ -62,6 +71,7 @@ export function checkPassword(value: string): ValidationCode | null {
   return null;
 }
 
+/** Checks that the confirmation matches the password. */
 export function checkConfirmation(password: string, confirmation: string): ValidationCode | null {
   if (confirmation === '') return 'required';
   return password === confirmation ? null : 'mismatch';
@@ -74,6 +84,7 @@ export function collectErrors(checks: Readonly<Record<string, string | null>>): 
   return errors;
 }
 
+/** True when the field errors contain at least one error. */
 export function hasErrors(errors: FieldErrors): boolean {
   return Object.keys(errors).length > 0;
 }

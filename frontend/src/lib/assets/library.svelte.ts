@@ -23,6 +23,7 @@ export interface LibraryOptions {
   readonly admin?: boolean;
 }
 
+/** Reactive model of the asset library page. */
 export class LibraryModel {
   /** Bound to form controls: validated by filters(). */
   scope = $state<string>('mine');

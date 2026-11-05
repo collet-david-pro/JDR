@@ -7,6 +7,7 @@ import type { ChunkKey, FogBitmap, MapOp, VisibleScene } from '../contracts';
 import { fogRasterizers } from '../../vision/index';
 import { effectiveFog, fogOps, mergeFog } from '../model/fog-wire';
 
+/** Delay before explored fog cells are flushed to the server. */
 export const EXPLORE_FLUSH_MS = 500;
 
 export interface ExplorerTarget {
@@ -25,6 +26,7 @@ const realClock: ExplorerClock = {
   clearTimeout: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
 };
 
+/** Tracks cells explored by the vision and reports them in batches. */
 export class FogExplorer {
   private pending = new Map<ChunkKey, FogBitmap>();
   private timer: unknown = null;

@@ -12,6 +12,7 @@
  */
 export type EngineUnsupportedReason = 'no-gpu' | 'init-failed';
 
+/** Error raised when the engine cannot run in this browser. */
 export class EngineUnsupportedError extends Error {
   override readonly name = 'EngineUnsupportedError';
   /** i18n key of the user-facing explanation (i18n/_pending/engine.json until merged). */
@@ -30,6 +31,7 @@ export class EngineUnsupportedError extends Error {
   }
 }
 
+/** Type guard for EngineUnsupportedError. */
 export function isEngineUnsupportedError(error: unknown): error is EngineUnsupportedError {
   return error instanceof EngineUnsupportedError;
 }

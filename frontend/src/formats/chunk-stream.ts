@@ -6,6 +6,7 @@
 import type { ChunkKey, TileLayerId } from '../editor/contracts';
 import { TILE_LAYERS, TILE_LAYER_CODES } from './chunk-codec';
 
+/** Size of a chunk record header in a chunk stream, in bytes. */
 export const CHUNK_RECORD_HEADER_BYTES = 9;
 /** A compressed 4 104-byte block is far smaller; anything larger is a corrupt stream. */
 export const MAX_CHUNK_RECORD_BYTES = 64 * 1024;
@@ -19,6 +20,7 @@ export interface ChunkRecord {
   readonly data: Uint8Array;
 }
 
+/** Error raised when a chunk stream is invalid. */
 export class ChunkStreamError extends Error {
   override readonly name = 'ChunkStreamError';
 }

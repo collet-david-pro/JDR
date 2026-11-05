@@ -160,6 +160,7 @@ async function createRenderer(
   return renderer;
 }
 
+/** Pixi-based renderer of a scene: chunks, grid, overlays and camera. */
 export class SceneEngine implements SceneEngineApi {
   /**
    * Creates the engine inside `host` (the canvas fills it; give it a size and

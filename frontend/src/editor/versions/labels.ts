@@ -2,6 +2,7 @@
 import { t as defaultT, type Translate } from '../../lib/i18n';
 import type { MapVersionKind } from '../../lib/types';
 
+/** Label of a map version kind. */
 export function versionKindLabel(kind: MapVersionKind | string, t: Translate = defaultT): string {
   switch (kind) {
     case 'auto':

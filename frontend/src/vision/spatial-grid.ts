@@ -6,6 +6,7 @@
 
 export const GRID_CELL = 8;
 
+/** Spatial grid index for fast segment lookup. */
 export class SpatialGrid {
   private readonly cols: number;
   private readonly rows: number;

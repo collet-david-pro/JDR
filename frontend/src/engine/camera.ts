@@ -9,7 +9,9 @@
 
 import type { CameraState, GridSpec } from '../editor/contracts';
 
+/** Minimum zoom factor. */
 export const MIN_ZOOM = 0.05;
+/** Maximum zoom factor. */
 export const MAX_ZOOM = 8;
 /** Padding kept around the map by fit(), in CSS pixels. */
 export const FIT_PADDING_PX = 24;
@@ -25,6 +27,7 @@ export interface Point {
   readonly y: number;
 }
 
+/** Clamps a zoom factor to the allowed range. */
 export function clampZoom(zoom: number): number {
   if (!Number.isFinite(zoom)) return 1;
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
@@ -150,6 +153,7 @@ export function fitCamera(
   };
 }
 
+/** True when two camera states are equal. */
 export function camerasEqual(a: CameraState, b: CameraState): boolean {
   return a.x === b.x && a.y === b.y && a.zoom === b.zoom;
 }
@@ -204,6 +208,7 @@ export function releaseVelocity(samples: readonly PanSample[], releaseTime: numb
   return { vx, vy };
 }
 
+/** True when the velocity is non-zero. */
 export function isMoving(v: Velocity): boolean {
   return Math.hypot(v.vx, v.vy) >= INERTIA_MIN_SPEED;
 }

@@ -14,6 +14,7 @@ import { RenderTexture } from './pixi';
 /** Free render textures kept for reuse, in bytes of GPU memory. */
 export const RT_POOL_MAX_BYTES = 48 * 1024 * 1024;
 
+/** Pool that reuses render textures. */
 export class RenderTexturePool {
   private readonly free: { rt: RenderTexture; level: number }[] = [];
   private freeBytes = 0;

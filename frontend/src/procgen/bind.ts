@@ -39,7 +39,9 @@ export interface BindTarget {
   fallback?: (key: PackKey) => PackKey | null;
 }
 
+/** Maximum number of palette entries. */
 export const MAX_PALETTE = 4096;
+/** Maximum number of cells per tile operation. */
 export const TILE_OP_CHUNK = 5000;
 const LAYERS: readonly TileLayerId[] = ['ground', 'terrain', 'decor'];
 
@@ -95,6 +97,7 @@ function chunked(
   return ops;
 }
 
+/** Converts a generation result to editor operations and a palette. */
 export function bindResult(
   r: GenResult,
   t: BindTarget,

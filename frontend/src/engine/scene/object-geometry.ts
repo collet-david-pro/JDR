@@ -87,6 +87,7 @@ export function doorShape(door: DoorObject): DoorShape {
   }
 }
 
+/** Midpoint of a segment. */
 export function segmentMiddle(s: Seg): Point {
   return [(s[0] + s[2]) / 2, (s[1] + s[3]) / 2];
 }
@@ -102,12 +103,14 @@ export function tokenBox(
   return { w: w * scale, h: h * scale };
 }
 
+/** Parses a CSS color to a number, or null when invalid. */
 export function parseColor(color: string | null | undefined): number | null {
   if (typeof color !== 'string') return null;
   const m = /^#([0-9a-fA-F]{6})$/.exec(color);
   return m === null ? null : parseInt(m[1]!, 16);
 }
 
+/** Ring color of a token. */
 export function tokenRingColor(def: TokenDefView | null): number {
   return parseColor(def?.ringColor) ?? TOKEN_RING_COLORS[def?.kind ?? 'object'];
 }

@@ -14,6 +14,7 @@ import {
   type DeflateStreamOptions,
 } from './png-encoder';
 
+/** Error raised when a ZIP size or entry limit is exceeded. */
 export class ZipLimitError extends Error {
   override readonly name = 'ZipLimitError';
 }
@@ -55,6 +56,7 @@ export function dosDateTime(date: Date): { time: number; date: number } {
   };
 }
 
+/** Streaming ZIP writer. */
 export class ZipWriter {
   private offset = 0;
   private readonly records: CentralRecord[] = [];

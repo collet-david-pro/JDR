@@ -102,6 +102,7 @@ export function inDialog(target: unknown): boolean {
   return typeof el?.closest === 'function' && el.closest('dialog, [role="dialog"]') !== null;
 }
 
+/** Session of an open map editor: wires the document, controller, sync and UI models. */
 export class EditorSession {
   readonly ui: EditorUiState;
   readonly doc: MapDocument;

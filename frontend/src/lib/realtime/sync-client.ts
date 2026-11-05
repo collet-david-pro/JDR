@@ -24,9 +24,13 @@ import {
 } from './types';
 import { SeenIds, compareIds, isEventId, maxId, toWireEvent } from './util';
 
+/** Name of the Web Lock that elects the leader tab. */
 export const LOCK_NAME = 'jdr-sync';
+/** Name of the BroadcastChannel shared between tabs. */
 export const CHANNEL_NAME = 'jdr-sync';
+/** Interval between leader heartbeats, in milliseconds. */
 export const HEARTBEAT_MS = 30_000;
+/** Delay after which a tab without heartbeat is considered gone, in milliseconds. */
 export const TAB_EXPIRY_MS = 90_000;
 
 interface Sub {
@@ -66,6 +70,7 @@ type Message =
 
 const ACTIVITIES: readonly string[] = ['running', 'lobby', 'paused', 'hidden'];
 
+/** Realtime client: leader election, event stream and fan-out to tabs. */
 export class SyncClientImpl implements SyncClient {
   private readonly subs = new Map<number, Sub>();
   private readonly remote = new Map<string, RemoteTab>();

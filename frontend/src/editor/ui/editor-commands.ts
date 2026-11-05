@@ -31,6 +31,7 @@ const CONTROLLER_ACTIONS: readonly ShortcutAction[] = [
 
 const LAYER_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
+/** Builds the command palette entries of the editor. */
 export function buildEditorCommands(session: EditorSession, cb: EditorCommandCallbacks): Command[] {
   const ui = session.ui;
   const out: Command[] = [];

@@ -7,6 +7,7 @@ import { command, lockedLayer } from './object-common';
 import { createPolygonDraw } from './polygon-draw';
 import type { Tool, ToolContext, ToolResult } from './types';
 
+/** Creates the zone tool. */
 export function createZoneTool(ctx: ToolContext): Tool {
   const draw = createPolygonDraw(ctx);
 

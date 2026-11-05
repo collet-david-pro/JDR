@@ -36,6 +36,7 @@ function limitParams(limits: AssetLimits | null): TranslationParams {
   };
 }
 
+/** Maps an upload error to a user-facing failure. */
 export function failureFromError(error: unknown, limits: AssetLimits | null): UploadFailure {
   const params = limitParams(limits);
   if (error instanceof UploadRejected) {

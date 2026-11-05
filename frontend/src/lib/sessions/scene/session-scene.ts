@@ -49,6 +49,7 @@ export function floorOf(state: SessionState): string | null {
   return state.session.current_floor_id ?? state.map.floors[0]?.id ?? null;
 }
 
+/** Scene state of a session: map, objects, tokens and fog as seen by the current user. */
 export class SessionScene {
   /** The document the engine shows (`setMap(doc)`, `setScene(doc)`). */
   readonly doc: MapDocument;

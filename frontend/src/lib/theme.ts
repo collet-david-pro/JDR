@@ -7,6 +7,7 @@
  */
 
 export const SCHEME_PREFERENCES = ['auto', 'light', 'dark'] as const;
+/** Available interface styles. */
 export const UI_STYLES = ['modern', 'fantasy', 'scifi'] as const;
 
 export type SchemePreference = (typeof SCHEME_PREFERENCES)[number];
@@ -18,14 +19,18 @@ export interface ThemePrefs {
   readonly style: UiStyle;
 }
 
+/** Default theme preferences. */
 export const DEFAULT_THEME: ThemePrefs = Object.freeze({ scheme: 'auto', style: 'modern' });
 
+/** Local storage key of the theme preferences. */
 export const THEME_STORAGE_KEY = 'jdr.theme';
 
+/** Type guard for color scheme preferences. */
 export function isSchemePreference(value: unknown): value is SchemePreference {
   return typeof value === 'string' && (SCHEME_PREFERENCES as readonly string[]).includes(value);
 }
 
+/** Type guard for interface styles. */
 export function isUiStyle(value: unknown): value is UiStyle {
   return typeof value === 'string' && (UI_STYLES as readonly string[]).includes(value);
 }
@@ -47,6 +52,7 @@ export function parseThemePrefs(raw: string | null): ThemePrefs {
   };
 }
 
+/** Resolves the color scheme from the preference and the system setting. */
 export function resolveScheme(preference: SchemePreference, systemDark: boolean): ResolvedScheme {
   if (preference === 'auto') return systemDark ? 'dark' : 'light';
   return preference;

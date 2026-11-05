@@ -20,6 +20,7 @@ export interface LinkTargetsDeps {
   readonly floorsOf: (mapId: string) => Promise<readonly LinkFloorItem[]>;
 }
 
+/** Computes the maps and floors that a link or portal can target. */
 export class LinkTargets {
   private mapsCache: Promise<readonly LinkMapItem[]> | null = null;
   private readonly floorsCache = new Map<string, Promise<readonly LinkFloorItem[]>>();

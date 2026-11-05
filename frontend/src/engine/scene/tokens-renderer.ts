@@ -45,6 +45,7 @@ function absoluteUrl(url: string): string {
   }
 }
 
+/** Renders placed tokens. */
 export class TokensRenderer {
   /** World space (unit: pixel at zoom 1). */
   readonly root = new Container({ sortableChildren: true });

@@ -29,6 +29,7 @@ export function fogCommandOps(
   return fogOps(type, ctx.doc.floor, changes);
 }
 
+/** Creates the fog painting tool. */
 export function createFogTool(ctx: ToolContext): Tool {
   let last: Point | null = null;
   let rectFrom: Point | null = null;

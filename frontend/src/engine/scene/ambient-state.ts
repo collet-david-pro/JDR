@@ -13,6 +13,7 @@ import {
   type EffectiveAmbient,
 } from '../../vision/ambient';
 
+/** Ambient settings with no effect. */
 export const NEUTRAL_AMBIENT: EffectiveAmbient = Object.freeze({
   darkness: 0,
   tint: Object.freeze([1, 1, 1]) as readonly [number, number, number],
@@ -27,6 +28,7 @@ function sameAmbient(a: EffectiveAmbient, b: EffectiveAmbient): boolean {
   );
 }
 
+/** Animates ambient changes (light level, tint, weather) over time. */
 export class AmbientAnimator {
   private from: EffectiveAmbient = NEUTRAL_AMBIENT;
   private to: EffectiveAmbient = NEUTRAL_AMBIENT;

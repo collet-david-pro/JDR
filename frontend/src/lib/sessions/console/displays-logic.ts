@@ -85,6 +85,7 @@ export interface SettingsForm {
   follow: boolean;
 }
 
+/** Builds a form from a display. */
 export function formFromDisplay(d: Pick<DisplayInfo, 'name' | 'settings'>): SettingsForm {
   const s = d.settings;
   return {

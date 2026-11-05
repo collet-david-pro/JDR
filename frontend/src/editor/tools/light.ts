@@ -58,6 +58,7 @@ export function offsetFromWalls(
   return p;
 }
 
+/** Creates the light tool. */
 export function createLightTool(ctx: ToolContext): Tool {
   let anchor: Point | null = null;
   let dragRadius: number | null = null;

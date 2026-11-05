@@ -23,6 +23,7 @@ export interface OutdoorInput {
   rngTrees: Rng;
 }
 
+/** Places the outdoor decor and lights of the village. */
 export function placeOutdoor(i: OutdoorInput): { decor: GenCell[]; lights: GenLight[] } {
   const { W, H, theme, occ, roads } = i;
   const decor: GenCell[] = [];

@@ -7,6 +7,7 @@
 import type { Rng } from '../prng';
 import { clamp01, field, smooth, stretched, tri, voronoi } from './cells';
 
+/** Available materials. */
 export const MATERIALS = [
   'stone',
   'flagstone',
@@ -205,6 +206,7 @@ const ice: MaterialDef = {
   },
 };
 
+/** Definition of each material. */
 export const MATERIAL_DEFS: Readonly<Record<Material, MaterialDef>> = {
   stone,
   flagstone,

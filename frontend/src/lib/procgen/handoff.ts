@@ -14,6 +14,7 @@ export interface GenerationHandoff {
 
 const stash = new Map<string, GenerationHandoff>();
 
+/** Stores a generation in session storage for the editor to apply. */
 export function stashGeneration(mapId: string, payload: GenerationHandoff): void {
   stash.set(mapId, payload);
 }

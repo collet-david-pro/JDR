@@ -6,6 +6,7 @@
 import type { ExportProgress } from './job';
 import type { ExportOptions, MapSnapshot, SnapshotPaletteEntry } from './scene';
 
+/** Maximum number of messages sent to the worker without acknowledgement. */
 export const MAX_UNACKED = 2;
 
 export type ToWorker =

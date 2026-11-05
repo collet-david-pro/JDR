@@ -50,4 +50,5 @@ export type SessionEffect =
   /** server.notice (maintenance / reload). */
   | { readonly kind: 'notice'; readonly notice: string; readonly message: string };
 
+/** Empty effect list returned when an event has no side effect. */
 export const NO_EFFECTS: readonly SessionEffect[] = Object.freeze([]);

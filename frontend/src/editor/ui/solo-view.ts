@@ -16,6 +16,7 @@ import type {
   TileLayerId,
 } from '../contracts';
 
+/** Map view used by the solo (single floor) mode. */
 export class SoloView implements MapView {
   private soloId: LayerId | null = null;
   private cachedFor: readonly LayerDef[] | null = null;

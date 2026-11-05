@@ -12,6 +12,7 @@ type Handler = (s: SessionState, e: WireEvent, p: Record<string, unknown>) => Re
 
 const text = (v: unknown): string | null => (typeof v === 'string' ? v : null);
 
+/** Handles the event announcing a shared note. */
 export const onNoteShared: Handler = (s, _e, p) => {
   const raw = p['note'];
   if (typeof raw !== 'object' || raw === null) return null;
@@ -20,6 +21,7 @@ export const onNoteShared: Handler = (s, _e, p) => {
   return { state: { ...s, notes: { ...s.notes, [note.uid]: note } }, effects: NO_EFFECTS };
 };
 
+/** Handles the event announcing a hidden note. */
 export const onNoteHidden: Handler = (s, _e, p) => {
   const uid = text(p['uid']);
   if (uid === null || !(uid in s.notes)) return null;
@@ -28,6 +30,7 @@ export const onNoteHidden: Handler = (s, _e, p) => {
   return { state: { ...s, notes }, effects: NO_EFFECTS };
 };
 
+/** Handles the event announcing a zone entered by a token. */
 export const onZoneEntered: Handler = (s, _e, p) => {
   const zoneUid = text(p['zone_uid']);
   const noteUid = text(p['note_uid']);

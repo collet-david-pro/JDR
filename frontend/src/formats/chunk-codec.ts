@@ -11,14 +11,20 @@
 import { CHUNK_SIZE, type TileLayerId } from '../editor/contracts';
 import { CompressionError, deflateRaw, inflateRaw, type CompressionOptions } from './compression';
 
+/** Number of cells in a chunk. */
 export const CHUNK_CELLS = CHUNK_SIZE * CHUNK_SIZE;
+/** Size of the chunk header, in bytes. */
 export const CHUNK_HEADER_BYTES = 8;
+/** Size of an uncompressed chunk, in bytes. */
 export const CHUNK_RAW_BYTES = CHUNK_HEADER_BYTES + CHUNK_CELLS * 4;
+/** Current chunk format version. */
 export const CHUNK_FORMAT_VERSION = 1;
 /** Uint16 values per cell in the in-memory layout. */
 export const CELL_STRIDE = 4;
 
+/** Tile layer identifiers, bottom to top. */
 export const TILE_LAYERS: readonly TileLayerId[] = ['ground', 'terrain', 'decor'];
+/** Numeric code of each tile layer in the chunk format. */
 export const TILE_LAYER_CODES: Readonly<Record<TileLayerId, number>> = {
   ground: 0,
   terrain: 1,
@@ -34,6 +40,7 @@ export type ChunkCodecErrorCode =
   | 'bad_palette_index'
   | 'bad_compression';
 
+/** Error raised when a chunk cannot be decoded or encoded. */
 export class ChunkCodecError extends Error {
   override readonly name = 'ChunkCodecError';
   constructor(

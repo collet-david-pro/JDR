@@ -23,8 +23,10 @@ export interface BootConfig {
   readonly maintenance: boolean;
 }
 
+/** Id of the DOM element that holds the boot configuration. */
 export const BOOT_ELEMENT_ID = 'jdr-boot';
 
+/** Boot configuration used in development. */
 export const DEV_BOOT_CONFIG: BootConfig = Object.freeze({
   version: 'dev',
   apiBase: '/api/v1',
@@ -34,6 +36,7 @@ export const DEV_BOOT_CONFIG: BootConfig = Object.freeze({
   maintenance: false,
 });
 
+/** Error raised when the boot configuration is missing or invalid. */
 export class BootConfigError extends Error {
   override readonly name = 'BootConfigError';
 }

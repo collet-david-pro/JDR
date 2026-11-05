@@ -38,6 +38,7 @@ export function meToSession(me: DisplayMe): Session {
   };
 }
 
+/** Creates the session API used by the display. */
 export function displaySessionApi(
   sessions: Pick<SessionsClient, 'snapshot'>,
   device: Pick<DeviceClient, 'me'>,

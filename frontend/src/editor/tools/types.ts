@@ -51,6 +51,7 @@ export interface ObjectSelection {
   readonly tokens: readonly string[];
 }
 
+/** Empty object selection. */
 export const EMPTY_OBJECT_SELECTION: ObjectSelection = Object.freeze({
   objects: Object.freeze([]),
   tokens: Object.freeze([]),
@@ -62,8 +63,11 @@ export type ToolAction = 'confirm' | 'delete';
 export type BrushShape = 'square' | 'round';
 export type ShapeKind = 'rect' | 'ellipse' | 'line';
 
+/** Smallest brush size. */
 export const BRUSH_MIN = 1;
+/** Largest brush size. */
 export const BRUSH_MAX = 16;
+/** Maximum number of cells a fill may change. */
 export const FILL_LIMIT = 50_000;
 
 /** Integer cell rectangle (defined in the contract). */
@@ -221,12 +225,15 @@ export const DEFAULT_OBJECT_SETTINGS = Object.freeze({
   secretNote: null as string | null,
 });
 
+/** Smallest fog brush size. */
 export const FOG_BRUSH_MIN = 0.5;
+/** Largest fog brush size. */
 export const FOG_BRUSH_MAX = 10;
 /** Pointer tolerance of the object tools, in screen pixels. */
 export const HIT_TOLERANCE_PX = 8;
 /** Two presses within this delay and distance make a double click. */
 export const DOUBLE_CLICK_MS = 400;
+/** Maximum pointer distance, in pixels, for two clicks to count as a double click. */
 export const DOUBLE_CLICK_PX = 6;
 
 export interface ToolContext {

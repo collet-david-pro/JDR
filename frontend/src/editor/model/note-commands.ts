@@ -7,6 +7,7 @@ import type { FloorMeta } from './FloorSlot';
 import type { MapNote, NoteObject, NoteValues } from '../contracts-notes';
 import { noteValues } from './NotesState';
 
+/** Builds the command that adds a note. */
 export function noteAddCommand(note: NoteValues & { readonly uid: string }): Command {
   return {
     label: 'editor.command.note_add',

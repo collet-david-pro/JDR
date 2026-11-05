@@ -5,10 +5,12 @@ import { round3 } from '../model/scene-values';
 import { uid } from './object-common';
 import type { ToolContext } from './types';
 
+/** Wraps points as a polygon payload. */
 export function polygonOf(points: readonly Point[]): { polygon: { x: number; y: number }[] } {
   return { polygon: points.map((p) => ({ x: round3(p[0]), y: round3(p[1]) })) };
 }
 
+/** Converts a point to a plain {x, y} object. */
 export function pointOf(p: Point): { x: number; y: number } {
   return { x: round3(p[0]), y: round3(p[1]) };
 }

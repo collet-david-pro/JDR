@@ -10,6 +10,7 @@ import { MapFileError, readMapFile, type MapFilePreview } from '../../formats/ma
 
 export type ImportStep = 'choose' | 'reading' | 'preview' | 'invalid' | 'uploading' | 'done';
 
+/** Reactive model of the map import dialog. */
 export class MapImportModel {
   step = $state<ImportStep>('choose');
   preview = $state.raw<MapFilePreview | null>(null);

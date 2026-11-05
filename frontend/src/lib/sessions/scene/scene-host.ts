@@ -24,6 +24,7 @@ export interface SceneHostOptions {
   readonly onError?: (error: unknown) => void;
 }
 
+/** Hosts the scene engine of a session page. */
 export class SceneHost {
   private current: SessionScene | null = null;
   private fog: SessionSnapshot['fog'] | null = null;

@@ -35,6 +35,7 @@ function gameOrNull(data: unknown): Game | null {
   return typeof data === 'object' && data !== null && 'id' in data ? (data as Game) : null;
 }
 
+/** Client for the game endpoints. */
 export class GamesClient {
   constructor(private readonly api: ApiClient) {}
 

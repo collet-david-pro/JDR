@@ -13,6 +13,7 @@ import { parseDecimal, roundTo } from './units';
 export const GRID_MIN_RADIUS = 3;
 /** Largest half-size displayed (the numeric inputs allow more). */
 export const GRID_MAX_RADIUS = 10;
+/** Maximum absolute value of a token offset inside a cell. */
 export const OFFSET_LIMIT = 9999.999;
 
 export interface Cell {
@@ -47,6 +48,7 @@ export function tokensAt(placements: readonly EncounterToken[], cell: Cell): str
     .map((p) => p.token_id);
 }
 
+/** True when the token is already placed. */
 export function isPlaced(placements: readonly EncounterToken[], tokenId: string): boolean {
   return placements.some((p) => p.token_id === tokenId);
 }
@@ -64,6 +66,7 @@ export function placeToken(
   return placements.map((p, i) => (i === index ? entry : p));
 }
 
+/** Removes a token from the placements. */
 export function removeToken(
   placements: readonly EncounterToken[],
   tokenId: string,
@@ -96,6 +99,7 @@ export function firstFreeCell(placements: readonly EncounterToken[]): Cell {
   return { dx: 0, dy: 0 };
 }
 
+/** Clamps an offset to the allowed range. */
 export function clampOffset(value: number): number {
   return roundTo(Math.max(-OFFSET_LIMIT, Math.min(OFFSET_LIMIT, value)), 3);
 }
@@ -139,12 +143,16 @@ export function prunePlacements(
   return placements.filter((p) => tokenIds.has(p.token_id));
 }
 
+/** True when two cells are equal. */
 export function sameCell(a: Cell, b: Cell): boolean {
   return a.dx === b.dx && a.dy === b.dy;
 }
 
+/** Maximum length of an encounter name. */
 export const ENCOUNTER_NAME_MAX = 120;
+/** Maximum length of encounter notes. */
 export const ENCOUNTER_NOTES_MAX = 10000;
+/** Maximum number of tokens in an encounter. */
 export const ENCOUNTER_TOKENS_MAX = 100;
 
 export type EncounterValidation =

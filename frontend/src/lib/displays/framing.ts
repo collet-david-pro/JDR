@@ -78,6 +78,7 @@ export function fitZoom(map: FrameMap, viewport: ScreenSize): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(viewport.width / w, viewport.height / h)));
 }
 
+/** Computes the frame that fits the scene on the display from its calibration. */
 export function frame(input: FrameInput): Frame {
   const { settings, map } = input;
   const lock = settings.view_lock;

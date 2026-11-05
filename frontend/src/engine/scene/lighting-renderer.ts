@@ -128,6 +128,7 @@ function destroyMesh(mesh: Mesh): void {
   geometry.destroy();
 }
 
+/** Renders lights and darkness. */
 export class LightingRenderer {
   readonly shadowSprite = new Sprite();
   readonly lightSprite = new Sprite();

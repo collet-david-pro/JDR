@@ -4,8 +4,11 @@
  */
 export type Corner = 'tl' | 'tr' | 'bl' | 'br';
 
+/** Size of each screen corner that reacts to a long press, in pixels. */
 export const CORNER_ZONE_PX = 80;
+/** Hold duration to trigger the corner action, in milliseconds. */
 export const CORNER_HOLD_MS = 2000;
+/** Finger movement tolerated during a corner press, in pixels. */
 export const CORNER_MOVE_TOLERANCE_PX = 10;
 
 export interface Area {

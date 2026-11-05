@@ -17,6 +17,7 @@ import { SweepScratch, visibilityPolygon } from './visibility';
 const BORDER_INSET = 1e-3;
 const CACHE_LIMIT = 4096;
 
+/** True when the object blocks vision. */
 export function isOccluderObject(o: MapObject): boolean {
   return (
     o.type === 'wall' ||
@@ -38,6 +39,7 @@ function sameFrame(a: VisionScene, b: VisionScene): boolean {
   );
 }
 
+/** Implementation of the vision core: occluders, visibility and fog computation. */
 export class VisionCoreImpl implements VisionCore {
   private scene: VisionScene | null = null;
   private occluders: readonly MapObject[] = [];
@@ -212,6 +214,7 @@ function crossParam(
   return t;
 }
 
+/** Creates a vision core. */
 export function createCore(): VisionCoreImpl {
   return new VisionCoreImpl();
 }

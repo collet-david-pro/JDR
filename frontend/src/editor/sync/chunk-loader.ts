@@ -105,6 +105,7 @@ function nearestFirst(rest: ChunkKey[], around: readonly ChunkKey[]): ChunkKey[]
   return [...rest].sort((a, b) => d(a) - d(b));
 }
 
+/** Loads all chunks of a map from the server, with progress and cancellation. */
 export async function loadMapChunks(options: ChunkLoadOptions): Promise<ChunkLoadResult> {
   const { doc, mapId, floor, revision } = options;
   let errors = 0;

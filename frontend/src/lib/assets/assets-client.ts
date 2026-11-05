@@ -93,6 +93,7 @@ function jobOf(data: { job: Job }): Job {
   return data.job;
 }
 
+/** Client for the asset endpoints (upload, list, jobs). */
 export class AssetsClient {
   private limitsCache: Promise<AssetLimits> | null = null;
 

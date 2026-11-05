@@ -9,9 +9,12 @@ import { command, lockedLayer, tolerance } from './object-common';
 import { createPolygonDraw } from './polygon-draw';
 import type { Tool, ToolContext, ToolResult } from './types';
 
+/** Minimum passage width. */
 export const PASSAGE_MIN = 0.1;
+/** Maximum passage width. */
 export const PASSAGE_MAX = 20;
 
+/** Creates the secret tool. */
 export function createSecretTool(ctx: ToolContext): Tool {
   const draw = createPolygonDraw(ctx);
   let from: Point | null = null;

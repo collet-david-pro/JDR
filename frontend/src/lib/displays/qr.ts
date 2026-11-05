@@ -15,6 +15,7 @@ export interface QrOptions {
   readonly ecc?: 'L' | 'M' | 'Q' | 'H';
 }
 
+/** Renders a QR code as an SVG string. */
 export function qrSvg(text: string, options: QrOptions = {}): string {
   const margin = Math.max(0, Math.floor(options.margin ?? 4));
   const { data, size } = encode(text, { ecc: options.ecc ?? 'M', border: 0 });

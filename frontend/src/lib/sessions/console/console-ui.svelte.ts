@@ -14,6 +14,7 @@ export const CONSOLE_PANELS = [
 ] as const;
 export type ConsolePanelId = (typeof CONSOLE_PANELS)[number];
 
+/** Reactive UI state of the console. */
 export class ConsoleUi {
   tab = $state<ConsolePanelId>('players');
   /** "End the session" confirmation (ConsoleHeader). */

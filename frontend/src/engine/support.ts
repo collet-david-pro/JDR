@@ -41,6 +41,7 @@ export async function hasWebGPU(nav: Navigator = navigator): Promise<boolean> {
   }
 }
 
+/** Detects WebGL/WebGPU support in the browser. */
 export async function detectGpuSupport(): Promise<GpuSupport> {
   return { webgpu: await hasWebGPU(), webgl2: hasWebGL2() };
 }

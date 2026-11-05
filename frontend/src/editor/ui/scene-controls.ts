@@ -34,6 +34,7 @@ export interface SceneControlsHost {
   notify(code: 'conflict'): void;
 }
 
+/** Reactive controller of the scene settings panel (ambient, weather, fog). */
 export class SceneControls {
   private engine: Engine | null = null;
   private engineOffs: (() => void)[] = [];

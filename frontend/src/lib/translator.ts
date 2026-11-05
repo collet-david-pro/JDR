@@ -69,6 +69,7 @@ function isPluralForms(value: Messages): boolean {
   );
 }
 
+/** Creates a translation function with parameter interpolation and fallbacks. */
 export function createTranslator(options: TranslatorOptions): Translate {
   const { locale, messages, onMissing } = options;
   const pluralRules = new Intl.PluralRules(locale);

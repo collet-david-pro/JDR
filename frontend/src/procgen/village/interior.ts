@@ -95,6 +95,7 @@ function targetRooms(type: BuildingType, rng: Rng): number {
 
 const SIDES: readonly Side[] = ['N', 'E', 'S', 'W'];
 
+/** Plans the interior of a building. */
 export function planBuilding(
   b: Building,
   interiors: boolean,

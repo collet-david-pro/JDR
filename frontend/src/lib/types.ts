@@ -356,6 +356,7 @@ export interface Member {
   readonly joined_at: string;
 }
 
+/** Token kinds. */
 export const TOKEN_KINDS = ['pc', 'npc', 'monster', 'object'] as const;
 export type TokenKind = (typeof TOKEN_KINDS)[number];
 

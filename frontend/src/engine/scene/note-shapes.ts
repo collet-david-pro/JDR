@@ -9,11 +9,15 @@ import { dashSegments } from '../overlay-geometry';
 import type { Graphics } from '../pixi';
 import { parseColor } from './object-geometry';
 
+/** Fill color of zones. */
 export const ZONE_COLOR = 0x3f9bd8;
+/** Fill color of traps. */
 export const TRAP_COLOR = 0xe0762c;
+/** Color of secrets. */
 export const SECRET_COLOR = SECRET_DOOR_OUTLINE;
 /** Radius of a pin disc / point trap marker (cells). */
 export const PIN_RADIUS = 0.3;
+/** Radius of the trap mark, in cells. */
 export const TRAP_MARK_RADIUS = 0.28;
 
 type Poly = readonly (readonly [number, number])[];
@@ -49,6 +53,7 @@ function dashedRing(
 const toPoly = (g: { readonly polygon: readonly { x: number; y: number }[] }): Poly =>
   g.polygon.map((q) => [q.x, q.y] as const);
 
+/** Draws a pin. */
 export function drawPin(g: Graphics, o: PinObject, cellPx: number, bucket: number): void {
   const k = cellPx;
   const cx = o.geometry.x * k;
@@ -96,6 +101,7 @@ export function drawPin(g: Graphics, o: PinObject, cellPx: number, bucket: numbe
   });
 }
 
+/** Draws a zone. */
 export function drawZone(g: Graphics, o: ZoneObject, cellPx: number, bucket: number): void {
   const pts = toPoly(o.geometry);
   ring(g, pts, cellPx);
@@ -117,6 +123,7 @@ function drawPulse(g: Graphics, o: TrapObject, k: number): void {
   });
 }
 
+/** Draws a trap. */
 export function drawTrap(g: Graphics, o: TrapObject, cellPx: number, bucket: number): void {
   const k = cellPx;
   const geo = o.geometry;

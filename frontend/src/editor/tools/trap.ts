@@ -9,6 +9,7 @@ import { command, lockedLayer } from './object-common';
 import { createPolygonDraw } from './polygon-draw';
 import type { Tool, ToolContext, ToolResult } from './types';
 
+/** Creates the trap tool. */
 export function createTrapTool(ctx: ToolContext): Tool {
   const draw = createPolygonDraw(ctx);
 

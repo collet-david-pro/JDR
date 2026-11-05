@@ -33,8 +33,10 @@ export interface VillageTheme {
   rules: string;
 }
 
+/** Identifiers of the village themes. */
 export const VILLAGE_THEME_IDS: readonly VillageThemeId[] = ['rural', 'town'];
 
+/** Village themes. */
 export const VILLAGE_THEMES: Readonly<Record<VillageThemeId, VillageTheme>> = {
   rural: {
     label: 'Rural',

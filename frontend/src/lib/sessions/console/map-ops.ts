@@ -35,8 +35,11 @@ export function newPlacedToken(
   };
 }
 
+/** Builds the operation that adds a placed token. */
 export const addTokenOp = (token: PlacedToken): MapOp => ({ type: 'maptoken.add', token });
+/** Builds the operation that removes a placed token. */
 export const removeTokenOp = (uid: string): MapOp => ({ type: 'maptoken.remove', uid });
+/** Builds the operation that hides or shows a placed token. */
 export const hideTokenOp = (token: PlacedToken, hidden: boolean): MapOp => ({
   type: 'maptoken.update',
   uid: token.uid,

@@ -18,6 +18,7 @@ export interface PlayerExplorerOptions {
   readonly intervalMs?: number;
 }
 
+/** Computes and reports the cells explored by the player's tokens. */
 export class PlayerExplorer {
   private readonly explorer: FogExplorer;
 

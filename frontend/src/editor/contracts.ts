@@ -24,6 +24,7 @@
  */
 import type { NoteObject, NoteOp } from './contracts-notes';
 
+/** Edge length of a chunk in cells (matches the server chunk format). */
 export const CHUNK_SIZE = 32;
 
 /** Tile layers stored in chunks (12.2 header byte: 0 ground, 1 terrain, 2 decor). */

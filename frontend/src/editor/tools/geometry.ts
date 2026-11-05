@@ -14,10 +14,12 @@ export interface Projection {
   readonly distance: number;
 }
 
+/** Euclidean distance between two points. */
 export function dist(a: Point, b: Point): number {
   return Math.hypot(b[0] - a[0], b[1] - a[1]);
 }
 
+/** Projects a point on a segment and returns the projection. */
 export function project(p: Point, a: Point, b: Point): Projection {
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
@@ -37,6 +39,7 @@ export function wallSegments(wall: WallObject): [Point, Point][] {
   return out;
 }
 
+/** Clamps a point to a rectangle starting at the origin. */
 export function clampPoint(p: Point, width: number, height: number): Point {
   return [round3(Math.min(width, Math.max(0, p[0]))), round3(Math.min(height, Math.max(0, p[1])))];
 }
@@ -95,6 +98,7 @@ export function snapPoint(
   return { point: clampPoint(snapToGrid(p), bounds.width, bounds.height), kind: 'grid' };
 }
 
+/** True when two points are equal within a tolerance. */
 export function samePoint(a: Point, b: Point, eps = 1e-6): boolean {
   return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps;
 }

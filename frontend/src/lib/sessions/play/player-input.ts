@@ -34,6 +34,7 @@ interface Drag {
   last: Point;
 }
 
+/** Handles keyboard and pointer input of the player view. */
 export class PlayerInput {
   private drag: Drag | null = null;
 

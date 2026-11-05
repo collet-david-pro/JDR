@@ -9,6 +9,7 @@ import { command, DoubleClick, lockedLayer, newWall, tolerance } from './object-
 import { dedupePoints, dist, samePoint, snapPoint, type Snapped } from './geometry';
 import type { Tool, ToolContext, ToolResult } from './types';
 
+/** Creates the wall tool. */
 export function createWallTool(ctx: ToolContext): Tool {
   let points: Point[] = [];
   /** Room mode: corner where the drag started. */

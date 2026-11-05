@@ -18,6 +18,7 @@ export interface DungeonParams {
   floors: number;
 }
 
+/** Default dungeon parameters. */
 export const DUNGEON_DEFAULTS: Readonly<DungeonParams> = Object.freeze({
   width: 60,
   height: 60,
@@ -33,6 +34,7 @@ export const DUNGEON_DEFAULTS: Readonly<DungeonParams> = Object.freeze({
   floors: 1,
 });
 
+/** Dungeon presets. */
 export const DUNGEON_PRESETS: Readonly<Record<string, Partial<DungeonParams>>> = Object.freeze({
   small_crypt: { width: 30, height: 30, rooms: 6, theme: 'crypt' },
   large_dungeon: { width: 120, height: 120, rooms: 40, loops: 0.25 },

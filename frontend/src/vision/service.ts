@@ -52,6 +52,7 @@ export interface VisionServiceImpl extends VisionService {
   readonly mode: 'worker' | 'local';
 }
 
+/** Creates the vision service, which runs in a worker when available. */
 export function createVisionService(options: VisionServiceOptions = {}): VisionServiceImpl {
   let worker: VisionWorkerLike | null =
     options.worker === false ? null : (options.createWorker ?? defaultWorker)();

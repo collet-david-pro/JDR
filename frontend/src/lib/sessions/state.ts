@@ -37,6 +37,7 @@ export interface SessionState {
   readonly kicked: boolean;
 }
 
+/** Creates the initial session state from a snapshot. */
 export function createSessionState(snapshot: SessionSnapshot, me: string): SessionState {
   const full = snapshot.map;
   let map: MapHead | null = null;
@@ -91,6 +92,7 @@ export function ownTokens(state: SessionState): PlacedToken[] {
   );
 }
 
+/** Lists the realtime channels the session subscribes to. */
 export function sessionChannels(state: SessionState): string[] {
   const channels = [`session:${state.session.id}`];
   if (state.role === 'gm' && state.session.current_map_id !== null) {

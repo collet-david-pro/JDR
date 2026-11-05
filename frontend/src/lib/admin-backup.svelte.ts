@@ -37,6 +37,7 @@ export type RestorePhase = 'idle' | 'uploading' | 'restoring' | 'done' | 'failed
 
 const TERMINAL = new Set(['done', 'failed', 'cancelled']);
 
+/** Reactive model of the backup page (create, download, restore). */
 export class BackupModel implements UploadTransport {
   info = $state.raw<BackupInfo | null>(null);
   loadFailure = $state.raw<ErrorSummary | null>(null);

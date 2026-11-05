@@ -46,6 +46,7 @@ export function floodRegion(
   return queue.subarray(0, tail);
 }
 
+/** Creates the flood-fill tool. */
 export function createFillTool(ctx: ToolContext): Tool {
   return {
     id: 'fill',

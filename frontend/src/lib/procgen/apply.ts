@@ -37,6 +37,7 @@ export function isMapEmpty(doc: MapView & SceneView, floor: string): boolean {
   return !doc.objects().some((o) => o.floor === floor);
 }
 
+/** Applies a generation result to the map through editor commands. */
 export function applyGeneration(
   session: EditorSession,
   gen: ApplyInput,

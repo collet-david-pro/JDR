@@ -34,9 +34,11 @@ export type ApplyOutcome =
 export { missingPackKeys, paramsFromStored, presetParams, defaultParams } from './generate-params';
 export type { ParamValue, ParamValues } from './generate-params';
 
+/** Delay before the preview is regenerated after a change, in milliseconds. */
 export const PREVIEW_DELAY_MS = 300;
 /** Smallest side (cells) of a zone for the zone generators (error `zone_too_small`). */
 export const MIN_ZONE_SIDE = 8;
+/** Maximum length of a generation seed. */
 export const SEED_MAX_LENGTH = 64;
 
 export interface GeneratePanelDeps {
@@ -75,6 +77,7 @@ export interface GeneratePanelDeps {
   debounceMs?: number;
 }
 
+/** Reactive model of the generation panel. */
 export class GeneratePanelModel {
   generator = $state<GeneratorId>('dungeon');
   genVersion = $state(GENERATOR_INFO.dungeon.version);

@@ -27,6 +27,7 @@ export type MapOpErrorCode =
   | 'floor_unloaded'
   | 'bad_note';
 
+/** Error thrown when an operation cannot be applied to the document. */
 export class MapOpError extends Error {
   override readonly name = 'MapOpError';
   constructor(
@@ -37,6 +38,7 @@ export class MapOpError extends Error {
   }
 }
 
+/** Immutable empty cell value (index 0, variant 0, no flags). */
 export const EMPTY_CELL: CellValue = Object.freeze({ index: 0, variant: 0, flags: 0 });
 
 /** Default layer stack of a new map (projet.md 12.1). */
@@ -51,23 +53,28 @@ export const DEFAULT_LAYERS: readonly LayerDef[] = Object.freeze([
   { id: 'gm', kind: 'objects', visible: true, locked: false, opacity: 1, gmOnly: true },
 ] satisfies LayerDef[]);
 
+/** Builds the string key of a chunk from its chunk coordinates. */
 export function chunkKey(cx: number, cy: number): ChunkKey {
   return `${cx}:${cy}`;
 }
 
+/** Parses a chunk key back to chunk coordinates. */
 export function parseChunkKey(key: string): { cx: number; cy: number } | null {
   const m = /^(\d{1,5}):(\d{1,5})$/.exec(key);
   return m === null ? null : { cx: Number(m[1]), cy: Number(m[2]) };
 }
 
+/** Returns the key of the chunk that contains the given cell. */
 export function chunkKeyOfCell(x: number, y: number): ChunkKey {
   return chunkKey(Math.floor(x / CHUNK_SIZE), Math.floor(y / CHUNK_SIZE));
 }
 
+/** True when both cell values are identical. */
 export function sameCell(a: CellValue, b: CellValue): boolean {
   return a.index === b.index && a.variant === b.variant && a.flags === b.flags;
 }
 
+/** Builds a tile cell from coordinates and a cell value. */
 export function tileCell(x: number, y: number, v: CellValue): TileCell {
   return [x, y, v.index, v.variant, v.flags];
 }

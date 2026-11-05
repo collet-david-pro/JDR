@@ -5,7 +5,9 @@
 
 import { locale } from './i18n';
 
+/** Bytes in a mebibyte. */
 export const MIB = 1024 * 1024;
+/** Bytes in a gibibyte. */
 export const GIB = 1024 * MIB;
 
 const cache = new Map<string, Intl.NumberFormat>();

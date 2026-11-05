@@ -59,6 +59,7 @@ export interface UpdateSummary {
   readonly uploaded_at: string;
 }
 
+/** Update run states from which an update can be resumed. */
 export const RESUMABLE_STATES = [
   'running',
   'rolling_back',
@@ -132,10 +133,12 @@ export interface UpdateInfo {
   readonly update_url: string;
 }
 
+/** URL of the public releases page. */
 export const RELEASES_URL = 'https://github.com/collet-david-pro/JDR/releases';
 
 export type UpdateApiClient = Pick<ApiClient, 'get' | 'post' | 'put' | 'patch' | 'delete'>;
 
+/** True when the update run can be resumed. */
 export function isResumable(run: UpdateRun | null): run is UpdateRun {
   return run !== null && (RESUMABLE_STATES as readonly string[]).includes(run.state);
 }
@@ -176,6 +179,7 @@ export function compareVersions(a: string, b: string): number | null {
   return 0;
 }
 
+/** True when the checked release is newer than the installed version. */
 export function isNewerRelease(check: UpdateCheck | null): boolean {
   if (check === null || check.latest === null) return false;
   return (compareVersions(check.latest.version, check.current) ?? 0) > 0;

@@ -4,6 +4,7 @@
  */
 import { InflateError, deflateRawSync, inflateRawSync } from './deflate';
 
+/** Error raised when compression or decompression fails. */
 export class CompressionError extends Error {
   override readonly name = 'CompressionError';
   constructor(

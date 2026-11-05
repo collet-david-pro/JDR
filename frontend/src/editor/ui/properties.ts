@@ -25,6 +25,7 @@ export interface SelectedScene {
   readonly type: MapObjectType | null;
 }
 
+/** Resolves the selected scene objects and tokens from a selection. */
 export function selectedScene(scene: SceneView, sel: ObjectSelection): SelectedScene {
   const objects = sel.objects
     .map((u) => scene.object(u))
@@ -54,10 +55,12 @@ export function wallPatch(o: MapObject, change: Partial<WallProps>): ObjectPatch
   return { props: { ...props, thickness: round3(clamp(props.thickness, 0.05, 2)) } };
 }
 
+/** Builds the object patch for a door property change. */
 export function doorPatch(o: MapObject, change: Partial<DoorProps>): ObjectPatch | null {
   return o.type === 'door' ? { props: { ...o.props, ...change } } : null;
 }
 
+/** Builds the object patch for a window property change. */
 export function windowPatch(o: MapObject, change: Partial<WindowProps>): ObjectPatch | null {
   return o.type === 'window' ? { props: { ...o.props, ...change } } : null;
 }
@@ -96,6 +99,7 @@ export function lightPatch(o: MapObject, change: Partial<LightProps>): ObjectPat
   };
 }
 
+/** Default light attached to a token. */
 export const DEFAULT_TOKEN_LIGHT: TokenLightDef = Object.freeze({
   radius: 4,
   dim_radius: 8,
@@ -104,6 +108,7 @@ export const DEFAULT_TOKEN_LIGHT: TokenLightDef = Object.freeze({
   flicker: false,
 });
 
+/** Normalizes a token patch. */
 export function tokenPatch(change: PlacedTokenPatch): PlacedTokenPatch {
   const out: { -readonly [K in keyof PlacedTokenPatch]: PlacedTokenPatch[K] } = { ...change };
   if (change.scale !== undefined) out.scale = Math.round(clamp(change.scale, 0.25, 4) * 100) / 100;

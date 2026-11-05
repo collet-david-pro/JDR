@@ -13,6 +13,7 @@ import { failureFromError, type UploadFailure } from './upload-errors';
 export type UploadStatus =
   'pending' | 'preparing' | 'reducing' | 'uploading' | 'waiting' | 'done' | 'error' | 'cancelled';
 
+/** Upload statuses in display order. */
 export const UPLOAD_STATUSES: readonly UploadStatus[] = [
   'pending',
   'preparing',
@@ -68,6 +69,7 @@ export interface UploadQueueDeps {
   readonly rateLimitRetries?: number;
 }
 
+/** Default number of simultaneous uploads. */
 export const DEFAULT_CONCURRENCY = 2;
 const MAX_RETRY_AFTER_S = 60;
 const DEFAULT_RETRY_AFTER_S = 5;
@@ -115,6 +117,7 @@ interface Entry {
   controller: AbortController | null;
 }
 
+/** Upload queue with concurrency, retries and progress. */
 export class UploadQueue {
   items = $state.raw<readonly UploadItem[]>([]);
 

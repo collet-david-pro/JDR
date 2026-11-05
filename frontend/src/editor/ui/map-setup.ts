@@ -2,8 +2,11 @@
 import type { GridSpec } from '../contracts';
 import { MAX_MAP_CELLS_PER_SIDE } from '../model/MapDocument';
 
+/** Default size of a new map, in cells. */
 export const DEFAULT_MAP_SIZE = { width: 60, height: 40 } as const;
+/** Smallest map side, in cells. */
 export const MIN_MAP_SIZE = 1;
+/** Largest map side, in cells. */
 export const MAX_MAP_SIZE = MAX_MAP_CELLS_PER_SIDE;
 
 /** Game settings used by the editor (lib/types.ts GameSettings). */
@@ -25,6 +28,7 @@ export function parseMapSide(value: string | number): number | null {
   return n;
 }
 
+/** Builds the grid specification from the grid settings and the map size. */
 export function gridFromSettings(settings: GridSettings, size: MapSize): GridSpec {
   const cellPx = Number.isFinite(settings.default_cell_px)
     ? Math.min(512, Math.max(16, Math.round(settings.default_cell_px)))

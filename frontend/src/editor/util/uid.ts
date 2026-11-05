@@ -1,6 +1,7 @@
 /** Identifiers of new objects and placed tokens (nanoid-like: 21 chars of [A-Za-z0-9_-]). */
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
 
+/** Generates a random object identifier of the given length. */
 export function newObjectUid(size = 21): string {
   const bytes = new Uint8Array(size);
   globalThis.crypto.getRandomValues(bytes);

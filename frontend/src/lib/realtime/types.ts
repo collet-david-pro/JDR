@@ -66,14 +66,23 @@ export interface TransportSignal {
 
 /** Constants of the automatic selection (projet.md 10.3). */
 export const SSE_SILENCE_MS = 5000;
+/** An SSE connection that ends sooner than this is a short cut, in milliseconds. */
 export const SSE_SHORT_CUT_MS = 3000;
+/** Window in which short SSE cuts are counted, in milliseconds. */
 export const SSE_CUT_WINDOW_MS = 60_000;
+/** Number of short SSE cuts after which the client falls back. */
 export const SSE_MAX_SHORT_CUTS = 3;
+/** Long polling wait, in seconds. */
 export const LONGPOLL_WAIT_S = 20;
+/** Number of long polling cuts after which the client falls back. */
 export const LONGPOLL_MAX_CUTS = 3;
+/** Delay before retrying the best transport mode, in milliseconds. */
 export const BEST_MODE_RETRY_MS = 5 * 60_000;
+/** Minimum reconnection delay, in milliseconds. */
 export const BACKOFF_MIN_MS = 500;
+/** Maximum reconnection delay, in milliseconds. */
 export const BACKOFF_MAX_MS = 15_000;
+/** Random jitter ratio applied to reconnection delays. */
 export const BACKOFF_JITTER = 0.3;
 /** The server accepts at most 4 channels per request. */
 export const MAX_CHANNELS = 4;

@@ -44,6 +44,7 @@ export interface ZoneSuggestion {
   readonly at: number;
 }
 
+/** Run loop of a session page: loads the snapshot, follows events and sends actions. */
 export class SessionRun {
   phase = $state<RunPhase>('loading');
   error = $state.raw<unknown>(null);

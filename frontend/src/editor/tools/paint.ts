@@ -22,6 +22,7 @@ interface Stroke {
 
 let strokeSeq = 0;
 
+/** Creates the brush or eraser tool for tile painting. */
 export function createPaintTool(ctx: ToolContext, mode: 'brush' | 'eraser'): Tool {
   let stroke: Stroke | null = null;
   const erase = mode === 'eraser';

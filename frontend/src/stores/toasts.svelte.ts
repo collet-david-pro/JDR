@@ -54,4 +54,5 @@ export class ToastStore {
   }
 }
 
+/** Store of toast notifications. */
 export const toasts = new ToastStore();

@@ -20,6 +20,7 @@ interface FogChunk {
   readonly pixels: Uint8Array;
 }
 
+/** Renders the fog of war. */
 export class FogRenderer {
   /** World space (unit: pixel at zoom 1). */
   readonly root = new Container();

@@ -22,6 +22,7 @@ export interface TileImages {
 
 export type ImageLoader = (url: string, signal: AbortSignal) => Promise<ImageBitmap>;
 
+/** Default image loader (fetch). */
 export const fetchImage: ImageLoader = async (url, signal) => {
   const response = await fetch(url, { credentials: 'same-origin', signal });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -31,6 +32,7 @@ export const fetchImage: ImageLoader = async (url, signal) => {
 /** Fallback bitmaps (2×2) need ImageData + createImageBitmap, available in workers. */
 export type FallbackFactory = (pixels: Uint8ClampedArray) => Promise<CanvasImageSource>;
 
+/** Fallback factory that builds a bitmap from raw pixels. */
 export const bitmapFallback: FallbackFactory = (pixels) =>
   createImageBitmap(new ImageData(new Uint8ClampedArray(pixels), 2, 2));
 
@@ -116,6 +118,7 @@ export interface TokenImages {
   close(): void;
 }
 
+/** Empty token images set. */
 export const NO_TOKEN_IMAGES: TokenImages = {
   get: () => null,
   failed: [],

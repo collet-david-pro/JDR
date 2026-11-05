@@ -11,6 +11,7 @@ import { t as defaultT, type Translate } from '../i18n';
 import type { MapFileErrorCode } from '../../formats/map-document-file';
 import type { MapDocumentIssue, MapDocumentIssueCode } from '../../formats/map-document';
 
+/** User-facing text of a map import error. */
 export function importErrorText(
   code: MapFileErrorCode,
   version: number | null = null,
@@ -41,6 +42,7 @@ export function importErrorText(
   }
 }
 
+/** User-facing text of a map document issue. */
 export function issueText(issue: MapDocumentIssue, t: Translate = defaultT): string {
   const path = issue.path === '' ? '/' : issue.path;
   switch (issue.code) {

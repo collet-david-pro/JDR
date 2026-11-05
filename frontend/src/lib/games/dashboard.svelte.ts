@@ -17,6 +17,7 @@ export function splitByRole(games: readonly Game[]): { gm: Game[]; player: Game[
   return { gm: gm.sort(byName), player: player.sort(byName) };
 }
 
+/** Reactive model of the games list on the dashboard. */
 export class DashboardGames {
   gm = $state.raw<readonly Game[]>([]);
   player = $state.raw<readonly Game[]>([]);

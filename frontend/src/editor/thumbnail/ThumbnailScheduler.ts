@@ -6,6 +6,7 @@
  */
 
 export const THUMBNAIL_INTERVAL_MS = 60_000;
+/** Edge length of the generated thumbnail, in pixels. */
 export const THUMBNAIL_PX = 512;
 /** Second attempt after a refusal of the image (413 too large, 415 type, 422 unreadable). */
 export const THUMBNAIL_FALLBACK_PX = 256;
@@ -50,6 +51,7 @@ export interface ThumbnailSchedulerOptions {
   readonly onError?: (error: unknown) => void;
 }
 
+/** Schedules thumbnail regeneration after edits, debounced. */
 export class ThumbnailScheduler {
   private readonly interval: number;
   private readonly clock: SchedulerClock;

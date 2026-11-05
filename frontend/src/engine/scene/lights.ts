@@ -37,6 +37,7 @@ export interface LightSource {
   readonly seed: number;
 }
 
+/** Prefix of light source identifiers that come from tokens. */
 export const TOKEN_LIGHT_PREFIX = 'token:';
 
 function tokenLight(token: PlacedToken, def: TokenDefView | null): TokenLightDef | null {
@@ -89,6 +90,7 @@ export function collectLights(
   return out;
 }
 
+/** True when the light flickers. */
 export function isFlickering(light: LightSource): boolean {
   return light.flicker.type !== 'none' && light.flicker.amp > 0;
 }
@@ -121,6 +123,7 @@ export interface WorldRect {
   readonly y1: number;
 }
 
+/** True when a circle intersects a world rectangle. */
 export function circleIntersectsRect(x: number, y: number, r: number, rect: WorldRect): boolean {
   const cx = Math.min(Math.max(x, rect.x0), rect.x1);
   const cy = Math.min(Math.max(y, rect.y0), rect.y1);

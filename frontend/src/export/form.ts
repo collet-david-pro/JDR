@@ -56,6 +56,7 @@ export interface ExportForm {
   cropMarks: boolean;
 }
 
+/** Software name written in the exported file metadata. */
 export const SOFTWARE = 'JDR';
 
 /** Decimal input ("12,5" accepted); NaN when empty or invalid. */
@@ -65,6 +66,7 @@ export function parseNumber(value: string): number {
   return Number(v);
 }
 
+/** Builds the default export form for a source. */
 export function defaultForm(source: ExportSource): ExportForm {
   const visible = new Set(defaultLayers(source.view));
   const layers = Object.fromEntries(TILE_LAYERS.map((id) => [id, visible.has(id)])) as Record<
@@ -124,6 +126,7 @@ export interface FormEvaluation {
   readonly options: ExportOptions | null;
 }
 
+/** Validates the export form and computes its derived values. */
 export function evaluateForm(form: ExportForm, source: ExportSource): FormEvaluation {
   const view = source.view;
   const errors: FormError[] = [];

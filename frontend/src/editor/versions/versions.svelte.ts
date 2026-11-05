@@ -14,6 +14,7 @@ import type { MapsClient } from '../../lib/maps/maps-client';
 import type { MapRestoreResult, MapVersion } from '../../lib/types';
 import { newClientOpId } from '../sync/OpsQueue';
 
+/** Maximum length of a version label. */
 export const VERSION_LABEL_MAX = 120;
 
 export type VersionsStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -47,6 +48,7 @@ export function normalizeVersionLabel(label: string | null | undefined): string 
   return [...text].slice(0, VERSION_LABEL_MAX).join('');
 }
 
+/** Reactive model of the versions panel (list, create, restore). */
 export class VersionsModel {
   status = $state<VersionsStatus>('idle');
   error = $state.raw<unknown>(null);

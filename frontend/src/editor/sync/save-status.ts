@@ -6,6 +6,7 @@
 import { t as defaultT, type Translate } from '../../lib/i18n';
 import type { SaveStatus } from './OpsQueue';
 
+/** Turns a save error code into a user-facing message. */
 export function saveErrorText(code: string | null, t: Translate = defaultT): string {
   switch (code) {
     case 'revision_conflict':
@@ -25,6 +26,7 @@ export function saveErrorText(code: string | null, t: Translate = defaultT): str
   }
 }
 
+/** Turns the save status into a user-facing message. */
 export function saveStatusText(status: SaveStatus, t: Translate = defaultT): string {
   switch (status.state) {
     case 'saved':

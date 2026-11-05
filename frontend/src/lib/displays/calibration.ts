@@ -6,9 +6,11 @@
  */
 import { DEFAULT_MM_PER_CELL, type DisplaySettings } from './types';
 
+/** Millimetres per inch. */
 export const MM_PER_INCH = 25.4;
 /** Zoom bounds of the engine camera (px of screen per `cellPx`). */
 export const MIN_ZOOM = 0.05;
+/** Maximum calibration zoom. */
 export const MAX_ZOOM = 8;
 /** Length of the on-screen ruler in mm (a real ruler is held against it). */
 export const RULER_MM = 100;

@@ -19,6 +19,7 @@ import { chunkKey } from '../chunk-math';
 
 const EMPTY: CellValue = { index: 0, variant: 0, flags: 0 };
 
+/** Synthetic map used by dev and performance tests. */
 export class SyntheticMap implements MapView {
   grid: GridSpec;
   layers: LayerDef[] = [

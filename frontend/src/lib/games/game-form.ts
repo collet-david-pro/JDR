@@ -8,14 +8,22 @@ import type { FieldErrors } from '../validation';
 import type { Game, GamePatch, GameSettings } from '../types';
 import { numberToInput, parseDecimal, roundTo } from './units';
 
+/** Maximum length of a game name. */
 export const GAME_NAME_MAX = 120;
+/** Maximum length of a game description. */
 export const GAME_DESCRIPTION_MAX = 5000;
+/** Maximum length of the unit label. */
 export const UNIT_LABEL_MAX = 10;
+/** Minimum units per cell. */
 export const UNIT_PER_CELL_MIN = 0.01;
+/** Maximum units per cell. */
 export const UNIT_PER_CELL_MAX = 9999.99;
+/** Minimum cell size, in pixels. */
 export const CELL_PX_MIN = 16;
+/** Maximum cell size, in pixels. */
 export const CELL_PX_MAX = 512;
 
+/** Default settings of a new game. */
 export const DEFAULT_SETTINGS: GameSettings = {
   fog_strict: true,
   players_blocked_by_walls: true,
@@ -26,6 +34,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   default_cell_px: 70,
 };
 
+/** Boolean game settings, in display order. */
 export const SETTING_FLAGS = [
   'fog_strict',
   'players_blocked_by_walls',
@@ -36,12 +45,14 @@ export type SettingFlag = (typeof SETTING_FLAGS)[number];
 
 const length = (value: string): number => [...value].length;
 
+/** Validates a game name and returns an error key, or an empty string. */
 export function checkGameName(value: string): string | null {
   const v = value.trim();
   if (v === '') return 'required';
   return length(v) > GAME_NAME_MAX ? 'too_long' : null;
 }
 
+/** Validates a game description and returns an error key, or an empty string. */
 export function checkDescription(value: string): string | null {
   return length(value.trim()) > GAME_DESCRIPTION_MAX ? 'too_long' : null;
 }
@@ -61,6 +72,7 @@ export interface GameDraft {
   default_cell_px: string;
 }
 
+/** Builds an editable draft from a game. */
 export function gameToDraft(game: Game): GameDraft {
   const s = { ...DEFAULT_SETTINGS, ...game.settings };
   return {
@@ -87,6 +99,7 @@ export type GameDraftValidation =
     }
   | { readonly ok: false; readonly errors: FieldErrors };
 
+/** Validates a game draft. */
 export function validateGameDraft(draft: GameDraft): GameDraftValidation {
   const errors: Record<string, string> = {};
   const nameCode = checkGameName(draft.name);

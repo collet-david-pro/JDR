@@ -3,7 +3,9 @@ import type { PopulateOpening } from '../populate';
 import { zoneOpenings, type GenZone } from '../zone';
 import type { DungeonParams } from './params';
 
+/** Minimum zone side, in cells. */
 export const ZONE_MIN = 8;
+/** Maximum zone side, in cells. */
 export const ZONE_MAX = 400;
 
 export interface ZoneSetup {

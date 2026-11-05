@@ -27,6 +27,7 @@ export interface PreloadHost {
   decode(blob: Blob, asset: PreloadAsset): Promise<void>;
 }
 
+/** Number of simultaneous preloads. */
 export const PRELOAD_CONCURRENCY = 4;
 
 const IDLE: PreloadProgress = {
@@ -39,6 +40,7 @@ const IDLE: PreloadProgress = {
   error: null,
 };
 
+/** Preloads the assets and chunks of the next floors or maps. */
 export class Preloader {
   private progress: PreloadProgress = IDLE;
   private abort: AbortController | null = null;

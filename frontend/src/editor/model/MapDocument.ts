@@ -43,6 +43,7 @@ import { SceneState, isSceneOp, type SceneOp } from './SceneState';
 import { DEFAULT_AMBIENT, ambientOf } from './scene-values';
 import { validateLayers } from './validate';
 
+/** Maximum map side length, in cells. */
 export const MAX_MAP_CELLS_PER_SIDE = 400;
 
 export interface AssetInfo {
@@ -84,6 +85,7 @@ export interface AppliedOps {
 type MetaOp = Extract<MapOp, { type: 'map.meta' }>;
 type AmbientPatch = NonNullable<MetaOp['ambient']>;
 
+/** Maximum number of floors per map. */
 export const MAX_FLOORS = 10;
 const FLOOR_UID = /^[A-Za-z0-9_-]{1,21}$/;
 
@@ -94,6 +96,7 @@ export interface FloorsEvent {
   readonly current: boolean;
 }
 
+/** In-memory map document: layers, chunks, floors and scene; applies and reverts operations. */
 export class MapDocument implements MapView, SceneView {
   readonly grid: GridSpec;
   /** Notes of the map (P9b2a), outside the floors. */

@@ -6,6 +6,7 @@ export interface Rng {
   int(n: number): number;
 }
 
+/** Creates a seeded pseudo-random number generator. */
 export function createRng(seed: number): Rng {
   let a = seed >>> 0;
   const next = (): number => {

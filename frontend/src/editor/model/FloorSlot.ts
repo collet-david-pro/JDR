@@ -31,6 +31,7 @@ export interface FloorMeta {
   readonly loaded: boolean;
 }
 
+/** One floor of a multi-floor map: its tile chunks, scene objects and metadata. */
 export class FloorSlot {
   readonly chunks = new Map<TileLayerId, Map<number, ChunkRecord>>();
   loaded: boolean;

@@ -18,8 +18,10 @@ export interface CaveTheme {
   lava: PackKey | null;
 }
 
+/** Identifiers of the cave themes. */
 export const CAVE_THEME_IDS: readonly CaveThemeId[] = ['rock', 'ice', 'lava'];
 
+/** Cave themes. */
 export const CAVE_THEMES: Readonly<Record<CaveThemeId, CaveTheme>> = {
   rock: {
     label: 'Roche',

@@ -181,6 +181,7 @@ function fitsPlace(floor: BitGrid, x: number, y: number, place: RuleItem['place'
   return true;
 }
 
+/** Places props, lights and doors on a generated map according to rules. */
 export function populate(input: PopulateInput): PopulateResult {
   const { floor, regions, doors, ruleSet, rng, blocking } = input;
   const { w, h } = floor;

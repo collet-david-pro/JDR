@@ -48,6 +48,7 @@ export interface PlanContext {
   readonly followed: ReadonlySet<string>;
 }
 
+/** True when the object blocks light and sight. */
 export function isOccluder(obj: MapObject | undefined): boolean {
   return (
     obj !== undefined &&
@@ -64,6 +65,7 @@ function hasLight(t: PlacedToken | undefined, def: (id: string) => TokenDefView 
   return light !== null && light.dim_radius > 0;
 }
 
+/** Computes which parts of the scene must be updated after a change event. */
 export function planSceneChange(event: SceneChangedEvent, ctx: PlanContext): ScenePlan {
   const redrawObjects: string[] = [];
   const removeObjects: string[] = [];

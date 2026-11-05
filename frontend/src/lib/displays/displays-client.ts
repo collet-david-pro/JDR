@@ -9,6 +9,7 @@ import type { DisplayInfo, DisplayList, DisplayPatch } from './types';
 
 const seg = (id: string): string => encodeURIComponent(id);
 
+/** Client for the display management endpoints (game master side). */
 export class DisplaysClient {
   constructor(private readonly api: ApiClient) {}
 

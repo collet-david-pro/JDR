@@ -7,6 +7,7 @@
 import type { PlacedToken, Polygon, TokenDefView, VisibleScene } from '../../editor/contracts';
 import type { VisionSource } from '../../vision';
 
+/** Prefix of identifiers of dark light sources. */
 export const DARK_SOURCE_PREFIX = 'dark:';
 
 export interface ViewerInfo {
@@ -18,6 +19,7 @@ export interface ViewerInfo {
   readonly dark: number;
 }
 
+/** Set of viewers whose vision is computed. */
 export class ViewerSet {
   private infos: readonly ViewerInfo[] = [];
   private polygons: ReadonlyMap<string, Polygon> = new Map();

@@ -37,6 +37,7 @@ export interface ChangeMapBody {
   readonly move_tokens?: readonly string[];
 }
 
+/** Client for the session endpoints. */
 export class SessionsClient {
   constructor(private readonly api: ApiClient) {}
 

@@ -29,6 +29,7 @@ export {
 } from './params';
 export { cutWalls } from './cutwalls';
 
+/** Version of the village generator algorithm. */
 export const VILLAGE_VERSION = 1;
 const PHASES = 9;
 
@@ -187,6 +188,7 @@ function generate(p: VillageParams, ctx: GenContext): GenResult {
   };
 }
 
+/** Village generator. */
 export const villageGenerator: Generator<VillageParams> = {
   id: 'village',
   version: VILLAGE_VERSION,

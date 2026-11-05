@@ -49,6 +49,7 @@ export function loginPath(location: AppLocation): string {
   return next === '/' ? '/login' : `/login?next=${encodeURIComponent(next)}`;
 }
 
+/** Decides whether the current user may access a route, or where to redirect. */
 export function decideAccess(
   access: RouteAccess | undefined,
   auth: AuthSnapshot,

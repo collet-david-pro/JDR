@@ -18,7 +18,9 @@ import {
 
 /** Largest JSON document read in the browser (bigger files are refused before upload). */
 export const MAP_JSON_MAX_BYTES = 64 * 1024 * 1024;
+/** Name of the map entry in a map ZIP archive. */
 export const ZIP_MAP_ENTRY = 'map.json';
+/** Directory of assets in a map ZIP archive. */
 export const ZIP_ASSETS_DIR = 'assets/';
 
 export type MapFileErrorCode =
@@ -33,6 +35,7 @@ export type MapFileErrorCode =
   | 'missing_migration'
   | 'invalid';
 
+/** Error raised when a map file cannot be read or written. */
 export class MapFileError extends Error {
   override readonly name = 'MapFileError';
   constructor(

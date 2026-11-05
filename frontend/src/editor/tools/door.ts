@@ -119,6 +119,7 @@ export function openingOps(ctx: ToolContext, hit: WallHit, a: Point, b: Point): 
   return ops;
 }
 
+/** Creates the door tool. */
 export function createDoorTool(ctx: ToolContext): Tool {
   const placement = (x: number, y: number, free: boolean) => {
     const p: Point = [x, y];

@@ -10,6 +10,7 @@ import type { Job } from './types';
 
 export type BackupKind = 'db' | 'assets';
 
+/** Backup kinds. */
 export const BACKUP_KINDS: readonly BackupKind[] = ['db', 'assets'];
 
 /** Word to type before a restore (second check, with the "I understand" box). */
@@ -59,6 +60,7 @@ export function isConfirmed(understood: boolean, word: string): boolean {
   return understood && word.trim() === CONFIRM_WORD;
 }
 
+/** True when a restore can be started in the given state. */
 export function canStartRestore(state: {
   readonly file: Blob | null;
   readonly understood: boolean;
@@ -73,10 +75,12 @@ export function canStartRestore(state: {
   );
 }
 
+/** Maximum upload size allowed for a backup kind. */
 export function maxBytes(kind: BackupKind, limits: BackupLimits): number {
   return kind === 'db' ? limits.db_max_bytes : limits.assets_max_bytes;
 }
 
+/** Percentage done, clamped to 0-100. */
 export function percentOf(done: number, total: number): number {
   if (total <= 0) return 0;
   return Math.max(0, Math.min(100, Math.floor((done / total) * 100)));
@@ -122,6 +126,7 @@ export function codeError(code: string | null, t: Translate): ErrorSummary {
   return { message: message === key ? t('errors.unknown') : message, requestId: null };
 }
 
+/** Extracts the assets restore result from a finished job. */
 export function assetsResult(job: Job): AssetsRestoreResult {
   const r = (typeof job.result === 'object' && job.result !== null ? job.result : {}) as Record<
     string,

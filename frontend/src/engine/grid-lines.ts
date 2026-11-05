@@ -38,6 +38,7 @@ export function mapScreenRect(camera: CameraState, viewport: Viewport, grid: Gri
   return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y };
 }
 
+/** Intersection of two screen rectangles. */
 export function intersectRect(a: ScreenRect, b: ScreenRect): ScreenRect | null {
   const x0 = Math.max(a.x, b.x);
   const y0 = Math.max(a.y, b.y);

@@ -47,6 +47,7 @@ function absoluteUrl(url: string): string {
   }
 }
 
+/** Builds and caches the textures of the map palette. */
 export class PaletteTextures {
   private entries: EntryState[] = [];
   private readonly missing: Texture = createMissingTexture();

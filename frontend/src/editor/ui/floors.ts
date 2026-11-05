@@ -29,6 +29,7 @@ export interface FloorsHost {
 /** Fetches the tiles and fog of a floor (MapSync); absent for a map not saved on the server. */
 export type FloorLoader = (floor: FloorMeta) => Promise<void>;
 
+/** Controller for floor management in the editor UI. */
 export class FloorsController {
   private engine: Engine | null = null;
   private loader: FloorLoader | null = null;

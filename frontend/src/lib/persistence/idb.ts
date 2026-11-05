@@ -10,7 +10,9 @@
  */
 
 export const DB_NAME = 'jdr';
+/** IndexedDB schema version. */
 export const DB_VERSION = 1;
+/** Names of the IndexedDB object stores. */
 export const STORES = {
   pendingOps: 'pendingOps',
   chunkCache: 'chunkCache',

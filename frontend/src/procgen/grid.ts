@@ -1,12 +1,14 @@
 /** Grids, neighbourhoods, connected components and BFS (pure, deterministic). */
 
 export type Conn = 4 | 8;
+/** Offsets of the 4 orthogonal neighbours. */
 export const N4: readonly (readonly [number, number])[] = [
   [0, -1],
   [1, 0],
   [0, 1],
   [-1, 0],
 ];
+/** Offsets of the 8 neighbours. */
 export const N8: readonly (readonly [number, number])[] = [
   [0, -1],
   [1, -1],
@@ -17,6 +19,7 @@ export const N8: readonly (readonly [number, number])[] = [
   [-1, 0],
   [-1, -1],
 ];
+/** Neighbour offsets for a connectivity. */
 export const neighbours = (conn: Conn): readonly (readonly [number, number])[] =>
   conn === 8 ? N8 : N4;
 

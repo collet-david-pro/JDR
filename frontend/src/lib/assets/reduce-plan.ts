@@ -29,6 +29,7 @@ export type RejectReason =
   | 'unreadable'
   | 'reduce_failed';
 
+/** Reasons for which an upload can be rejected before sending. */
 export const REJECT_REASONS: readonly RejectReason[] = [
   'unsupported_type',
   'animation_too_long',
@@ -73,6 +74,7 @@ export function outputMime(mime: AssetMime): AssetMime {
   return mime === 'image/gif' ? 'image/png' : mime;
 }
 
+/** Decides how a file is prepared for upload (as is, reduced, or rejected). */
 export function planUpload(input: PlanInput, limits: AssetLimits): ReducePlan {
   const { info, size } = input;
   if (info === null || !limits.accepted_mimes.includes(info.mime)) {

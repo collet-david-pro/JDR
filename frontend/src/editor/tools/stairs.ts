@@ -7,6 +7,7 @@ import type { MapPointerEvent, StairsObject } from '../contracts';
 import { command, lockedLayer, uid } from './object-common';
 import type { CellRect, Tool, ToolContext, ToolResult } from './types';
 
+/** Maximum stairs side, in cells. */
 export const STAIRS_MAX_SIDE = 10;
 
 /** Floor the next stairs lead to: the chosen one when it is another floor, else the first other one. */
@@ -36,6 +37,7 @@ export function stairsRect(
   return { x, y, w, h };
 }
 
+/** Creates the stairs tool. */
 export function createStairsTool(ctx: ToolContext): Tool {
   let anchor: { x: number; y: number } | null = null;
 

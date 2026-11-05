@@ -84,6 +84,7 @@ const digitBindings = (n: number, action: ShortcutAction, mod: boolean): KeyBind
   { action, code: `Numpad${n}`, mod },
 ];
 
+/** Default keyboard bindings of the editor. */
 export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   tool('tool.select', 'v'),
   tool('tool.hand', 'h'),

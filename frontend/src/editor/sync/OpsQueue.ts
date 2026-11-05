@@ -18,11 +18,17 @@ import type { PendingBatch, PendingOpsStore } from '../../lib/persistence/map-st
 import { OpenBatch, countChanges } from './batch';
 import { toWireOp } from './wire';
 
+/** Idle delay before pending operations are sent to the server. */
 export const SEND_IDLE_MS = 1500;
+/** Maximum delay before pending operations are sent, even if edits continue. */
 export const SEND_MAX_WAIT_MS = 5000;
+/** Idle delay before pending operations are persisted locally. */
 export const PERSIST_IDLE_MS = 250;
+/** Maximum delay before local persistence, even if edits continue. */
 export const PERSIST_MAX_WAIT_MS = 1000;
+/** Maximum payload size for a keepalive request on page unload. */
 export const KEEPALIVE_MAX_BYTES = 64 * 1024;
+/** Duration the conflict notice stays visible. */
 export const CONFLICT_NOTICE_MS = 4000;
 const BACKOFF_MS = [1000, 2000, 4000, 8000, 15000, 30000] as const;
 
@@ -118,6 +124,7 @@ interface Batch {
   sealed: boolean;
 }
 
+/** Queue that batches, persists and sends map operations, and handles acknowledgements and rejections. */
 export class OpsQueue {
   private readonly mapId: string;
   private readonly store: PendingOpsStore;

@@ -19,6 +19,7 @@ import type { MapDetail, MapLayer, MapPaletteEntry, Token, WireMapOp } from '../
 
 const THEMES: readonly GridTheme[] = ['parchment', 'slate', 'blueprint', 'dark', 'light'];
 
+/** Extracts the grid specification from a map detail. */
 export function gridOf(map: Pick<MapDetail, 'grid'>): GridSpec {
   const g = map.grid;
   return {
@@ -30,6 +31,7 @@ export function gridOf(map: Pick<MapDetail, 'grid'>): GridSpec {
   };
 }
 
+/** Validates a theme name from the server, falling back to a default. */
 export function themeOf(theme: string): GridTheme {
   return (THEMES as readonly string[]).includes(theme) ? (theme as GridTheme) : 'parchment';
 }
@@ -52,6 +54,7 @@ export function layersFromWire(layers: readonly MapLayer[]): readonly LayerDef[]
   }
 }
 
+/** Converts editor layers to their wire form. */
 export function layersToWire(layers: readonly LayerDef[]): MapLayer[] {
   return layers.map((l) => ({
     id: l.id,
@@ -63,6 +66,7 @@ export function layersToWire(layers: readonly LayerDef[]): MapLayer[] {
   }));
 }
 
+/** Rebuilds the palette from its wire form. */
 export function paletteFromWire(
   palette: readonly (MapPaletteEntry | null)[],
 ): (PaletteEntry | null)[] {

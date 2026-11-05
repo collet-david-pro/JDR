@@ -85,6 +85,7 @@ export interface SceneLayerHooks {
 
 const EXPLORED_GREY = Math.round((1 - FOG_EXPLORED_ALPHA) * 255) * 0x010101;
 
+/** Container of all scene rendering layers for a floor. */
 export class SceneLayer {
   readonly objects = new ObjectsRenderer();
   readonly tokens: TokensRenderer;

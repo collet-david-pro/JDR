@@ -15,6 +15,7 @@ export type NoteErrors = Partial<
   Record<'title' | 'body' | 'audience_users', 'required' | 'too_long'>
 >;
 
+/** Returns an empty note draft. */
 export function emptyDraft(): NoteDraft {
   return {
     title: '',
@@ -26,6 +27,7 @@ export function emptyDraft(): NoteDraft {
   };
 }
 
+/** Builds an editable draft from a note. */
 export function draftOf(note: MapNote): NoteDraft {
   return {
     title: note.title,
@@ -62,6 +64,7 @@ export function draftValues(draft: NoteDraft): NoteValues {
   };
 }
 
+/** i18n key of the label of a note audience. */
 export function audienceLabelKey(audience: NoteAudience): string {
   switch (audience) {
     case 'gm':

@@ -9,7 +9,9 @@
  */
 
 export const FLAG_ROTATION_MASK = 0b0011;
+/** Flag bit: horizontal mirror. */
 export const FLAG_MIRROR_H = 0b0100;
+/** Flag bit: vertical mirror. */
 export const FLAG_MIRROR_V = 0b1000;
 
 export interface CellFlags {
@@ -19,6 +21,7 @@ export interface CellFlags {
   readonly mirrorV: boolean;
 }
 
+/** Decodes cell flags into rotation and mirror values. */
 export function decodeFlags(flags: number): CellFlags {
   return {
     quarterTurns: flags & FLAG_ROTATION_MASK,
@@ -27,6 +30,7 @@ export function decodeFlags(flags: number): CellFlags {
   };
 }
 
+/** Encodes rotation and mirror values into cell flags. */
 export function encodeFlags(f: CellFlags): number {
   return (f.quarterTurns & 3) | (f.mirrorH ? FLAG_MIRROR_H : 0) | (f.mirrorV ? FLAG_MIRROR_V : 0);
 }
@@ -76,6 +80,7 @@ export function variantFrameCount(width: number, height: number): number {
   return w / h;
 }
 
+/** Picks the animation frame of a tile variant. */
 export function variantFrame(variant: number, frames: number): number {
   if (frames <= 1) return 0;
   const v = Math.max(0, Math.floor(variant));

@@ -1,6 +1,7 @@
 /** Command builders for floors (P9a2): floor ops are undoable commands of the history (D1). */
 import type { Command } from '../contracts';
 
+/** Builds the command that adds a floor. */
 export function floorAddCommand(uid: string, name: string, level: number): Command {
   return {
     label: 'editor.command.floor_add',
@@ -9,6 +10,7 @@ export function floorAddCommand(uid: string, name: string, level: number): Comma
   };
 }
 
+/** Builds the command that updates a floor's name or level. */
 export function floorUpdateCommand(
   uid: string,
   patch: { readonly name?: string; readonly level?: number },

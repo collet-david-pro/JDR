@@ -25,6 +25,7 @@ export function villageRules(name: string): RuleSet {
   return set;
 }
 
+/** Furnishes a building. */
 export function furnishBuilding(
   plan: BuildingPlan,
   ruleSet: RuleSet,

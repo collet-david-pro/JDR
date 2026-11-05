@@ -46,6 +46,7 @@ interface TrackedPointer {
 
 const MAX_PAN_SAMPLES = 12;
 
+/** Translates DOM pointer, wheel and touch events into camera and tool input. */
 export class InputController {
   panMode = false;
 

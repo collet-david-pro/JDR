@@ -22,6 +22,7 @@ export interface ResolutionInput {
   readonly scale: number;
 }
 
+/** Limits applied to exports (size, resolution). */
 export const EXPORT_LIMITS = Object.freeze({
   /** Warning from this size (Mpx). */
   warnMegapixels: 100,
@@ -37,6 +38,7 @@ export const EXPORT_LIMITS = Object.freeze({
   maxScale: 32,
 });
 
+/** Available resolution factors (pixels per cell multipliers). */
 export const RESOLUTION_FACTORS: readonly number[] = [1, 2, 4];
 
 /** Clamps a rectangle to the map; null when empty / outside. */
@@ -82,6 +84,7 @@ export function cellEdge(i: number, ppc: number): number {
   return Math.round(i * ppc);
 }
 
+/** Pixel size of an export for a cell rectangle and a pixels-per-cell value. */
 export function outputSize(extent: CellRect, ppc: number): { width: number; height: number } {
   return { width: cellEdge(extent.w, ppc), height: cellEdge(extent.h, ppc) };
 }

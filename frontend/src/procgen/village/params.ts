@@ -12,6 +12,7 @@ export interface VillageParams {
   decor: number;
 }
 
+/** Default village parameters. */
 export const VILLAGE_DEFAULTS: Readonly<VillageParams> = Object.freeze({
   width: 70,
   height: 70,
@@ -22,6 +23,7 @@ export const VILLAGE_DEFAULTS: Readonly<VillageParams> = Object.freeze({
   decor: 0.5,
 });
 
+/** Village presets. */
 export const VILLAGE_PRESETS: Readonly<Record<string, Partial<VillageParams>>> = Object.freeze({
   hamlet: { width: 50, height: 50, buildings: 5, theme: 'rural' },
   village: { width: 80, height: 80, buildings: 14 },

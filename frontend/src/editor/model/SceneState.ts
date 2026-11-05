@@ -63,6 +63,7 @@ const SCENE_OP_TYPES: ReadonlySet<string> = new Set([
   'fog.hide',
 ]);
 
+/** Type guard: true when the operation targets scene content (objects, tokens, ambient). */
 export function isSceneOp(op: MapOp): op is SceneOp {
   return SCENE_OP_TYPES.has(op.type);
 }
@@ -77,6 +78,7 @@ function compareObjects(a: MapObject, b: MapObject): number {
   return a.sort_order - b.sort_order || (a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0);
 }
 
+/** State container for the scene (objects, placed tokens, ambient); applies scene operations. */
 export class SceneState {
   private readonly objectMap = new Map<string, MapObject>();
   private readonly tokenMap = new Map<string, PlacedToken>();

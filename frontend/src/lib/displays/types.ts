@@ -25,11 +25,13 @@ export interface ViewLock {
   readonly floor_id: string | null;
 }
 
+/** Keys of the settings stored per device. */
 export const DEVICE_SETTING_KEYS = ['diagonal_in', 'px_per_mm', 'rotation', 'mirror'] as const;
 export type DeviceSettingKey = (typeof DEVICE_SETTING_KEYS)[number];
 /** PATCH /display/me. */
 export type DeviceSettingsPatch = Partial<Pick<DisplaySettings, DeviceSettingKey>>;
 
+/** Default size of a cell, in millimetres. */
 export const DEFAULT_MM_PER_CELL = 25;
 
 export interface PairingInfo {

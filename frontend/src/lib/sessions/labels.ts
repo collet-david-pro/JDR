@@ -2,6 +2,7 @@ import { errorMessage } from '../errors';
 import { t } from '../i18n';
 import type { PlayerStatus, SessionStatus } from './types';
 
+/** Label of a session state. */
 export function sessionStateLabel(state: SessionStatus): string {
   switch (state) {
     case 'lobby':
@@ -15,6 +16,7 @@ export function sessionStateLabel(state: SessionStatus): string {
   }
 }
 
+/** Label of a player status. */
 export function playerStatusLabel(status: PlayerStatus): string {
   switch (status) {
     case 'connected':

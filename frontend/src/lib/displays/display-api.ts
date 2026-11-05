@@ -12,6 +12,7 @@ import { SessionsClient } from '../sessions/sessions-client';
 import type { MeResponse } from '../types';
 import { DeviceClient } from './device-client';
 
+/** Name of the sync channel used by the display. */
 export const DISPLAY_SYNC_NAME = 'jdr-sync-display';
 
 export interface DisplayApiOptions {
@@ -35,6 +36,7 @@ export interface DisplayApi {
   readonly sync: SyncClient;
 }
 
+/** Creates the API used by the display page. */
 export function createDisplayApi(o: DisplayApiOptions): DisplayApi {
   // `api` is read by refreshCsrf only when a request is made, long after the construction.
   const api: ApiClient = new ApiClient({

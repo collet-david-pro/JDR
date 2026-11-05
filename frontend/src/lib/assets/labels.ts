@@ -4,6 +4,7 @@ import { t } from '../i18n';
 import type { AssetKind } from '../types';
 import type { UploadStatus } from './upload-queue.svelte';
 
+/** Label of an asset kind. */
 export function kindLabel(kind: string): string {
   switch (kind as AssetKind) {
     case 'tile':
@@ -21,6 +22,7 @@ export function kindLabel(kind: string): string {
   }
 }
 
+/** Label of an upload status. */
 export function statusLabel(status: UploadStatus): string {
   switch (status) {
     case 'pending':

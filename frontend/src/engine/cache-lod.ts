@@ -10,6 +10,7 @@ import { CHUNK_SIZE } from '../editor/contracts';
 
 /** Highest cache level (texture pixels per cell): 32 × 32 = 1024² texture per chunk. */
 export const CACHE_MAX_LEVEL = 32;
+/** Lowest zoom level at which chunk caching applies. */
 export const CACHE_MIN_LEVEL = 1;
 /** Above this many device pixels per cell, chunks are drawn directly. */
 export const DIRECT_THRESHOLD = CACHE_MAX_LEVEL * Math.SQRT2;
@@ -45,6 +46,7 @@ export function nextRenderMode(
   return ratio >= LEVEL_FORCE_RATIO ? ideal : current;
 }
 
+/** True when two chunk render modes are identical. */
 export function modesEqual(a: ChunkRenderMode | null, b: ChunkRenderMode | null): boolean {
   if (a === null || b === null) return a === b;
   if (a.kind !== b.kind) return false;

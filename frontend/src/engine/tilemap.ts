@@ -57,6 +57,7 @@ import type { PaletteTextures } from './textures';
  */
 export const MAX_RETAINED_PARTICLES = 200_000;
 
+/** Tile layer identifiers, bottom to top. */
 export const TILE_LAYER_IDS: readonly TileLayerId[] = ['ground', 'terrain', 'decor'];
 
 const STATIC_PROPERTIES = {
@@ -140,6 +141,7 @@ export interface TileMapStats {
   readonly cacheBytes: number;
 }
 
+/** Renders the tile layers of a map by chunks. */
 export class TileMapRenderer {
   /** Child of the world container (unit: pixel at zoom 1). */
   readonly root = new Container();

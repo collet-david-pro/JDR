@@ -17,6 +17,7 @@ export interface RiverResult {
   deadEnds: number;
 }
 
+/** Carves rivers into the land. */
 export function carveRivers(land: Land, count: number, rng: Rng): RiverResult {
   const { w, h, elev, biome } = land;
   const mask = new Uint8Array(w * h);

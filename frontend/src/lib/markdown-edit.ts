@@ -4,6 +4,7 @@
  */
 export type MarkdownFormat = 'heading' | 'bold' | 'italic' | 'list' | 'ordered' | 'quote' | 'rule';
 
+/** Markdown formatting actions of the editor toolbar. */
 export const MARKDOWN_FORMATS: readonly MarkdownFormat[] = [
   'heading',
   'bold',
@@ -77,6 +78,7 @@ function lines(
   };
 }
 
+/** Applies a Markdown format to a text selection. */
 export function applyFormat(
   value: string,
   selStart: number,

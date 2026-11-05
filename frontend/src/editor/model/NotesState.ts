@@ -7,10 +7,14 @@ import type { MapOp } from '../contracts';
 import type { MapNote, NoteOp, NoteValues } from '../contracts-notes';
 import { MapOpError } from './ops';
 
+/** Maximum number of notes per map. */
 export const MAX_NOTES = 500;
+/** Maximum length of a note body, in characters. */
 export const MAX_NOTE_BODY = 20_000;
+/** Maximum length of a note title, in characters. */
 export const MAX_NOTE_TITLE = 120;
 
+/** Type guard: true when the operation targets notes. */
 export function isNoteOp(op: MapOp): op is NoteOp {
   return (
     op.type === 'note.add' ||
@@ -44,6 +48,7 @@ function checkValues(v: Partial<NoteValues>): void {
   if (v.body !== undefined && v.body.length > MAX_NOTE_BODY) bad('Note body too long');
 }
 
+/** State container for the map notes; applies note operations. */
 export class NotesState {
   private notes: readonly MapNote[] = [];
   private readonly listeners = new Set<() => void>();

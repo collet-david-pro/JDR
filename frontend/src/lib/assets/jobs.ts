@@ -6,12 +6,15 @@
 import { ApiError } from '../api';
 import type { Job } from '../types';
 
+/** Job statuses that end a job. */
 export const TERMINAL_STATUSES: ReadonlySet<string> = new Set(['done', 'failed', 'cancelled']);
 
+/** True when the job has ended. */
 export function isTerminal(job: Job): boolean {
   return TERMINAL_STATUSES.has(job.status);
 }
 
+/** Error raised when a background job ends in failure. */
 export class JobFailedError extends Error {
   override readonly name = 'JobFailedError';
   constructor(readonly job: Job) {

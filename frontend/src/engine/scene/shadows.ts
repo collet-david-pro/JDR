@@ -12,6 +12,7 @@ import type { LightSource } from './lights';
 import { polylineSegments, type Seg } from './object-geometry';
 import { doorDrawnAsWall } from './view-rules';
 
+/** Wall height used for shadows when none is given. */
 export const DEFAULT_WALL_HEIGHT = 1;
 
 export interface ShadowSegment {

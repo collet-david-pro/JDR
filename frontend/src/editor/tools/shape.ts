@@ -38,6 +38,7 @@ export function shapeCells(
   return kind === 'rect' ? rectCells(r, filled) : ellipseCells(r, filled);
 }
 
+/** Creates the shape tool (rectangle, ellipse, line). */
 export function createShapeTool(ctx: ToolContext): Tool {
   let anchor: Point | null = null;
 

@@ -12,6 +12,7 @@ export interface Polyline {
   closed: boolean;
 }
 
+/** Rounds to 3 decimals. */
 export const round3 = (v: number): number => Math.round(v * 1000) / 1000;
 
 /**

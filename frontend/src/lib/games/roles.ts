@@ -5,6 +5,7 @@
 
 import type { GameRole, Member, UserRef } from '../types';
 
+/** Tabs of the game page. */
 export const GAME_TABS = ['maps', 'tokens', 'players', 'sessions', 'settings'] as const;
 export type GameTab = (typeof GAME_TABS)[number];
 
@@ -13,6 +14,7 @@ export function tabsForRole(role: GameRole): readonly GameTab[] | null {
   return role === 'player' ? null : GAME_TABS;
 }
 
+/** Type guard for game tab identifiers. */
 export function isGameTab(value: string | null | undefined): value is GameTab {
   return value !== null && value !== undefined && (GAME_TABS as readonly string[]).includes(value);
 }

@@ -24,6 +24,7 @@ export const MIN_THICKNESS = 0.05;
 /** A door / window cuts a wall when it is nearly parallel to it (sine of the angle). */
 const OPENING_MAX_SIN = 0.1;
 
+/** Occluder modes. */
 export const OCCLUDER_MODES: readonly OccluderMode[] = ['vision', 'light', 'move'];
 
 export interface OccluderSet {

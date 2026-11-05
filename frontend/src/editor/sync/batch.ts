@@ -9,7 +9,9 @@
 import type { MapOp, TileCell, TileLayerId } from '../contracts';
 import { toWireOp } from './wire';
 
+/** Maximum number of operations per request. */
 export const MAX_OPS_PER_BATCH = 200;
+/** Maximum number of cells per operation. */
 export const MAX_CELLS_PER_OP = 5000;
 /** Server body limit. */
 export const MAX_BODY_BYTES = 1_000_000;

@@ -7,7 +7,9 @@ export { MATERIALS, PALETTES };
 export type { Material };
 export type { PaletteInfo } from './palettes';
 
+/** Available texture sizes, in pixels. */
 export const TEXTURE_SIZES = [128, 256, 512] as const;
+/** Version of the texture generation algorithm. */
 export const TEXTURE_GEN_VERSION = 1;
 
 export interface TextureRequest {

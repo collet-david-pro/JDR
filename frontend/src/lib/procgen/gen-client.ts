@@ -26,6 +26,7 @@ import type {
 
 export type { GenOutcome, GenProgress, GenRequest } from './gen-protocol';
 
+/** Error raised when a generation is cancelled. */
 export class GenCancelledError extends Error {
   constructor() {
     super('Generation cancelled');
@@ -70,6 +71,7 @@ interface Active {
   cancel(): void;
 }
 
+/** Creates the client of the generation worker. */
 export function createGenClient(options: GenClientOptions = {}): GenClient {
   const factory = options.createWorker ?? defaultWorker;
   let mode: 'worker' | 'main' = options.mainThread === true ? 'main' : 'worker';

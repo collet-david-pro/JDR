@@ -5,14 +5,23 @@ import type { Rng } from '../prng';
 import type { OutdoorTheme } from '../themes/outdoor';
 import type { OutdoorParams } from './params';
 
+/** Terrain code: deep water. */
 export const DEEP = 0;
+/** Terrain code: water. */
 export const WATER = 1;
+/** Terrain code: beach. */
 export const BEACH = 2;
+/** Terrain code: plain. */
 export const PLAIN = 3;
+/** Terrain code: forest. */
 export const FOREST = 4;
+/** Terrain code: hill. */
 export const HILL = 5;
+/** Terrain code: mountain. */
 export const MOUNTAIN = 6;
+/** Terrain code: snow. */
 export const SNOW = 7;
+/** Terrain code: oasis. */
 export const OASIS = 8;
 
 export interface Land {

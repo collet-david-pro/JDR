@@ -1,6 +1,7 @@
 /** Maps tab: sorting and grouping by folder ("Acte 1/Crypte", projet.md 7.2 maps.folder). */
 import type { MapSummary } from '../types';
 
+/** Available map sort modes. */
 export const MAP_SORTS = ['manual', 'name', 'updated'] as const;
 export type MapSort = (typeof MAP_SORTS)[number];
 
@@ -14,10 +15,12 @@ export interface MapFolderGroup {
 
 const collator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
 
+/** Type guard for map sort modes. */
 export function isMapSort(value: string | null | undefined): value is MapSort {
   return value !== null && value !== undefined && (MAP_SORTS as readonly string[]).includes(value);
 }
 
+/** Sorts maps for the given sort mode. */
 export function sortMaps(maps: readonly MapSummary[], sort: MapSort): MapSummary[] {
   const byName = (a: MapSummary, b: MapSummary): number => collator.compare(a.name, b.name);
   const list = [...maps];

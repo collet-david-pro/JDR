@@ -52,6 +52,7 @@ export interface MapSyncStart {
   readonly fogErrors: number;
 }
 
+/** Orchestrates map saving: loads chunks, queues operations and reports save status. */
 export class MapSync {
   readonly queue: OpsQueue;
   private readonly session: EditorSession;

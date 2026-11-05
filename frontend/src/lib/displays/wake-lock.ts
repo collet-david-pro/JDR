@@ -35,6 +35,7 @@ export interface WakeLockDeps {
   onVisibility(listener: () => void): () => void;
 }
 
+/** Keeps the screen awake with the Wake Lock API when available. */
 export class WakeLockManager {
   private current: WakeLockState = 'idle';
   private sentinel: WakeLockSentinelLike | null = null;

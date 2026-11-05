@@ -7,7 +7,9 @@ import { WALL_OUTLINE } from '../../scene/style';
 import type { Graphics } from '../pixi';
 import { parseColor } from './object-geometry';
 
+/** Fill color of stairs. */
 export const STAIRS_COLOR = 0xb8a98a;
+/** Color of stairs steps. */
 export const STAIRS_STEP_COLOR = 0x5b4f3a;
 
 type Seg = readonly [number, number, number, number];
@@ -62,6 +64,7 @@ export function stairsArrow(g: StairsObject['geometry'], direction: 'up' | 'down
 /** Radius of the portal disc (cells). */
 export const PORTAL_RADIUS = 0.4;
 
+/** Draws stairs. */
 export function drawStairs(g: Graphics, o: StairsObject, cellPx: number, bucket: number): void {
   const { x, y, w, h } = o.geometry;
   const k = cellPx;
@@ -81,6 +84,7 @@ export function drawStairs(g: Graphics, o: StairsObject, cellPx: number, bucket:
   g.stroke({ width: Math.max(2 / bucket, 0.07 * k), color: 0xffffff, alpha: 0.95, cap: 'round' });
 }
 
+/** Draws a portal. */
 export function drawPortal(g: Graphics, o: PortalObject, cellPx: number, bucket: number): void {
   const k = cellPx;
   const cx = o.geometry.x * k;

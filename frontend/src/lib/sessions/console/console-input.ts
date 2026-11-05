@@ -67,6 +67,7 @@ interface Drag {
   last: Point;
 }
 
+/** Handles keyboard and pointer input of the console. */
 export class ConsoleInput {
   private tool: ConsoleTool = { kind: 'select' };
   private drag: Drag | null = null;

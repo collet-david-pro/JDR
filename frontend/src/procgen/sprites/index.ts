@@ -2,6 +2,7 @@
 import { Canvas } from './raster';
 import { DRAWERS } from './draw';
 
+/** Keys of the available sprites. */
 export const SPRITE_KEYS: readonly string[] = Object.freeze(
   Object.keys(DRAWERS).map((k) => 'decor.' + k),
 );

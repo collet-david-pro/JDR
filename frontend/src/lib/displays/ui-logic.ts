@@ -2,9 +2,13 @@
 import { ApiError } from '../api';
 import type { DisplayStatus } from './types';
 
+/** Idle time before the cursor is hidden, in milliseconds. */
 export const CURSOR_HIDE_MS = 3000;
+/** Minimum screen diagonal, in inches. */
 export const DIAGONAL_MIN_IN = 5;
+/** Maximum screen diagonal, in inches. */
 export const DIAGONAL_MAX_IN = 300;
+/** Delay before the page reloads, in milliseconds. */
 export const RELOAD_DELAY_MS = 2000;
 
 /** Digits only, at most 6 (spaces and dashes are tolerated). */
@@ -12,6 +16,7 @@ export function normalizeCode(raw: string): string {
   return raw.replace(/\D/g, '').slice(0, 6);
 }
 
+/** True when the pairing code has the expected 6 digits. */
 export const isCodeComplete = (code: string): boolean => /^\d{6}$/.test(code);
 
 export type DisplayScreenKind = 'loading' | 'pair' | 'lobby' | 'waiting' | 'game' | 'pause';

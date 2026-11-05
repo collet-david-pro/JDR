@@ -15,8 +15,11 @@ export interface Building {
 
 /** Occupancy codes of the `occ` grid. */
 export const OCC_FREE = 0;
+/** Occupancy code: road. */
 export const OCC_ROAD = 1;
+/** Occupancy code: building. */
 export const OCC_BUILDING = 2;
+/** Occupancy code: ring around a building. */
 export const OCC_RING = 3;
 
 /** [along min, along max, depth min, depth max] of each type. */
@@ -39,6 +42,7 @@ const TYPE_ORDER: readonly BuildingType[] = [
   'temple',
 ];
 
+/** Places buildings along the roads. */
 export function placeBuildings(
   count: number,
   lShapeP: number,

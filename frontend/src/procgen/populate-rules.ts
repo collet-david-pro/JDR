@@ -37,6 +37,7 @@ export interface RuleSet {
   kinds: ReadonlyMap<string, readonly RuleItem[]>;
 }
 
+/** Error raised when population rules are invalid. */
 export class RulesError extends Error {
   constructor(message: string) {
     super(message);

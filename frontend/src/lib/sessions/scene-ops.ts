@@ -18,6 +18,7 @@ export interface OpsResult {
   readonly effects: readonly SessionEffect[];
 }
 
+/** Applies map operations to the session scene. */
 export function applyMapOps(
   state: SessionState,
   mapId: string,

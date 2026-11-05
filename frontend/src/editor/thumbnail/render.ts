@@ -18,7 +18,9 @@ import { decodeFlags, variantFrame, variantFrameCount } from '../../engine/cell-
 import { colorToCss, fallbackColor } from '../../engine/fallback-color';
 import { gridTheme } from '../../engine/grid-themes';
 
+/** Maximum thumbnail side, in pixels. */
 export const THUMBNAIL_MAX_PX = 512;
+/** Maximum thumbnail size, in bytes. */
 export const THUMBNAIL_MAX_BYTES = 512 * 1024;
 /** Below this cell size, each cell is one averaged colour (fast path for big maps). */
 export const DETAILED_MIN_CELL_PX = 4;
@@ -264,6 +266,7 @@ export class ThumbnailRenderer {
 /** Maps whose thumbnail must be refreshed when the editor opens again (after a restore). */
 const stale = new Set<string>();
 
+/** Marks the cached thumbnail of a map as outdated. */
 export function markThumbnailStale(mapId: string): void {
   stale.add(mapId);
 }

@@ -11,10 +11,12 @@ export const CHUNK_RELEASE_AFTER_MS = 30_000;
 /** Chunks around the visible ones that are prepared ahead (built, not drawn). */
 export const CHUNK_MARGIN = 1;
 
+/** Builds the string key of a chunk from its coordinates. */
 export function chunkKey(cx: number, cy: number): ChunkKey {
   return `${cx}:${cy}`;
 }
 
+/** Parses a chunk key back to chunk coordinates. */
 export function parseChunkKey(key: string): { cx: number; cy: number } | null {
   const match = /^(-?\d+):(-?\d+)$/.exec(key);
   if (match === null) return null;
@@ -34,20 +36,25 @@ export interface ChunkRange {
   readonly cy1: number;
 }
 
+/** Chunk range that contains no chunk. */
 export const EMPTY_RANGE: ChunkRange = { cx0: 0, cy0: 0, cx1: -1, cy1: -1 };
 
+/** True when the chunk range is empty. */
 export function isEmptyRange(r: ChunkRange): boolean {
   return r.cx1 < r.cx0 || r.cy1 < r.cy0;
 }
 
+/** Number of chunks in a range. */
 export function rangeSize(r: ChunkRange): number {
   return isEmptyRange(r) ? 0 : (r.cx1 - r.cx0 + 1) * (r.cy1 - r.cy0 + 1);
 }
 
+/** True when the range contains the chunk. */
 export function rangeContains(r: ChunkRange, cx: number, cy: number): boolean {
   return cx >= r.cx0 && cx <= r.cx1 && cy >= r.cy0 && cy <= r.cy1;
 }
 
+/** True when two chunk ranges are identical. */
 export function rangesEqual(a: ChunkRange, b: ChunkRange): boolean {
   if (isEmptyRange(a) && isEmptyRange(b)) return true;
   return a.cx0 === b.cx0 && a.cy0 === b.cy0 && a.cx1 === b.cx1 && a.cy1 === b.cy1;
@@ -64,6 +71,7 @@ export function mapChunkRange(grid: GridSpec): ChunkRange {
   };
 }
 
+/** Intersection of two chunk ranges. */
 export function intersectRanges(a: ChunkRange, b: ChunkRange): ChunkRange {
   const r = {
     cx0: Math.max(a.cx0, b.cx0),

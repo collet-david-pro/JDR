@@ -9,4 +9,5 @@ class AppStatusStore {
   applyUpdate = $state.raw<(() => void) | null>(null);
 }
 
+/** Store of the application status (loading, errors, connectivity). */
 export const appStatus = new AppStatusStore();

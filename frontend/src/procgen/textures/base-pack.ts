@@ -5,7 +5,9 @@ import type { PackKey } from '../types';
 import { renderSprite } from '../sprites';
 import { renderTexture, type TextureRequest } from './index';
 
+/** Version of the base texture pack. */
 export const BASE_PACK_VERSION = 1;
+/** Side of the base pack textures, in pixels. */
 export const BASE_PACK_SIZE = 256;
 
 export interface BasePackEntry {
@@ -99,6 +101,7 @@ export interface BasePackFile {
   rgbaSha256: string;
 }
 
+/** Builds the base texture pack. */
 export async function buildBasePack(): Promise<{
   manifest: BasePackManifest;
   files: BasePackFile[];

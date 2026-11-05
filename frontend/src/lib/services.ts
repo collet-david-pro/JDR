@@ -16,10 +16,12 @@ export interface Services {
 
 let current: Services | null = null;
 
+/** Registers the application services. */
 export function setServices(services: Services): void {
   current = services;
 }
 
+/** Returns the registered application services. */
 export function services(): Services {
   if (current === null) throw new Error('Services are not initialised (main.ts)');
   return current;

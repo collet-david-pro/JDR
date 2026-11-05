@@ -25,8 +25,10 @@ export interface DungeonTheme {
   rules: string;
 }
 
+/** Identifiers of the dungeon themes. */
 export const DUNGEON_THEME_IDS: readonly DungeonThemeId[] = ['stone', 'crypt', 'sewer', 'wood'];
 
+/** Dungeon themes. */
 export const DUNGEON_THEMES: Readonly<Record<DungeonThemeId, DungeonTheme>> = {
   stone: {
     label: 'Pierre',

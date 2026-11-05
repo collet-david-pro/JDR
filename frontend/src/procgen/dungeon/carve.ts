@@ -7,6 +7,7 @@ import type { Rect } from './layout';
 /** Margin (cells) around the two anchors of the A* search window. */
 const WINDOW = 10;
 
+/** Carves rooms and corridors into the dungeon grid. */
 export class Carver {
   readonly floor: BitGrid;
   /** Room whose rectangle contains the cell, or -1. */

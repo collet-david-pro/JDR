@@ -5,6 +5,7 @@ import { newNoteObject, pointOf, validNote } from './note-objects';
 import { command, lockedLayer } from './object-common';
 import type { Tool, ToolContext, ToolResult } from './types';
 
+/** Creates the pin tool. */
 export function createPinTool(ctx: ToolContext): Tool {
   const centre = (world: { x: number; y: number }, alt: boolean): Point => {
     const raw: Point = [world.x, world.y];

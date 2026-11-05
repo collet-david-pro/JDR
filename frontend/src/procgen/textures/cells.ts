@@ -26,7 +26,9 @@ export function stretched(
   return (x, y) => fbm(n, x * kx, y * ky, { octaves });
 }
 
+/** Clamps a value to the 0-1 range. */
 export const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+/** Smoothstep interpolation. */
 export const smooth = (t: number): number => {
   const c = clamp01(t);
   return c * c * (3 - 2 * c);

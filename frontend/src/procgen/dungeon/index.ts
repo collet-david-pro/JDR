@@ -34,6 +34,7 @@ export {
   validateDungeon,
 } from './params';
 
+/** Version of the dungeon generator algorithm. */
 export const DUNGEON_VERSION = 1;
 
 const RULE_FILES: Readonly<Record<string, unknown>> = { stone, crypt, sewer, wood };
@@ -253,6 +254,7 @@ function generate(params: DungeonParams, ctx: GenContext): GenResult {
   };
 }
 
+/** Dungeon generator. */
 export const dungeonGenerator: Generator<DungeonParams> = {
   id: 'dungeon',
   version: DUNGEON_VERSION,

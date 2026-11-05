@@ -27,6 +27,7 @@ export interface Orientation {
   readonly height: number;
 }
 
+/** Computes the effective orientation of the display from the viewport and settings. */
 export function orientation(viewport: Viewport, settings: OrientationSettings): Orientation {
   const swapped = settings.rotation === 90 || settings.rotation === 270;
   const parts = ['translate(-50%, -50%)'];

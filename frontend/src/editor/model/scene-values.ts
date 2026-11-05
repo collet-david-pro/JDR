@@ -25,9 +25,13 @@ import type {
 import type { PinObject, SecretObject, TrapObject, ZoneObject } from '../contracts-notes';
 import { MapOpError } from './ops';
 
+/** Accepted pattern for object, token and note identifiers. */
 export const UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
+/** Maximum number of points in a wall. */
 export const MAX_WALL_POINTS = 1000;
+/** Maximum number of scene objects per floor. */
 export const MAX_OBJECTS = 20_000;
+/** Maximum number of placed tokens per floor. */
 export const MAX_PLACED_TOKENS = 2_000;
 const LAYERS: readonly ObjectLayerId[] = ['walls', 'props', 'lighting', 'labels', 'gm'];
 const VISIBILITIES: readonly ObjectVisibility[] = ['all', 'gm', 'hidden_until_revealed'];
@@ -46,7 +50,9 @@ const OBJECT_TYPES: readonly MapObject['type'][] = [
 ];
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
+/** Rounds to 3 decimals. */
 export const round3 = (v: number): number => Math.round(v * 1000) / 1000;
+/** Rounds to 2 decimals. */
 export const round2 = (v: number): number => Math.round(v * 100) / 100;
 
 export interface Bounds {
@@ -90,6 +96,7 @@ function segment(g: unknown, b: Bounds): { a: Point; b: Point } {
   return { a, b: e };
 }
 
+/** Maximum number of points in a polygon (zone, room). */
 export const MAX_POLYGON_POINTS = 200;
 
 function polygon(g: unknown, b: Bounds): { polygon: { x: number; y: number }[] } {
@@ -106,7 +113,9 @@ function polygon(g: unknown, b: Bounds): { polygon: { x: number; y: number }[] }
   };
 }
 
+/** Icons available for pins. */
 export const PIN_ICONS = ['place', 'danger', 'treasure', 'npc', 'info'] as const;
+/** Kinds of secrets that can be attached to a note. */
 export const SECRET_KINDS = ['passage', 'room', 'object'] as const;
 
 function noteLink(v: unknown): string | null {
@@ -157,6 +166,7 @@ function wallProps(p: WallProps): WallProps {
 }
 
 const FLOOR_UID = /^[A-Za-z0-9_-]{1,21}$/;
+/** Icons available for portals. */
 export const PORTAL_ICONS = ['portal', 'door', 'stairs', 'ladder', 'trapdoor'] as const;
 
 /** Validated link (door, stairs, portal): ids stay strings, `broken` / `map_name` are read-side hints. */
@@ -224,6 +234,7 @@ function windowProps(p: WindowProps): WindowProps {
   return { kind: oneOf(p.kind, ['glass', 'bars', 'opening'], 'window kind') };
 }
 
+/** Normalizes light properties (clamping and rounding). */
 export function lightProps(p: LightProps): LightProps {
   const radius = round3(num(p.radius, 0, 100, 'radius'));
   const dim = round3(num(p.dim_radius, 0, 100, 'dim_radius'));
@@ -353,6 +364,7 @@ export function normalizeObject(o: MapObject, b: Bounds): MapObject {
   } as MapObject);
 }
 
+/** Normalizes the light definition of a placed token. */
 export function tokenLight(l: TokenLightDef | null): TokenLightDef | null {
   if (l === null) return null;
   const radius = round3(num(l.radius, 0, 100, 'light radius'));
@@ -422,18 +434,21 @@ export function changedObjectPatch(o: MapObject, patch: ObjectPatch): ObjectPatc
   return out as ObjectPatch;
 }
 
+/** Returns a copy of the token with the patch applied and clamped to the bounds. */
 export function patchToken(t: PlacedToken, patch: PlacedTokenPatch, b: Bounds): PlacedToken {
   const next = { ...t } as Record<string, unknown>;
   for (const k of TOKEN_PATCH_KEYS) if (patch[k] !== undefined) next[k] = patch[k];
   return normalizeToken(next as unknown as PlacedToken, b);
 }
 
+/** Builds the patch that restores the token's current values (inverse of the patch). */
 export function tokenInversePatch(t: PlacedToken, patch: PlacedTokenPatch): PlacedTokenPatch {
   const out: Record<string, unknown> = {};
   for (const k of TOKEN_PATCH_KEYS) if (patch[k] !== undefined) out[k] = t[k];
   return out as PlacedTokenPatch;
 }
 
+/** Reduces a patch to the fields that actually change the token. */
 export function changedTokenPatch(t: PlacedToken, patch: PlacedTokenPatch): PlacedTokenPatch {
   const out: Record<string, unknown> = {};
   for (const k of TOKEN_PATCH_KEYS) {
@@ -459,6 +474,7 @@ export function sameValue(a: unknown, b: unknown): boolean {
   );
 }
 
+/** Default ambient settings of a scene. */
 export const DEFAULT_AMBIENT: Ambient = Object.freeze({
   darkness: 0,
   tint: '#000000',

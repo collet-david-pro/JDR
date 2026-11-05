@@ -8,8 +8,11 @@ import { bytesToMbInput, mbInputToBytes } from './format';
 import type { SiteSettings, SmtpSettings } from './types';
 import { checkEmail, collectErrors, type FieldErrors } from './validation';
 
+/** Text keys of the settings form. */
 export const TEXT_KEYS = ['site_name', 'base_url', 'default_locale', 'registration_mode'] as const;
+/** Settings expressed in megabytes in the form. */
 export const MB_KEYS = ['default_quota_bytes', 'max_upload_bytes'] as const;
+/** Integer keys of the settings form. */
 export const INT_KEYS = [
   'max_dimension_px',
   'max_total_pixels',
@@ -23,7 +26,9 @@ export const INT_KEYS = [
 ] as const;
 /** INT_KEYS fields shown with a help text (admin.settings.hints.<key>). */
 export const INT_HINT_KEYS: readonly string[] = ['realtime_max_waiting'];
+/** Boolean keys of the settings form. */
 export const FLAG_KEYS = ['use_db_sessions', 'maintenance'] as const;
+/** Text keys of the SMTP settings. */
 export const SMTP_TEXT_KEYS = [
   'host',
   'encryption',
@@ -50,6 +55,7 @@ export interface SettingsFormValues {
   smtpPassword: string;
 }
 
+/** Converts site settings to form values. */
 export function toFormValues(settings: SiteSettings): SettingsFormValues {
   const values: Partial<Record<SettingsValueKey, string>> = {};
   for (const key of TEXT_KEYS) values[key] = settings[key];
@@ -69,6 +75,7 @@ function intValue(raw: string | undefined): number | undefined {
   return /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
+/** Validates the settings form. */
 export function validateSettings(form: SettingsFormValues): FieldErrors {
   const v = form.values;
   const checks: Record<string, string | null> = {

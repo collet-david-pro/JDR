@@ -5,6 +5,7 @@ import type { GameRole, TokenKind } from '../types';
 import type { SettingFlag } from './game-form';
 import type { GameTab } from './roles';
 
+/** Label of a game role. */
 export function roleLabel(role: GameRole): string {
   switch (role) {
     case 'gm':
@@ -16,6 +17,7 @@ export function roleLabel(role: GameRole): string {
   }
 }
 
+/** Label of a token kind. */
 export function tokenKindLabel(kind: TokenKind): string {
   switch (kind) {
     case 'pc':
@@ -29,6 +31,7 @@ export function tokenKindLabel(kind: TokenKind): string {
   }
 }
 
+/** Label of a game page tab. */
 export function tabLabel(tab: GameTab): string {
   switch (tab) {
     case 'maps':
@@ -44,6 +47,7 @@ export function tabLabel(tab: GameTab): string {
   }
 }
 
+/** Label and hint of a game setting flag. */
 export function settingFlagLabel(flag: SettingFlag): { label: string; hint: string } {
   switch (flag) {
     case 'fog_strict':

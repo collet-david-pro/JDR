@@ -42,6 +42,7 @@ export function fallbackColor(index: number, variant = 0): number {
   return hslToRgb(hue, saturation, lightness);
 }
 
+/** Converts a numeric color to a CSS color string. */
 export function colorToCss(color: number): string {
   return `#${(color & 0xffffff).toString(16).padStart(6, '0')}`;
 }

@@ -44,6 +44,7 @@ function blob(cx: number, cy: number, radii: number[], turn = 0): Pt[] {
   });
 }
 
+/** Sprite drawing functions by key. */
 export const DRAWERS: Record<string, (c: Canvas) => void> = {
   rock(c) {
     c.polygon(

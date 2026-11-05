@@ -70,6 +70,7 @@ function withoutFloors<T extends object>(o: T): Record<string, number | string |
   return rest as Record<string, number | string | boolean>;
 }
 
+/** Description of each generator. */
 export const GENERATOR_INFO: Readonly<Record<GeneratorId, GeneratorInfo>> = {
   dungeon: {
     version: dungeonGenerator.version,
@@ -135,8 +136,10 @@ export const GENERATOR_INFO: Readonly<Record<GeneratorId, GeneratorInfo>> = {
   },
 };
 
+/** Identifiers of the generators. */
 export const GENERATOR_IDS: readonly GeneratorId[] = ['dungeon', 'cave', 'outdoor', 'village'];
 
+/** Type guard for generator identifiers. */
 export function isGeneratorId(value: unknown): value is GeneratorId {
   return typeof value === 'string' && (GENERATOR_IDS as readonly string[]).includes(value);
 }

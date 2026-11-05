@@ -22,6 +22,7 @@ import { canEditContent } from './roles';
 
 export type GamePageStatus = 'loading' | 'ready' | 'not_found' | 'error';
 
+/** Reactive model of the game page. */
 export class GamePageModel {
   status = $state<GamePageStatus>('loading');
   error = $state.raw<unknown>(null);

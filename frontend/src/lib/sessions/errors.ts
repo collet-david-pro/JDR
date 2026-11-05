@@ -4,6 +4,7 @@
  */
 import { ApiError } from '../api';
 
+/** Error codes returned by the sessions API. */
 export const SESSION_ERROR_CODES = [
   'session_exists',
   'invalid_transition',
@@ -45,6 +46,7 @@ export function classifySessionError(error: unknown): SessionErrorInfo | null {
   };
 }
 
+/** True when the error is a session error with the given code. */
 export function isSessionError(error: unknown, code: SessionErrorCode): boolean {
   return classifySessionError(error)?.code === code;
 }

@@ -22,6 +22,7 @@ import type { SessionsClient } from './sessions-client';
 import { createSessionState, sessionChannels, type SessionState } from './state';
 import type { SessionSnapshot } from './types';
 
+/** Interval between presence heartbeats, in milliseconds. */
 export const PRESENCE_MS = 20_000;
 const MAX_SNAPSHOT_RETRIES = 4;
 
@@ -81,6 +82,7 @@ export interface SessionSyncOptions {
   readonly random?: () => number;
 }
 
+/** Synchronizes a session with the realtime client: snapshot, catch-up and events. */
 export class SessionSync {
   /** Sends the actions of this session (moves, doors, fog...). */
   readonly actions: ActionSender;

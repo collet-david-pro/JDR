@@ -35,8 +35,10 @@ export interface OutdoorTheme {
   rules: string;
 }
 
+/** Identifiers of the outdoor themes. */
 export const OUTDOOR_THEME_IDS: readonly OutdoorThemeId[] = ['temperate', 'desert', 'winter'];
 
+/** Outdoor themes. */
 export const OUTDOOR_THEMES: Readonly<Record<OutdoorThemeId, OutdoorTheme>> = {
   temperate: {
     label: 'Tempéré',

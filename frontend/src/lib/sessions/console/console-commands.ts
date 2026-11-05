@@ -73,6 +73,7 @@ function panelLabel(panel: ConsolePanelId): string {
   }
 }
 
+/** Builds the command palette entries of the console. */
 export function buildConsoleCommands(d: ConsoleCommandDeps): Command[] {
   const out: Command[] = [];
   const g = {

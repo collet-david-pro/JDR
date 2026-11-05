@@ -3,6 +3,7 @@
  * `K7F2-QM9X`, sent and stored without the dash.
  */
 export const SESSION_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/** Length of a session code. */
 export const SESSION_CODE_LENGTH = 8;
 
 /** Upper case, without dash, space or any other separator ("k7f2 qm9x" ⇒ "K7F2QM9X"). */
@@ -10,6 +11,7 @@ export function normalizeSessionCode(input: string): string {
   return input.toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
+/** True when the input is a valid session code. */
 export function isValidSessionCode(input: string): boolean {
   const code = normalizeSessionCode(input);
   return (

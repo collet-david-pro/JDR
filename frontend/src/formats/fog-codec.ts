@@ -6,11 +6,14 @@
 import { CHUNK_SIZE, type FogBitmap } from '../editor/contracts';
 import { CompressionError, deflateRaw, inflateRaw, type CompressionOptions } from './compression';
 
+/** Number of fog subcells per cell side. */
 export const FOG_SUBCELLS = 4;
 /** Sub-cells per chunk side. */
 export const FOG_SIDE = CHUNK_SIZE * FOG_SUBCELLS;
+/** Size of an uncompressed fog chunk, in bytes. */
 export const FOG_RAW_BYTES = (FOG_SIDE * FOG_SIDE) / 8;
 
+/** Error raised when a fog chunk cannot be decoded. */
 export class FogCodecError extends Error {
   override readonly name = 'FogCodecError';
   constructor(
@@ -21,6 +24,7 @@ export class FogCodecError extends Error {
   }
 }
 
+/** Creates an empty fog bitmap. */
 export function createFogBitmap(): FogBitmap {
   return new Uint8Array(FOG_RAW_BYTES);
 }
@@ -30,17 +34,20 @@ export function fogBitIndex(sx: number, sy: number): number {
   return sy * FOG_SIDE + sx;
 }
 
+/** Reads a fog bit. */
 export function getFogBit(bits: FogBitmap, sx: number, sy: number): boolean {
   const i = fogBitIndex(sx, sy);
   return (bits[i >> 3]! & (0x80 >> (i & 7))) !== 0;
 }
 
+/** Sets a fog bit. */
 export function setFogBit(bits: FogBitmap, sx: number, sy: number, value = true): void {
   const i = fogBitIndex(sx, sy);
   if (value) bits[i >> 3]! |= 0x80 >> (i & 7);
   else bits[i >> 3]! &= ~(0x80 >> (i & 7));
 }
 
+/** True when no fog bit is set. */
 export function isFogEmpty(bits: FogBitmap): boolean {
   for (let i = 0; i < bits.length; i++) if (bits[i] !== 0) return false;
   return true;

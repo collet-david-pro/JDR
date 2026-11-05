@@ -15,6 +15,7 @@ export interface Road {
 
 const BRIDGE_MAX = 3;
 
+/** Builds roads across the land. */
 export function buildRoads(land: Land, wet: Wet, count: number, rng: Rng): Road[] {
   const { w, h, elev, biome } = land;
   const roads: Road[] = [];

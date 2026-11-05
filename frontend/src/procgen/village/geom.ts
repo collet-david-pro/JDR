@@ -84,6 +84,7 @@ export function unitNeighbours(u: Segment): [Segment, Segment] {
   ];
 }
 
+/** Returns the cells of a rectangle. */
 export const rectCells = (r: Rect): Cell[] => {
   const out: Cell[] = [];
   for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) out.push([x, y]);

@@ -47,6 +47,7 @@ export function roomDegrees(
   return deg;
 }
 
+/** Assigns a kind to each dungeon room. */
 export function assignKinds(k: KindInput): string[] {
   const n = k.rooms.length;
   const kinds: (string | null)[] = new Array<string | null>(n).fill(null);

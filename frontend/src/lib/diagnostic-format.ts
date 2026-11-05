@@ -9,6 +9,7 @@ import type { Translate } from './translator';
 /** Maximum number of array items shown before "+N". */
 export const MAX_LIST_ITEMS = 5;
 
+/** Formats a diagnostic check value for display. */
 export function formatCheckValue(value: unknown, t: Translate, depth = 0): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'boolean') return t(value ? 'common.yes' : 'common.no');

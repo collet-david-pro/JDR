@@ -76,6 +76,7 @@ function probe(worker: Worker, id: number): Promise<boolean> {
   });
 }
 
+/** Starts an export in a worker and returns a handle to follow or cancel it. */
 export function startExport(input: StartExportInput): ExportHandle {
   const controller = new AbortController();
   let worker: Worker | null = null;

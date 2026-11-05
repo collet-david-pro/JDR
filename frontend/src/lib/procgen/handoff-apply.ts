@@ -16,6 +16,7 @@ export interface HandoffDeps {
   loadPack: () => Promise<Pack>;
 }
 
+/** Applies a generation handed over by another page to the open map. */
 export async function applyHandoff(deps: HandoffDeps): Promise<ApplyReport | null> {
   const handoff = takeGeneration(deps.mapId);
   if (handoff === null) return null;

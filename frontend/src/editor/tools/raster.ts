@@ -36,6 +36,7 @@ export function rectBetween(a: Point, b: Point): CellRect {
   return { x, y, w: Math.abs(a[0] - b[0]) + 1, h: Math.abs(a[1] - b[1]) + 1 };
 }
 
+/** Returns the cells of a rectangle, filled or outline only. */
 export function rectCells(r: CellRect, filled: boolean): Point[] {
   const out: Point[] = [];
   for (let y = r.y; y < r.y + r.h; y++) {

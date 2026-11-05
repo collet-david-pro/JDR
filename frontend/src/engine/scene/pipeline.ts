@@ -38,6 +38,7 @@ export const WORLD_LAYERS: ReadonlySet<PipelineLayer> = new Set([
   'fog',
 ]);
 
+/** Index of a layer in the render pipeline. */
 export function pipelineIndex(layer: PipelineLayer): number {
   return RENDER_PIPELINE.indexOf(layer);
 }

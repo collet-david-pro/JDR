@@ -9,6 +9,7 @@ import { GRID_BORDER_PX, GRID_LINE_PX, computeGridLines, mapScreenRect, snap } f
 import { DEFAULT_GRID_THEME, gridTheme, type GridThemeDef } from './grid-themes';
 import { Graphics } from './pixi';
 
+/** Draws the grid lines of the scene. */
 export class GridRenderer {
   /** World space, under the tiles. */
   readonly background = new Graphics();

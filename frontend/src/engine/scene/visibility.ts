@@ -8,8 +8,10 @@ import type { Polygon, VisibleScene } from '../../editor/contracts';
 
 /** Below this effective darkness everything in a vision polygon is visible. */
 export const BRIGHT_DARKNESS = 0.3;
+/** Minimum delay between visibility updates, in milliseconds. */
 export const VISIBILITY_EMIT_MS = 100;
 
+/** True when the point lies inside the polygon. */
 export function pointInPolygon(poly: Polygon, x: number, y: number): boolean {
   const n = poly.length >> 1;
   let inside = false;

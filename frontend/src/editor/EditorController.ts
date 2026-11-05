@@ -64,6 +64,7 @@ export interface EditorControllerOptions {
   visionCore?: () => VisionCore;
 }
 
+/** Facade of the map editor: owns the document, history, sync and tool state for one open map. */
 export class EditorController {
   readonly tools: ToolSet;
   private spaceHeld = false;

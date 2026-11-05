@@ -17,6 +17,7 @@ const images = import.meta.glob('../../help/img/*.{webp,png}', {
   eager: true,
 }) as Record<string, string>;
 
+/** Help sections built from the bundled Markdown files. */
 export const helpSections: readonly HelpSection[] = buildCatalog(files);
 
 const stem = (name: string): string => name.replace(/\.[a-z0-9]+$/i, '');

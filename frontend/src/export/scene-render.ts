@@ -81,6 +81,7 @@ interface Box {
   readonly y1: number;
 }
 
+/** Converts a numeric color to a CSS color string. */
 export function cssColor(color: number): string {
   return `rgb(${(color >> 16) & 255} ${(color >> 8) & 255} ${color & 255})`;
 }
@@ -155,6 +156,7 @@ function dashes(s: Seg, dash: number, gap: number): Seg[] {
   return out;
 }
 
+/** Paints a scene on a 2D canvas for exports. */
 export class ScenePainter {
   private readonly items: readonly { readonly obj: MapObject; readonly box: Box }[];
   private readonly lights: readonly {

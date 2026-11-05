@@ -14,29 +14,50 @@ import { CHUNK_SIZE, type TileLayerId } from '../editor/contracts';
 import { CELL_STRIDE, ChunkCodecError, decodeChunk, TILE_LAYERS } from './chunk-codec';
 import { decodeFog, FogCodecError, isFogEmpty } from './fog-codec';
 
+/** Format identifier of the map document. */
 export const MAP_DOCUMENT_FORMAT = 'jdr-map';
+/** Current version of the map document format. */
 export const CURRENT_FORMAT_VERSION = 1;
 
+/** Maximum length of a map name. */
 export const MAP_NAME_MAX = 120;
+/** Maximum length of a palette name. */
 export const PALETTE_NAME_MAX = 120;
+/** Maximum length of a floor name. */
 export const FLOOR_NAME_MAX = 60;
+/** Maximum grid side, in cells. */
 export const GRID_SIDE_MAX = 400;
+/** Minimum cell size, in pixels. */
 export const CELL_PX_MIN = 16;
+/** Maximum cell size, in pixels. */
 export const CELL_PX_MAX = 512;
+/** Maximum length of the unit label. */
 export const UNIT_LABEL_MAX = 10;
+/** Minimum units per cell. */
 export const UNIT_PER_CELL_MIN = 0.01;
+/** Maximum units per cell. */
 export const UNIT_PER_CELL_MAX = 9999.99;
+/** Maximum number of palette entries. */
 export const PALETTE_MAX = 4096;
+/** Maximum number of floors in a map document. */
 export const FLOORS_MAX = 8;
+/** Minimum floor level. */
 export const LEVEL_MIN = -100;
+/** Maximum floor level. */
 export const LEVEL_MAX = 100;
+/** Maximum length of a base64 chunk. */
 export const CHUNK_BASE64_MAX = 8192;
+/** Maximum size of the generation parameters, in bytes. */
 export const GENERATION_PARAMS_MAX_BYTES = 65536;
 /** Cell flags: bits 0-3 used, 4-7 reserved (projet.md 12.2). */
 export const FLAGS_MAX = 0x0f;
+/** Accepted pattern for autotile identifiers. */
 export const AUTOTILE_PATTERN = /^[A-Za-z0-9_.:-]{1,40}$/;
+/** Accepted pattern for asset references. */
 export const ASSET_REF_PATTERN = /^sha256:[0-9a-fA-F]{64}$/;
+/** Accepted pattern for floor identifiers. */
 export const FLOOR_UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
+/** Accepted pattern for generator identifiers. */
 export const GENERATOR_PATTERN = /^[a-z0-9][a-z0-9_.-]{0,39}$/;
 const BLOCK_KEY_PATTERN = /^(\d{1,3}):(\d{1,3})$/;
 const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -44,9 +65,13 @@ const COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 /** Keys refused anywhere in the document (prototype pollution). */
 export const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'] as const;
 
+/** Accepted grid themes. */
 export const MAP_THEMES = ['parchment', 'slate', 'blueprint', 'dark', 'light'] as const;
+/** Accepted weather types. */
 export const WEATHER_TYPES = ['none', 'rain', 'snow', 'fog', 'storm'] as const;
+/** Identifiers of object layers. */
 export const OBJECT_LAYER_IDS = ['walls', 'props', 'lighting', 'labels', 'gm'] as const;
+/** Identifiers of all layers. */
 export const LAYER_IDS = [...TILE_LAYERS, ...OBJECT_LAYER_IDS] as const;
 
 /** Allowed members (anything else is `unsupported`). */
@@ -70,6 +95,7 @@ export const DOCUMENT_KEYS = [
   'tokens_placed',
   'generation',
 ] as const;
+/** Keys required at the root of a map document. */
 export const REQUIRED_KEYS = [
   'format',
   'format_version',
@@ -93,23 +119,39 @@ export const LATER_LISTS = ['notes', 'links'] as const;
 /* ---- P5 content (etapes/P05 "Contrat d'API P5", same bounds as the server) ------------- */
 
 export const OBJECT_TYPES = ['wall', 'door', 'window', 'light'] as const;
+/** Accepted object visibilities. */
 export const OBJECT_VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'] as const;
+/** Accepted wall kinds. */
 export const WALL_KINDS = ['stone', 'brick', 'wood', 'metal', 'natural', 'invisible'] as const;
+/** Accepted door states. */
 export const DOOR_STATES = ['open', 'closed'] as const;
+/** Accepted door swings. */
 export const DOOR_SWINGS = ['a', 'b', 'slide'] as const;
+/** Accepted window kinds. */
 export const WINDOW_KINDS = ['glass', 'bars', 'opening'] as const;
+/** Accepted light flicker types. */
 export const FLICKER_TYPES = ['none', 'torch', 'pulse'] as const;
+/** Maximum number of objects per floor. */
 export const OBJECTS_MAX = 20_000;
+/** Maximum number of placed tokens per floor. */
 export const TOKENS_PLACED_MAX = 2_000;
+/** Minimum number of points in a wall. */
 export const WALL_POINTS_MIN = 2;
+/** Maximum number of points in a wall. */
 export const WALL_POINTS_MAX = 1_000;
+/** Maximum sort order value. */
 export const SORT_ORDER_MAX = 1_000_000;
+/** Maximum light radius. */
 export const LIGHT_RADIUS_MAX = 100;
 /** Token definition light (P3 TokenInput): radii 0–1000 cells. */
 export const TOKEN_LIGHT_RADIUS_MAX = 1_000;
+/** Maximum length of a token name. */
 export const TOKEN_NAME_MAX = 80;
+/** Maximum length of a base64 fog chunk. */
 export const FOG_BASE64_MAX = 4096;
+/** Accepted pattern for object identifiers. */
 export const OBJECT_UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
+/** Pattern of a token reference (ref:token:<id>). */
 export const TOKEN_REF_PATTERN = /^ref:token:([\s\S]+)$/;
 /** Members of a document object (no rev); layer, visibility, locked, sort_order may be omitted. */
 const OBJECT_KEYS = [
@@ -1201,6 +1243,7 @@ export function migrateMapDocument(
 
 export type MapDocumentErrorCode = 'not_json' | MigrationFailure | 'invalid';
 
+/** Error raised when a map document is invalid. */
 export class MapDocumentError extends Error {
   override readonly name = 'MapDocumentError';
   constructor(

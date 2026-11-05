@@ -54,8 +54,11 @@ export interface SenderStatus {
   readonly pending: number;
 }
 
+/** Minimum interval between token move actions, in milliseconds. */
 export const MOVE_INTERVAL_MS = 100;
+/** Minimum interval between token move actions in polling mode, in milliseconds. */
 export const MOVE_INTERVAL_POLL_MS = 200;
+/** Maximum number of actions per request. */
 export const MAX_ACTIONS_PER_REQUEST = 20;
 const MAX_SERVER_ERRORS = 5;
 
@@ -87,6 +90,7 @@ const realClock: SenderClock = {
   clearTimeout: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
 };
 
+/** Sends session actions in batches, with throttling of moves. */
 export class ActionSender {
   private readonly queue: Item[] = [];
   private readonly latest = new Map<string, Position>();

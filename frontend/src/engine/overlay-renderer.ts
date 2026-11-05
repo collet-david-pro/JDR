@@ -15,6 +15,7 @@ const ERASE = 0xe5484d;
 const DARK = 0x111418;
 const LIGHT = 0xffffff;
 
+/** Renders tool overlays (previews, selection, handles). */
 export class OverlayRenderer {
   readonly root = new Container();
   private readonly gfx = new Graphics();

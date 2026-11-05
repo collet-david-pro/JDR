@@ -13,6 +13,7 @@ export interface OutdoorParams {
   theme: OutdoorThemeId;
 }
 
+/** Default outdoor parameters. */
 export const OUTDOOR_DEFAULTS: Readonly<OutdoorParams> = Object.freeze({
   width: 80,
   height: 80,
@@ -24,6 +25,7 @@ export const OUTDOOR_DEFAULTS: Readonly<OutdoorParams> = Object.freeze({
   theme: 'temperate',
 });
 
+/** Outdoor presets. */
 export const OUTDOOR_PRESETS: Readonly<Record<string, Partial<OutdoorParams>>> = Object.freeze({
   forest_river: { forest: 0.8, rivers: 2 },
   crossroads: { roads: 4, forest: 0.3 },

@@ -16,6 +16,7 @@ import type { SceneEngine, SceneEngineOptions } from './SceneEngine';
 export type { SceneEngine, SceneEngineOptions, SceneEngineStats } from './SceneEngine';
 export { EngineUnsupportedError, isEngineUnsupportedError } from './errors';
 
+/** Loads the engine lazily and returns a ready SceneEngine. */
 export async function loadSceneEngine(
   host: HTMLElement,
   options?: SceneEngineOptions,

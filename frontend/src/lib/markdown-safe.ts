@@ -25,6 +25,7 @@ export type MdBlock =
   | { readonly kind: 'quote'; readonly runs: readonly MdRun[] }
   | { readonly kind: 'rule' };
 
+/** Maximum number of blocks accepted by the Markdown parser. */
 export const MAX_BLOCKS = 1000;
 
 const PUNCT = '\\`*_{}[]()#+-.!<>|~"\'&:;,/=@$%^?';
@@ -140,6 +141,7 @@ function pair(toks: readonly Tok[]): void {
   }
 }
 
+/** Parses inline Markdown into runs. */
 export function parseInline(src: string): MdRun[] {
   const toks = tokenize(src);
   pair(toks);
@@ -220,6 +222,7 @@ function heading(line: string): { level: number; text: string } | null {
   return { level, text };
 }
 
+/** Parses Markdown into a safe block tree (no raw HTML). */
 export function parseMarkdown(markdown: string | null | undefined): MdBlock[] {
   const blocks: MdBlock[] = [];
   let paragraph: string[] = [];

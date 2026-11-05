@@ -18,6 +18,7 @@ import { caveWalls } from './walls';
 export type { CaveParams } from './params';
 export { CAVE_DEFAULTS, CAVE_PRESETS, CAVE_PRESET_LABELS, validateCave } from './params';
 
+/** Version of the cave generator algorithm. */
 export const CAVE_VERSION = 1;
 
 const RULE_FILES: Readonly<Record<string, unknown>> = { rock, ice, lava };
@@ -218,6 +219,7 @@ function generate(p: CaveParams, ctx: GenContext): GenResult {
   };
 }
 
+/** Cave generator. */
 export const caveGenerator: Generator<CaveParams> = {
   id: 'cave',
   version: CAVE_VERSION,

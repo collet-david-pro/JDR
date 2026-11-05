@@ -85,6 +85,7 @@ export interface EditorNotice {
   readonly text: string;
 }
 
+/** Reactive UI state of the editor (active tool, layer, brush, view options). */
 export class EditorUiState implements EditorSettings {
   tool = $state<ToolId>('brush');
   layer = $state<TileLayerId>('ground');

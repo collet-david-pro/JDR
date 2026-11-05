@@ -10,6 +10,7 @@ import { saveErrorText } from './save-status';
 const NOTE_FIELD = /^ops\.\d+\.(?:note|patch)\.[a-z_]+$/;
 const OP_FIELD = /^ops\.\d+$/;
 
+/** Turns a server rejection into a user-facing message. */
 export function rejectionText(
   error: { readonly code: string; readonly fields?: Readonly<Record<string, string>> },
   t: Translate = defaultT,

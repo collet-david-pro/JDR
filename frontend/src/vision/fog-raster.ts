@@ -320,6 +320,7 @@ function room(
   return builder.out;
 }
 
+/** Fog rasterizers by shape. */
 export const fogRasterizers: FogRasterizers = {
   visible,
   rect,

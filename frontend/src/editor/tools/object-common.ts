@@ -31,6 +31,7 @@ export function tolerance(ctx: ToolContext): number {
   return HIT_TOLERANCE_PX * pixelSize(ctx);
 }
 
+/** Generates a new object identifier. */
 export function uid(ctx: ToolContext): string {
   return ctx.newUid?.() ?? newObjectUid();
 }
@@ -41,6 +42,7 @@ export function lockedLayer(ctx: ToolContext, layer: ObjectLayerId): ToolNotice 
   return def !== undefined && def.locked ? { code: 'layer_locked' } : null;
 }
 
+/** Builds an undoable command from operations. */
 export function command(label: string, ops: readonly MapOp[], mergeKey?: string): Command {
   // The history recomputes the inverse against the document (inverseOps is not trusted).
   return { label, ops, inverseOps: [], ...(mergeKey !== undefined ? { mergeKey } : {}) };
@@ -69,6 +71,7 @@ export class DoubleClick {
   }
 }
 
+/** Creates a wall object from points. */
 export function newWall(ctx: ToolContext, points: readonly Point[], closed: boolean): WallObject {
   const s = ctx.settings;
   return {
@@ -93,6 +96,7 @@ export function newWall(ctx: ToolContext, points: readonly Point[], closed: bool
   };
 }
 
+/** Creates a door object between two points. */
 export function newOpening(ctx: ToolContext, a: Point, b: Point): DoorObject | WindowObject {
   const base = {
     uid: uid(ctx),
@@ -165,6 +169,7 @@ export const LIGHT_PRESETS: Readonly<Record<LightPresetId, LightPreset>> = Objec
   },
 });
 
+/** Identifiers of the available light presets. */
 export const LIGHT_PRESET_IDS = Object.keys(LIGHT_PRESETS) as LightPresetId[];
 
 /** Light of a preset; `dimRadius` (drag) scales both radii, keeping the preset ratio. */

@@ -7,6 +7,7 @@ type AnyGenerator = Generator<any>;
 
 const registry = new Map<GeneratorId, Map<number, AnyGenerator>>();
 
+/** Error raised when a generation is cancelled. */
 export class GenCancelled extends Error {
   constructor() {
     super('Generation cancelled');
@@ -14,6 +15,7 @@ export class GenCancelled extends Error {
   }
 }
 
+/** Registers a generator. */
 export function registerGenerator<P>(g: Generator<P>): void {
   let versions = registry.get(g.id);
   if (versions === undefined) {
@@ -43,6 +45,7 @@ export function getGenerator(id: GeneratorId, version?: number): AnyGenerator {
   return g;
 }
 
+/** Lists the registered generators and their versions. */
 export function listGenerators(): { id: GeneratorId; versions: number[] }[] {
   return [...registry.entries()]
     .map(([id, vs]) => ({ id, versions: [...vs.keys()].sort((a, b) => a - b) }))
@@ -73,6 +76,7 @@ export function normalizeFloor(f: GenFloor): void {
   sortCells(f.decor, 'decor');
 }
 
+/** Runs a generator by identifier and version. */
 export function runGenerator(
   id: GeneratorId,
   version: number,

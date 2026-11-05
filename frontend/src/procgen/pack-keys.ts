@@ -38,6 +38,7 @@ const decor = (id: string, name: string, category: Cat, blocking = false): PackK
   layer: 'decor',
 });
 
+/** Keys of the texture pack. */
 export const PACK_KEYS: readonly PackKeyInfo[] = Object.freeze(
   [
     floor('stone', 'Pierre'),
@@ -84,6 +85,7 @@ export const PACK_KEYS: readonly PackKeyInfo[] = Object.freeze(
 
 const BY_KEY: ReadonlyMap<PackKey, PackKeyInfo> = new Map(PACK_KEYS.map((p) => [p.key, p]));
 
+/** True when the key is a known pack key. */
 export function isPackKey(key: string): boolean {
   return BY_KEY.has(key);
 }

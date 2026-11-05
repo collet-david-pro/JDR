@@ -21,9 +21,11 @@ export interface EngineBindingsOptions {
   readonly send: (actions: SessionAction[]) => Promise<boolean>;
 }
 
+/** Builds the viewer list of the game master view. */
 export const gmView = (viewers: readonly string[]) =>
   ({ mode: 'gm', viewers: [...viewers], lighting: true, fog: true, shadows: true }) as const;
 
+/** Binds the engine to the console screens (viewers, camera, visibility). */
 export function bindEngineToScreens(o: EngineBindingsOptions): void {
   // Viewers follow the assignments, the tokens and the floor.
   $effect(() => {

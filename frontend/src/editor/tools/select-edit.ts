@@ -110,6 +110,7 @@ export function snapDelta(
   return [Math.round(dx * 2) / 2, Math.round(dy * 2) / 2];
 }
 
+/** Builds the operations that move the selected objects and tokens. */
 export function moveOps(
   objects: readonly MapObject[],
   tokens: readonly PlacedToken[],
@@ -224,6 +225,7 @@ export function handlePatch(o: MapObject, handle: HandleHit, p: Point): ObjectPa
   return null;
 }
 
+/** Builds the operations that delete the selected objects and tokens. */
 export function deleteOps(objects: readonly MapObject[], tokens: readonly PlacedToken[]): MapOp[] {
   return [
     ...objects.map((o): MapOp => ({ type: 'object.remove', uid: o.uid })),

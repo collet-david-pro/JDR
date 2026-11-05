@@ -17,6 +17,7 @@ export interface Roads {
   cells: number;
 }
 
+/** Builds the roads of the village. */
 export function buildRoads(
   W: number,
   H: number,

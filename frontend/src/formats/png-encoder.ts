@@ -279,6 +279,7 @@ export interface DeflateStreamOptions {
   readonly jsSegmentBytes?: number;
 }
 
+/** Creates a deflate stream used by the PNG encoder. */
 export function createDeflateStream(
   format: DeflateFormat,
   sink: ByteSink,
@@ -294,9 +295,13 @@ export function createDeflateStream(
 /* ---- PNG -------------------------------------------------------------------------------------- */
 
 export const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+/** Maximum PNG dimension. */
 export const PNG_MAX_DIMENSION = 0x7fffffff;
+/** Size of IDAT chunks, in bytes. */
 export const IDAT_SIZE = 64 * 1024;
+/** PNG Sub filter type. */
 export const FILTER_SUB = 1;
+/** PNG Paeth filter type. */
 export const FILTER_PAETH = 4;
 
 const ascii = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0) & 0xff);
@@ -383,6 +388,7 @@ export interface PngEncoderOptions {
   readonly deflate?: DeflateStreamOptions;
 }
 
+/** Streaming PNG encoder that writes rows as they are produced. */
 export class PngEncoder {
   private readonly bpp: number;
   private prev: Uint8Array;

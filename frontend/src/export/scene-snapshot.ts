@@ -36,6 +36,7 @@ export interface SceneContentOptions {
   readonly fog: boolean;
 }
 
+/** Default content options of a scene export. */
 export const DEFAULT_SCENE_CONTENT: SceneContentOptions = Object.freeze({
   tokens: true,
   lighting: false,

@@ -44,6 +44,7 @@ export function canonicalJson(value: unknown): string {
   return enc(value, '$');
 }
 
+/** SHA-256 digest of a text, in hexadecimal. */
 export async function sha256Hex(text: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   const bytes = new Uint8Array(buf);
@@ -53,6 +54,7 @@ export async function sha256Hex(text: string): Promise<string> {
   return hex;
 }
 
+/** Fingerprint of a generation result, used to check determinism. */
 export function fingerprint(r: GenResult): Promise<string> {
   return sha256Hex(canonicalJson(r));
 }

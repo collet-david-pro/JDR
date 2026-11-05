@@ -131,4 +131,5 @@ function writeStorage(win: Window, key: string, value: string): void {
   }
 }
 
+/** Store of user preferences. */
 export const prefs = new PrefsStore();

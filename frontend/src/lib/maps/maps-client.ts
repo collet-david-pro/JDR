@@ -85,6 +85,7 @@ export function exportFileName(mapName: string, withAssets: boolean): string {
   return `${base === '' ? 'map' : base}.${withAssets ? 'zip' : 'json'}`;
 }
 
+/** Client for the map endpoints. */
 export class MapsClient {
   constructor(
     private readonly api: ApiClient,

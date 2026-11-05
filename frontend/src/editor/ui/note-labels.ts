@@ -2,10 +2,14 @@
 import type { NoteAudience, PinIcon, SecretKind } from '../contracts-notes';
 import { t } from '../../lib/i18n';
 
+/** Pin icons in display order. */
 export const PIN_ICONS: readonly PinIcon[] = ['place', 'danger', 'treasure', 'npc', 'info'];
+/** Secret kinds in display order. */
 export const SECRET_KIND_LIST: readonly SecretKind[] = ['passage', 'room', 'object'];
+/** Reveal effects in display order. */
 export const REVEAL_EFFECTS: readonly ('pulse' | 'none')[] = ['pulse', 'none'];
 
+/** Label of a pin icon. */
 export function pinIconLabel(icon: PinIcon): string {
   switch (icon) {
     case 'place':
@@ -21,6 +25,7 @@ export function pinIconLabel(icon: PinIcon): string {
   }
 }
 
+/** Label of a secret kind. */
 export function secretKindLabel(kind: SecretKind): string {
   switch (kind) {
     case 'passage':
@@ -32,10 +37,12 @@ export function secretKindLabel(kind: SecretKind): string {
   }
 }
 
+/** Label of a reveal effect. */
 export function revealEffectLabel(effect: 'pulse' | 'none'): string {
   return effect === 'pulse' ? t('editor.notes.reveal.pulse') : t('editor.notes.reveal.none');
 }
 
+/** Short badge text of a note audience. */
 export function audienceBadge(audience: NoteAudience): string {
   switch (audience) {
     case 'gm':

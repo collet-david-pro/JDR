@@ -10,6 +10,7 @@ import type {
 import type { FogShape, LightPresetId } from '../tools/types';
 import { t } from '../../lib/i18n';
 
+/** Wall kinds in display order. */
 export const WALL_KINDS: readonly WallKind[] = [
   'stone',
   'brick',
@@ -18,11 +19,16 @@ export const WALL_KINDS: readonly WallKind[] = [
   'natural',
   'invisible',
 ];
+/** Window kinds in display order. */
 export const WINDOW_KINDS: readonly WindowProps['kind'][] = ['glass', 'bars', 'opening'];
+/** Fog shapes in display order. */
 export const FOG_SHAPES: readonly FogShape[] = ['brush', 'rect', 'room'];
+/** Weather types in display order. */
 export const WEATHER_TYPES: readonly WeatherType[] = ['none', 'rain', 'snow', 'fog', 'storm'];
+/** Object visibilities in display order. */
 export const VISIBILITIES: readonly ObjectVisibility[] = ['all', 'gm', 'hidden_until_revealed'];
 
+/** Label of a wall kind. */
 export function wallKindLabel(kind: WallKind): string {
   switch (kind) {
     case 'stone':
@@ -40,6 +46,7 @@ export function wallKindLabel(kind: WallKind): string {
   }
 }
 
+/** Label of a window kind. */
 export function windowKindLabel(kind: WindowProps['kind']): string {
   switch (kind) {
     case 'glass':
@@ -51,6 +58,7 @@ export function windowKindLabel(kind: WindowProps['kind']): string {
   }
 }
 
+/** Label of a light preset. */
 export function lightPresetLabel(id: LightPresetId): string {
   switch (id) {
     case 'torch':
@@ -66,6 +74,7 @@ export function lightPresetLabel(id: LightPresetId): string {
   }
 }
 
+/** Label of a portal icon. */
 export function portalIconLabel(icon: PortalIcon): string {
   switch (icon) {
     case 'portal':
@@ -81,6 +90,7 @@ export function portalIconLabel(icon: PortalIcon): string {
   }
 }
 
+/** Label of a fog shape. */
 export function fogShapeLabel(shape: FogShape): string {
   switch (shape) {
     case 'brush':
@@ -92,6 +102,7 @@ export function fogShapeLabel(shape: FogShape): string {
   }
 }
 
+/** Label of an object type. */
 export function objectTypeLabel(type: MapObjectType | 'token'): string {
   switch (type) {
     case 'wall':
@@ -119,6 +130,7 @@ export function objectTypeLabel(type: MapObjectType | 'token'): string {
   }
 }
 
+/** Label of an object visibility. */
 export function visibilityLabel(v: ObjectVisibility): string {
   switch (v) {
     case 'all':
@@ -130,6 +142,7 @@ export function visibilityLabel(v: ObjectVisibility): string {
   }
 }
 
+/** Label of a weather type. */
 export function weatherLabel(type: WeatherType): string {
   switch (type) {
     case 'none':
@@ -145,6 +158,7 @@ export function weatherLabel(type: WeatherType): string {
   }
 }
 
+/** Label of a door swing side. */
 export function swingLabel(swing: 'a' | 'b' | 'slide'): string {
   switch (swing) {
     case 'a':
@@ -156,6 +170,7 @@ export function swingLabel(swing: 'a' | 'b' | 'slide'): string {
   }
 }
 
+/** Label of a light flicker type. */
 export function flickerLabel(type: 'none' | 'torch' | 'pulse'): string {
   switch (type) {
     case 'none':

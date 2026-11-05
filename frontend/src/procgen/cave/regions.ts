@@ -11,6 +11,7 @@ const NB4: readonly (readonly [number, number])[] = [
   [-1, 0],
 ];
 
+/** Splits the cave into regions. */
 export function caveRegions(
   floor: BitGrid,
   kinds: readonly { kind: string; weight: number }[],

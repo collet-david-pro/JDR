@@ -10,9 +10,13 @@ import { dashSegments } from './overlay-geometry';
 import type { Graphics } from './pixi';
 import { lightPosition, objectHandles, tokenBox } from './scene/object-geometry';
 
+/** Overlay accent color. */
 export const OVERLAY_ACCENT = 0x2f80ed;
+/** Overlay color for erase previews. */
 export const OVERLAY_ERASE = 0xe5484d;
+/** Overlay dark color. */
 export const OVERLAY_DARK = 0x111418;
+/** Overlay light color. */
 export const OVERLAY_LIGHT = 0xffffff;
 /** Handle size, screen px. */
 export const HANDLE_PX = 8;
@@ -24,6 +28,7 @@ export type SceneOverlay = Extract<
   { kind: 'objects' | 'polyline' | 'segment' | 'light' | 'snap' | 'area' }
 >;
 
+/** Type guard for scene overlays. */
 export function isSceneOverlay(o: Overlay): o is SceneOverlay {
   return (
     o.kind === 'objects' ||
@@ -112,6 +117,7 @@ function lightRings(
   dashedCircle(g, c.x, c.y, d, OVERLAY_ACCENT);
 }
 
+/** Draws a scene overlay. */
 export function drawSceneOverlay(
   g: Graphics,
   o: SceneOverlay,

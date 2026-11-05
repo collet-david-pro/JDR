@@ -19,6 +19,7 @@ export interface RegisterValues {
   readonly invitationCode: string | null;
 }
 
+/** Validates the registration form. */
 export function validateRegister(values: RegisterValues): FieldErrors {
   return collectErrors({
     email: checkEmail(values.email),
@@ -29,6 +30,7 @@ export function validateRegister(values: RegisterValues): FieldErrors {
   });
 }
 
+/** Validates a new password and its confirmation. */
 export function validateNewPassword(password: string, confirmation: string): FieldErrors {
   return collectErrors({
     password: checkPassword(password),

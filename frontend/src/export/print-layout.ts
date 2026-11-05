@@ -18,6 +18,7 @@ export const PAPERS: Readonly<Record<PaperId, { readonly w: number; readonly h: 
     letter: { w: 215.9, h: 279.4 },
   });
 
+/** Supported paper sizes. */
 export const PAPER_IDS: readonly PaperId[] = ['a4', 'a3', 'letter'];
 
 export interface PrintOptions {
@@ -32,6 +33,7 @@ export interface PrintOptions {
   readonly cropMarks: boolean;
 }
 
+/** Default print options. */
 export const DEFAULT_PRINT: PrintOptions = Object.freeze({
   mmPerCell: 25,
   paging: true,
@@ -42,6 +44,7 @@ export const DEFAULT_PRINT: PrintOptions = Object.freeze({
   cropMarks: true,
 });
 
+/** Limits of print options. */
 export const PRINT_LIMITS = Object.freeze({
   minMmPerCell: 1,
   maxMmPerCell: 500,

@@ -8,8 +8,11 @@
  */
 
 export const FPS_WINDOW_MS = 500;
+/** Gap after which the FPS meter considers the engine idle. */
 export const FPS_IDLE_GAP_MS = 250;
+/** FPS threshold below which performance mode is considered. */
 export const PERF_MODE_FPS = 30;
+/** Duration of low FPS before performance mode is enabled. */
 export const PERF_MODE_AFTER_MS = 3000;
 
 export interface FpsSample {
@@ -18,6 +21,7 @@ export interface FpsSample {
   readonly durationMs: number;
 }
 
+/** Measures frames per second and signals when to switch to performance mode. */
 export class FpsMeter {
   private windowStart = -1;
   private last = -1;

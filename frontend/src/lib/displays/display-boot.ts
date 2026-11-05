@@ -11,6 +11,7 @@ export interface DisplayBootOptions extends Omit<DisplayApiOptions, 'onUnpaired'
   readonly onProblem?: (error: unknown) => void;
 }
 
+/** Creates the display run and its API from boot options. */
 export function createDisplayRun(o: DisplayBootOptions): { run: DisplayRun; api: DisplayApi } {
   let run: DisplayRun | null = null;
   const api = createDisplayApi({ ...o, onUnpaired: () => run?.markUnpaired() });

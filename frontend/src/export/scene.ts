@@ -56,6 +56,7 @@ export interface ExportOptions {
   readonly scene?: SceneContentOptions;
 }
 
+/** Tile layer identifiers, bottom to top. */
 export const TILE_LAYERS: readonly TileLayerId[] = ['ground', 'terrain', 'decor'];
 
 function chunkRange(extent: CellRect): { cx0: number; cy0: number; cx1: number; cy1: number } {

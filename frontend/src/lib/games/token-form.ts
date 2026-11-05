@@ -8,14 +8,18 @@ import type { FieldErrors } from '../validation';
 import { TOKEN_KINDS, type Token, type TokenInput, type TokenKind } from '../types';
 import { numberToInput, parseDecimal, roundTo } from './units';
 
+/** Maximum length of a token name. */
 export const TOKEN_NAME_MAX = 80;
 /** Size in cells (DECIMAL(4,2)). */
 export const TOKEN_SIZE_MIN = 0.25;
+/** Maximum token size, in cells. */
 export const TOKEN_SIZE_MAX = 20;
 /** Vision and light distances, in cells. */
 export const DISTANCE_MAX = 1000;
 
+/** Default vision settings of a token. */
 export const DEFAULT_VISION = { enabled: true, range: 12, dark: 0 } as const;
+/** Default light settings of a token. */
 export const DEFAULT_LIGHT = {
   radius: 4,
   dim_radius: 8,
@@ -23,6 +27,7 @@ export const DEFAULT_LIGHT = {
   intensity: 0.8,
   flicker: false,
 } as const;
+/** Default token ring color. */
 export const DEFAULT_RING_COLOR = '#2f5bd3';
 
 const COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
@@ -50,6 +55,7 @@ export interface TokenDraft {
   ring_color: string;
 }
 
+/** Type guard for token kinds. */
 export function isTokenKind(value: string): value is TokenKind {
   return (TOKEN_KINDS as readonly string[]).includes(value);
 }
