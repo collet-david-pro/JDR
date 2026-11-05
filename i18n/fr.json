@@ -701,7 +701,9 @@
       },
       "hints": {
         "realtime_max_waiting": "Nombre maximal de connexions qui gardent un processus PHP (flux en direct et attente longue). Au-delà, les appareils interrogent le serveur toutes les 2 s. Augmentez-le si votre hébergeur offre beaucoup de processus PHP."
-      }
+      },
+      "feedback_repo_url": "Dépôt GitHub pour les retours",
+      "feedback_repo_url_hint": "Adresse du type https://github.com/propriétaire/dépôt. Les liens « Signaler un problème » et « Proposer une idée » y ouvrent un formulaire d'issue. Laissez vide pour masquer ces liens."
     },
     "smtp": {
       "title": "E-mail (SMTP)",
@@ -2793,6 +2795,15 @@
       "pointer_trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
       "pointer_middle": "Bouton du milieu : déplacer la vue.",
       "typing": "Sur un écran de projection, la touche M ouvre le menu de l'écran."
+    },
+    "feedback": {
+      "title": "Donner son avis",
+      "intro": "Une anomalie, une idée ? Les retours se font sur GitHub : un compte GitHub (gratuit) est nécessaire. Le formulaire s'ouvre dans un nouvel onglet, déjà rempli avec la version du site, votre navigateur et la page où vous étiez (sans identifiant ni donnée personnelle).",
+      "disabled": "Le lien de retour d'expérience est désactivé sur ce site."
     }
+  },
+  "feedback": {
+    "bug": "Signaler un problème",
+    "idea": "Proposer une idée"
   }
 }

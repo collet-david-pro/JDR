@@ -87,7 +87,7 @@ final class SettingsService
         $values = [];
         foreach ($input as $key => $_) {
             $key = (string) $key;
-            if ($key === 'smtp' || $key === 'site_name' || $key === 'base_url' || $key === 'default_locale'
+            if ($key === 'smtp' || $key === 'site_name' || $key === 'base_url' || $key === 'default_locale' || $key === 'feedback_repo_url'
                 || $key === 'registration_mode' || isset(self::INTS[$key]) || in_array($key, self::BOOLS, true)) {
                 continue;
             }
@@ -103,6 +103,14 @@ final class SettingsService
                 $v->error('base_url', 'invalid');
             }
             $values['base_url'] = $url === null ? '' : rtrim($url, '/');
+        }
+        if ($v->has('feedback_repo_url')) {
+            $repo = $v->string('feedback_repo_url', false, 0, 200);
+            if ($repo !== null && (preg_match(Settings::FEEDBACK_REPO_PATTERN, $repo) !== 1
+                || str_ends_with($repo, '/.') || str_ends_with($repo, '/..'))) {
+                $v->error('feedback_repo_url', 'invalid');
+            }
+            $values['feedback_repo_url'] = $repo ?? '';
         }
         if ($v->has('default_locale')) {
             $values['default_locale'] = $v->in('default_locale', self::LOCALES);

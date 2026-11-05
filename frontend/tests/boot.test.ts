@@ -20,6 +20,7 @@ describe('parseBootConfig', () => {
       basePath: '/base',
       csrf: null,
       maintenance: false,
+      feedbackUrl: '',
     });
   });
 

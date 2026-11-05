@@ -1,0 +1,59 @@
+name: Signaler un problème
+description: Quelque chose ne marche pas comme prévu.
+title: "[Problème] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler un problème. N'écrivez ici ni mot de passe, ni lien d'invitation, ni code de séance, ni donnée personnelle.
+  - type: input
+    id: version
+    attributes:
+      label: Version du site
+      description: Pré-remplie quand vous venez du site. Sinon, elle figure dans Administration > Tableau de bord.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Navigateur et système
+      description: Par exemple « Firefox · Windows ».
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Page concernée
+      description: Pré-remplie sans identifiant, par exemple « /games/:id/maps ».
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du problème
+      description: Que se passe-t-il ?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+      placeholder: |
+        1. Aller sur…
+        2. Cliquer sur…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat attendu
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Résultat obtenu
+      description: Vous pouvez ajouter une capture d'écran (sans information personnelle).
+    validations:
+      required: true

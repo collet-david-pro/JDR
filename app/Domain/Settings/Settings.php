@@ -17,10 +17,17 @@ use JDR\Core\Db;
  */
 final class Settings
 {
+    public const DEFAULT_FEEDBACK_REPO = 'https://github.com/collet-david-pro/JDR';
+
+    /** Accepted shape of feedback_repo_url (or empty). */
+    public const FEEDBACK_REPO_PATTERN = '#^https://github\.com/[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$#';
+
     public const DEFAULTS = [
         'site_name' => 'JDR',
         'base_url' => '',
         'default_locale' => 'fr',
+        /** GitHub repository receiving feedback issues (https://github.com/<owner>/<repo>); '' hides the link. */
+        'feedback_repo_url' => self::DEFAULT_FEEDBACK_REPO,
         'registration_mode' => 'open',
         'default_quota_bytes' => 524288000,
         'max_upload_bytes' => 10485760,

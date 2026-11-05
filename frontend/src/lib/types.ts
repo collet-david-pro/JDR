@@ -109,6 +109,8 @@ export interface SiteSettings {
   readonly site_name: string;
   readonly base_url: string;
   readonly default_locale: string;
+  /** GitHub repository for feedback issues; "" hides the links. */
+  readonly feedback_repo_url: string;
   readonly registration_mode: RegistrationMode;
   readonly default_quota_bytes: number;
   readonly max_upload_bytes: number;

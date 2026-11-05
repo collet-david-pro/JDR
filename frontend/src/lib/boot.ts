@@ -9,6 +9,8 @@
  * In development (Vite dev server, no PHP shell) the defaults below are used.
  */
 
+import { validRepoUrl } from './feedback';
+
 export type RoutingMode = 'rewrite' | 'query';
 
 export interface BootConfig {
@@ -21,6 +23,8 @@ export interface BootConfig {
   readonly csrf: string | null;
   /** Maintenance flag set by an administrator (schema up to date): only administrators use the site. */
   readonly maintenance: boolean;
+  /** GitHub repository receiving feedback issues (https://github.com/<owner>/<repo>), "" = links hidden. */
+  readonly feedbackUrl: string;
 }
 
 /** Id of the DOM element that holds the boot configuration. */
@@ -34,6 +38,7 @@ export const DEV_BOOT_CONFIG: BootConfig = Object.freeze({
   basePath: '',
   csrf: null,
   maintenance: false,
+  feedbackUrl: 'https://github.com/collet-david-pro/JDR',
 });
 
 /** Error raised when the boot configuration is missing or invalid. */
@@ -74,7 +79,10 @@ export function parseBootConfig(text: string): BootConfig {
 
   const maintenance = obj['maintenance'] === true;
 
-  return Object.freeze({ version, apiBase, routingMode, basePath, csrf, maintenance });
+  const feedbackRaw = obj['feedback_url'];
+  const feedbackUrl = typeof feedbackRaw === 'string' ? (validRepoUrl(feedbackRaw) ?? '') : '';
+
+  return Object.freeze({ version, apiBase, routingMode, basePath, csrf, maintenance, feedbackUrl });
 }
 
 function normalizeBasePath(value: unknown): string {

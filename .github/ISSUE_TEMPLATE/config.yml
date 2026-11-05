@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/collet-david-pro/JDR/tree/main/docs
+    about: Le tutoriel, le guide d'installation et le diagnostic répondent à beaucoup de questions.

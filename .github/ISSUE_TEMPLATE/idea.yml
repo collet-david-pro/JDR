@@ -1,0 +1,44 @@
+name: Proposer une idée
+description: Une amélioration ou une nouveauté qui vous serait utile.
+title: "[Idée] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci pour votre idée. N'écrivez ici aucune donnée personnelle.
+  - type: input
+    id: version
+    attributes:
+      label: Version du site
+      description: Pré-remplie quand vous venez du site.
+    validations:
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: Navigateur et système
+      description: Utile si l'idée concerne l'affichage ou un appareil précis.
+    validations:
+      required: false
+  - type: input
+    id: page
+    attributes:
+      label: Page concernée
+      description: Pré-remplie sans identifiant, par exemple « /library ».
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: Votre idée
+      description: Décrivez ce que vous aimeriez pouvoir faire.
+    validations:
+      required: true
+  - type: textarea
+    id: usage
+    attributes:
+      label: Pourquoi c'est utile
+      description: Dans quelle situation de jeu en avez-vous besoin ?
+    validations:
+      required: false

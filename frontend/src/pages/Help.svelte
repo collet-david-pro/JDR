@@ -14,7 +14,8 @@
   import { shortcutRows } from '../lib/help/shortcuts';
   import { t } from '../lib/i18n';
   import type { PageProps } from '../lib/page';
-  import { href } from '../lib/services';
+  import FeedbackLinks from '../components/FeedbackLinks.svelte';
+  import { href, services } from '../lib/services';
 
   let { query }: PageProps = $props();
 
@@ -265,6 +266,16 @@
             <li>{t('help.shortcuts.pointer_middle')}</li>
             <li>{t('help.shortcuts.typing')}</li>
           </ul>
+        </section>
+
+        <section id="avis" aria-labelledby="avis-heading">
+          <h2 id="avis-heading" tabindex="-1">{t('help.feedback.title')}</h2>
+          {#if services().boot.feedbackUrl === ''}
+            <p class="muted">{t('help.feedback.disabled')}</p>
+          {:else}
+            <p>{t('help.feedback.intro')}</p>
+            <p><FeedbackLinks /></p>
+          {/if}
         </section>
       {/if}
     </div>

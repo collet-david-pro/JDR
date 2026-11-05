@@ -9,6 +9,7 @@
   import { RouteView } from './lib/route-view.svelte';
   import { href, services } from './lib/services';
   import Forbidden from './pages/Forbidden.svelte';
+  import FeedbackLinks from './components/FeedbackLinks.svelte';
   import NotFound from './pages/NotFound.svelte';
   import { appStatus } from './stores/app.svelte';
 
@@ -136,6 +137,7 @@
 
 <footer class="site-footer">
   <a href={href('/aide')} data-testid="footer-help">{t('help.footer.link')}</a>
+  <FeedbackLinks />
 </footer>
 
 <Toasts />

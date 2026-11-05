@@ -211,6 +211,7 @@ final class AppTest extends TestCase
             'base_path' => '/jdr',
             'csrf' => null,
             'maintenance' => false,
+            'feedback_url' => 'https://github.com/collet-david-pro/JDR',
         ], json_decode($boot[1], true));
         self::assertSame('max-age=15552000', $response->header('Strict-Transport-Security'));
     }

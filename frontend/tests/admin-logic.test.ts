@@ -48,6 +48,7 @@ const settings: SiteSettings = {
   site_name: 'JDR',
   base_url: 'https://jdr.example.test',
   default_locale: 'fr',
+  feedback_repo_url: 'https://github.com/collet-david-pro/JDR',
   registration_mode: 'open',
   default_quota_bytes: 500 * MIB,
   max_upload_bytes: 10 * MIB,
@@ -110,8 +111,10 @@ describe('settings form', () => {
     form.values['smtp.host'] = 'smtp.example.test';
     form.values['smtp.port'] = '70000';
     form.values['smtp.from_email'] = 'nope';
+    form.values['feedback_repo_url'] = 'https://example.org/a/b';
     expect(validateSettings(form)).toEqual({
       base_url: 'invalid',
+      feedback_repo_url: 'invalid',
       max_frames: 'invalid',
       default_quota_bytes: 'required',
       'smtp.port': 'invalid',

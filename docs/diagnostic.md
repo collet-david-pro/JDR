@@ -94,6 +94,18 @@ La ligne « Connexions en attente (occupées / plafond) » du diagnostic montre 
 
 **Quand l'augmenter ?** Si votre hébergeur offre beaucoup de processus PHP et que vous avez plusieurs séances en parallèle. **Quand le garder bas ?** Sur un petit hébergement : mieux vaut une interrogation un peu moins fluide qu'un site qui ne répond plus.
 
+## Retours des utilisateurs (formulaires GitHub)
+
+Le pied de page et la section « Donner son avis » de l'aide proposent deux liens : **Signaler un problème** et **Proposer une idée**. Ils ouvrent, dans un nouvel onglet, un formulaire d'issue GitHub (un compte GitHub est nécessaire) déjà rempli avec la version du site, le navigateur et le motif de la page (par exemple `/games/:id/maps`), sans identifiant, code de séance, jeton ni nom de domaine.
+
+Le dépôt visé se règle dans **Administration > Réglages**, section « Général » (`feedback_repo_url`) :
+
+- par défaut : `https://github.com/collet-david-pro/JDR` ;
+- pour un fork, indiquez l'adresse de votre dépôt, strictement de la forme `https://github.com/propriétaire/dépôt` (sinon le réglage est refusé) ;
+- champ vide : les liens sont masqués.
+
+Les formulaires sont dans `.github/ISSUE_TEMPLATE/` du dépôt ; un fork doit les conserver pour que le pré-remplissage fonctionne.
+
 ## Problèmes courants
 
 | Symptôme | Cause probable et solution |

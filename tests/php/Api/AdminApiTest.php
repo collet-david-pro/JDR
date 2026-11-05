@@ -167,6 +167,7 @@ final class AdminApiTest extends ApiTestCase
             'site_name' => 'JDR',
             'base_url' => '',
             'default_locale' => 'fr',
+            'feedback_repo_url' => 'https://github.com/collet-david-pro/JDR',
             'registration_mode' => 'open',
             'default_quota_bytes' => 524288000,
             'max_upload_bytes' => 10485760,
@@ -225,6 +226,24 @@ final class AdminApiTest extends ApiTestCase
         self::assertStringNotContainsString('Smtp-Secret-Value', (string) $audit);
         // Wrapped form {settings: {...}} is accepted too.
         self::assertSame('Wrapped', $admin->patch('/admin/settings', ['settings' => ['site_name' => 'Wrapped']])->payload()['data']['settings']['site_name']);
+    }
+
+    public function testFeedbackRepoUrlValidation(): void
+    {
+        $this->createUser('Admin', 'admin');
+        $admin = $this->client();
+        $admin->login('Admin', self::PASSWORD);
+        foreach (['http://github.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b/issues',
+            'https://gitlab.com/a/b', 'https://github.com/a/b?x=1', 'https://github.com/a/../b', 'javascript:alert(1)', 'https://github.com.evil.org/a/b'] as $bad) {
+            $res = $admin->patch('/admin/settings', ['feedback_repo_url' => $bad]);
+            self::assertSame(422, $res->status(), $bad);
+            self::assertSame('invalid', $res->payload()['error']['fields']['feedback_repo_url'], $bad);
+        }
+        $ok = $admin->patch('/admin/settings', ['feedback_repo_url' => 'https://github.com/my-fork/JDR.v2']);
+        self::assertSame('https://github.com/my-fork/JDR.v2', $ok->payload()['data']['settings']['feedback_repo_url']);
+        $empty = $admin->patch('/admin/settings', ['feedback_repo_url' => '']);
+        self::assertSame(200, $empty->status());
+        self::assertSame('', $empty->payload()['data']['settings']['feedback_repo_url']);
     }
 
     public function testSmtpTestAndForgotByEmail(): void

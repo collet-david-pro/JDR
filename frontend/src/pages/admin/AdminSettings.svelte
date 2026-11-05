@@ -98,6 +98,14 @@
         bind:value={values.values['default_locale']}
         options={locales}
       />
+      <TextField
+        label={t('admin.settings.feedback_repo_url')}
+        name="feedback_repo_url"
+        type="url"
+        hint={t('admin.settings.feedback_repo_url_hint')}
+        bind:value={values.values['feedback_repo_url']}
+        error={form.message('feedback_repo_url')}
+      />
       <SelectField
         label={t('admin.settings.registration_mode')}
         name="registration_mode"

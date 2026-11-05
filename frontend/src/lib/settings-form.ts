@@ -6,10 +6,17 @@
 
 import { bytesToMbInput, mbInputToBytes } from './format';
 import type { SiteSettings, SmtpSettings } from './types';
+import { validRepoUrl } from './feedback';
 import { checkEmail, collectErrors, type FieldErrors } from './validation';
 
 /** Text keys of the settings form. */
-export const TEXT_KEYS = ['site_name', 'base_url', 'default_locale', 'registration_mode'] as const;
+export const TEXT_KEYS = [
+  'site_name',
+  'base_url',
+  'default_locale',
+  'registration_mode',
+  'feedback_repo_url',
+] as const;
 /** Settings expressed in megabytes in the form. */
 export const MB_KEYS = ['default_quota_bytes', 'max_upload_bytes'] as const;
 /** Integer keys of the settings form. */
@@ -81,6 +88,11 @@ export function validateSettings(form: SettingsFormValues): FieldErrors {
   const checks: Record<string, string | null> = {
     site_name: (v['site_name'] ?? '').trim() === '' ? 'required' : null,
     base_url: /^https?:\/\/\S+$/.test((v['base_url'] ?? '').trim()) ? null : 'invalid',
+    feedback_repo_url:
+      (v['feedback_repo_url'] ?? '').trim() === '' ||
+      validRepoUrl(v['feedback_repo_url'] ?? '') !== null
+        ? null
+        : 'invalid',
   };
   for (const key of MB_KEYS) {
     const bytes = mbInputToBytes(v[key] ?? '');

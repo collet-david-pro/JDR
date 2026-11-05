@@ -364,7 +364,19 @@ final class App
             $this->config->routingMode(),
             $nonce,
             null,
+            false,
+            $this->feedbackUrl(),
         );
+    }
+
+    /** Feedback repository address for the boot data; '' (link hidden) when cleared, the official repository when unreadable. */
+    private function feedbackUrl(): string
+    {
+        try {
+            return $this->container->get(Settings::class)->string('feedback_repo_url');
+        } catch (\Throwable) {
+            return Settings::DEFAULT_FEEDBACK_REPO;
+        }
     }
 
     private function finalize(Response $response, Request $request, string $nonce): Response
