@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import ConfirmDialog from '../ConfirmDialog.svelte';
   import TokenList from './TokenList.svelte';
   import { DEFAULT_SETTINGS } from '../../lib/games/game-form';
@@ -61,7 +62,10 @@
     <header class="head">
       {#if game.cover_url}<img class="cover" src={game.cover_url} alt="" />{/if}
       <div>
-        <h1>{game.name}</h1>
+        <div class="title-row">
+          <h1>{game.name}</h1>
+          <HelpLink anchor="joueur-parties-et-seances" />
+        </div>
         <p class="muted">{t('games.card.gm', { name: game.gm.username })}</p>
       </div>
     </header>

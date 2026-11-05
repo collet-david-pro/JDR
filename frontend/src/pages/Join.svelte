@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../components/HelpLink.svelte';
   import { onMount } from 'svelte';
   import { errorMessage } from '../lib/errors';
   import { t } from '../lib/i18n';
@@ -36,7 +37,10 @@
 </script>
 
 <section class="card join" aria-labelledby="join-title">
-  <h1 id="join-title">{t('sessions.join.title')}</h1>
+  <div class="title-row">
+    <h1 id="join-title">{t('sessions.join.title')}</h1>
+    <HelpLink anchor="joueur-rejoindre-une-seance" />
+  </div>
   <form class="stack" novalidate onsubmit={submit}>
     <label class="field">
       <span>{t('dashboard.join.label')}</span>

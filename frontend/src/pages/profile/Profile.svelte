@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../../components/HelpLink.svelte';
   import ThemeControls from '../../components/ThemeControls.svelte';
   import { t } from '../../lib/i18n';
   import type { PageProps } from '../../lib/page';
@@ -11,7 +12,10 @@
 </script>
 
 <div class="profile stack">
-  <h1>{t('pages.profile.title')}</h1>
+  <div class="title-row">
+    <h1>{t('pages.profile.title')}</h1>
+    <HelpLink anchor="joueur-profil-et-apparence" />
+  </div>
   <InfoSection />
   <section class="card" aria-labelledby="profile-theme">
     <h2 id="profile-theme">{t('profile.theme.title')}</h2>

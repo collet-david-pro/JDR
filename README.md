@@ -123,6 +123,10 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](CHANGELOG.md).
 - Console d'administration : comptes, quotas, invitations, réglages, e-mail de test, diagnostic, intégrité, sauvegarde et restauration, journal d'audit, migrations, mise à jour.
 - Interface en français, thème clair, sombre ou automatique, trois styles (moderne, fantasy, science-fiction).
 
+### Aide intégrée
+
+Une page d'aide publique (`/aide`, lien « Aide » dans l'en-tête et le pied de page) décrit toutes les fonctionnalités par public : joueur, MJ, écran IRL et administrateur. Elle a une recherche, les raccourcis clavier, des captures d'écran et des liens « ? » dans les écrans clés. Les textes sont des fichiers Markdown dans `frontend/src/help/`.
+
 ## Démarrage rapide
 
 1. Téléchargez `jdr-v0.3.5-full.zip` depuis la [page des releases](https://github.com/collet-david-pro/JDR/releases/tag/v0.3.5) et décompressez-le.

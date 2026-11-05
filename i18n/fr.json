@@ -184,6 +184,9 @@
     },
     "reset": {
       "title": "Nouveau mot de passe"
+    },
+    "help": {
+      "title": "Aide"
     }
   },
   "health": {
@@ -482,7 +485,8 @@
     "profile": "Profil",
     "admin": "Administration",
     "theme": "Thème",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "help": "Aide"
   },
   "auth": {
     "back_to_login": "Retour à la connexion",
@@ -2736,5 +2740,59 @@
     "confirm_kick_title": "Expulser {name} ?",
     "confirm_kick_text": "Le joueur sera retiré de la séance.",
     "display_add": "Appairer un écran"
+  },
+  "help": {
+    "title": "Aide",
+    "intro": "Tout ce que l'on peut faire sur le site, expliqué pas à pas. Choisissez votre rôle dans le sommaire, ou cherchez un mot.",
+    "permalink": "Lien vers la section « {title} »",
+    "link": {
+      "label": "Aide sur cette page"
+    },
+    "footer": {
+      "link": "Aide"
+    },
+    "search": {
+      "label": "Rechercher dans l'aide",
+      "placeholder": "Un mot, une action… (par exemple « brouillard »)",
+      "count": {
+        "one": "{count} section trouvée.",
+        "other": "{count} sections trouvées."
+      },
+      "none": "Aucun résultat.",
+      "none_detail": "Aucune section ne contient tous ces mots. Essayez un mot plus court ou un synonyme.",
+      "results": "Résultats de la recherche"
+    },
+    "toc": {
+      "title": "Sommaire",
+      "label": "Sommaire de l'aide"
+    },
+    "publics": {
+      "joueur": {
+        "title": "Joueur",
+        "intro": "Vous jouez dans une partie dirigée par un MJ : compte, séance, déplacements, notes."
+      },
+      "mj": {
+        "title": "MJ (maître du jeu)",
+        "intro": "Vous préparez et dirigez les parties : maps, tokens, séances, brouillard, notes secrètes."
+      },
+      "irl": {
+        "title": "Écran IRL (projection)",
+        "intro": "Une tablette ou une télévision posée à plat montre la map à l'échelle réelle pour y poser de vraies figurines."
+      },
+      "admin": {
+        "title": "Administrateur",
+        "intro": "Vous gérez le site : comptes, réglages, sauvegardes, mises à jour."
+      }
+    },
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "intro": "Ces raccourcis fonctionnent dans l'éditeur de map et, pour la palette de commandes, dans la console du MJ. Ils sont inactifs pendant la saisie dans un champ.",
+      "keys": "Touches",
+      "action": "Action",
+      "pointer_wheel": "Molette : zoom. Maj + molette : défilement horizontal.",
+      "pointer_trackpad": "Trackpad : glisser à deux doigts pour déplacer la vue, pincer pour zoomer.",
+      "pointer_middle": "Bouton du milieu : déplacer la vue.",
+      "typing": "Sur un écran de projection, la touche M ouvre le menu de l'écran."
+    }
   }
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import PauseScreenDialog from './PauseScreenDialog.svelte';
   import ConfirmDialog from '../ConfirmDialog.svelte';
   import { copyText } from '../../lib/clipboard';
@@ -72,6 +73,7 @@
         >{t('sessions.console.back')}</a
       >
       <h1>{session.name}</h1>
+      <HelpLink anchor="mj-console-du-mj" />
       <span class="badge" data-testid="session-state" data-state={session.state}
         >{sessionStateLabel(session.state)}</span
       >

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import { tick } from 'svelte';
   import Button from '../Button.svelte';
   import MapsTab from '../maps/MapsTab.svelte';
@@ -34,6 +35,15 @@
   const tabs = $derived(tabsForRole(role) ?? []);
   // svelte-ignore state_referenced_locally
   let current = $state<GameTab>(initialTab(model.role, requestedTab) ?? 'maps');
+  /** Help section of the current tab (P13-2). */
+  const HELP_ANCHORS: Readonly<Record<GameTab, string>> = {
+    maps: 'mj-creer-une-map',
+    tokens: 'mj-creer-des-tokens',
+    players: 'mj-gerer-les-joueurs',
+    sessions: 'mj-lancer-une-seance',
+    settings: 'mj-reglages-de-la-partie',
+  };
+  const helpAnchor = $derived(HELP_ANCHORS[current]);
   let restoring = $state(false);
   const listFailure = $derived(model.listError === null ? null : describeError(model.listError, t));
 
@@ -68,7 +78,10 @@
   <div class="game">
     <header class="head">
       <div class="title">
-        <h1>{game.name}</h1>
+        <div class="title-row">
+          <h1>{game.name}</h1>
+          <HelpLink anchor={helpAnchor} />
+        </div>
         <p class="muted small">
           {t('games.card.gm', { name: game.gm.username })}
           {#if role !== 'gm'}<span class="badge">{roleLabel(role)}</span>{/if}

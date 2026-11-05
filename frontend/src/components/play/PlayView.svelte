@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import { cameraText } from '../../lib/sessions/play/camera';
   import { onMount, untrack } from 'svelte';
   import NetworkIndicator from './NetworkIndicator.svelte';
@@ -215,6 +216,7 @@
   <div class="top">
     <header class="bar">
       <h1 class="name">{snap?.session.name ?? ''}</h1>
+      <HelpLink anchor="joueur-jouer-une-seance" />
       <NetworkIndicator />
       <label class="follow">
         <input

@@ -55,6 +55,12 @@
   {/if}
 
   <div class="tools">
+    <a
+      class="button button-ghost"
+      href={href('/aide')}
+      aria-current={path === '/aide' ? 'page' : undefined}
+      data-testid="nav-help">{t('nav.help')}</a
+    >
     <details class="theme-menu">
       <summary class="button button-ghost">{t('nav.theme')}</summary>
       <div class="panel"><ThemeControls /></div>
@@ -117,6 +123,9 @@
   }
   .theme-menu {
     position: relative;
+  }
+  .tools a.button {
+    text-decoration: none;
   }
   summary {
     list-style: none;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import { t } from '../../lib/i18n';
   import type { ApiError } from '../../lib/api';
   import { isCodeComplete, normalizeCode, pairErrorKey } from '../../lib/displays/ui-logic';
@@ -23,7 +24,10 @@
 </script>
 
 <main class="pair">
-  <h1>{t('display.pair.title')}</h1>
+  <div class="title-row">
+    <h1>{t('display.pair.title')}</h1>
+    <HelpLink anchor="irl-mise-en-place" />
+  </div>
   <form onsubmit={submit} data-testid="display-pair-form">
     <label for="display-code">{t('display.pair.label')}</label>
     <input

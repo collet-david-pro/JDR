@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../components/HelpLink.svelte';
   import { onMount } from 'svelte';
   import Gauge from '../components/Gauge.svelte';
   import GameCard from '../components/games/GameCard.svelte';
@@ -69,13 +70,19 @@
 <!-- Dashboard (projet.md 18.1 p.2). -->
 <div class="dashboard">
   <header>
-    <h1>{t('dashboard.title', { name: auth.user?.username ?? '' })}</h1>
+    <div class="title-row">
+      <h1>{t('dashboard.title', { name: auth.user?.username ?? '' })}</h1>
+      <HelpLink anchor="joueur-tableau-de-bord" />
+    </div>
   </header>
 
   <div class="grid">
     <section class="card games" aria-labelledby="gm-games">
       <div class="section-head">
-        <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
+        <div class="title-row">
+          <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
+          <HelpLink anchor="mj-creer-une-partie" />
+        </div>
         <button type="button" class="button button-primary" onclick={() => (creating = true)}>
           {t('games.create.open')}
         </button>

@@ -134,6 +134,10 @@
   {/if}
 </main>
 
+<footer class="site-footer">
+  <a href={href('/aide')} data-testid="footer-help">{t('help.footer.link')}</a>
+</footer>
+
 <Toasts />
 
 <style>
@@ -172,6 +176,17 @@
     main {
       padding: var(--space-5) var(--space-4);
     }
+  }
+  .site-footer {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-5) var(--space-6);
+    border-top: var(--border-width) solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+  .site-footer a {
+    color: inherit;
   }
   .system-page {
     max-width: 36rem;

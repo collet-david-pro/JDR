@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import DisplayItem from './DisplayItem.svelte';
   import TextField from '../TextField.svelte';
   import { t } from '../../lib/i18n';
@@ -33,7 +34,10 @@
 </script>
 
 <section class="panel" aria-labelledby={`${uid}-title`} data-testid="displays-panel">
-  <h2 id={`${uid}-title`}>{t('sessions.displays.title')}</h2>
+  <div class="title-row">
+    <h2 id={`${uid}-title`}>{t('sessions.displays.title')}</h2>
+    <HelpLink anchor="irl-mise-en-place" />
+  </div>
   <p class="small muted">{t('sessions.displays.intro')}</p>
 
   {#if !ended}

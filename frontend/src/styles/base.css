@@ -279,3 +279,16 @@ textarea {
 a.button {
   text-decoration: none;
 }
+
+/* Heading followed by a small action (help "?" link). */
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.title-row > h1,
+.title-row > h2 {
+  margin: 0;
+}

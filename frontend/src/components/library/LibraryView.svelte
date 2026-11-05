@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import { onMount } from 'svelte';
   import Button from '../Button.svelte';
   import Gauge from '../Gauge.svelte';
@@ -83,7 +84,10 @@
 
 <div class="library">
   <header class="row top">
-    {#if titleLevel === 1}<h1>{title}</h1>{:else}<h2>{title}</h2>{/if}
+    <div class="title-row">
+      {#if titleLevel === 1}<h1>{title}</h1>{:else}<h2>{title}</h2>{/if}
+      <HelpLink anchor={admin ? 'admin-bibliotheque-generale' : 'mj-bibliotheque-d-images'} />
+    </div>
     <div class="row">
       <button type="button" class="button" onclick={() => (taxonomyOpen = true)}>
         {t('library.taxonomy.open')}

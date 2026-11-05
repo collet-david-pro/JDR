@@ -72,10 +72,23 @@ export default defineConfig({
     },
     ...browsers.map((name) => ({
       name,
-      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates)\.spec\.ts/,
+      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|help)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },
     })),
+    // Help screenshots (P13-2): on demand only, E2E_HELP_SHOTS=1 npx playwright test --project=help-shots
+    ...(process.env.E2E_HELP_SHOTS === '1'
+      ? [
+          {
+            name: 'help-shots',
+            testDir: './shots',
+            testMatch: /help-shots\.ts/,
+            dependencies: ['setup'],
+            timeout: 420_000,
+            use: { ...devices['Desktop Chrome'] },
+          },
+        ]
+      : []),
     {
       name: 'install-no-js',
       testMatch: /install-no-js\.spec\.ts/,

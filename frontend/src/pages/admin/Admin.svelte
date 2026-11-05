@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../../components/HelpLink.svelte';
   import { t } from '../../lib/i18n';
   import type { PageProps } from '../../lib/page';
   import { href } from '../../lib/services';
@@ -31,12 +32,30 @@
     { slug: 'integrity', label: t('admin.tabs.integrity') },
   ];
 
+  /** Help section of each tab (P13-2). */
+  const ADMIN_HELP: Readonly<Record<string, string>> = {
+    '': 'admin-tableau-de-bord',
+    users: 'admin-comptes',
+    invitations: 'admin-invitations',
+    settings: 'admin-reglages',
+    library: 'admin-bibliotheque-generale',
+    diagnostic: 'admin-diagnostic',
+    audit: 'admin-journal-d-audit',
+    migrations: 'admin-migrations',
+    update: 'admin-mise-a-jour',
+    backup: 'admin-sauvegarde',
+    integrity: 'admin-integrite',
+  };
+
   const current = $derived((params['rest'] ?? '').replace(/\/+$/, ''));
   const tabHref = (slug: string): string => href(slug === '' ? '/admin' : `/admin/${slug}`);
 </script>
 
 <div class="admin">
-  <h1>{t('pages.admin.title')}</h1>
+  <div class="title-row">
+    <h1>{t('pages.admin.title')}</h1>
+    <HelpLink anchor={ADMIN_HELP[current] ?? 'admin-tableau-de-bord'} />
+  </div>
   <nav aria-label={t('admin.tabs.label')}>
     <ul class="tabs">
       {#each tabs as tab (tab.slug)}

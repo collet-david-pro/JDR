@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import ExportMenu from './ExportMenu.svelte';
   import FloorSelector from './FloorSelector.svelte';
   import SaveIndicator from './SaveIndicator.svelte';
@@ -63,6 +64,7 @@
   <h1 class="name" title={t('editor.map_title', { map: mapName, game: gameName })}>
     {mapName}
   </h1>
+  <HelpLink anchor="mj-editeur-presentation" />
   <SaveIndicator {session} {onreload} />
   <FloorSelector {session} />
 

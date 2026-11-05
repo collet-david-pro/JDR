@@ -86,6 +86,14 @@ export const routes: readonly RouteDefinition<PageComponent>[] = [
     access: 'public',
   },
   {
+    // Built-in help (P13-2): readable without an account.
+    name: 'help',
+    path: '/aide',
+    load: () => import('./pages/Help.svelte'),
+    titleKey: 'pages.help.title',
+    access: 'public',
+  },
+  {
     name: 'library',
     path: '/library',
     load: () => import('./pages/Library.svelte'),

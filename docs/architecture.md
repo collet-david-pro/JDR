@@ -73,6 +73,15 @@ L'installeur vérifie par une vraie requête HTTP que ces dossiers sont inaccess
 { "ok": false, "error": { "code": "…", "message": "…", "fields": { } } }
 ```
 
+## Aide intégrée
+
+La page publique `/aide` (route `help`, accès `public`, chargée en différé) vit dans le front :
+
+- **Contenu** : `frontend/src/help/<public>/NN-nom.md` (`joueur`, `mj`, `irl`, `admin`). Le titre est la ligne `# …` ; l'ancre stable est `<public>-<nom>` (le préfixe `NN-` fixe l'ordre seulement). Un lien interne s'écrit `[texte](#mj-creer-une-map)`, une capture `![texte alternatif](nom.webp)`.
+- **Code** : `frontend/src/lib/help/` (rendu Markdown sûr, catalogue, recherche insensible aux accents, liens) et `frontend/src/pages/Help.svelte`. La section « Raccourcis clavier » est lue dans `editor/shortcuts.ts`. Les liens « ? » des écrans utilisent `components/HelpLink.svelte` (ancre vérifiée par `tests/help-catalog.test.ts`).
+- **Adresses** : `/aide?s=<ancre>` (marche aussi en mode `query`) ou `/aide#<ancre>` (mode `rewrite`).
+- **Captures** : `frontend/src/help/img/` (WebP). Pour les régénérer, après `cd frontend && npm run build` : `cd e2e && E2E_HELP_SHOTS=1 E2E_BROWSERS=chromium npx playwright test --project=help-shots` (script `e2e/shots/help-shots.ts`, thème clair, données de démonstration créées par le script). Elles servent aussi au README.
+
 ## Migrations et mises à jour
 
 - Chaque migration appliquée est enregistrée avec son empreinte SHA-256 ; une empreinte modifiée bloque la mise à jour. La CI refuse toute modification d'une migration déjà publiée.

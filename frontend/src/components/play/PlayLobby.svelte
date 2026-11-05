@@ -1,4 +1,5 @@
 <script lang="ts">
+  import HelpLink from '../HelpLink.svelte';
   import { t } from '../../lib/i18n';
   import { playerStatusLabel } from '../../lib/sessions/labels';
   import { preloadRatio, type PreloadProgress } from '../../lib/sessions/play/preload';
@@ -37,6 +38,7 @@
 <section class="lobby stack" data-testid="play-lobby" data-state={session.state}>
   <header class="head">
     <h1>{session.name}</h1>
+    <HelpLink anchor="joueur-salle-d-attente" />
     <NetworkIndicator />
   </header>
 
