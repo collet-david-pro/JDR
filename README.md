@@ -135,6 +135,8 @@ Une page d'aide publique (`/aide`, lien « Aide » dans l'en-tête et le pied de
 4. Ouvrez `https://votre-site/install.php` et suivez les 6 étapes : prérequis, base de données, site, administrateur, installation, fin.
 5. Connectez-vous, créez une partie, puis une map.
 
+Première fois ? Suivez le [tutoriel pas à pas](docs/TUTORIEL.md), de l'installation à la première séance.
+
 ## Prérequis
 
 | Élément | Exigence |
