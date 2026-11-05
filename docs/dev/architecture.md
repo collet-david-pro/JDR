@@ -108,3 +108,94 @@ La page publique `/aide` (route `help`, accès `public`, chargée en différé) 
 ## Livraison
 
 `dev/release.mjs` calcule `manifest.json` et produit les archives `jdr-vX.Y.Z-full.zip` (installation) et `jdr-update-vX.Y.Z.zip` (mise à jour, sans `install.php` ni `storage/`). Procédure complète : [AGENTS.md](../../AGENTS.md) ; environnement local : [dev/README.md](../../dev/README.md).
+
+## Vue d'ensemble (reprise du README)
+
+### Ce que l'outil n'est pas
+
+Clairvoie n'est **pas un VTT de règles** : pas de dés, pas d'initiative, pas de fiches de personnage, pas de points de vie. L'outil sert à la carte, pas aux règles.
+
+
+### Principes
+
+
+- **Hébergement simple** : PHP et MySQL ou MariaDB, sans démon, sans WebSocket, sans Composer en production. On envoie les fichiers, puis on ouvre `install.php`.
+- **Données chez soi** : les comptes, les maps et les images restent sur votre hébergement.
+- **Édition hors ligne** : l'éditeur fonctionne sans connexion, les modifications sont mises en file d'attente puis synchronisées.
+- **Projection en présentiel** : des écrans sans compte, appairés à la séance, affichent la vue de table à l'échelle réelle.
+
+
+### Schéma
+
+```mermaid
+flowchart LR
+  subgraph NAV["Navigateur"]
+    SPA["SPA Svelte 5 + PixiJS"]
+    WK["Web Workers<br/>vision, export, génération"]
+    IDB[("IndexedDB")]
+    SW["Service Worker"]
+    SPA --- WK
+    SPA --- IDB
+    SPA --- SW
+  end
+  subgraph SRV["Serveur PHP"]
+    IDX["index.php<br/>contrôleur frontal"]
+    MW["Middlewares<br/>JSON, maintenance, session, CSRF, débit"]
+    API["API JSON /api/v1"]
+    RT["Temps réel<br/>SSE ou long polling"]
+    IDX --> MW --> API
+    MW --> RT
+  end
+  DB[("MySQL / MariaDB")]
+  ST[("storage/")]
+  DSP["Écrans de projection<br/>/display"]
+  SPA <-->|"fetch JSON"| IDX
+  SPA <-->|"événements"| RT
+  DSP <-->|"vue de table"| IDX
+  API --> DB
+  RT --> DB
+  API --> ST
+```
+
+Le back-end PHP n'utilise ni framework ni Composer en production. Le front est une SPA sans SvelteKit. Les décisions structurantes (base, rendu, temps réel, brouillard strict, fichiers signés, migrations) sont dans [decisions.md](decisions.md).
+
+
+### Technologies
+
+| Domaine | Choix |
+|---|---|
+| Serveur | PHP 8.1 ou plus, sans dépendance externe ; MySQL ou MariaDB |
+| Interface | Svelte 5.57, TypeScript 5.9, Vite 8 |
+| Rendu des maps | PixiJS 8.22 (WebGPU, repli WebGL2) |
+| Calculs lourds | Web Workers (vision, export, génération) |
+| Hors ligne | IndexedDB, Service Worker |
+| Tests | PHPUnit 10, Vitest 4, Playwright 1.64 (Chromium, Firefox, WebKit) |
+
+
+### Feuille de route
+
+| Phase | Contenu | État |
+|---|---|---|
+| P0 | Fondations : routeur, base, migrations, sécurité, build, outillage | Terminée |
+| P1 | Installeur, comptes, administration | Terminée |
+| P2 | Bibliothèque d'images et quotas | Terminée |
+| P3 | Parties, membres, tokens, rencontres | Terminée |
+| P4 | Éditeur de maps : moteur, outils, hors ligne, versions, import et export, PNG | Terminée |
+| P5 | Murs, portes, fenêtres, lumières, vision, brouillard de guerre | Terminée |
+| P6 | Séances en temps réel : code de séance, lobby, synchronisation | Terminée |
+| P7 | Mode présentiel : écrans appairés, échelle réelle | Terminée |
+| P8 | Génération procédurale : donjons, grottes, extérieurs, villages, textures | Terminée |
+| P9 | MJ en séance : étages et escaliers, liens entre maps, notes et épingles du MJ, zones de texte à lire, secrets et pièges, modèles de maps, palette de commandes (Cmd/Ctrl+K) | Terminée |
+| P10 | Durcissement : revue de sécurité OWASP, accessibilité, performances et tests de charge, mise à jour automatique avec archives signées, sauvegarde et restauration, documentation d'exploitation | Terminée (0.3.0) |
+| P11 | Grille hexagonale (option) | Abandonnée |
+| P12 | Ajouts et retours d'expérience : demandes et défauts remontés à l'usage | À venir |
+| P13 | Tutoriels : aide intégrée au site et tutoriel | À venir |
+
+Le module de mise à jour (voir [Mise à jour](../mise-a-jour.md)) est livré dans la version `0.1.0-alpha.1`.
+
+Retirés du projet : traduction anglaise, co-édition en direct, carte du monde, WebSocket.
+
+
+### Dernière vérification enregistrée (reprise du README)
+
+Dernière vérification (2026-11-02) : PHPUnit, 1113 tests ; Vitest, 1430 tests ; Playwright sur Chromium, Firefox et WebKit, partiel (écrans touchés) : 101 tests sur 102, l'échec restant étant un aléa déjà présent avant ces changements (bascule en long polling sur WebKit). L'intégration continue GitHub Actions est en pause pendant l'alpha : les tests sont lancés en local.

@@ -197,3 +197,19 @@ PHP_CLI_SERVER_WORKERS=4 php -S 127.0.0.1:8000 index.php
 ```
 
 Dans une copie de développement (dossier `.git` présent), l'assistant ne supprime pas `install.php` à la fin.
+
+## Vérification après installation (commandes)
+
+Remplacez `jdr.example.org` par votre domaine :
+
+```bash
+curl -i https://jdr.example.org/api/v1/health                 # 200
+curl -i 'https://jdr.example.org/index.php?r=/api/v1/health'  # 200 (mode query)
+curl -i https://jdr.example.org/config.php                    # 403 ou 404
+curl -i https://jdr.example.org/app/bootstrap.php             # 403 ou 404
+curl -i https://jdr.example.org/storage/index.php             # 403 ou 404
+curl -i https://jdr.example.org/migrations/0001_initial.sql   # 403 ou 404
+```
+
+Pour vérifier le flux temps réel (`curl -N` avec le cookie de session), voir [nginx.md](nginx.md).
+

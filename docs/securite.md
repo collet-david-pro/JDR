@@ -152,3 +152,26 @@ Requêtes sortantes possibles, aucune vers une URL fournie par un utilisateur :
 - **Extension sodium** requise (chiffrement du mot de passe SMTP, signature des mises à jour).
 - PHP-FPM recommandé (`fastcgi_finish_request`) ; `expose_php = Off` et `display_errors = Off` dans la configuration PHP.
 - Gardez `config.php` (et son `app_secret`) hors de toute copie publique : il signe les URL et chiffre les secrets.
+
+## Mesures en place (vue d'ensemble)
+
+Repris du README du dépôt.
+
+
+- **Dossiers privés** : `app/`, `migrations/`, `storage/`, `i18n/` et `config.php` sont protégés par un `.htaccess`, un `index.php` qui renvoie 403 et une garde en tête de chaque fichier PHP privé. L'installeur vérifie par une vraie requête HTTP que ces dossiers sont inaccessibles. Sous Nginx, la protection est à ajouter ([nginx.md](nginx.md)).
+- **CSRF et limitation de débit** : middlewares appliqués aux requêtes de l'API.
+- **Images** : contrôle strict à l'import (type réel, dimensions, fichiers piégés refusés), ré-encodage, quotas.
+- **Fichiers** : stockés hors base, servis par PHP avec des liens signés (HMAC).
+- **Anti-fuite en séance** : le serveur filtre tout ce qu'il envoie aux joueurs et aux écrans (tokens cachés, objets du MJ, portes secrètes non révélées, code de séance). Un joueur ne peut révéler du brouillard que dans la vision de ses tokens.
+- **Écrans de projection** : cookie `jdr_display` HttpOnly, SameSite=Strict, révocation immédiate.
+- **Mise à jour** : contrôle des chemins, du manifeste et des empreintes de l'archive, releases signées (Ed25519), sauvegarde préalable.
+- **Sauvegarde et restauration** : base et assets, depuis l'administration, sans copie gardée sur le serveur.
+- **Intégrité** : vérification et correction des données depuis l'administration.
+- **Journal d'audit** dans l'administration.
+- **Installeur** verrouillé après usage.
+
+
+## Signaler une vulnérabilité
+
+N'écrivez pas les détails d'une faille dans une issue publique. Ouvrez une [issue](https://github.com/collet-david-pro/JDR/issues) **sans détail sensible** et demandez un contact privé.
+
