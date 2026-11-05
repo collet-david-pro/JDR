@@ -354,7 +354,7 @@ Le back-end PHP n'utilise ni framework ni Composer en production. Le front est u
 
 ## Développement
 
-Documentation détaillée : [dev/README.md](dev/README.md). Deux environnements sont décrits : Homebrew (serveur PHP intégré) et Docker Compose (Apache et MariaDB, plus fidèle à un mutualisé).
+Documentation détaillée : [dev/README.md](dev/README.md). Pour les agents IA et les mainteneurs : [AGENTS.md](AGENTS.md) et [docs/dev/](docs/dev/) (architecture, décisions, recettes). Deux environnements sont décrits : Homebrew (serveur PHP intégré) et Docker Compose (Apache et MariaDB, plus fidèle à un mutualisé).
 
 ### Environnement local
 
