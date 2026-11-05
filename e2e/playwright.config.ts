@@ -89,6 +89,19 @@ export default defineConfig({
           },
         ]
       : []),
+    // README screenshots (P13-4b): on demand only, E2E_README_SHOTS=1 npx playwright test --project=readme-shots
+    ...(process.env.E2E_README_SHOTS === '1'
+      ? [
+          {
+            name: 'readme-shots',
+            testDir: './shots',
+            testMatch: /readme-shots\.ts/,
+            dependencies: ['setup'],
+            timeout: 900_000,
+            use: { ...devices['Desktop Chrome'] },
+          },
+        ]
+      : []),
     {
       name: 'install-no-js',
       testMatch: /install-no-js\.spec\.ts/,
