@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.3.6] - 2026-11-05
+
+### Added
+- **Aide intégrée** (`/aide`, accessible sans compte, lien « Aide » dans l'en-tête et le pied de page) : toutes les fonctionnalités expliquées par public (joueur, MJ, écran IRL, administrateur), recherche, raccourcis clavier, captures d'écran. Un lien « ? » dans chaque écran principal ouvre la section qui le concerne.
+
+### Fixed
+- **Réglages d'un écran IRL** (console du MJ) : une modification pas encore enregistrée (par exemple masquer les tokens) n'est plus annulée quand la liste des écrans se recharge.
+
 ## [0.3.5] - 2026-11-05
 
 ### Changed
