@@ -20,7 +20,7 @@ final class WaitSlotsTest extends RealtimeTestCase
 
     protected function tearDown(): void
     {
-        $this->other?->fetchValue('SELECT RELEASE_ALL_LOCKS()');
+        // Dropping the connection releases its named locks (RELEASE_ALL_LOCKS needs MariaDB 10.5).
         $this->other = null;
         parent::tearDown();
     }

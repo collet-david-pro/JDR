@@ -92,8 +92,9 @@ jobs:
             sleep 2
           done
           # Explicit utf8mb4 (MariaDB 10.3 defaults to latin1; service containers take no command args).
+          # The suite keeps connections open across tests: MariaDB's default cap (100) is too low.
           mysql -h "$JDR_TEST_DB_HOST" -P "$JDR_TEST_DB_PORT" -u"$JDR_TEST_DB_USER" -p"$JDR_TEST_DB_PASS" \
-            -e "CREATE DATABASE IF NOT EXISTS \`$JDR_TEST_DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; SELECT VERSION();"
+            -e "CREATE DATABASE IF NOT EXISTS \`$JDR_TEST_DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; SET GLOBAL max_connections = 500; SELECT VERSION();"
 
       - name: Download PHPUnit
         run: bash dev/get-phpunit.sh
@@ -186,13 +187,18 @@ jobs:
           exit "$failed"
 
   e2e:
-    name: E2E (Playwright, Chromium/Firefox/WebKit)
+    name: E2E (Playwright, ${{ matrix.browser }})
     # projet §21 / P1 criteria: browser installation on a blank database (with and without
     # JavaScript), accounts, rate limiting, "remember me", suspension, invitations, diagnostic.
     # dev/e2e-serve.sh (started by e2e/playwright.config.ts) copies the deliverable to a temporary
     # folder, recreates the E2E databases and serves them with php -S (ports 8090 and 8091).
+    # One job per browser: the three in a row exceed 30 minutes on the runners.
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     services:
       db:
         image: mysql:8.0
@@ -210,6 +216,7 @@ jobs:
       E2E_DB_PORT: '3306'
       E2E_DB_USER: root
       E2E_DB_PASS: root
+      E2E_BROWSERS: ${{ matrix.browser }}
     steps:
       - uses: actions/checkout@v4
 
@@ -237,7 +244,7 @@ jobs:
         working-directory: e2e
         run: |
           npm ci
-          npx playwright install --with-deps chromium firefox webkit
+          npx playwright install --with-deps chromium ${{ matrix.browser }}
 
       - name: Wait for the database
         run: |
@@ -257,7 +264,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-${{ github.sha }}
+          name: playwright-report-${{ matrix.browser }}-${{ github.sha }}
           path: |
             e2e/playwright-report/
             e2e/test-results/
