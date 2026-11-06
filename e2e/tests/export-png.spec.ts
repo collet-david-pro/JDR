@@ -281,7 +281,7 @@ test("export ×1, ×2 and ×4: downloaded PNG decodes at the announced size", as
       "data-where",
       "worker",
     );
-    expect(path.basename(file)).toMatch(/Export petit\.png$/);
+    expect(path.basename(file)).toMatch(/Export[ _]petit\.png$/) // WebKit on Linux swaps the space;
     const png = decodePng(readFileSync(file));
     expect([png.width, png.height]).toEqual([size.width, size.height]);
     expect(png.channels).toBe(3); // opaque background ⇒ RGB

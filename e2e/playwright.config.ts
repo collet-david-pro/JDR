@@ -28,7 +28,8 @@ const browsers = (process.env.E2E_BROWSERS ?? 'chromium,firefox,webkit')
 
 const deviceOf = {
   chromium: devices['Desktop Chrome'],
-  firefox: devices['Desktop Firefox'],
+  // Headless Firefox on Linux runners turns WebGL off unless forced (the map scene needs it).
+  firefox: { ...devices['Desktop Firefox'], launchOptions: { firefoxUserPrefs: { 'webgl.force-enabled': true } } },
   webkit: devices['Desktop Safari'],
 } as const;
 

@@ -317,8 +317,9 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   // 4. "See as the player" (every PC): unexplored areas are black, the lit room is seen.
   await page.getByTestId("view-fog").check();
   await page.getByTestId("view-mode").selectOption("all_pcs");
+  // Software rendering (CI runners) may need more than one frame to show the new view.
+  await expect.poll(async () => (await shot(page, m))(16.5, 4.5), { timeout: 10_000 }).toBeLessThan(12);
   sample = await shot(page, m);
-  expect(sample(16.5, 4.5)).toBeLessThan(12);
   expect(sample(5.5, 8.5)).toBeGreaterThan(sample(16.5, 4.5) + 25);
   await page.getByTestId("view-mode").selectOption("gm");
 
