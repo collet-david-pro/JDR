@@ -73,6 +73,15 @@ export default defineConfig({
     },
     ...browsers.map((name) => ({
       name,
+      // E2E_NO_WEBGL=firefox (CI): headless Firefox on the runners has no WebGL at all, so the
+      // scenarios that need a live scene (console, player view, screens) cannot run there; the
+      // editor scenarios already skip themselves when the engine reports "unsupported".
+      ...(process.env.E2E_NO_WEBGL === name
+        ? {
+            testIgnore: /(displays-criteria|displays-gm|floors|notes-session)\.spec\.ts/,
+            grepInvert: /games, sessions, GM console|keyboard-only walkthrough/,
+          }
+        : {}),
       testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|help)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },

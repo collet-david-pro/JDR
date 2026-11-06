@@ -217,6 +217,9 @@ jobs:
       E2E_DB_USER: root
       E2E_DB_PASS: root
       E2E_BROWSERS: ${{ matrix.browser }}
+      # Headless Firefox has no WebGL on the runners (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS, even
+      # with Mesa): its live-scene scenarios are left out there (see e2e/playwright.config.ts).
+      E2E_NO_WEBGL: firefox
     steps:
       - uses: actions/checkout@v4
 
@@ -246,14 +249,6 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium ${{ matrix.browser }}
 
-      - name: Software OpenGL for Firefox (Mesa llvmpipe)
-        # Without a GL driver, headless Firefox on the runners fails every WebGL context
-        # (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS) and the map scenes report "unsupported".
-        if: matrix.browser == 'firefox'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libgl1-mesa-dri libegl1 libgles2 libglx-mesa0
-          echo "LIBGL_ALWAYS_SOFTWARE=1" >> "$GITHUB_ENV"
 
       - name: Wait for the database
         run: |
