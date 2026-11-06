@@ -246,6 +246,15 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium ${{ matrix.browser }}
 
+      - name: Software OpenGL for Firefox (Mesa llvmpipe)
+        # Without a GL driver, headless Firefox on the runners fails every WebGL context
+        # (FEATURE_FAILURE_WEBGL_EXHAUSTED_DRIVERS) and the map scenes report "unsupported".
+        if: matrix.browser == 'firefox'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1-mesa-dri libegl1 libgles2 libglx-mesa0
+          echo "LIBGL_ALWAYS_SOFTWARE=1" >> "$GITHUB_ENV"
+
       - name: Wait for the database
         run: |
           for i in $(seq 1 60); do
