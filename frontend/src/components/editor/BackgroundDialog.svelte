@@ -3,14 +3,17 @@
   import AssetPicker from '../AssetPicker.svelte';
   import Button from '../Button.svelte';
   import Modal from '../Modal.svelte';
+  import type { MapOp } from '../../editor/contracts';
   import type { ImageAssetView, ImageGeometry, ImageObject } from '../../editor/contracts-images';
   import {
     DEFAULT_IMAGE_CELL_PX,
     calibratedGeometry,
+    calibrationMap,
     calibrationOf,
     fitToMap,
     mapSizeFor,
     type Calibration,
+    type MapAxis,
   } from '../../editor/images/calibration';
   import { backgroundsOf, imageAssetOf, uploadImage } from '../../editor/images/library';
   import type { EditorSession } from '../../editor/ui/session';
@@ -23,11 +26,14 @@
    * "Image de fond…" (P14): choose or send the background of the shown floor, then calibrate it
    * (size of a cell in the image or cells across, offset) with a live preview over the grid; fit
    * it to the map, or resize the map to the image. The background is locked by default.
+   * Mode "map size": the width or height of the map in cells, the other side from the image
+   * proportions; applying also resizes the map (warning when it shrinks).
    */
   interface Props {
     session: EditorSession;
     /** Resizes the map (saved first, then the editor reloads). */
-    onresize?: (width: number, height: number) => Promise<void>;
+    /** Resizes the map, then sends `after` in the same batch (checked against the new size). */
+    onresize?: (width: number, height: number, after?: readonly MapOp[]) => Promise<void>;
   }
 
   let { session, onresize }: Props = $props();
@@ -48,7 +54,7 @@
   let busy = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
-  let canvas: HTMLCanvasElement | undefined = $state();
+  let canvas: HTMLCanvasElement | null | undefined = $state();
   let image: HTMLImageElement | null = $state(null);
 
   const geometry = $derived<ImageGeometry | null>(
@@ -56,7 +62,20 @@
       ? null
       : calibratedGeometry(cal, { width: asset.width, height: asset.height }, grid),
   );
-  const mapSize = $derived(geometry === null ? null : mapSizeFor(geometry));
+  /** Mode map_cells: the map the background is made for (preview and resize). */
+  const targetMap = $derived(
+    asset === null ? null : calibrationMap(cal, { width: asset.width, height: asset.height }),
+  );
+  const mapSize = $derived(targetMap ?? (geometry === null ? null : mapSizeFor(geometry)));
+  /** Map drawn by the preview. */
+  const shown = $derived(targetMap ?? grid);
+  const sameSize = $derived(
+    targetMap !== null && targetMap.width === grid.width && targetMap.height === grid.height,
+  );
+  const shrinks = $derived(
+    targetMap !== null && (targetMap.width < grid.width || targetMap.height < grid.height),
+  );
+  const mapMode = $derived(cal.mode === 'map_cells');
 
   // Opening: the background being recalibrated (or the first one of the floor), else a new one.
   $effect(() => {
@@ -98,32 +117,39 @@
     const c = canvas;
     const g = geometry;
     const img = image;
-    if (c === undefined) return;
+    // null once the dialog is unmounted (bind:this).
+    if (c === undefined || c === null) return;
     const ctx = c.getContext('2d');
     if (ctx === null) return;
-    const scale = Math.min(c.width / grid.width, c.height / grid.height);
+    const map = shown;
+    const scale = Math.min(c.width / map.width, c.height / map.height);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
     ctx.fillStyle = '#2b2b2b';
-    ctx.fillRect(0, 0, grid.width * scale, grid.height * scale);
+    ctx.fillRect(0, 0, map.width * scale, map.height * scale);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, map.width * scale, map.height * scale);
+    ctx.clip();
     if (g !== null && img !== null) {
       ctx.drawImage(img, g.x * scale, g.y * scale, g.w * scale, g.h * scale);
     }
+    ctx.restore();
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     const step = scale >= 4 ? 1 : Math.ceil(4 / scale);
-    for (let x = 0; x <= grid.width; x += step) {
+    for (let x = 0; x <= map.width; x += step) {
       ctx.moveTo(Math.round(x * scale) + 0.5, 0);
-      ctx.lineTo(Math.round(x * scale) + 0.5, grid.height * scale);
+      ctx.lineTo(Math.round(x * scale) + 0.5, map.height * scale);
     }
-    for (let y = 0; y <= grid.height; y += step) {
+    for (let y = 0; y <= map.height; y += step) {
       ctx.moveTo(0, Math.round(y * scale) + 0.5);
-      ctx.lineTo(grid.width * scale, Math.round(y * scale) + 0.5);
+      ctx.lineTo(map.width * scale, Math.round(y * scale) + 0.5);
     }
     ctx.stroke();
     ctx.strokeStyle = '#e0b040';
-    ctx.strokeRect(0.5, 0.5, grid.width * scale - 1, grid.height * scale - 1);
+    ctx.strokeRect(0.5, 0.5, map.width * scale - 1, map.height * scale - 1);
   });
 
   function chosen(a: Asset): void {
@@ -161,49 +187,45 @@
     cal = fitToMap({ width: asset.width, height: asset.height }, grid);
   }
 
-  function apply(): void {
+  /** The op that places the background (update of the edited one, or a new image object). */
+  function backgroundOp(): MapOp | null {
     const g = geometry;
     const a = asset;
-    if (g === null || a === null) return;
+    if (g === null || a === null) return null;
     const live = target === null ? undefined : session.doc.object(target.uid);
     if (live !== undefined && live.type === 'image') {
-      session.history.execute({
-        label: 'editor.command.background',
-        ops: [
-          {
-            type: 'object.update',
-            uid: live.uid,
-            rev: live.rev,
-            patch: { geometry: g, props: { ...live.props, asset_id: a.assetId } },
-          },
-        ],
-        inverseOps: [],
-      });
-    } else {
-      const object: ImageObject = {
-        uid: newObjectUid(),
-        floor: session.doc.floor,
-        type: 'image',
-        layer: 'props',
-        geometry: g,
-        props: {
-          asset_id: a.assetId,
-          opacity: 1,
-          flip_h: false,
-          flip_v: false,
-          placement: 'background',
-        },
-        visibility: 'all',
-        locked: true,
-        sort_order: -1000,
-        rev: 1,
+      return {
+        type: 'object.update',
+        uid: live.uid,
+        rev: live.rev,
+        patch: { geometry: g, props: { ...live.props, asset_id: a.assetId } },
       };
-      session.history.execute({
-        label: 'editor.command.background',
-        ops: [{ type: 'object.add', object }],
-        inverseOps: [],
-      });
     }
+    const object: ImageObject = {
+      uid: newObjectUid(),
+      floor: session.doc.floor,
+      type: 'image',
+      layer: 'props',
+      geometry: g,
+      props: {
+        asset_id: a.assetId,
+        opacity: 1,
+        flip_h: false,
+        flip_v: false,
+        placement: 'background',
+      },
+      visibility: 'all',
+      locked: true,
+      sort_order: -1000,
+      rev: 1,
+    };
+    return { type: 'object.add', object };
+  }
+
+  function apply(): void {
+    const op = backgroundOp();
+    if (op === null) return;
+    session.history.execute({ label: 'editor.command.background', ops: [op], inverseOps: [] });
     close();
   }
 
@@ -218,6 +240,35 @@
     } finally {
       busy = false;
     }
+  }
+
+  /** Mode map_cells with a new size: one batch, the resize first, so the server checks the background against it. */
+  async function resizeWithBackground(width: number, height: number): Promise<void> {
+    const op = backgroundOp();
+    if (op === null || onresize === undefined) return;
+    busy = true;
+    try {
+      await onresize(width, height, [op]);
+    } catch (e) {
+      error = e instanceof Error ? e.message : t('errors.unknown');
+    } finally {
+      busy = false;
+    }
+  }
+
+  /** Mode map_cells: the background, then the map at its new size (when it changes). */
+  function applyMapSize(): void {
+    if (sameSize || onresize === undefined || targetMap === null) apply();
+    else void resizeWithBackground(targetMap.width, targetMap.height);
+  }
+
+  function useMapCells(): void {
+    cal = {
+      ...cal,
+      mode: 'map_cells',
+      mapAxis: cal.mapAxis ?? 'width',
+      mapCells: cal.mapCells ?? grid.width,
+    };
   }
 
   function close(): void {
@@ -294,26 +345,82 @@
           aria-label={t('editor.images.mode_cells_wide')}
         />
       {/if}
-      <div class="row">
-        <label>
-          <span>{t('editor.images.offset_x')}</span>
-          <input
-            type="number"
-            step="0.1"
-            value={cal.offsetX}
-            oninput={(e) => (cal = { ...cal, offsetX: numberOf(e) })}
-          />
-        </label>
-        <label>
-          <span>{t('editor.images.offset_y')}</span>
-          <input
-            type="number"
-            step="0.1"
-            value={cal.offsetY}
-            oninput={(e) => (cal = { ...cal, offsetY: numberOf(e) })}
-          />
-        </label>
-      </div>
+      <label class="check">
+        <input
+          type="radio"
+          name={`${uid}-mode`}
+          checked={mapMode}
+          onchange={useMapCells}
+          data-testid="background-mode-map"
+        />
+        {t('editor.images.mode_map_cells')}
+      </label>
+      {#if mapMode}
+        <div class="row">
+          <label>
+            <span>{t('editor.images.map_axis')}</span>
+            <select
+              value={cal.mapAxis ?? 'width'}
+              onchange={(e) =>
+                (cal = {
+                  ...cal,
+                  mapAxis: (e.currentTarget as HTMLSelectElement).value as MapAxis,
+                })}
+              data-testid="background-map-axis"
+            >
+              <option value="width">{t('editor.images.map_axis_width')}</option>
+              <option value="height">{t('editor.images.map_axis_height')}</option>
+            </select>
+          </label>
+          <label>
+            <span>{t('editor.images.map_cells')}</span>
+            <input
+              type="number"
+              min="1"
+              max="400"
+              step="1"
+              value={cal.mapCells ?? grid.width}
+              oninput={(e) => (cal = { ...cal, mapCells: numberOf(e) })}
+              data-testid="background-map-cells"
+            />
+          </label>
+        </div>
+        {#if targetMap !== null}
+          <p
+            class="small muted"
+            data-testid="background-map-result"
+            data-width={targetMap.width}
+            data-height={targetMap.height}
+          >
+            {t('editor.images.map_result', { width: targetMap.width, height: targetMap.height })}
+          </p>
+        {/if}
+        {#if shrinks}
+          <p class="alert alert-warning small" role="status">{t('editor.images.map_shrinks')}</p>
+        {/if}
+      {/if}
+      {#if !mapMode}
+        <div class="row">
+          <label>
+            <span>{t('editor.images.offset_x')}</span>
+            <input
+              type="number"
+              step="0.1"
+              value={cal.offsetX}
+              oninput={(e) => (cal = { ...cal, offsetX: numberOf(e) })}
+            />
+          </label>
+          <label>
+            <span>{t('editor.images.offset_y')}</span>
+            <input
+              type="number"
+              step="0.1"
+              value={cal.offsetY}
+              oninput={(e) => (cal = { ...cal, offsetY: numberOf(e) })}
+            />
+          </label>
+        </div>
+      {/if}
     </fieldset>
 
     <canvas
@@ -323,7 +430,7 @@
       aria-label={t('editor.images.preview')}
       data-testid="background-preview"
     ></canvas>
-    {#if geometry !== null && mapSize !== null}
+    {#if geometry !== null && mapSize !== null && !mapMode}
       <p class="small muted">
         {t('editor.images.covers', {
           width: Math.round(geometry.w * 10) / 10,
@@ -333,8 +440,12 @@
     {/if}
 
     <div class="row actions">
-      <Button size="small" onclick={fit} disabled={asset === null}>{t('editor.images.fit')}</Button>
-      {#if onresize !== undefined}
+      {#if !mapMode}
+        <Button size="small" onclick={fit} disabled={asset === null}
+          >{t('editor.images.fit')}</Button
+        >
+      {/if}
+      {#if onresize !== undefined && !mapMode}
         <Button
           size="small"
           onclick={() => void resize()}
@@ -348,14 +459,25 @@
       {/if}
       <span class="spacer"></span>
       <Button onclick={close}>{t('common.cancel')}</Button>
-      <Button
-        variant="primary"
-        onclick={apply}
-        disabled={geometry === null || busy}
-        data-testid="background-apply"
-      >
-        {t('editor.images.apply')}
-      </Button>
+      {#if mapMode && targetMap !== null && !sameSize && onresize !== undefined}
+        <Button
+          variant="primary"
+          onclick={applyMapSize}
+          disabled={geometry === null || busy}
+          data-testid="background-apply"
+        >
+          {t('editor.images.apply_resize', { width: targetMap.width, height: targetMap.height })}
+        </Button>
+      {:else}
+        <Button
+          variant="primary"
+          onclick={apply}
+          disabled={geometry === null || busy}
+          data-testid="background-apply"
+        >
+          {t('editor.images.apply')}
+        </Button>
+      {/if}
     </div>
   </div>
 </Modal>

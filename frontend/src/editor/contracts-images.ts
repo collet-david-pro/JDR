@@ -78,6 +78,8 @@ export interface ImageAssetView {
   readonly url: string | null;
   readonly width: number;
   readonly height: number;
+  /** Animated GIF / WebP: every frame is shown (first frame where the browser cannot decode). */
+  readonly animated?: boolean;
 }
 
 /** Wire entry -> view. */
@@ -88,6 +90,7 @@ export function imageAssetFromWire(w: ImageAssetWire): ImageAssetView {
     url: w.url,
     width: w.width,
     height: w.height,
+    animated: w.animated,
   };
 }
 

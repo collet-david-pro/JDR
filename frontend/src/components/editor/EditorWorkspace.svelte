@@ -23,6 +23,7 @@
   import { visibleChunkKeys } from '../../editor/sync/chunk-loader';
   import { MapSync } from '../../editor/sync/MapSync';
   import { newClientOpId } from '../../editor/sync/OpsQueue';
+  import type { MapOp } from '../../editor/contracts';
   import { imageAssetFromWire } from '../../editor/contracts-images';
   import { watchImageAssets } from '../../editor/images/library';
   import { rejectionText } from '../../editor/sync/rejection-text';
@@ -32,6 +33,7 @@
     layersFromWire,
     paletteFromWire,
     themeOf,
+    toWireOp,
     tokenDefFromWire,
   } from '../../editor/sync/wire';
   import {
@@ -63,6 +65,13 @@
   import type { MapDetail, MapGeneration, Token } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
   import { createVisionService } from '../../vision/index';
+  import ColumnResizer from './ColumnResizer.svelte';
+  import {
+    clampWidth,
+    loadColumns,
+    saveColumns,
+    type ColumnId,
+  } from '../../editor/ui/column-width';
 
   /**
    * Full-screen editor (projet.md 18.1 p.5): top bar, tools on the left, map, collapsible
@@ -105,6 +114,14 @@
   const grid = gridOf(initial.map);
 
   let viewport: HTMLDivElement | undefined = $state();
+  // Adjustable side columns, remembered per browser.
+  let columns = $state(loadColumns());
+  let editorWidth = $state(typeof window === 'undefined' ? 1280 : window.innerWidth);
+  function setColumn(id: ColumnId, width: number, final: boolean): void {
+    const other = id === 'tools' ? columns.panels : columns.tools;
+    columns[id] = clampWidth(id, width, editorWidth, other);
+    if (final) saveColumns({ tools: columns.tools, panels: columns.panels });
+  }
   let engineState = $state<'loading' | 'ready' | 'unsupported' | 'error'>('loading');
   let loadFailed = $state(false);
 
@@ -155,14 +172,18 @@
   session.doc.setImageAssets((initial.map.images ?? []).map(imageAssetFromWire), true);
   const stopImageWatch = watchImageAssets(session.doc, services().api);
 
-  /** P14 "resize the map to the image": saved first, then the editor reloads. */
-  async function resizeMap(width: number, height: number): Promise<void> {
+  /** P14 "resize the map to the image": saved first, then the editor reloads; `after` rides in the same batch. */
+  async function resizeMap(
+    width: number,
+    height: number,
+    after: readonly MapOp[] = [],
+  ): Promise<void> {
     await sync?.settle();
     const fresh = await initial.client.get(initial.map.id);
     await initial.client.sendOps(initial.map.id, {
       base_revision: fresh.revision,
       client_op_id: newClientOpId(),
-      ops: [{ type: 'map.meta', grid: { width, height } }],
+      ops: [{ type: 'map.meta', grid: { width, height } }, ...after.map(toWireOp)],
     });
     markThumbnailStale(initial.map.id);
     if (onreload !== undefined) onreload();
@@ -425,7 +446,14 @@
   onblur={() => session.releaseKeys()}
 />
 
-<div class="editor" class:panels-hidden={!ui.panelsOpen} data-testid="editor">
+<div
+  class="editor"
+  class:panels-hidden={!ui.panelsOpen}
+  style:--tools-w="{columns.tools}px"
+  style:--panels-w="{columns.panels}px"
+  bind:clientWidth={editorWidth}
+  data-testid="editor"
+>
   <EditorTopBar
     {session}
     {gameId}
@@ -439,6 +467,26 @@
   <ToolBar {session} />
 
   <div class="stage">
+    <ColumnResizer
+      id="tools"
+      width={columns.tools}
+      other={ui.panelsOpen ? columns.panels : 0}
+      container={editorWidth}
+      sign={1}
+      label={t('editor.columns.tools')}
+      onchange={(w, f) => setColumn('tools', w, f)}
+    />
+    {#if ui.panelsOpen}
+      <ColumnResizer
+        id="panels"
+        width={columns.panels}
+        other={columns.tools}
+        container={editorWidth}
+        sign={-1}
+        label={t('editor.columns.panels')}
+        onchange={(w, f) => setColumn('panels', w, f)}
+      />
+    {/if}
     <!-- The map is focusable so that Space / Tab shortcuts and screen-reader hints apply to it. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <div
@@ -545,7 +593,7 @@
     /* Above the site header and banner (z-banner 50), below dialogs and toasts. */
     z-index: 60;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) 18rem;
+    grid-template-columns: var(--tools-w, 11rem) minmax(0, 1fr) var(--panels-w, 18rem);
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       'top top top'
@@ -555,7 +603,7 @@
     color: var(--color-text);
   }
   .editor.panels-hidden {
-    grid-template-columns: auto minmax(0, 1fr) 0;
+    grid-template-columns: var(--tools-w, 11rem) minmax(0, 1fr) 0;
   }
   .stage {
     grid-area: stage;
@@ -598,7 +646,8 @@
     background: var(--color-surface);
   }
   @media (max-width: 48rem) {
-    .editor {
+    .editor,
+    .editor.panels-hidden {
       grid-template-columns: auto minmax(0, 1fr) 0;
     }
     .panels {

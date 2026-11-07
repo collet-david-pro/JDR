@@ -6,15 +6,20 @@ Une battlemap toute faite (une image) peut servir de fond : il ne reste qu'à po
 
 1. Dans l'éditeur, outil **Image** (touche **J**), bouton **Image de fond…** (ou la [palette de commandes](#mj-palette-de-commandes)).
 2. **Choisir une image** dans la bibliothèque, ou **Envoyer une image** (rangée comme _fond_).
-3. **Recalage sur la grille** : indiquez la **taille d'une case dans l'image** (en pixels) ou le **nombre de cases en largeur**, puis le **décalage X / Y** en cases. L'aperçu montre l'image sous la grille de la map.
-4. **Ajuster à la map** fait tenir toute l'image dans la map ; **Redimensionner la map à l'image** change la taille de la map pour qu'elle contienne l'image (l'éditeur se recharge).
+3. **Recalage sur la grille**, au choix :
+   - la **taille d'une case dans l'image** (en pixels) ou le **nombre de cases en largeur**, puis le **décalage X / Y** en cases ;
+   - la **taille de la map (en cases)** : choisissez le côté donné (**largeur** ou **hauteur**) et son nombre de cases. L'autre côté suit les proportions de l'image, arrondi à la case la plus proche ; l'image couvre toute la map sans être déformée, centrée (quand l'arrondi laisse un écart, elle dépasse d'au plus une demi-case, répartie sur les deux bords).
+
+   L'aperçu montre l'image sous la grille de la map, ou de la map à sa future taille.
+
+4. **Ajuster à la map** fait tenir toute l'image dans la map ; **Redimensionner la map à l'image** change la taille de la map pour qu'elle contienne l'image (l'éditeur se recharge). En mode _taille de la map_, **Appliquer et redimensionner la map** fait les deux d'un coup. Si la map rétrécit, les tuiles, objets et tokens hors de la nouvelle taille sont supprimés (un avertissement le rappelle).
 5. **Appliquer**. Le fond est dessiné sous les tuiles et **verrouillé** : il ne bouge pas par mégarde. Chaque étage peut avoir son propre fond.
 
 Pour le recaler plus tard, sélectionnez-le et utilisez **Recaler le fond…** dans le panneau Propriétés.
 
 ## Nouvelle map depuis une image
 
-Dans l'onglet Maps, **Nouvelle map**, partie **Depuis une image** : choisissez ou envoyez l'image et indiquez la taille d'une case dans l'image (70 px par défaut). La taille de la map et des cases est calculée, l'image est posée en fond et l'éditeur s'ouvre.
+Dans l'onglet Maps, **Nouvelle map**, partie **Depuis une image** : choisissez ou envoyez l'image et indiquez la **taille d'une case dans l'image** (70 px par défaut) ou la **taille de la map** (largeur ou hauteur en cases, l'autre côté suit les proportions de l'image). La taille de la map et des cases est calculée, l'image est posée en fond et l'éditeur s'ouvre.
 
 ## Poser des images sur la map
 
@@ -26,6 +31,7 @@ Dans l'onglet Maps, **Nouvelle map**, partie **Depuis une image** : choisissez o
 
 À savoir :
 
+- Les images **animées** (GIF, WebP animé) s'animent sur la map, dans l'éditeur, la vue des joueurs et les écrans. Elles restent sur leur première image si l'appareil demande moins d'animations (réglage _réduire les animations_), en mode performance, sur les navigateurs qui ne savent pas les décoder, si elles sont trop lourdes (très grandes et très longues), et dans les exports PNG et les miniatures de map. Une image hors de l'écran ne s'anime pas.
 - Une image ne bloque ni la vue, ni la lumière, ni les déplacements : posez des murs par-dessus.
 - Une image du calque **MJ** n'est jamais montrée aux joueurs ni aux écrans. Le brouillard cache les images comme le reste.
 - Les images trop grandes pour les limites du site sont réduites à l'envoi. Si l'envoi est refusé, réduisez ou découpez l'image, ou demandez à l'administrateur de relever les limites.

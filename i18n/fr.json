@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "JDR",
+    "name": "Clairvoie",
     "tagline": "Cartographie et projection de maps pour le jeu de rôle",
     "skip_to_content": "Aller au contenu",
     "update_available": "Une nouvelle version est disponible.",
@@ -107,7 +107,7 @@
       "package_pending": "Une archive est déjà en attente : lancez-la ou supprimez-la d'abord."
     },
     "backup": {
-      "invalid_file": "Ce fichier n'est pas une sauvegarde valide de JDR (ou il est incomplet).",
+      "invalid_file": "Ce fichier n'est pas une sauvegarde valide de Clairvoie (ou il est incomplet).",
       "too_recent": "Cette sauvegarde vient d'une version plus récente ({version}) que la version installée ({current}) : mettez d'abord le site à jour.",
       "busy": "Une restauration est déjà en cours ; patientez puis réessayez.",
       "too_large": "Le fichier est trop volumineux.",
@@ -1356,7 +1356,13 @@
         "upload": "Envoyer une image",
         "chosen": "{name} ({width} × {height} px)",
         "cell_px": "Taille d'une case dans l'image (px)",
-        "cell_px_hint": "La taille de la map et des cases est calculée à partir de l'image ; l'image est posée en fond, verrouillée."
+        "cell_px_hint": "La taille de la map et des cases est calculée à partir de l'image ; l'image est posée en fond, verrouillée.",
+        "mode_cell_px": "Taille d'une case dans l'image",
+        "mode_map": "Taille de la map",
+        "axis_width": "Largeur",
+        "axis_height": "Hauteur",
+        "map_cells": "Nombre de cases",
+        "map_cells_hint": "L'autre côté suit les proportions de l'image (arrondi à la case la plus proche) ; l'image couvre toute la map, centrée."
       }
     },
     "shelf": {
@@ -2179,7 +2185,20 @@
       "resize_map_to": "Redimensionner la map à l'image ({width} × {height} cases)",
       "apply": "Appliquer",
       "reduced": "L'image a été réduite à {width} × {height} px pour respecter les limites du site : vérifiez le recalage.",
-      "too_large_hint": "Réduisez l'image (ou découpez-la en plusieurs morceaux) avant de l'envoyer, ou demandez à l'administrateur de relever les limites d'images dans les réglages."
+      "too_large_hint": "Réduisez l'image (ou découpez-la en plusieurs morceaux) avant de l'envoyer, ou demandez à l'administrateur de relever les limites d'images dans les réglages.",
+      "mode_map_cells": "Taille de la map (en cases)",
+      "map_axis": "Côté donné",
+      "map_axis_width": "Largeur",
+      "map_axis_height": "Hauteur",
+      "map_cells": "Nombre de cases",
+      "map_result": "Map de {width} × {height} cases : l'autre côté suit les proportions de l'image (arrondi à la case la plus proche), l'image couvre toute la map, centrée.",
+      "map_shrinks": "La map sera réduite : les tuiles, objets et tokens hors de la nouvelle taille seront supprimés.",
+      "apply_resize": "Appliquer et redimensionner la map ({width} × {height} cases)"
+    },
+    "columns": {
+      "tools": "Largeur de la barre d'outils",
+      "panels": "Largeur des panneaux",
+      "hint": "Glisser pour régler la largeur, double-clic pour la valeur par défaut"
     }
   },
   "maps": {

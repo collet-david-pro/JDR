@@ -350,3 +350,70 @@ test("an object image placed with the image tool, moved, the move undone", async
     .toEqual(placed!.geometry);
   expect(errors).toEqual([]);
 });
+
+test("background set from the size of the map wanted: the map is resized to the image proportions", async ({
+  page,
+  browserName,
+}) => {
+  const errors = watchErrors(page);
+  const gmName = await createUser("Arpenteur");
+  await login(page, gmName, userPassword);
+  const headers = await csrf(page.request);
+  const game = await page.request.post("/api/v1/games", {
+    headers,
+    data: { name: unique("Taille ") },
+  });
+  const gameId = (await game.json()).data.id as string;
+  const created = await page.request.post(`/api/v1/games/${gameId}/maps`, {
+    headers,
+    data: { name: "Plaine", width: 10, height: 10 },
+  });
+  const mapId = (await created.json()).data.id as string;
+  await page.goto(`/games/${gameId}/maps/${mapId}/edit`);
+  const ready = await editorReady(page);
+  test.skip(
+    !ready,
+    `${browserName}: neither WebGPU nor WebGL 2 in this headless browser`,
+  );
+
+  // Image tool, "Image de fond…", upload the 64 x 48 px fixture, mode "map size": 40 cells wide (4x the map, beyond what one object op allows).
+  await page.getByTestId("tool-image").click();
+  await page.getByTestId("image-background").click();
+  const dialog = page.getByTestId("background-dialog");
+  await expect(dialog).toBeVisible();
+  await page
+    .getByTestId("background-upload")
+    .setInputFiles(path.join(fixtures, "valid_png_opaque.png"));
+  await expect(page.getByTestId("background-asset")).toBeVisible({
+    timeout: 20_000,
+  });
+  await page.getByTestId("background-mode-map").check();
+  await page.getByTestId("background-map-axis").selectOption("width");
+  await page.getByTestId("background-map-cells").fill("40");
+  const result = page.getByTestId("background-map-result");
+  await expect(result).toHaveAttribute("data-width", "40");
+  await expect(result).toHaveAttribute("data-height", "30");
+  await page.getByTestId("background-apply").click();
+
+  // Saved, resized (the editor reloads): 40 x 30 cells, the image covering the whole map.
+  await expect
+    .poll(
+      async () => {
+        const res = await page.request.get(`/api/v1/maps/${mapId}`);
+        const grid = (await res.json()).data.grid as Record<string, number>;
+        return [grid["width"], grid["height"]];
+      },
+      { timeout: 20_000 },
+    )
+    .toEqual([40, 30]);
+  const [background] = (await mapObjects(page.request, mapId)).filter(
+    (o) => o.type === "image",
+  );
+  expect(background).toMatchObject({
+    locked: true,
+    geometry: { x: 0, y: 0, w: 40, h: 30, rotation: 0 },
+    props: { placement: "background" },
+  });
+  expect(await editorReady(page)).toBe(true);
+  expect(errors).toEqual([]);
+});

@@ -19,7 +19,12 @@
   import { t } from '../../lib/i18n';
   import type { Asset, GameSettings, MapDetail, MapInput } from '../../lib/types';
   import type { ImageGeometry } from '../../editor/contracts-images';
-  import { DEFAULT_IMAGE_CELL_PX, mapFromImage } from '../../editor/images/calibration';
+  import {
+    DEFAULT_IMAGE_CELL_PX,
+    mapFromImage,
+    mapFromImageSize,
+    type MapAxis,
+  } from '../../editor/images/calibration';
   import { uploadImage } from '../../editor/images/library';
   import { assetsClient } from '../../lib/assets/service';
 
@@ -49,13 +54,23 @@
   // ---- P14: map from an image ----
   let image = $state<Asset | null>(null);
   let imageCellPx = $state(String(DEFAULT_IMAGE_CELL_PX));
+  /** Size from the cell of the image, or from the size of the map wanted (cells). */
+  let imageMode = $state<'cell_px' | 'map'>('cell_px');
+  let imageAxis = $state<MapAxis>('width');
+  let imageMapCells = $state('30');
   let pickerOpen = $state(false);
   let uploading = $state(false);
   let imageError = $state<string | null>(null);
   const fromImage = $derived(
     image === null
       ? null
-      : mapFromImage({ width: image.width, height: image.height }, Number(imageCellPx)),
+      : imageMode === 'map'
+        ? mapFromImageSize(
+            { width: image.width, height: image.height },
+            imageAxis,
+            Number(imageMapCells),
+          )
+        : mapFromImage({ width: image.width, height: image.height }, Number(imageCellPx)),
   );
 
   function useImage(asset: Asset): void {
@@ -105,6 +120,7 @@
       form.reset();
       image = null;
       imageError = null;
+      imageMode = 'cell_px';
     }
   });
 
@@ -169,13 +185,53 @@
         </div>
         {#if imageError !== null}<p class="alert alert-error" role="alert">{imageError}</p>{/if}
         {#if image !== null}
-          <TextField
-            label={t('games.maps.from_image.cell_px')}
-            name="image_cell_px"
-            inputmode="decimal"
-            bind:value={imageCellPx}
-            hint={t('games.maps.from_image.cell_px_hint')}
-          />
+          <div class="row" role="radiogroup">
+            <label class="check">
+              <input
+                type="radio"
+                name={`${uid}-image-mode`}
+                value="cell_px"
+                bind:group={imageMode}
+              />
+              {t('games.maps.from_image.mode_cell_px')}
+            </label>
+            <label class="check">
+              <input
+                type="radio"
+                name={`${uid}-image-mode`}
+                value="map"
+                bind:group={imageMode}
+                data-testid="map-from-image-mode-map"
+              />
+              {t('games.maps.from_image.mode_map')}
+            </label>
+          </div>
+          {#if imageMode === 'map'}
+            <SelectField
+              label={t('editor.images.map_axis')}
+              name="image_axis"
+              bind:value={imageAxis}
+              options={[
+                { value: 'width', label: t('games.maps.from_image.axis_width') },
+                { value: 'height', label: t('games.maps.from_image.axis_height') },
+              ]}
+            />
+            <TextField
+              label={t('games.maps.from_image.map_cells')}
+              name="image_map_cells"
+              inputmode="numeric"
+              bind:value={imageMapCells}
+              hint={t('games.maps.from_image.map_cells_hint')}
+            />
+          {:else}
+            <TextField
+              label={t('games.maps.from_image.cell_px')}
+              name="image_cell_px"
+              inputmode="decimal"
+              bind:value={imageCellPx}
+              hint={t('games.maps.from_image.cell_px_hint')}
+            />
+          {/if}
         {/if}
       </fieldset>
     {/if}
@@ -295,6 +351,11 @@
     grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
     gap: var(--space-3);
     align-items: start;
+  }
+  .check {
+    display: inline-flex;
+    gap: var(--space-2);
+    align-items: center;
   }
   p {
     margin: 0;

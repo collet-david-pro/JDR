@@ -299,6 +299,7 @@ export class SceneLayer {
     const shadows = this.viewOptions.shadows && !this.perf;
     if (shadows) this.updateShadows(f.camera);
     const frozen = this.perf || this.hooks.reducedMotion;
+    this.images.animate(f.now, view, frozen);
     const player = isPlayerLike(this.viewOptions.mode);
     const fogOn = this.viewOptions.fog;
     this.fogWorld.visible = fogOn && !player;

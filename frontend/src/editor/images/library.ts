@@ -20,6 +20,7 @@ export function imageAssetOf(asset: Asset): ImageAssetView {
     url: asset.urls.full,
     width: asset.width,
     height: asset.height,
+    animated: asset.is_animated,
   };
 }
 
