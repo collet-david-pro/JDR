@@ -11,6 +11,7 @@
  * before uploading it.
  */
 import { CHUNK_SIZE, type TileLayerId } from '../editor/contracts';
+import { MAX_TEXTURE_REPEAT } from '../engine/texture-tiles';
 import { CELL_STRIDE, ChunkCodecError, decodeChunk, TILE_LAYERS } from './chunk-codec';
 import { decodeFog, FogCodecError, isFogEmpty } from './fog-codec';
 
@@ -109,16 +110,26 @@ export const REQUIRED_KEYS = [
 const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per_cell'];
 const AMBIENT_KEYS = ['darkness', 'tint', 'time_of_day', 'weather'];
 const WEATHER_KEYS = ['type', 'intensity'];
-const PALETTE_KEYS = ['asset', 'name', 'autotile'];
+const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat'];
 const LAYER_KEYS = ['id', 'kind', 'visible', 'locked', 'opacity', 'gm_only'];
 const FLOOR_KEYS = ['uid', 'level', 'name'];
 const GENERATION_KEYS = ['generator', 'gen_version', 'seed', 'params'];
-/** Content of later phases (P9): must be null or empty (`unsupported` otherwise). */
+/** Content of later phases (P9): only checked to be lists here, the server validates their entries. */
 export const LATER_LISTS = ['notes', 'links'] as const;
 
 /* ---- P5 content (etapes/P05 "Contrat d'API P5", same bounds as the server) ------------- */
 
 export const OBJECT_TYPES = ['wall', 'door', 'window', 'light'] as const;
+/** Object types of later phases (P9, P14): geometry and props are only checked to be objects, the server validates them. */
+export const SERVER_CHECKED_TYPES = [
+  'stairs',
+  'portal',
+  'pin',
+  'zone',
+  'trap',
+  'secret',
+  'image',
+] as const;
 /** Accepted object visibilities. */
 export const OBJECT_VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'] as const;
 /** Accepted wall kinds. */
@@ -227,6 +238,8 @@ export interface MapDocumentPaletteEntry {
   readonly asset: string;
   readonly name?: string | null;
   readonly autotile?: string | null;
+  /** P14: block size (cells) of a world-aligned texture, absent for a tile. */
+  readonly repeat?: number | null;
 }
 
 export interface MapDocumentLayer {
@@ -533,6 +546,14 @@ function checkPalette(c: Collector, v: unknown): number {
         else if (!AUTOTILE_PATTERN.test(x)) c.add(p, 'pattern');
       },
       `${path}.autotile`,
+    );
+    c.optional(
+      entry,
+      'repeat',
+      (x, p) => {
+        if (x !== null) c.number(x, p, 1, MAX_TEXTURE_REPEAT, true);
+      },
+      `${path}.repeat`,
     );
   }
   return v.length;
@@ -893,6 +914,11 @@ function checkObjects(
       `${path}.sort_order`,
     );
     const type = object['type'];
+    if ((SERVER_CHECKED_TYPES as readonly unknown[]).includes(type)) {
+      if (!isObj(object['geometry'])) c.add(`${path}.geometry`, 'type');
+      if (!isObj(object['props'])) c.add(`${path}.props`, 'type');
+      continue;
+    }
     if (!c.oneOf(type, OBJECT_TYPES, `${path}.type`)) continue;
     const t = type as (typeof OBJECT_TYPES)[number];
     if (size !== null) checkGeometry(c, t, object['geometry'], `${path}.geometry`, size);
@@ -1093,7 +1119,6 @@ export function validateMapDocument(value: unknown): MapDocumentValidation {
       (x, p) => {
         if (x === null) return;
         if (!Array.isArray(x)) c.add(p, 'type');
-        else if (x.length > 0) c.add(p, 'unsupported');
       },
       key,
     );

@@ -62,6 +62,15 @@ describe('map document validation (format_version 1)', () => {
     }
   });
 
+  it('leaves later object types and notes to the server', () => {
+    const doc = variant('objects', [
+      { uid: 'o1', floor: 'f1', type: 'image', geometry: { x: 0, y: 0, w: 4, h: 4 }, props: {} },
+      { uid: 'o2', floor: 'f1', type: 'stairs', geometry: 'x', props: {} },
+    ]);
+    doc['notes'] = [{ uid: 'n1' }];
+    expect(issuesOf(doc)).toEqual(['objects.1.geometry:type']);
+  });
+
   it('accepts a minimal document', () => {
     expect(
       issuesOf({
@@ -161,10 +170,10 @@ describe('map document validation (format_version 1)', () => {
       'floors.1.level:duplicate',
     ],
     ['ambient.tint', null, 'ambient.tint:type'],
-    // P5 content is validated (tests/formats/map-document-p5.test.ts); P9 content stays empty.
+    // P5 content is validated (tests/formats/map-document-p5.test.ts); P9 lists are left to the server.
     ['objects', [{ uid: 'o1' }], 'objects.0.floor:required'],
-    ['notes', [{ uid: 'n1' }], 'notes:unsupported'],
-    ['links', [{}], 'links:unsupported'],
+    ['notes', 'x', 'notes:type'],
+    ['links', {}, 'links:type'],
     ['tokens_placed', [{ uid: 't1' }], 'tokens_placed.0.token:required'],
     ['fog', { f9: { '0:0': 'AAAA' } }, 'fog.f9:unknown_floor'],
     ['fog', 'x', 'fog:type'],
