@@ -209,3 +209,35 @@ test('a player cannot open the editor of a game', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Accès refusé' })).toBeVisible();
   await expect(page.getByTestId('editor')).toHaveCount(0);
 });
+
+test('side column width is adjustable and remembered', async ({ page, browserName }) => {
+  const gm = unique('Cartographe');
+  await createUser(gm);
+  await login(page, gm, userPassword);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Nouvelle partie' }).click();
+  await page.locator('input[name="name"]').fill(unique('Carte '));
+  await page.getByRole('button', { name: 'Créer la partie' }).click();
+  await expect(page).toHaveURL(/\/games\/\d+/);
+  const gameId = new URL(page.url()).pathname.split('/').pop() as string;
+  const ready = await openNewMap(page, gameId, 20, 20);
+  test.skip(!ready, `${browserName}: neither WebGPU nor WebGL 2 in this headless browser`);
+
+  const handle = page.getByTestId('resizer-panels');
+  const before = Number(await handle.getAttribute('aria-valuenow'));
+  const box = (await handle.boundingBox())!;
+  await page.mouse.move(box.x + 4, box.y + 100);
+  await page.mouse.down();
+  await page.mouse.move(box.x - 76, box.y + 100, { steps: 5 });
+  await page.mouse.up();
+  const after = Number(await handle.getAttribute('aria-valuenow'));
+  expect(after).toBeGreaterThan(before + 40);
+
+  await page.reload();
+  await expect(page.getByTestId('editor-viewport')).toHaveAttribute('data-state', 'ready', {
+    timeout: 30_000,
+  });
+  expect(Number(await page.getByTestId('resizer-panels').getAttribute('aria-valuenow'))).toBe(after);
+  await page.getByTestId('resizer-panels').dblclick();
+  expect(Number(await page.getByTestId('resizer-panels').getAttribute('aria-valuenow'))).toBe(288);
+});

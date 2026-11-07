@@ -82,7 +82,8 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    width: 11rem;
+    width: 100%;
+    box-sizing: border-box;
     padding: var(--space-2);
     overflow-y: auto;
     border-right: var(--border-width) solid var(--color-border);
@@ -132,6 +133,7 @@
   @media (max-width: 48rem) {
     .toolbar {
       width: 8.5rem;
+      box-sizing: border-box;
     }
   }
 </style>
