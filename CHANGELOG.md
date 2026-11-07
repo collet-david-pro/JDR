@@ -6,6 +6,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.4.0] - 2026-11-07
+
+### Added
+- **Signaler un bug ou proposer une idée** : liens dans le pied de page et l'aide vers des formulaires GitHub préremplis (version, navigateur, page). Le dépôt cible se règle dans **Administration > Réglages** ; laissé vide, les liens disparaissent.
+- **Tutoriel pas à pas** (`docs/TUTORIEL.md`) : de l'installation à la première séance.
+- **Documentation du code** : `AGENTS.md`, guides contributeurs (`docs/dev/`), README par module et commentaires sur les déclarations publiques PHP et TypeScript.
+- **Intégration continue GitHub** : PHPUnit (PHP 8.1 et 8.3, MySQL 8.0 et MariaDB 10.3), front, migrations figées et tests de bout en bout sur Chromium, Firefox et WebKit.
+
+### Changed
+- **README** : présentation complète de l'application, fonctionnalités par usage, captures d'écran et FAQ ; le contenu technique est déplacé dans `docs/` (fonctionnalités, sécurité, installation, architecture).
+
 ## [0.3.6] - 2026-11-05
 
 ### Added
