@@ -83,7 +83,7 @@ Dans **Administration > Réglages**, section « Limites et conservation » : con
 
 Chaque appareil en séance garde une connexion ouverte avec le serveur (flux en direct, ou attente longue). Sur un hébergement mutualisé, chaque connexion occupe un processus PHP, et leur nombre est limité par l'hébergeur.
 
-Pour éviter de saturer le serveur, JDR limite ces connexions avec le réglage **Connexions en attente maximales** (`realtime_max_waiting`) :
+Pour éviter de saturer le serveur, Clairvoie limite ces connexions avec le réglage **Connexions en attente maximales** (`realtime_max_waiting`) :
 
 - valeur par défaut : **4** ;
 - au-delà, les appareils suivants passent en **interrogation** : ils demandent des nouvelles au serveur toutes les 2 secondes. Ça marche, mais avec un peu plus de délai (environ 2 secondes) ;

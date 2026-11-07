@@ -168,7 +168,8 @@ final class UpgradeFromPublishedTest extends DbTestCase
 
         $this->copyMigration('0005_floor_uids.php');
         $this->copyMigration('0006_notes_audience.php');
-        self::assertSame(['0005', '0006'], $this->migrateStepByStep());
+        $this->copyMigration('0007_site_name_clairvoie.php');
+        self::assertSame(['0005', '0006', '0007'], $this->migrateStepByStep());
         self::assertSame(\REQUIRED_DB_VERSION, (new Runner($this->db, $this->dir))->currentVersion());
         self::assertSame(\REQUIRED_DB_VERSION, json_decode((string) $this->db->fetchValue('SELECT `value` FROM ' . $this->db->t('settings') . " WHERE `key` = 'db_version'"), true));
 
@@ -218,6 +219,7 @@ final class UpgradeFromPublishedTest extends DbTestCase
         self::assertStringContainsString($marker, $real);
         file_put_contents($this->dir . '/0005_floor_uids.php', str_replace($marker, "        throw new \\RuntimeException('simulated crash');\n" . $marker, $real));
         $this->copyMigration('0006_notes_audience.php');
+        $this->copyMigration('0007_site_name_clairvoie.php');
         try {
             $this->migrateStepByStep();
             self::fail('the simulated crash must stop the update');
@@ -229,7 +231,7 @@ final class UpgradeFromPublishedTest extends DbTestCase
 
         // The fixed file replays: "Retry" of update.php.
         $this->copyMigration('0005_floor_uids.php');
-        self::assertSame(['0005', '0006'], $this->migrateStepByStep());
+        self::assertSame(['0005', '0006', '0007'], $this->migrateStepByStep());
         $after = $this->counts();
         unset($after['map_note_users']);
         self::assertSame($before, $after);

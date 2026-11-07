@@ -2,7 +2,7 @@
 
 Document de référence unique pour les contributeurs (l'ancien `docs/architecture.md` renvoie ici). Consignes pour agents et mainteneurs : [AGENTS.md](../../AGENTS.md). Décisions : [decisions.md](decisions.md). Recettes : [recettes.md](recettes.md).
 
-Vue d'ensemble. JDR est une SPA (Svelte 5 + PixiJS) servie par un back-end PHP sans framework, conçu pour un hébergement mutualisé : pas de démon, pas de WebSocket, pas de Composer, pas de cron garanti.
+Vue d'ensemble. Clairvoie est une SPA (Svelte 5 + PixiJS) servie par un back-end PHP sans framework, conçu pour un hébergement mutualisé : pas de démon, pas de WebSocket, pas de Composer, pas de cron garanti.
 
 ```
 Navigateur : SPA Svelte 5 ── moteur de scène Pixi ── Web Workers ── IndexedDB / Service Worker

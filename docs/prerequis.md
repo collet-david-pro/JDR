@@ -1,8 +1,8 @@
 # Prérequis du serveur
 
-Cette page liste ce qu'il faut sur votre hébergement avant d'installer JDR. L'assistant `install.php` vérifie tout cela à l'étape 1 et vous dit quoi corriger. Pour l'installation elle-même, voir [installation.md](installation.md).
+Cette page liste ce qu'il faut sur votre hébergement avant d'installer Clairvoie. L'assistant `install.php` vérifie tout cela à l'étape 1 et vous dit quoi corriger. Pour l'installation elle-même, voir [installation.md](installation.md).
 
-JDR n'a besoin ni de SSH, ni de Composer, ni de Node.js sur le serveur.
+Clairvoie n'a besoin ni de SSH, ni de Composer, ni de Node.js sur le serveur.
 
 ## En bref
 
@@ -44,7 +44,7 @@ Leur absence donne un point orange à l'étape 1, mais n'empêche pas l'installa
 | Extension | Ce qu'elle apporte | Sans elle |
 |---|---|---|
 | `sodium` | vérifie la signature des versions publiées | **la mise à jour automatique est désactivée** ; la mise à jour manuelle reste possible |
-| `zip` | archives plus rapides | JDR écrit les ZIP lui-même, en PHP |
+| `zip` | archives plus rapides | Clairvoie écrit les ZIP lui-même, en PHP |
 | `imagick` | meilleure qualité d'image, WebP animé | `gd` est utilisé |
 | `apcu` | signaux temps réel en mémoire | des fichiers témoins sont utilisés |
 
@@ -80,7 +80,7 @@ Le fichier `.htaccess` ne s'applique que si l'hébergeur l'autorise. Si le site 
 
 ## Place disque
 
-JDR lui-même occupe peu de place. La place dépend surtout des images et sons que vos utilisateurs envoient dans le dossier `storage/assets/`.
+Clairvoie lui-même occupe peu de place. La place dépend surtout des images et sons que vos utilisateurs envoient dans le dossier `storage/assets/`.
 
 - Comptez quelques dizaines de Mo pour les fichiers du site.
 - Chaque utilisateur a un quota d'espace (réglable dans l'administration).

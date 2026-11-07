@@ -23,7 +23,7 @@ final class Settings
     public const FEEDBACK_REPO_PATTERN = '#^https://github\.com/[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$#';
 
     public const DEFAULTS = [
-        'site_name' => 'JDR',
+        'site_name' => 'Clairvoie',
         'base_url' => '',
         'default_locale' => 'fr',
         /** GitHub repository receiving feedback issues (https://github.com/<owner>/<repo>); '' hides the link. */
@@ -54,7 +54,7 @@ final class Settings
         'username' => '',
         'password_enc' => '',
         'from_email' => '',
-        'from_name' => 'JDR',
+        'from_name' => 'Clairvoie',
     ];
 
     public const REGISTRATION_MODES = ['open', 'closed', 'invite'];

@@ -1,6 +1,6 @@
 # Mise à jour
 
-Cette page explique comment mettre JDR à jour, comment vérifier qu'une version est authentique, et quoi faire si quelque chose se passe mal. Pour la première installation, voir [installation.md](installation.md).
+Cette page explique comment mettre Clairvoie à jour, comment vérifier qu'une version est authentique, et quoi faire si quelque chose se passe mal. Pour la première installation, voir [installation.md](installation.md).
 
 Dans tous les cas, l'archive `jdr-update-vX.Y.Z.zip` ne contient ni `config.php`, ni `storage/`, ni `install.php` : vos réglages, vos données et vos fichiers envoyés ne sont jamais touchés.
 

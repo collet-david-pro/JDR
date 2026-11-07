@@ -1,7 +1,7 @@
 <?php
 
 /*
- * JDR updater (manual assisted update): installs the archive sent from Administration › Update, or finishes
+ * Clairvoie updater (manual assisted update): installs the archive sent from Administration › Update, or finishes
  * an update whose files were sent by FTP (integrity check, database backup, migrations).
  * Reserved to a logged-in administrator; works while the site answers 503 (it bypasses the maintenance check).
  *
@@ -18,8 +18,8 @@ defined('JDR_ROOT') || define('JDR_ROOT', __DIR__);
 if (PHP_VERSION_ID < 80100) {
     http_response_code(500);
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!doctype html><meta charset="utf-8"><title>JDR</title>'
-        . '<p>JDR requiert PHP 8.1 ou plus récent (version actuelle : '
+    echo '<!doctype html><meta charset="utf-8"><title>Clairvoie</title>'
+        . '<p>Clairvoie requiert PHP 8.1 ou plus récent (version actuelle : '
         . htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8')
         . '). Changez la version de PHP dans le panneau de votre hébergeur.</p>';
     exit;

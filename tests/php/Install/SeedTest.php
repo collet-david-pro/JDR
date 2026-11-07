@@ -52,7 +52,7 @@ final class SeedTest extends InstallDbTestCase
 
         $s = $this->settings();
         self::assertSame(\REQUIRED_DB_VERSION, $s['db_version']);
-        self::assertSame('JDR', $s['site_name']);
+        self::assertSame('Clairvoie', $s['site_name']);
         self::assertSame('fr', $s['default_locale']);
         self::assertSame('open', $s['registration_mode']);
         self::assertSame(524288000, $s['default_quota_bytes']);

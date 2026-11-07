@@ -45,7 +45,7 @@ Le travail se fait par petites tranches : il convient aux hébergements mutualis
 
 - Toutes les sessions sont fermées : « Reconnectez-vous » avec le bouton **Se reconnecter**.
 - Si la sauvegarde vient d'une **version plus ancienne** du site, le site vous le dit : cliquez sur **Ouvrir update.php** pour appliquer les migrations.
-- Le fichier est vérifié avant d'être appliqué : seules les commandes attendues d'une sauvegarde de JDR sont acceptées. Un fichier modifié ou venant d'ailleurs est refusé.
+- Le fichier est vérifié avant d'être appliqué : seules les commandes attendues d'une sauvegarde de Clairvoie sont acceptées. Un fichier modifié ou venant d'ailleurs est refusé.
 
 ### Après une restauration des assets
 
@@ -63,7 +63,7 @@ Si la page est fermée ou la connexion coupée pendant la restauration de la bas
 4. **Testez une restauration** de temps en temps, idéalement sur une autre installation de test : une sauvegarde jamais testée est une sauvegarde dont on n'est pas sûr.
 5. **Sauvegardez aussi `config.php`**. Sans la clé `app_secret`, les liens de fichiers signés déjà distribués ne marchent plus.
 6. **Protégez les fichiers de sauvegarde** : ils contiennent les données de vos utilisateurs.
-7. Pensez aussi aux sauvegardes de votre hébergeur, si elles existent : elles complètent celles de JDR.
+7. Pensez aussi aux sauvegardes de votre hébergeur, si elles existent : elles complètent celles de Clairvoie.
 
 ## Sauvegarde proposée à la mise à jour
 

@@ -7,7 +7,7 @@ defined('JDR_BOOT') || exit;
 // Installer strings (French). Keys are referenced by app/Install/* and app/Views/install/*.
 
 return [
-    'app.title' => 'Installation de JDR',
+    'app.title' => 'Installation de Clairvoie',
     'app.subtitle' => 'Assistant d\'installation',
 
     'step.requirements' => 'Prérequis',
@@ -207,7 +207,7 @@ return [
 
     // Step 6
     'done.title' => 'Installation terminée',
-    'done.text' => 'JDR est installé. Connectez-vous avec le compte administrateur que vous venez de créer.',
+    'done.text' => 'Clairvoie est installé. Connectez-vous avec le compte administrateur que vous venez de créer.',
     'done.duration' => 'Durée de l\'installation : {s} s.',
     'done.deleted' => 'Le fichier install.php a été supprimé.',
     'done.not_deleted' => 'install.php n\'a pas pu être supprimé : il reste verrouillé, mais supprimez-le par FTP par précaution.',
@@ -219,7 +219,7 @@ return [
     'done.backup' => 'Conservez une copie de config.php en lieu sûr et sauvegardez régulièrement le site depuis l\'administration.',
 
     // Locked
-    'locked.title' => 'JDR est déjà installé',
+    'locked.title' => 'Clairvoie est déjà installé',
     'locked.text' => 'L\'assistant est verrouillé car le fichier config.php ou storage/install.lock existe.',
     'locked.reinstall' => 'Pour réinstaller : 1) sauvegardez vos données ; 2) supprimez par FTP config.php et storage/install.lock ; 3) rouvrez install.php et choisissez un nouveau préfixe ou l\'option « Écraser ».',
     'locked.home' => 'Aller au site',
@@ -244,7 +244,7 @@ return [
     'err.too_common' => 'Ce mot de passe est trop courant.',
     'err.mismatch' => 'Les deux mots de passe ne correspondent pas.',
     'err.overwrite_confirm' => 'Cochez la case et retapez exactement le préfixe pour confirmer.',
-    'err.not_resumable' => 'Ces tables ne proviennent pas d\'une installation de JDR : reprise impossible.',
+    'err.not_resumable' => 'Ces tables ne proviennent pas d\'une installation de Clairvoie : reprise impossible.',
     'fatal.title' => 'Erreur inattendue',
     'fatal.text' => 'L\'assistant a rencontré une erreur : {message}',
 ];

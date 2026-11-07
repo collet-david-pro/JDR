@@ -1,7 +1,7 @@
 <?php
 
 /*
- * JDR installer (projet.md 19). Upload the files by FTP, then open install.php in a browser.
+ * Clairvoie installer (projet.md 19). Upload the files by FTP, then open install.php in a browser.
  * Locked once installed (config.php or storage/install.lock present); deletes itself at the end.
  *
  * This file must stay parseable by old PHP versions so that it can explain the problem:
@@ -17,8 +17,8 @@ defined('JDR_ROOT') || define('JDR_ROOT', __DIR__);
 if (PHP_VERSION_ID < 80100) {
     http_response_code(500);
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!doctype html><meta charset="utf-8"><title>JDR</title>'
-        . '<p>JDR requiert PHP 8.1 ou plus récent (version actuelle : '
+    echo '<!doctype html><meta charset="utf-8"><title>Clairvoie</title>'
+        . '<p>Clairvoie requiert PHP 8.1 ou plus récent (version actuelle : '
         . htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8')
         . '). Changez la version de PHP dans le panneau de votre hébergeur.</p>';
     exit;
@@ -26,7 +26,7 @@ if (PHP_VERSION_ID < 80100) {
 if (!function_exists('session_start') || !function_exists('random_bytes')) {
     http_response_code(500);
     header('Content-Type: text/html; charset=utf-8');
-    echo '<!doctype html><meta charset="utf-8"><title>JDR</title>'
+    echo '<!doctype html><meta charset="utf-8"><title>Clairvoie</title>'
         . '<p>L\'extension PHP « session » est requise : activez-la dans le panneau de votre hébergeur.</p>';
     exit;
 }

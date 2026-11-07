@@ -64,7 +64,7 @@ final class SiteStep
         }
 
         return [
-            'site_name' => 'JDR',
+            'site_name' => 'Clairvoie',
             'base_url' => $this->env->baseUrl(),
             'default_locale' => 'fr',
             'registration_mode' => 'open',

@@ -164,7 +164,7 @@ final class AdminApiTest extends ApiTestCase
 
         $settings = $admin->get('/admin/settings')->payload()['data']['settings'];
         self::assertSame([
-            'site_name' => 'JDR',
+            'site_name' => 'Clairvoie',
             'base_url' => '',
             'default_locale' => 'fr',
             'feedback_repo_url' => 'https://github.com/collet-david-pro/JDR',
@@ -184,7 +184,7 @@ final class AdminApiTest extends ApiTestCase
             'maintenance' => false,
             'smtp' => [
                 'host' => '', 'port' => 587, 'encryption' => 'starttls', 'username' => '', 'password_set' => false,
-                'from_email' => '', 'from_name' => 'JDR',
+                'from_email' => '', 'from_name' => 'Clairvoie',
             ],
         ], $settings);
 
@@ -203,7 +203,7 @@ final class AdminApiTest extends ApiTestCase
             'default_quota_bytes' => 1073741824,
             'smtp' => [
                 'host' => 'smtp.example.org', 'port' => 587, 'encryption' => 'starttls', 'username' => 'mailer',
-                'password' => 'Smtp-Secret-Value', 'from_email' => 'jdr@example.org', 'from_name' => 'JDR',
+                'password' => 'Smtp-Secret-Value', 'from_email' => 'jdr@example.org', 'from_name' => 'Clairvoie',
             ],
         ]);
         self::assertSame(200, $ok->status(), $ok->body());

@@ -8,7 +8,7 @@ defined('JDR_BOOT') || exit;
  * French strings of the update module (UpdateText). Self-contained: update.php runs while the site answers 503.
  */
 return [
-    'page.title' => 'Mise à jour de JDR',
+    'page.title' => 'Mise à jour de Clairvoie',
     'page.subtitle' => 'Administration',
     'page.csrf' => 'Le formulaire a expiré. Rechargez la page et recommencez.',
     'page.fatal' => 'La page de mise à jour a rencontré une erreur : {message}',
@@ -111,14 +111,14 @@ return [
     'error.generic' => 'Mise à jour refusée ({code}).',
     'error.update.invalid_zip' => 'Le fichier envoyé n\'est pas une archive ZIP valide.',
     'error.update.unsafe_path' => 'L\'archive contient un chemin interdit ou inattendu.',
-    'error.update.missing_manifest' => 'L\'archive ne contient pas de manifest.json valide : ce n\'est pas une archive de mise à jour JDR.',
+    'error.update.missing_manifest' => 'L\'archive ne contient pas de manifest.json valide : ce n\'est pas une archive de mise à jour Clairvoie.',
     'error.update.file_hash' => 'Le contenu de l\'archive ne correspond pas à son manifeste (fichier modifié, manquant ou non listé).',
     'error.update.not_newer' => 'Cette archive n\'est pas plus récente que la version installée.',
     'error.update.hash_mismatch' => 'L\'empreinte de cette archive diffère de celle de la version officielle : elle a été modifiée ou corrompue.',
     'error.update.too_large' => 'L\'archive est trop volumineuse.',
     'error.update.bad_offset' => 'Morceau envoyé à une mauvaise position ; reprenez l\'envoi.',
     'error.update.upload_incomplete' => 'L\'envoi n\'est pas terminé.',
-    'error.backup.invalid_file' => 'Ce fichier n\'est pas une sauvegarde valide de JDR (ou il est incomplet).',
+    'error.backup.invalid_file' => 'Ce fichier n\'est pas une sauvegarde valide de Clairvoie (ou il est incomplet).',
     'error.backup.too_recent' => 'Cette sauvegarde vient d\'une version plus récente ({version}) que la version installée ({current}) : mettez d\'abord le site à jour.',
     'error.backup.busy' => 'Une restauration est déjà en cours ; patientez puis réessayez.',
     'error.backup.too_large' => 'Le fichier est trop volumineux.',

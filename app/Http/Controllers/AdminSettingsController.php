@@ -63,7 +63,7 @@ final class AdminSettingsController
             return Response::ok(['sent' => false, 'log' => ['SMTP is not configured (host and sender required).']]);
         }
         try {
-            $log = $this->mailer->send($to, 'JDR — test SMTP', "Ce message de test confirme que l'envoi d'e-mails fonctionne.");
+            $log = $this->mailer->send($to, 'Clairvoie — test SMTP', "Ce message de test confirme que l'envoi d'e-mails fonctionne.");
             $sent = true;
         } catch (SmtpLogException $e) {
             $log = $e->log();

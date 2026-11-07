@@ -47,7 +47,7 @@ final class NotesMigrationTest extends MapsP9bTestCase
 
     public function testRequiredVersionAcceptsTheGapOfNumbering(): void
     {
-        self::assertSame('0006', \REQUIRED_DB_VERSION);
+        self::assertSame('0007', \REQUIRED_DB_VERSION);
         self::assertFileExists(self::migrationsDir() . '/0006_notes_audience.php');
     }
 }

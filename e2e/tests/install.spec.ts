@@ -44,7 +44,7 @@ test('install.php can no longer be used once installed', async ({ browser }) => 
   const status = response!.status();
   expect([403, 404], `GET /install.php answered ${status}`).toContain(status);
   if (status === 403) {
-    await expect(page.getByRole('heading', { name: 'JDR est déjà installé' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Clairvoie est déjà installé' })).toBeVisible();
   }
   // A forged POST to a later step does not run anything either.
   const post = await context.request.post('/install.php?step=run', {

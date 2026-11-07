@@ -1,6 +1,6 @@
 # Installation
 
-JDR s'installe sur un hébergement PHP/MySQL mutualisé classique (OVH, o2switch, Hostinger, Ionos…), **sans SSH, sans Composer et sans tâche cron obligatoire** : on envoie les fichiers par FTP, puis on ouvre `install.php` dans le navigateur. Comptez moins de 3 minutes une fois les fichiers envoyés.
+Clairvoie s'installe sur un hébergement PHP/MySQL mutualisé classique (OVH, o2switch, Hostinger, Ionos…), **sans SSH, sans Composer et sans tâche cron obligatoire** : on envoie les fichiers par FTP, puis on ouvre `install.php` dans le navigateur. Comptez moins de 3 minutes une fois les fichiers envoyés.
 
 ## Prérequis de l'hébergement
 
@@ -47,7 +47,7 @@ Saisissez les informations fournies par l'hébergeur et le **préfixe des tables
 Si des tables portent déjà ce préfixe, l'assistant vous laisse le choix :
 
 - **Annuler** : rien n'est touché ; vous pouvez choisir un autre préfixe ;
-- **Reprendre** une installation interrompue (proposé seulement si ces tables viennent de JDR) ;
+- **Reprendre** une installation interrompue (proposé seulement si ces tables viennent de Clairvoie) ;
 - **Écraser** : les tables seront supprimées, après une double confirmation (case à cocher **et** saisie du préfixe). La suppression n'a lieu qu'au lancement de l'étape 5.
 
 Rien n'est écrit sur le serveur avant l'étape 5 (hormis la création éventuelle de la base et les tests ci-dessus).
@@ -94,7 +94,7 @@ La page indique aussi l'adresse du cron facultatif (voir plus bas). Cliquez ensu
 
 ## Mode sans réécriture d'adresses
 
-Si `mod_rewrite` n'est pas disponible, JDR fonctionne quand même :
+Si `mod_rewrite` n'est pas disponible, Clairvoie fonctionne quand même :
 
 - l'API est appelée en `index.php?r=/api/v1/…` ;
 - les pages utilisent des adresses de la forme `https://votre-site/#/games/12`.

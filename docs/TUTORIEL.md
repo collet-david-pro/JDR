@@ -1,6 +1,6 @@
 # Tutoriel : de l'installation à votre première séance
 
-Ce guide s'adresse à un MJ qui découvre JDR et n'est pas développeur. Il suit l'ordre naturel : installer le site, le régler, préparer une partie et une map, puis jouer. Pour le détail, il renvoie vers les autres documents. L'aide intégrée du site (`/aide`) complète chaque étape.
+Ce guide s'adresse à un MJ qui découvre Clairvoie et n'est pas développeur. Il suit l'ordre naturel : installer le site, le régler, préparer une partie et une map, puis jouer. Pour le détail, il renvoie vers les autres documents. L'aide intégrée du site (`/aide`) complète chaque étape.
 
 **Sommaire**
 

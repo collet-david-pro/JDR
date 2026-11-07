@@ -42,7 +42,7 @@ $current = $step === null ? -1 : (int) array_search($step, $steps, true);
 <main class="card">
 <?= $content ?>
 </main>
-<footer>JDR <?= $e(defined('APP_VERSION') ? APP_VERSION : '') ?></footer>
+<footer>Clairvoie <?= $e(defined('APP_VERSION') ? APP_VERSION : '') ?></footer>
 </div>
 </body>
 </html>

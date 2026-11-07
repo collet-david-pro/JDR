@@ -28,7 +28,7 @@ defined('JDR_BOOT') || exit;
 <main class="card">
 <?= $content ?>
 </main>
-<footer>JDR <?= $e(defined('APP_VERSION') ? APP_VERSION : '') ?></footer>
+<footer>Clairvoie <?= $e(defined('APP_VERSION') ? APP_VERSION : '') ?></footer>
 </div>
 </body>
 </html>

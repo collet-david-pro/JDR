@@ -1,6 +1,6 @@
 # Installation sur YunoHost (application My Webapp)
 
-Ce guide décrit l'installation de JDR sur un serveur YunoHost avec l'application **My Webapp**. Il repose sur un cas réel : le site est servi sous un sous-chemin (ici `/jdr/`) et Nginx traite le PHP dans des blocs `location` inclus depuis le dossier de configuration de l'application.
+Ce guide décrit l'installation de Clairvoie sur un serveur YunoHost avec l'application **My Webapp**. Il repose sur un cas réel : le site est servi sous un sous-chemin (ici `/jdr/`) et Nginx traite le PHP dans des blocs `location` inclus depuis le dossier de configuration de l'application.
 
 Nginx ne lit pas les fichiers `.htaccess`. Tant que les dossiers privés ne sont pas protégés dans la configuration Nginx, l'installeur signale « Dossier privé lisible depuis le web ». Ce guide ajoute cette protection.
 
@@ -32,7 +32,7 @@ Vous devez y retrouver :
 
 - une directive `alias` vers le dossier web de l'application ;
 - une `location` qui traite le PHP, avec son `fastcgi_pass` ;
-- un `try_files ... /jdr/index.php?$args`, qui suffit pour le mode « réécriture » de JDR.
+- un `try_files ... /jdr/index.php?$args`, qui suffit pour le mode « réécriture » de Clairvoie.
 
 Le dossier `<app>.d/` est conservé par My Webapp lors des mises à jour de l'application : c'est le bon endroit pour vos ajouts.
 
