@@ -17,7 +17,7 @@ use JDR\Domain\Maps\MapInput;
  * Types: wall {points [[x, y]] 2-1 000, closed}, door / window {a, b} (length 0.1-20),
  * light {x, y}. Every geometry / props key is required (the document accepts a few defaults,
  * see $lenient); unknown keys are refused. P9: pin, zone, trap, secret (ObjectRulesNotes).
- * texture_asset / asset_open / asset_closed are reserved (null) until P9.
+ * texture_asset / asset_open / asset_closed are reserved (null) until P9. P14: image (ObjectRulesImage).
  *
  * Errors are added to $errors as "<field>.<key>[.<sub>]" => required | invalid | too_small |
  * too_large | too_many | below_radius. Normalized values keep the canonical key order (MySQL
@@ -25,7 +25,7 @@ use JDR\Domain\Maps\MapInput;
  */
 final class ObjectRules
 {
-    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal', ...ObjectRulesNotes::TYPES];
+    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal', ...ObjectRulesNotes::TYPES, ...ObjectRulesImage::TYPES];
     public const VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'];
     public const UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const SORT_MAX = 1000000;
@@ -45,7 +45,7 @@ final class ObjectRules
     public const FLICKER_TYPES = ['none', 'torch', 'pulse'];
     public const FLICKER_SPEED_MIN = 0.1;
     public const FLICKER_SPEED_MAX = 10.0;
-    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props', 'pin' => 'props', 'zone' => 'gm', 'trap' => 'props', 'secret' => 'props'];
+    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props', 'pin' => 'props', 'zone' => 'gm', 'trap' => 'props', 'secret' => 'props', 'image' => 'props'];
 
     /** Keys of an object, in canonical order (API form). */
     public const OBJECT_KEYS = ['uid', 'floor', 'type', 'layer', 'geometry', 'props', 'visibility', 'locked', 'sort_order', 'rev'];
@@ -62,6 +62,7 @@ final class ObjectRules
         'zone' => ['polygon'],
         'trap' => ['x', 'y', 'polygon'],
         'secret' => ['a', 'b', 'polygon'],
+        'image' => ObjectRulesImage::GEOMETRY_KEYS,
     ];
     private const PROPS_KEYS = [
         'wall' => ['kind', 'thickness', 'blocks_vision', 'blocks_light', 'blocks_move', 'texture_asset', 'height'],
@@ -74,6 +75,7 @@ final class ObjectRules
         'zone' => ['kind', 'note', 'show_on_enter'],
         'trap' => ['note', 'reveal_effect'],
         'secret' => ['kind', 'note'],
+        'image' => ObjectRulesImage::PROPS_KEYS,
     ];
     /** Props keys the document may omit (reserved for P9): default null. */
     private const LENIENT_PROPS = ['texture_asset', 'height', 'asset_open', 'asset_closed'];
@@ -278,6 +280,9 @@ final class ObjectRules
         if (ObjectRulesP9::handles($type)) {
             return ObjectRulesP9::geometry($type, $g, $field, $errors, $width, $height);
         }
+        if (ObjectRulesImage::handles($type)) {
+            return ObjectRulesImage::geometry($g, $field, $errors, $width, $height);
+        }
         switch ($type) {
             case 'wall':
                 $points = $g['points'];
@@ -342,6 +347,9 @@ final class ObjectRules
     {
         if (ObjectRulesNotes::handles($type)) {
             return ObjectRulesNotes::props($type, $value, $field, $errors);
+        }
+        if (ObjectRulesImage::handles($type)) {
+            return ObjectRulesImage::props($value, $field, $errors, $lenient);
         }
         $keys = self::PROPS_KEYS[$type];
         $p = Fields::object($value, $keys);
@@ -421,6 +429,9 @@ final class ObjectRules
     {
         if (ObjectRulesP9::handles((string) $object['type'])) {
             return ObjectRulesP9::bbox($object, $width, $height);
+        }
+        if (ObjectRulesImage::handles($object['type'])) {
+            return ObjectRulesImage::bbox($object, $width, $height);
         }
         if (ObjectRulesNotes::handles($object['type'])) {
             return ObjectRulesNotes::bbox($object, $width, $height);

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ImageToolOptions from './ImageToolOptions.svelte';
   import NoteToolOptions from './NoteToolOptions.svelte';
   import ObjectToolOptions from './ObjectToolOptions.svelte';
   import { BRUSH_MAX, BRUSH_MIN, type BrushShape, type ShapeKind } from '../../editor/tools/types';
@@ -113,6 +114,7 @@
 
   <ObjectToolOptions {session} />
   <NoteToolOptions {session} />
+  {#if tool === 'image'}<ImageToolOptions {session} />{/if}
 </section>
 
 <style>

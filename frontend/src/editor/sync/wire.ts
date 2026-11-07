@@ -81,6 +81,7 @@ export function paletteFromWire(
             url: p.url,
             name: p.name,
             ...(p.autotile !== null && p.autotile !== undefined ? { autotile: p.autotile } : {}),
+            ...(p.repeat !== null && p.repeat !== undefined ? { repeat: p.repeat } : {}),
           },
     );
   }

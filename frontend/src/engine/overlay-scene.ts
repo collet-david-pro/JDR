@@ -8,6 +8,7 @@ import type { Overlay, Point, SceneView } from '../editor/contracts';
 import { normalizeRect } from './overlay-geometry';
 import { dashSegments } from './overlay-geometry';
 import type { Graphics } from './pixi';
+import { imageCorners } from '../editor/model/image-values';
 import { lightPosition, objectHandles, tokenBox } from './scene/object-geometry';
 
 /** Overlay accent color. */
@@ -210,6 +211,13 @@ function drawSelection(
         lightRings(g, toScreen, x, y, obj.props.radius, obj.props.dim_radius);
         break;
       }
+      case 'image':
+        outline(
+          g,
+          imageCorners(obj.geometry).map(([x, y]) => toScreen(x, y)),
+          true,
+        );
+        break;
       case 'zone':
       case 'trap':
       case 'secret': {

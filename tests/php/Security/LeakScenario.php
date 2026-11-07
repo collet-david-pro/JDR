@@ -85,8 +85,20 @@ trait LeakScenario
             ['type' => 'note.show', 'title' => 'Écho', 'body' => 'Des pas.'],
             ['type' => 'fog.reveal', 'floor' => $f, 'chunks' => [[5, 0, self::b64(self::fogBits(5, 0, 170, 4, 180, 10))]]],
         ]);
+        // P14: image objects, one on the gm layer (its asset is GM only), one seen by the players.
+        $secret = $this->uploadOk($gm, 'valid_webp_lossy.webp', ['kind' => 'background', 'name' => 'Plan secret']);
+        $w['secretImage'] = (string) $secret['uuid'];
+        $image = static fn (string $uid, string $assetId, array $over = []): array => array_replace([
+            'uid' => $uid, 'floor' => $f, 'type' => 'image', 'layer' => 'props',
+            'geometry' => ['x' => 3, 'y' => 10, 'w' => 2, 'h' => 2, 'rotation' => 0],
+            'props' => ['asset_id' => $assetId, 'opacity' => 1, 'flip_h' => false, 'flip_v' => false, 'placement' => 'above'],
+            'visibility' => 'all', 'locked' => false, 'sort_order' => 0,
+        ], $over);
+        $w['visibleImage'] = (string) $this->uploadOk($gm, 'valid_jpeg_exif_orientation6.jpg', ['kind' => 'object'])['id'];
         // D10: editor ops on the played map.
         $this->opsOk($gm, $w['big'], [
+            ['type' => 'object.add', 'object' => $image('img-gm', (string) $secret['id'], ['layer' => 'gm'])],
+            ['type' => 'object.add', 'object' => $image('img-vis', $w['visibleImage'])],
             ['type' => 'object.add', 'object' => self::wallObject('wall-new', $f, [[3, 12], [4, 12]])],
             ['type' => 'object.add', 'object' => self::wallObject('gm-new', $f, [[3, 13], [4, 13]], ['layer' => 'gm'])],
             self::tiles($f, 'ground', [[4, 4, 1], [150, 151, 2]]),
@@ -165,7 +177,7 @@ trait LeakScenario
         $all = ['bob', 'dan', 'table'];
         $ever = PHP_INT_MAX;
         $needles = [];
-        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre', 'up-wall', 'up-live', 't-up', 't-up-live', 'Etage secret'] as $uid) {
+        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre', 'up-wall', 'up-live', 't-up', 't-up-live', 'Etage secret', 'img-gm', 'Plan secret', $w['secretImage']] as $uid) {
             $needles[] = [$all, $uid, $ever];
         }
         foreach (['hidden-vis', 't-ghost', 'Spectre'] as $uid) {

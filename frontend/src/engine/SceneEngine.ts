@@ -282,8 +282,18 @@ export class SceneEngine implements SceneEngineApi {
       reducedMotion: this.reducedMotion,
     });
 
-    this.world.addChild(gridRenderer.background, this.ghostTilemap.root, this.tilemap.root);
-    this.worldScene.addChild(this.sceneLayer.objects.root, this.sceneLayer.tokens.root);
+    // P14: background images right after the theme background, `above` images on the objects.
+    this.world.addChild(
+      gridRenderer.background,
+      this.sceneLayer.images.below,
+      this.ghostTilemap.root,
+      this.tilemap.root,
+    );
+    this.worldScene.addChild(
+      this.sceneLayer.objects.root,
+      this.sceneLayer.images.above,
+      this.sceneLayer.tokens.root,
+    );
     this.worldFog.addChild(this.sceneLayer.fogWorld);
     const lighting = this.sceneLayer.lighting;
     const layers: Record<PipelineLayer, Container[]> = {

@@ -35,6 +35,7 @@ import {
   encodeChunk,
 } from '../../formats/chunk-codec';
 import type { CompressionOptions } from '../../formats/compression';
+import type { ImageAssetView } from '../contracts-images';
 import { FloorSlot, floorRecreateOps, type ChunkRecord, type FloorMeta } from './FloorSlot';
 import { DEFAULT_LAYERS, EMPTY_CELL, MapOpError, chunkKey, parseChunkKey } from './ops';
 import { FloorView } from './FloorView';
@@ -105,6 +106,9 @@ export class MapDocument implements MapView, SceneView {
   private cur!: FloorSlot;
   private sceneEpoch = 0;
   private readonly sceneListeners = new Set<Listener<SceneChangedEvent>>();
+  /** P14: assets of the image objects (map-wide, every floor). */
+  private readonly images = new Map<string, ImageAssetView>();
+  private pendingImages = false;
   private readonly floorListeners = new Set<Listener<FloorsEvent>>();
   private readonly floorChunkListeners = new Set<
     (floor: string, event: ChunksChangedEvent) => void
@@ -565,11 +569,22 @@ export class MapDocument implements MapView, SceneView {
   }
 
   /** Index of an asset in the palette, and the palette.add op to emit when it is missing. */
-  paletteIndexFor(assetId: string): { index: number; op: MapOp | null } {
+  paletteIndexFor(
+    assetId: string,
+    repeat: number | null = null,
+  ): { index: number; op: MapOp | null } {
     const found = this._palette.findIndex((p) => p !== null && p.assetId === assetId);
     if (found > 0) return { index: found, op: null };
     const index = this._palette.length;
-    return { index, op: { type: 'palette.add', index, asset_id: assetId } };
+    return {
+      index,
+      op: {
+        type: 'palette.add',
+        index,
+        asset_id: assetId,
+        ...(repeat !== null ? { repeat } : {}),
+      },
+    };
   }
 
   /** Updates url/name of palette entries (e.g. once signed URLs are known). Not an op. */
@@ -581,6 +596,26 @@ export class MapDocument implements MapView, SceneView {
       return { ...p, url: info.url, name: info.name };
     });
     if (changed) this.markMeta();
+  }
+
+  // ---- P14 image assets (not ops) ------------------------------------------------------
+
+  /** What the engine needs to draw the image objects of an asset (null = unknown). */
+  imageAsset(assetId: string): ImageAssetView | null {
+    return this.images.get(assetId) ?? null;
+  }
+
+  /** Known image assets. */
+  imageAssets(): readonly ImageAssetView[] {
+    return [...this.images.values()];
+  }
+
+  /** Adds / replaces image assets (map.images, an asset picked in the library); `replace` drops the others. */
+  setImageAssets(assets: readonly ImageAssetView[], replace = false): void {
+    if (replace) this.images.clear();
+    for (const a of assets) this.images.set(a.assetId, Object.freeze({ ...a }));
+    this.pendingImages = true;
+    this.schedule();
   }
 
   /** Synchronously emits pending change events (normally sent on the next microtask). */
@@ -609,7 +644,14 @@ export class MapDocument implements MapView, SceneView {
       for (const [layer, keys] of byLayer) emitChunks(slot, layer, [...keys]);
     }
     const scene = this.cur.scene.takeEvent();
-    const event = mergeSceneEvents(switched, scene);
+    let event = mergeSceneEvents(switched, scene);
+    if (this.pendingImages) {
+      this.pendingImages = false;
+      event = {
+        ...(event ?? { objects: [], tokens: [], fog: [], ambient: false, tokenDefs: false }),
+        images: true,
+      };
+    }
     if (event !== null) for (const l of [...this.sceneListeners]) l(event);
     if (floors !== null) for (const l of [...this.floorListeners]) l(floors);
   }
@@ -697,7 +739,7 @@ export class MapDocument implements MapView, SceneView {
           : { type: 'tiles.set', floor: slot.uid, layer: op.layer, cells: prev };
       }
       case 'palette.add':
-        this.addPalette(op.index, op.asset_id, op.autotile ?? null);
+        this.addPalette(op.index, op.asset_id, op.autotile ?? null, op.repeat ?? null);
         return null;
       case 'map.meta': {
         const layers = op.layers === undefined ? undefined : validateLayers(op.layers);
@@ -814,13 +856,27 @@ export class MapDocument implements MapView, SceneView {
     return Object.keys(inverse).length === 0 ? null : { next, inverse: inverse as AmbientPatch };
   }
 
-  private addPalette(index: number, assetId: string, autotile: string | null): void {
+  private addPalette(
+    index: number,
+    assetId: string,
+    autotile: string | null,
+    repeat: number | null,
+  ): void {
     if (!Number.isInteger(index) || index < 1 || index > 0xffff || assetId === '') {
       throw new MapOpError('bad_palette_index', `Invalid palette index ${index}`);
     }
     const existing = this._palette[index];
     if (existing !== undefined && existing !== null) {
-      if (existing.assetId === assetId) return;
+      if (existing.assetId === assetId) {
+        // Same asset: a texture entry may change its block size (the only mutable field).
+        if (repeat !== null && existing.repeat != null && existing.repeat !== repeat) {
+          const next = [...this._palette];
+          next[index] = { ...existing, repeat };
+          this._palette = next;
+          this.markMeta();
+        }
+        return;
+      }
       throw new MapOpError('palette_conflict', `Palette index ${index} already used`);
     }
     const info = this.resolveAsset(assetId);
@@ -831,6 +887,7 @@ export class MapDocument implements MapView, SceneView {
       url: info?.url ?? null,
       name: info?.name ?? assetId,
       ...(autotile !== null ? { autotile } : {}),
+      ...(repeat !== null ? { repeat } : {}),
     };
     this._palette = next;
     this.markMeta();
@@ -931,5 +988,6 @@ function mergeSceneEvents(
     fog: [...new Set([...a.fog, ...b.fog])],
     ambient: a.ambient || b.ambient,
     tokenDefs: a.tokenDefs || b.tokenDefs,
+    ...(a.images === true || b.images === true ? { images: true } : {}),
   };
 }

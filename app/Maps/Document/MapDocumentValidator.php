@@ -74,7 +74,7 @@ final class MapDocumentValidator
     ];
     private const REQUIRED_KEYS = ['format', 'format_version', 'name', 'grid', 'palette', 'layers', 'floors', 'chunks'];
     private const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per_cell'];
-    private const PALETTE_KEYS = ['asset', 'name', 'autotile'];
+    private const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat'];
     private const FLOOR_KEYS = ['uid', 'level', 'name'];
     private const TOKEN_KEYS = ['uid', 'token', 'floor', 'x', 'y', 'rotation', 'scale', 'hidden', 'light_override'];
 
@@ -298,15 +298,21 @@ final class MapDocumentValidator
                 $name = $item['name'] ?? '';
                 $name = $name === null ? '' : Fields::text($name, PHP_INT_MAX);
                 $autotile = MapInput::autotile($item['autotile'] ?? null);
+                $repeat = MapInput::repeat($item['repeat'] ?? null);
                 $assetId = array_key_exists('asset_id', $item) ? Fields::id($item['asset_id']) : null;
                 if ($name === null || mb_strlen($name, 'UTF-8') > MapInput::NAME_MAX) {
                     $errors[$field . '.name'] = $name === null ? 'invalid' : 'too_long';
                 } elseif ($autotile === false) {
                     $errors[$field . '.autotile'] = 'invalid';
+                } elseif ($repeat === false) {
+                    $errors[$field . '.repeat'] = 'invalid';
                 } elseif (array_key_exists('asset_id', $item) && $assetId === null) {
                     $errors[$field . '.asset_id'] = 'invalid';
                 } else {
                     $entryOut = ['sha256' => strtolower($m[1]), 'name' => $name, 'autotile' => $autotile];
+                    if ($repeat !== null) {
+                        $entryOut['repeat'] = $repeat;
+                    }
                     if ($assetId !== null) {
                         $entryOut['asset_id'] = $assetId;
                     }
@@ -501,6 +507,7 @@ final class MapDocumentValidator
         foreach ($value as $i => $item) {
             $field = 'objects.' . $i;
             [$item, $revealedAt] = MapDocumentNotes::takeRevealed($item, $field, $errors);
+            [$item, $imageAsset] = MapDocumentImages::take($item, $field, $errors);
             $object = ObjectRules::object($item, $field, $errors, (float) $grid['width'], (float) $grid['height'], $floorUid, false, true);
             if ($object !== null) {
                 if (!isset($known[$object['floor']])) {
@@ -511,7 +518,7 @@ final class MapDocumentValidator
                     $errors[$field . '.uid'] = 'duplicate';
                 } else {
                     $uids[strtolower($object['uid'])] = true;
-                    $out[] = $object + ($revealedAt === null ? [] : ['revealed_at' => $revealedAt]);
+                    $out[] = $object + ($revealedAt === null ? [] : ['revealed_at' => $revealedAt]) + ($imageAsset === null ? [] : ['asset' => $imageAsset]);
                 }
             }
             if (count($errors) - $before >= self::MAX_ERRORS) {

@@ -1349,6 +1349,14 @@
         "scope_hint": "Un modèle du site est visible de tous les MJ du site.",
         "private_assets": "Cette map utilise des images qui ne sont qu'à vous (textures ou images de notes). Un modèle du site ne peut pas les partager : remplacez-les par des éléments de la bibliothèque générale, ou enregistrez le modèle pour vous seul.",
         "saved": "Modèle « {name} » enregistré."
+      },
+      "from_image": {
+        "title": "Depuis une image (facultatif)",
+        "choose": "Choisir une image",
+        "upload": "Envoyer une image",
+        "chosen": "{name} ({width} × {height} px)",
+        "cell_px": "Taille d'une case dans l'image (px)",
+        "cell_px_hint": "La taille de la map et des cases est calculée à partir de l'image ; l'image est posée en fond, verrouillée."
       }
     },
     "shelf": {
@@ -1578,7 +1586,8 @@
       "pin": "Épingle",
       "zone": "Zone",
       "trap": "Piège",
-      "secret": "Secret"
+      "secret": "Secret",
+      "image": "Image"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1651,9 +1660,18 @@
       "title": "Palette de tuiles",
       "add": "Ajouter une tuile",
       "picker_title": "Choisir une tuile",
-      "empty": "Aucune tuile : ajoutez-en depuis la bibliothèque (images de type « Tuile »).",
+      "empty": "Aucune entrée : ajoutez des tuiles ou des textures depuis la bibliothèque.",
       "use": "Utiliser {name}",
-      "frames": "{count} variantes"
+      "frames": "{count} variantes",
+      "add_texture": "Ajouter une texture",
+      "picker_texture_title": "Choisir une texture",
+      "filter": "Afficher dans la palette",
+      "filter_all": "Tout",
+      "filter_tile": "Tuiles",
+      "filter_texture": "Textures",
+      "repeat": "Cases couvertes par la texture (côté)",
+      "repeat_hint": "La texture s'étale sur ce nombre de cases en largeur et en hauteur, alignée sur la carte.",
+      "repeat_badge": "{count} × {count} cases"
     },
     "panels": {
       "show": "Afficher les panneaux",
@@ -1709,7 +1727,11 @@
       "pin": "poser une épingle",
       "zone": "tracer une zone",
       "trap": "poser un piège",
-      "secret": "poser un secret"
+      "secret": "poser un secret",
+      "image": "poser une image",
+      "image_edit": "modifier une image",
+      "image_remove": "supprimer une image",
+      "background": "image de fond"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
@@ -1729,7 +1751,8 @@
       "stairs_no_target": "Créez d'abord un autre étage, ou choisissez un lien vers une autre map.",
       "link_required": "Choisissez la map de destination du portail dans les options de l'outil.",
       "polygon_limit": "Un polygone compte 200 points au plus : terminez-le (double-clic ou Entrée).",
-      "passage_length": "Un passage secret mesure de 0,1 à 20 cases."
+      "passage_length": "Un passage secret mesure de 0,1 à 20 cases.",
+      "no_image": "Choisissez d'abord une image dans les options de l'outil Image."
     },
     "help": {
       "title": "Raccourcis clavier",
@@ -1825,7 +1848,8 @@
         "pin": "Épingle",
         "zone": "Zone",
         "trap": "Piège",
-        "secret": "Secret"
+        "secret": "Secret",
+        "image": "Image"
       },
       "wall_kinds": {
         "stone": "Pierre",
@@ -2127,6 +2151,35 @@
       },
       "passage_hint": "Deux clics : le début et la fin du passage (0,1 à 20 cases). Il bloque la vue des joueurs jusqu'à sa révélation.",
       "passage_opening": "Laissez une ouverture dans le mur à cet endroit : le passage la bouche tant qu'il n'est pas révélé."
+    },
+    "images": {
+      "background_command": "Image de fond…",
+      "background_title": "Image de fond",
+      "none": "Aucune image choisie.",
+      "choose": "Choisir une image",
+      "upload": "Envoyer une image",
+      "placement": "Position",
+      "placement_background": "Fond (sous les tuiles)",
+      "placement_above": "Sur les objets (sous les tokens)",
+      "tool_hint": "Cliquez pour poser l'image. Glissez l'image sélectionnée pour la déplacer, ses coins pour la redimensionner (Maj : garder les proportions) et la poignée du haut pour la tourner. Alt : sans aimantation.",
+      "opacity": "Opacité : {value} %",
+      "flip_h": "Miroir horizontal",
+      "flip_v": "Miroir vertical",
+      "recalibrate": "Recaler le fond…",
+      "native": "Image de {width} × {height} px",
+      "calibration": "Recalage sur la grille",
+      "mode_cell_px": "Taille d'une case dans l'image (px)",
+      "mode_cells_wide": "Nombre de cases en largeur",
+      "offset_x": "Décalage X (cases)",
+      "offset_y": "Décalage Y (cases)",
+      "preview": "Aperçu de l'image sur la grille de la map",
+      "covers": "L'image couvre {width} × {height} cases.",
+      "fit": "Ajuster à la map",
+      "resize_map": "Redimensionner la map à l'image",
+      "resize_map_to": "Redimensionner la map à l'image ({width} × {height} cases)",
+      "apply": "Appliquer",
+      "reduced": "L'image a été réduite à {width} × {height} px pour respecter les limites du site : vérifiez le recalage.",
+      "too_large_hint": "Réduisez l'image (ou découpez-la en plusieurs morceaux) avant de l'envoyer, ou demandez à l'administrateur de relever les limites d'images dans les réglages."
     }
   },
   "maps": {
@@ -2718,7 +2771,8 @@
       "players": "Joueurs et écrans"
     },
     "kw": {
-      "tool": "outil"
+      "tool": "outil",
+      "image": "image fond battlemap"
     },
     "grid_theme": "Thème de grille : {theme}",
     "floor_go": "Aller à l'étage « {name} »",

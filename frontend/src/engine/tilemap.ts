@@ -389,10 +389,14 @@ export class TileMapRenderer {
         const lx = i % CHUNK_SIZE;
         const ly = (i / CHUNK_SIZE) | 0;
         if (lx >= maxX || ly >= maxY) continue;
-        const variant = cells[i * 4 + 1] ?? 0;
-        const flags = cells[i * 4 + 2] ?? 0;
+        const world = this.textures.isWorld(index);
+        // World-aligned textures (P14): portion by world position, no rotation / variant.
+        const variant = world ? 0 : (cells[i * 4 + 1] ?? 0);
+        const flags = world ? 0 : (cells[i * 4 + 2] ?? 0);
         indices.add(index);
-        const tile = this.textures.resolve(index, variant);
+        const tile = world
+          ? this.textures.resolve(index, 0, chunk.cx * CHUNK_SIZE + lx, chunk.cy * CHUNK_SIZE + ly)
+          : this.textures.resolve(index, variant);
         const frame = tile.texture.frame;
         const s = cellSprite(lx, ly, cellPx, frame.width, frame.height, flags);
         const uid = tile.texture.source.uid;

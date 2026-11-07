@@ -2,6 +2,7 @@
  * Geometry helpers of the object tools (cells, floats): segments, projection, snapping
  * (projet.md 15.2: grid, half cell, wall ends and middles; Alt disables it).
  */
+import { imageCorners } from '../model/image-values';
 import type { MapObject, Point, WallObject } from '../contracts';
 import type { NoteObject } from '../contracts-notes';
 import { round3 } from '../model/scene-values';
@@ -157,7 +158,9 @@ export function objectBox(o: MapObject): { x0: number; y0: number; x1: number; y
             ]
           : o.type === 'door' || o.type === 'window'
             ? [o.geometry.a, o.geometry.b]
-            : notePoints(o);
+            : o.type === 'image'
+              ? [...imageCorners(o.geometry)]
+              : notePoints(o);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;

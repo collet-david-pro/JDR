@@ -6,9 +6,10 @@
   import AssetGrid from './library/AssetGrid.svelte';
   import { assetsClient } from '../lib/assets/service';
   import { CursorList } from '../lib/cursor-list.svelte';
+  import { kindLabel } from '../lib/assets/labels';
   import { describeError } from '../lib/errors';
   import { t } from '../lib/i18n';
-  import type { Asset, AssetKind, AssetListScope } from '../lib/types';
+  import type { Asset, AssetCategory, AssetKind, AssetListScope, AssetTag } from '../lib/types';
 
   /**
    * Asset selection dialog (editor, tokens): grid filtered by kind, personal or general
@@ -19,24 +20,58 @@
     /** Only assets of this kind (all kinds when omitted). */
     kind?: AssetKind;
     title?: string;
+    /** P14: kinds offered in a kind filter (the first one, or `kind`, selected first). */
+    kinds?: readonly AssetKind[];
+    /** P14: category and tag filters. */
+    taxonomy?: boolean;
     onpick: (asset: Asset) => void;
   }
 
-  let { open = $bindable(), kind, title, onpick }: Props = $props();
+  let { open = $bindable(), kind, title, kinds, taxonomy = false, onpick }: Props = $props();
 
   let q = $state('');
   let scope = $state<string>('mine');
+  // svelte-ignore state_referenced_locally
+  let kindFilter = $state<string>(kind ?? kinds?.[0] ?? '');
+  let category = $state('');
+  let tag = $state('');
+  let categories = $state<AssetCategory[]>([]);
+  let tags = $state<AssetTag[]>([]);
   const client = assetsClient();
   const list = new CursorList<Asset>((cursor) =>
     client.list(
       {
         scope: (scope === 'general' ? 'general' : 'mine') satisfies AssetListScope,
-        kind: kind ?? '',
+        kind: (kinds !== undefined ? kindFilter : (kind ?? '')) as AssetKind | '',
         q,
+        ...(category !== '' ? { category } : {}),
+        ...(tag !== '' ? { tag } : {}),
       },
       cursor,
     ),
   );
+  const kindOptions = $derived(
+    (kinds ?? []).map((k) => ({ value: k as string, label: kindLabel(k) })),
+  );
+  const categoryOptions = $derived([
+    { value: '', label: t('library.filters.all_categories') },
+    ...categories.map((c) => ({ value: c.id, label: c.name })),
+  ]);
+  const tagOptions = $derived([
+    { value: '', label: t('library.filters.all_tags') },
+    ...tags.map((x) => ({ value: x.id, label: x.name })),
+  ]);
+  $effect(() => {
+    if (!open || !taxonomy) return;
+    void client.categories().then(
+      (c) => (categories = c),
+      () => undefined,
+    );
+    void client.tags().then(
+      (x) => (tags = x),
+      () => undefined,
+    );
+  });
   const failure = $derived(list.error === null ? null : describeError(list.error, t));
   const scopeOptions = [
     { value: 'mine', label: t('library.scope.mine') },
@@ -71,6 +106,28 @@
         options={scopeOptions}
         onchange={() => list.reload()}
       />
+      {#if kinds !== undefined}
+        <SelectField
+          label={t('library.fields.kind')}
+          bind:value={kindFilter}
+          options={kindOptions}
+          onchange={() => list.reload()}
+        />
+      {/if}
+      {#if taxonomy}
+        <SelectField
+          label={t('library.fields.category')}
+          bind:value={category}
+          options={categoryOptions}
+          onchange={() => list.reload()}
+        />
+        <SelectField
+          label={t('library.fields.tag')}
+          bind:value={tag}
+          options={tagOptions}
+          onchange={() => list.reload()}
+        />
+      {/if}
     </div>
     <p class="small muted">{t('asset_picker.hint')}</p>
     {#if list.items.length > 0}

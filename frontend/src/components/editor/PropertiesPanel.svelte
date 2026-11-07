@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ImageProperties from './ImageProperties.svelte';
   import NoteObjectProperties from './NoteObjectProperties.svelte';
   import PassageProperties from './PassageProperties.svelte';
   import SceneObjectList from './SceneObjectList.svelte';
@@ -383,6 +384,7 @@
 
   <PassageProperties {session} objects={sel.objects} />
   <NoteObjectProperties {session} objects={sel.objects} />
+  <ImageProperties {session} objects={sel.objects} />
 
   {#if sel.tokens.length > 0}
     <fieldset class="grid" data-testid="properties-token">

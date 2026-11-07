@@ -204,6 +204,14 @@ export function buildEditorCommands(session: EditorSession, cb: EditorCommandCal
     },
   });
   add({
+    id: 'editor.background',
+    label: t('editor.images.background_command'),
+    group: g.map,
+    keywords: [t('palette.kw.image')],
+    when: () => ui.editable,
+    run: () => (ui.backgroundOpen = true),
+  });
+  add({
     id: 'editor.generate',
     label: t('editor.generate.button'),
     group: g.view,

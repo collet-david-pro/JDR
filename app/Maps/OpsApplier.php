@@ -51,7 +51,7 @@ final class OpsApplier
         ?FloorStore $floorStore = null,
         private ?MapNotesOps $notes = null,
     ) {
-        $this->scene = $sceneStore === null ? null : new SceneApplier($state, $sceneStore);
+        $this->scene = $sceneStore === null ? null : new SceneApplier($state, $sceneStore, $canUseAsset);
         $this->floors = $floorStore === null ? null : new FloorApplier($state, $floorStore);
     }
 
@@ -163,7 +163,13 @@ final class OpsApplier
      */
     public function refDeltas(): array
     {
-        return array_filter($this->deltas, static fn (int $d): bool => $d !== 0);
+        $deltas = $this->deltas;
+        foreach ($this->scene?->refDeltas() ?? [] as $assetId => $d) {
+            // P14: one reference per image object.
+            $deltas[$assetId] = ($deltas[$assetId] ?? 0) + $d;
+        }
+
+        return array_filter($deltas, static fn (int $d): bool => $d !== 0);
     }
 
     /**
@@ -310,6 +316,13 @@ final class OpsApplier
             if ($current['asset_id'] !== $op['asset_id']) {
                 throw new ConflictException('', [$field . '.index' => 'conflict']);
             }
+            // Same asset: the block size of a texture entry is the only field that can change.
+            $repeat = $op['repeat'] ?? null;
+            if ($repeat !== null && isset($current['repeat']) && $current['repeat'] !== $repeat) {
+                $current['repeat'] = $repeat;
+                $this->state->palette[$index] = $current;
+                $this->state->change('palette');
+            }
 
             return;
         }
@@ -319,6 +332,9 @@ final class OpsApplier
         $entry = ['asset_id' => $op['asset_id']];
         if ($op['autotile'] !== null) {
             $entry['autotile'] = $op['autotile'];
+        }
+        if (($op['repeat'] ?? null) !== null) {
+            $entry['repeat'] = $op['repeat'];
         }
         $this->state->palette[$index] = $entry;
         $this->state->change('palette');

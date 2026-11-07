@@ -14,6 +14,8 @@ import {
   type MapView,
   type TileLayerId,
 } from '../contracts';
+import { textureCellRect } from '../../engine/texture-tiles';
+import { drawPictures, playerPictures, type PictureToDraw } from '../images/draw-2d';
 import { decodeFlags, variantFrame, variantFrameCount } from '../../engine/cell-transform';
 import { colorToCss, fallbackColor } from '../../engine/fallback-color';
 import { gridTheme } from '../../engine/grid-themes';
@@ -85,6 +87,7 @@ function rgbOf(color: number): [number, number, number] {
 /** Keeps the palette images loaded between two thumbnails of the same editing session. */
 export class ThumbnailRenderer {
   private readonly images = new Map<string, Promise<LoadedImage | null>>();
+  private readonly pictures = new Map<string, Promise<Img | null>>();
   private readonly loadImage: (url: string) => Promise<Img>;
   private readonly createCanvas: (width: number, height: number) => HTMLCanvasElement;
 
@@ -123,6 +126,10 @@ export class ThumbnailRenderer {
     if (ctx === null) throw new Error('Canvas 2D unavailable');
     ctx.fillStyle = colorToCss(gridTheme(view.theme).background);
     ctx.fillRect(0, 0, size.width, size.height);
+    // P14: image objects (backgrounds under the tiles, the others above).
+    const pictures = playerPictures(view);
+    const pictureImages = await this.loadPictures(pictures);
+    drawPictures(ctx, pictures, pictureImages, size.cellPx, 'background');
     for (const layer of view.layers) {
       if (layer.kind !== 'tiles' || !layer.visible || layer.opacity <= 0) continue;
       const id = layer.id as TileLayerId;
@@ -131,7 +138,22 @@ export class ThumbnailRenderer {
       else this.drawAveraged(ctx, view, id, size, palette);
     }
     ctx.globalAlpha = 1;
+    drawPictures(ctx, pictures, pictureImages, size.cellPx, 'above');
     return canvas;
+  }
+
+  private async loadPictures(pictures: readonly PictureToDraw[]): Promise<Map<string, Img | null>> {
+    const out = new Map<string, Img | null>();
+    for (const { url } of pictures) {
+      if (out.has(url)) continue;
+      let loaded = this.pictures.get(url);
+      if (loaded === undefined) {
+        loaded = this.loadImage(url).catch(() => null);
+        this.pictures.set(url, loaded);
+      }
+      out.set(url, await loaded);
+    }
+    return out;
   }
 
   private async loadPalette(view: MapView): Promise<(LoadedImage | null)[]> {
@@ -199,6 +221,13 @@ export class ThumbnailRenderer {
         if (img === null) {
           ctx.fillStyle = colorToCss(fallbackColor(index, variant));
           ctx.fillRect(x0, y0, w, h);
+          continue;
+        }
+        const repeat = view.palette[index]?.repeat ?? null;
+        if (repeat !== null) {
+          // World-aligned texture (P14): portion by world position, no rotation / variant.
+          const r = textureCellRect(img.image.width, img.image.height, repeat, x, y);
+          ctx.drawImage(img.image, r.sx, r.sy, r.sw, r.sh, x0, y0, w, h);
           continue;
         }
         const sx = variantFrame(variant, img.frames) * img.frameW;

@@ -173,6 +173,13 @@ export function objectHandles(
       }
       return [{ kind: 'centre', at: [g.x, g.y] }];
     }
+    case 'image':
+      return [
+        {
+          kind: 'centre',
+          at: [obj.geometry.x + obj.geometry.w / 2, obj.geometry.y + obj.geometry.h / 2],
+        },
+      ];
   }
 }
 

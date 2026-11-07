@@ -21,6 +21,7 @@ export type ShortcutAction =
   | 'tool.door'
   | 'tool.light'
   | 'tool.token'
+  | 'tool.image'
   | 'tool.fog'
   /** Enter: finish the gesture (wall polyline). */
   | 'confirm'
@@ -99,6 +100,7 @@ export const DEFAULT_BINDINGS: readonly KeyBinding[] = Object.freeze([
   tool('tool.light', 'l'),
   { action: 'palette', key: 'k', mod: true, shift: false, alt: false },
   tool('tool.token', 'k'),
+  tool('tool.image', 'j'),
   tool('tool.fog', 'f'),
   { action: 'confirm', key: 'Enter', shift: false, alt: false },
   { action: 'delete', key: 'Delete', shift: false, alt: false },

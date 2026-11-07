@@ -31,6 +31,9 @@ final class MapInput
     public const SORT_MAX = 1000000;
     public const AUTOTILE_MAX = 40;
 
+    /** Largest block size (cells per side) of a world-aligned texture palette entry (P14). */
+    public const MAX_REPEAT = 64;
+
     public const TILE_LAYERS = ['ground', 'terrain', 'decor'];
     public const OBJECT_LAYERS = ['walls', 'props', 'lighting', 'labels', 'gm'];
     public const WEATHER_TYPES = ['none', 'rain', 'snow', 'fog', 'storm'];
@@ -377,6 +380,19 @@ final class MapInput
     }
 
     /**
+     * Palette texture block size: null (ordinary tile) or an integer 1..MAX_REPEAT; false when invalid.
+     */
+    public static function repeat(mixed $value): int|false|null
+    {
+        if ($value === null) {
+            return null;
+        }
+        $n = Fields::int($value, 1, self::MAX_REPEAT);
+
+        return $n ?? false;
+    }
+
+    /**
      * Palette autotile value: null or a short identifier.
      */
     public static function autotile(mixed $value): string|false|null
@@ -440,7 +456,7 @@ final class MapInput
     }
 
     /**
-     * @return list<array{asset_id: int, autotile?: ?string}|null>
+     * @return list<array{asset_id: int, autotile?: ?string, repeat?: int}|null>
      */
     public static function storedPalette(mixed $json): array
     {
@@ -459,6 +475,10 @@ final class MapInput
             $autotile = self::autotile($entry['autotile'] ?? null);
             if (is_string($autotile)) {
                 $item['autotile'] = $autotile;
+            }
+            $repeat = self::repeat($entry['repeat'] ?? null);
+            if (is_int($repeat)) {
+                $item['repeat'] = $repeat;
             }
             $out[] = $item;
         }

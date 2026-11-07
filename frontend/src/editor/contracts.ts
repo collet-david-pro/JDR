@@ -22,6 +22,7 @@
  * layer, the objects and placed tokens of the floor from its MapDetail, GET /maps/{id}/fog?floor=...) and undoes by
  * sending floor.add + tiles.set / object.add / maptoken.add / fog.reveal for the same uid.
  */
+import type { ImageAssetView, ImageObject } from './contracts-images';
 import type { NoteObject, NoteOp } from './contracts-notes';
 
 /** Edge length of a chunk in cells (matches the server chunk format). */
@@ -51,6 +52,12 @@ export interface PaletteEntry {
   readonly name: string;
   /** Reserved for auto-tiling (projet.md 15.2); ignored in P4a. */
   readonly autotile?: string | null;
+  /**
+   * P14 texture entry: the image covers `repeat` × `repeat` cells aligned on the world (cell
+   * (x, y) shows portion (x mod repeat, y mod repeat)); rotation and variant are ignored.
+   * Absent / null for an ordinary tile.
+   */
+  readonly repeat?: number | null;
 }
 
 /**
@@ -281,6 +288,8 @@ export type MapOp =
       readonly index: number;
       readonly asset_id: string;
       readonly autotile?: string | null;
+      /** P14: texture block size in cells (1-64); re-sent for an existing entry it changes it. */
+      readonly repeat?: number | null;
     }
   | {
       readonly type: 'map.meta';
@@ -372,7 +381,18 @@ export type ObjectVisibility = 'all' | 'gm' | 'hidden_until_revealed';
 
 /** Object types the server knows (P5 + P9a stairs / portal); the other types arrive with P9b. */
 export type MapObjectType =
-  'wall' | 'door' | 'window' | 'light' | 'stairs' | 'portal' | 'pin' | 'zone' | 'trap' | 'secret';
+  | 'wall'
+  | 'door'
+  | 'window'
+  | 'light'
+  | 'stairs'
+  | 'portal'
+  | 'pin'
+  | 'zone'
+  | 'trap'
+  | 'secret'
+  /** P14 (contracts-images.ts). */
+  | 'image';
 
 /**
  * Where a door / stairs / portal leads (P9a). Normalized by the server: all four keys, floor = a floor UID of the
@@ -538,7 +558,14 @@ export interface PortalObject extends ObjectBase {
 }
 
 export type MapObject =
-  WallObject | DoorObject | WindowObject | LightObject | StairsObject | PortalObject | NoteObject;
+  | WallObject
+  | DoorObject
+  | WindowObject
+  | LightObject
+  | StairsObject
+  | PortalObject
+  | NoteObject
+  | ImageObject;
 
 /** object.update patch: geometry and props replace the whole value (no deep merge). */
 export interface ObjectPatch {
@@ -641,6 +668,8 @@ export interface SceneChangedEvent {
   /** Ambient or token definitions changed. */
   readonly ambient: boolean;
   readonly tokenDefs: boolean;
+  /** P14: the image assets known (SceneView.imageAsset) changed. */
+  readonly images?: boolean;
 }
 
 /**
@@ -669,6 +698,8 @@ export interface SceneView {
   fogChunk(key: ChunkKey): FogBitmap | null;
   /** Batched per microtask, like onChunksChanged. Returns an unsubscribe function. */
   onSceneChanged(listener: (event: SceneChangedEvent) => void): () => void;
+  /** P14: what the engine needs to draw the image objects of an asset (null = unknown). */
+  imageAsset?(assetId: string): ImageAssetView | null;
 }
 
 export type ViewMode = 'gm' | 'player' | 'display';

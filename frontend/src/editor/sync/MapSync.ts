@@ -290,7 +290,7 @@ export class MapSync {
             error instanceof MapOpError &&
             error.code === 'palette_conflict'
           ) {
-            const { index, op: add } = doc.paletteIndexFor(op.asset_id);
+            const { index, op: add } = doc.paletteIndexFor(op.asset_id, op.repeat ?? null);
             remap.set(op.index, index);
             if (add !== null) {
               doc.applyOps([add]);

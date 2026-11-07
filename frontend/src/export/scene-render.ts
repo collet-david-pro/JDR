@@ -43,6 +43,7 @@ import {
   stairsArrow,
   stairsStepLines,
 } from '../engine/scene/passage-shapes';
+import { imageBBox, imageCenter, imageCorners } from '../editor/model/image-values';
 import { notePoints } from '../editor/tools/geometry';
 import { FOG_SIDE, FOG_SUBCELLS } from '../formats/fog-codec';
 import {
@@ -108,7 +109,9 @@ function boxOf(obj: MapObject): Box {
             ]
           : obj.type === 'door' || obj.type === 'window'
             ? [obj.geometry.a, obj.geometry.b]
-            : notePoints(obj);
+            : obj.type === 'image'
+              ? imageCorners(obj.geometry)
+              : notePoints(obj);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -231,6 +234,52 @@ export class ScenePainter {
   private cellTransform(ctx: Ctx2D, ox: number, oy: number): void {
     const { extent, ppc } = this;
     ctx.setTransform(ppc, 0, 0, ppc, ox - extent.x * ppc, oy - extent.y * ppc);
+  }
+
+  /**
+   * P14 image objects of one placement (background: before the tiles; above: after the objects).
+   * The transform is left as it is: the caller resets it.
+   */
+  images(
+    ctx: Ctx2D,
+    placement: 'background' | 'above',
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ox: number,
+    oy: number,
+  ): void {
+    const list = this.scene.images ?? [];
+    if (list.length === 0) return;
+    const region = this.region(x, y, w, h, 1);
+    const { extent, ppc } = this;
+    ctx.imageSmoothingEnabled = true;
+    for (const img of list) {
+      if (img.placement !== placement || img.image === null || !(img.opacity > 0)) continue;
+      const bitmap = this.tokenImages?.get(img.image) ?? null;
+      if (bitmap === null) continue;
+      const [bx0, by0, bx1, by1] = imageBBox(img.geometry);
+      if (!overlaps({ x0: bx0, y0: by0, x1: bx1, y1: by1 }, region)) continue;
+      const g = img.geometry;
+      const [cx, cy] = imageCenter(g);
+      const rot = (g.rotation * Math.PI) / 180;
+      const cos = Math.cos(rot);
+      const sin = Math.sin(rot);
+      const fx = img.flipH ? -1 : 1;
+      const fy = img.flipV ? -1 : 1;
+      ctx.setTransform(
+        ppc * cos * fx,
+        ppc * sin * fx,
+        -ppc * sin * fy,
+        ppc * cos * fy,
+        ox + (cx - extent.x) * ppc,
+        oy + (cy - extent.y) * ppc,
+      );
+      ctx.globalAlpha = Math.min(1, img.opacity);
+      ctx.drawImage(bitmap.image, 0, 0, bitmap.width, bitmap.height, -g.w / 2, -g.h / 2, g.w, g.h);
+    }
+    ctx.globalAlpha = 1;
   }
 
   /** Walls, doors and windows of the region (ox, oy: canvas = image pixel + offset). */

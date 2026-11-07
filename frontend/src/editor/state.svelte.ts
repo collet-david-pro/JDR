@@ -12,11 +12,13 @@ import type {
   GridTheme,
   LayerDef,
   LayerId,
+  ObjectLayerId,
   TileLayerId,
   ViewMode,
   WallKind,
   WindowProps,
 } from './contracts';
+import type { ImagePlacement } from './contracts-images';
 import type { PinIcon, SecretKind } from './contracts-notes';
 import type { EditorSettings } from './EditorController';
 import type { HistoryState } from './history/History';
@@ -130,6 +132,13 @@ export class EditorUiState implements EditorSettings {
   trapReveal = $state<'pulse' | 'none'>(D.trapReveal);
   secretKind = $state<SecretKind>(D.secretKind);
   secretNote = $state<string | null>(D.secretNote);
+  // ---- P14 image tool ----
+  imageAssetId = $state<string | null>(null);
+  imagePlacement = $state<ImagePlacement>('above');
+  imageLayer = $state<ObjectLayerId>('props');
+  /** Background dialog (P14) open; `backgroundTarget`: background image recalibrated (null = new). */
+  backgroundOpen = $state(false);
+  backgroundTarget = $state<string | null>(null);
   /** Note dialog: `uid` null = new note; `linkObject` = pin / zone to link the new note to. */
   noteDialog = $state.raw<{ uid: string | null; linkObject: string | null } | null>(null);
   resetSecretsOpen = $state(false);

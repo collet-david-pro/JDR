@@ -8,10 +8,12 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
 use JDR\Domain\Maps\Map;
+use JDR\Domain\Maps\MapAssetRefs;
 use JDR\Domain\Maps\MapInput;
 use JDR\Domain\Maps\MapNotes;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
+use JDR\Maps\ObjectRulesImage;
 use JDR\Maps\ObjectRulesP9;
 
 /**
@@ -21,7 +23,8 @@ use JDR\Maps\ObjectRulesP9;
  * (stored raw-deflate bytes) by floor uid / layer / "cx:cy", generation. P5: fog (floor uid =>
  * "cx:cy" => base64 raw deflate), objects (API form without rev, floor = floor uid) and placed
  * tokens ({uid, token: "ref:token:<name>", floor, x, y, rotation, scale, hidden,
- * light_override}). Notes and links (P9): empty.
+ * light_override}). Notes and links (P9): empty. P14: image objects carry "asset": "sha256:<hex>"
+ * (MapDocumentImages).
  *
  * Internal documents (version snapshots) also carry the palette asset_id and the token_id of
  * the placed tokens, so that a restore finds the exact asset / token again on this server.
@@ -85,7 +88,7 @@ final class MapDocumentBuilder
             'floors' => $docFloors,
             'chunks' => $chunks === [] ? new \stdClass() : $chunks,
             'fog' => $this->fog($map->id, $uids),
-            'objects' => $this->objects($map->id, $uids),
+            'objects' => $this->objects($map->id, $uids, $internal),
             'notes' => $this->notes->documentNotes($map->id, $internal),
             'links' => [],
             'tokens_placed' => $this->tokens($map->id, $uids, $internal),
@@ -108,6 +111,9 @@ final class MapDocumentBuilder
         }
         foreach ($this->notes->assetIds($map->id, null) as $noteAsset) {
             $ids[$noteAsset] = $noteAsset;
+        }
+        foreach (array_keys((new MapAssetRefs($this->db))->imageCounts($map->id)) as $imageAsset) {
+            $ids[$imageAsset] = $imageAsset;
         }
         $out = [];
         foreach (array_chunk(array_values($ids), 500) as $batch) {
@@ -154,6 +160,9 @@ final class MapDocumentBuilder
                 continue;
             }
             $item = ['asset' => 'sha256:' . $asset['sha256'], 'name' => $asset['name'], 'autotile' => $entry['autotile'] ?? null];
+            if (isset($entry['repeat'])) {
+                $item['repeat'] = $entry['repeat'];
+            }
             if ($internal) {
                 $item['asset_id'] = $entry['asset_id'];
             }
@@ -183,9 +192,10 @@ final class MapDocumentBuilder
      * @param array<int, string> $uids floor id => floor uid
      * @return list<array<string, mixed>>
      */
-    private function objects(int $mapId, array $uids): array
+    private function objects(int $mapId, array $uids, bool $internal): array
     {
         $out = [];
+        $images = [];
         $names = [];
         $revealed = $this->notes->revealedTimes($mapId);
         foreach ($this->scene->objects($mapId) as $object) {
@@ -207,6 +217,32 @@ final class MapDocumentBuilder
                 $object['props']['link'] = ObjectRulesP9::canonicalLink($object['props']['link']);
             }
             $out[] = $object + (isset($revealed[$object['uid']]) ? ['revealed_at' => $revealed[$object['uid']]] : []);
+            $imageAsset = ObjectRulesImage::assetId($object);
+            if ($imageAsset !== null) {
+                $images[$imageAsset] = $imageAsset;
+            }
+        }
+
+        return MapDocumentImages::export($out, $this->hashes(array_values($images)), $internal);
+    }
+
+    /**
+     * sha256 of assets (P14 image objects): id => lower-case hex.
+     *
+     * @param list<int> $ids
+     * @return array<int, string>
+     */
+    private function hashes(array $ids): array
+    {
+        $out = [];
+        foreach (array_chunk($ids, 500) as $batch) {
+            $rows = $this->db->fetchAll(
+                'SELECT `id`, `sha256` FROM ' . $this->db->t('assets') . ' WHERE `id` IN (' . implode(', ', array_fill(0, count($batch), '?')) . ')',
+                $batch,
+            );
+            foreach ($rows as $r) {
+                $out[(int) $r['id']] = strtolower((string) $r['sha256']);
+            }
         }
 
         return $out;

@@ -118,6 +118,10 @@ final class LeakTest extends ActionsTestCase
                 self::assertContains('t-free', $snapshot['viewers'], $when . ' table: a free PC is a viewer');
             }
             $this->inspect($rules, $who, $when . ' snapshot', $snapshot, $at);
+            if ($when === 'end' && $who === 'bob') {
+                // P14: a seen image comes with its signed URL (the gm-layer one never does: needles).
+                self::assertContains($w['visibleImage'], array_column($snapshot['map']['images'], 'asset_id'), 'bob: visible image');
+            }
             foreach ($snapshot['fog']['chunks'] as [$cx, $cy]) {
                 $this->inspectBlock($rules, $who, $when . ' snapshot fog', (int) $snapshot['fog']['floor'], $cx, $cy, $at);
             }

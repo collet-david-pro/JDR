@@ -3,6 +3,7 @@
  * same-origin signed URLs (CSP connect-src 'self'). Entries without a URL or whose image fails
  * to load use the engine's fallback tile (cell-render.ts fallbackTilePixels).
  */
+import { textureCellRect } from '../engine/texture-tiles';
 import { fallbackTilePixels, frameRect, type FrameRect } from './cell-render';
 import type { SnapshotPaletteEntry } from './scene';
 import type { SnapshotTokenImage } from './scene-snapshot';
@@ -14,7 +15,10 @@ export interface TileSource extends FrameRect {
 }
 
 export interface TileImages {
-  tile(index: number, variant: number): TileSource;
+  /** `wx`, `wy`: world cell, used by world-aligned textures (P14, see worldAligned). */
+  tile(index: number, variant: number, wx?: number, wy?: number): TileSource;
+  /** True for a world-aligned texture entry: the cell's rotation and variant are ignored. */
+  worldAligned?(index: number): boolean;
   /** Palette entries that had a URL but could not be loaded. */
   readonly failed: readonly SnapshotPaletteEntry[];
   close(): void;
@@ -70,12 +74,23 @@ export async function loadTileImages(
     fallbacks.set(key, { image, sx: 0, sy: 0, sw: 2, sh: 2, smooth: false });
   }
   const frames = new Map<number, TileSource>();
+  const repeats = new Map<number, number>();
+  for (const p of palette) if (p.repeat != null && p.repeat >= 1) repeats.set(p.index, p.repeat);
   let unknown: TileSource | null = null;
 
   return {
     failed,
-    tile(index, variant) {
+    worldAligned: (index) => repeats.has(index),
+    tile(index, variant, wx = 0, wy = 0) {
       const bitmap = images.get(index);
+      const repeat = repeats.get(index);
+      if (bitmap !== undefined && repeat !== undefined) {
+        return {
+          image: bitmap,
+          smooth: true,
+          ...textureCellRect(bitmap.width, bitmap.height, repeat, wx, wy),
+        };
+      }
       if (bitmap !== undefined) {
         const key = index * 65536 + variant;
         let source = frames.get(key);

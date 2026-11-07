@@ -144,6 +144,8 @@ final class SnapshotService
 
         $full['thumb_url'] = null;
         $full['objects'] = $objects;
+        // P14: the signed URLs of the images the reader sees only (names never given).
+        $full['images'] = array_map(static fn (array $i): array => ['name' => ''] + $i, $this->maps->images($objects, $apiBase));
         $full['notes'] = $this->view->notes($map->id, $viewer);
         $full['tokens_placed'] = $placed;
         // P9a: a player / screen knows the current floor only (not the other floors of the map).
@@ -154,7 +156,7 @@ final class SnapshotService
             }
             $ok = isset($allowed[$entry['asset_id']]);
 
-            return ['asset_id' => $entry['asset_id'], 'name' => '', 'url' => $ok ? $entry['url'] : null, 'thumb_url' => $ok ? $entry['thumb_url'] : null, 'autotile' => $entry['autotile']];
+            return ['asset_id' => $entry['asset_id'], 'name' => '', 'url' => $ok ? $entry['url'] : null, 'thumb_url' => $ok ? $entry['thumb_url'] : null, 'autotile' => $entry['autotile'], 'repeat' => $entry['repeat'] ?? null];
         }, $full['palette']);
         $present = array_flip(array_map(static fn (array $o): string => (string) $o['uid'], $objects));
 

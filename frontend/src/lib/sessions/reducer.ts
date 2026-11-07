@@ -53,7 +53,14 @@ const withSession = (s: SessionState, patch: Partial<Session>): SessionState => 
   session: { ...s.session, ...patch },
 });
 const reload = (
-  reason: 'started' | 'resumed' | 'map_changed' | 'map_reload' | 'unknown_token' | 'assignment',
+  reason:
+    | 'started'
+    | 'resumed'
+    | 'map_changed'
+    | 'map_reload'
+    | 'unknown_token'
+    | 'unknown_image'
+    | 'assignment',
 ) => ({ kind: 'reload.snapshot', reason }) as const;
 
 /** Moves the cursor without changing anything else (events of no interest, other audience). */
@@ -371,6 +378,14 @@ const onMapOps: Handler = (s, _e, p) => {
   const mapId = str(x.map_id);
   if (mapId === null || mapId !== s.session.current_map_id || !Array.isArray(x.ops)) return null;
   const r = applyMapOps(s, mapId, x.ops);
+  const added = x.ops.flatMap((op) => {
+    const o = op as { type?: unknown; object?: { type?: unknown } };
+    return o.type === 'object.add' && o.object !== undefined ? [o.object] : [];
+  });
+  const effects =
+    unknownImage(s, added) && !r.effects.some((e) => e.kind === 'reload.snapshot')
+      ? [...r.effects, reload('unknown_image')]
+      : r.effects;
   return {
     state: {
       ...s,
@@ -381,9 +396,19 @@ const onMapOps: Handler = (s, _e, p) => {
       ambient: r.ambient,
       mapRevision: x.revision,
     },
-    effects: r.effects,
+    effects,
   };
 };
+
+/** P14: an image whose signed URL the reader does not have yet (only the snapshot gives them). */
+function unknownImage(s: SessionState, upsert: readonly { readonly type?: unknown }[]): boolean {
+  const known = new Set((s.map?.images ?? []).map((i) => String(i.asset_id)));
+  return upsert.some((o) => {
+    if (o.type !== 'image') return false;
+    const id = (o as { props?: { asset_id?: unknown } }).props?.asset_id;
+    return id !== undefined && !known.has(String(id));
+  });
+}
 
 const onOpsPublic: Handler = (s, _e, p) => {
   const x = p as unknown as MapOpsPublicPayload;
@@ -402,6 +427,7 @@ const onOpsPublic: Handler = (s, _e, p) => {
   const chunks = (x.chunks ?? []).map(([floor, cx, cy]) => ({ floor: String(floor), cx, cy }));
   if (chunks.length > 0) effects.push({ kind: 'reload.chunks', mapId, chunks });
   if (x.reload === true) effects.push(reload('map_reload'));
+  else if (unknownImage(s, upsert)) effects.push(reload('unknown_image'));
   return { state: { ...s, objects, mapRevision: x.revision }, effects };
 };
 

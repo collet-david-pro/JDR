@@ -9,13 +9,15 @@ defined('JDR_BOOT') || exit;
 use JDR\Domain\Assets\AssetUrls;
 use JDR\Domain\Maps\Transfer\MapThumbnailService;
 use JDR\Domain\Support\Dates;
+use JDR\Maps\ObjectRulesImage;
 
 /**
  * API representations "MapSummary" and "Map" (contract P4b). Only call for an editor of the
  * game (D8: palette URLs are signed for the GM / co-GMs only). thumb_url: signed URL of the
  * thumbnail (P4c, MapThumbnailService), null without thumbnail.
  * P5: objects of every floor sorted by floor, sort_order, id, and placed tokens (GM view: nothing
- * filtered; players get JDR\Maps\PlayerFilter in P6). notes stay empty until P9.
+ * filtered; players get JDR\Maps\PlayerFilter in P6). notes stay empty until P9. P14: images =
+ * assets of the image objects (images()).
  */
 final class MapPresenter
 {
@@ -64,6 +66,8 @@ final class MapPresenter
      */
     public function full(Map $map, string $apiBase, bool $withNotes = false): array
     {
+        $objects = $this->scene->objects($map->id);
+
         return [
             ...$this->summary($map, $apiBase),
             'grid' => [
@@ -80,11 +84,43 @@ final class MapPresenter
             'layers' => $map->layers,
             'floors' => $this->maps->floors($map->id),
             'format_version' => $map->formatVersion,
-            'objects' => $this->scene->objects($map->id),
+            'objects' => $objects,
+            'images' => $this->images($objects, $apiBase),
             'notes' => $withNotes ? $this->notes->forEditor($map->id) : [],
             'tokens_placed' => $this->scene->tokens($map->id),
             'generation' => $this->maps->generation($map->id),
         ];
+    }
+
+    /**
+     * Assets of the image objects among $objects (P14), by asset id order:
+     * [{asset_id, name, url, thumb_url, width, height, animated}]; url / thumb_url null when the asset
+     * is deleted (the client draws a placeholder). Only give it for objects the reader sees.
+     *
+     * @param list<array<string, mixed>> $objects
+     * @return list<array<string, mixed>>
+     */
+    public function images(array $objects, string $apiBase): array
+    {
+        $ids = array_keys(ObjectRulesImage::counts($objects));
+        sort($ids);
+        $assets = $ids === [] ? [] : $this->scene->imageAssets($ids);
+        $out = [];
+        foreach ($ids as $id) {
+            $asset = $assets[$id] ?? null;
+            $live = $asset !== null && !$asset['deleted'];
+            $out[] = [
+                'asset_id' => (string) $id,
+                'name' => $asset['name'] ?? '',
+                'url' => $live ? $this->urls->url($apiBase, $asset['uuid'], 'full') : null,
+                'thumb_url' => $live ? $this->urls->url($apiBase, $asset['uuid'], 'thumb') : null,
+                'width' => $asset['width'] ?? 0,
+                'height' => $asset['height'] ?? 0,
+                'animated' => $asset['animated'] ?? false,
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -116,6 +152,7 @@ final class MapPresenter
                 'url' => $live ? $this->urls->url($apiBase, $asset['uuid'], 'full') : null,
                 'thumb_url' => $live ? $this->urls->url($apiBase, $asset['uuid'], 'thumb') : null,
                 'autotile' => $entry['autotile'] ?? null,
+                'repeat' => $entry['repeat'] ?? null,
             ];
         }
 

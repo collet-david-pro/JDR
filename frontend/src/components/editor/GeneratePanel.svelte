@@ -81,7 +81,8 @@
         case 'zone':
         case 'trap':
         case 'secret':
-          // The generator never removes the notes' objects: they do not count as content.
+        case 'image':
+          // The generator never removes the notes' objects nor the images: not content.
           return false;
       }
     });

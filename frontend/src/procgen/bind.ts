@@ -78,7 +78,8 @@ function bbox(o: MapObject): [number, number, number, number] {
     case 'pin':
     case 'zone':
     case 'trap':
-    case 'secret': {
+    case 'secret':
+    case 'image': {
       const b = objectBox(o);
       return [b.x0, b.y0, b.x1, b.y1];
     }

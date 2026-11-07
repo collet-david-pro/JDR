@@ -1,6 +1,7 @@
 import { createDoorTool } from './door';
 import { createFillTool } from './fill';
 import { createFogTool } from './fog';
+import { createImageTool } from './image';
 import { createLightTool } from './light';
 import { createPaintTool } from './paint';
 import { createPinTool } from './pin';
@@ -39,6 +40,7 @@ export function createTools(ctx: ToolContext): ToolSet {
     trap: createTrapTool(ctx),
     secret: createSecretTool(ctx),
     token: createTokenTool(ctx),
+    image: createImageTool(ctx),
     fog: createFogTool(ctx),
     pipette: createPipetteTool(ctx),
     ruler: createRulerTool(ctx),

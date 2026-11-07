@@ -9,6 +9,8 @@ export interface TileAsset {
   readonly name: string;
   readonly width: number;
   readonly height: number;
+  /** Library kind: "texture" is added to the palette as a world-aligned texture (P14). */
+  readonly kind?: string;
   /** Signed URLs (projet.md 9.3). */
   readonly urls: { readonly full: string; readonly thumb: string };
 }
@@ -21,6 +23,8 @@ export interface PaletteItem {
   readonly thumb: string | null;
   /** Variant frames of the image (strip of N square frames), 1 otherwise. */
   readonly frames: number;
+  /** World-aligned texture block size in cells (P14), null for an ordinary tile. */
+  readonly repeat: number | null;
 }
 
 interface Known {
@@ -78,7 +82,8 @@ export class PaletteCatalog {
         assetId: entry.assetId,
         name: entry.name,
         thumb: k !== undefined && k.thumb !== '' ? k.thumb : entry.url,
-        frames: k?.frames ?? 1,
+        frames: entry.repeat != null ? 1 : (k?.frames ?? 1),
+        repeat: entry.repeat ?? null,
       });
     });
     return out;

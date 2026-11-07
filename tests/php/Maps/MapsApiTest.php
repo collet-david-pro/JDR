@@ -198,7 +198,7 @@ final class MapsApiTest extends MapsTestCase
         $coGm->login('Carol', self::PASSWORD);
         $full = self::data($coGm->get('/maps/' . $map['id']));
         $entry = $full['palette'][1];
-        self::assertSame(['asset_id', 'name', 'url', 'thumb_url', 'autotile'], array_keys($entry));
+        self::assertSame(['asset_id', 'name', 'url', 'thumb_url', 'autotile', 'repeat'], array_keys($entry));
         self::assertSame($a['id'], $entry['asset_id']);
         self::assertSame($a['name'], $entry['name']);
         self::assertNull($entry['autotile']);

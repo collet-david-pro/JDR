@@ -31,6 +31,47 @@ final class MapSceneRepository
     // ---- Objects ---------------------------------------------------------------------------
 
     /**
+     * Kind of a live (not deleted) asset, null when there is none (P14 image objects).
+     */
+    public function assetKind(int $assetId): ?string
+    {
+        $kind = $this->db->fetchValue('SELECT `kind` FROM ' . $this->db->t('assets') . ' WHERE `id` = ? AND `deleted_at` IS NULL', [$assetId]);
+
+        return $kind === null || $kind === false ? null : (string) $kind;
+    }
+
+    /**
+     * Assets of image objects (P14): id => {uuid, name, kind, width, height, animated, deleted}.
+     *
+     * @param list<int> $ids
+     * @return array<int, array{uuid: string, name: string, kind: string, width: int, height: int, animated: bool, deleted: bool}>
+     */
+    public function imageAssets(array $ids): array
+    {
+        $out = [];
+        foreach (array_chunk(array_values(array_unique($ids)), 500) as $batch) {
+            $rows = $this->db->fetchAll(
+                'SELECT `id`, `uuid`, `name`, `kind`, `width`, `height`, `is_animated`, `deleted_at` FROM ' . $this->db->t('assets')
+                . ' WHERE `id` IN (' . implode(', ', array_fill(0, count($batch), '?')) . ')',
+                $batch,
+            );
+            foreach ($rows as $r) {
+                $out[(int) $r['id']] = [
+                    'uuid' => (string) $r['uuid'],
+                    'name' => (string) $r['name'],
+                    'kind' => (string) $r['kind'],
+                    'width' => (int) $r['width'],
+                    'height' => (int) $r['height'],
+                    'animated' => (int) $r['is_animated'] === 1,
+                    'deleted' => $r['deleted_at'] !== null,
+                ];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Objects of a map (all floors, or one), sorted by floor, sort_order, id; $bbox keeps those
      * whose bounding box intersects [x1, y1, x2, y2].
      *

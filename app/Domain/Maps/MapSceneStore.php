@@ -171,4 +171,12 @@ final class MapSceneStore implements SceneStore
     {
         $this->links?->sync($this->mapId, $objectId, $link);
     }
+
+    /**
+     * Kind of a live asset (P14 image objects), null when there is none.
+     */
+    public function assetKind(int $assetId): ?string
+    {
+        return $this->scene->assetKind($assetId);
+    }
 }

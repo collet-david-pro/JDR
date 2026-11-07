@@ -8,6 +8,7 @@ import type {
   MapPointerEvent,
   PortalIcon,
   MapView,
+  ObjectLayerId,
   Overlay,
   SceneView,
   TileLayerId,
@@ -15,6 +16,7 @@ import type {
   WallKind,
   WindowProps,
 } from '../contracts';
+import type { ImagePlacement } from '../contracts-images';
 import type { PinIcon, SecretKind } from '../contracts-notes';
 import type { VisionCore } from '../../vision/index';
 import type { Rng } from '../util/rng';
@@ -36,6 +38,7 @@ export type ToolId =
   | 'trap'
   | 'secret'
   | 'token'
+  | 'image'
   | 'fog'
   | 'pipette'
   | 'ruler';
@@ -93,6 +96,7 @@ export interface ToolNotice {
     | 'link_required'
     | 'polygon_limit'
     | 'passage_length'
+    | 'no_image'
     | 'invalid';
   readonly params?: Readonly<Record<string, number | string>>;
 }
@@ -191,6 +195,10 @@ export interface ToolSettings {
   readonly trapReveal: 'pulse' | 'none';
   readonly secretKind: SecretKind;
   readonly secretNote: string | null;
+  /** P14 image tool: asset placed (null = none chosen), placement and layer of new images. */
+  readonly imageAssetId?: string | null;
+  readonly imagePlacement?: ImagePlacement;
+  readonly imageLayer?: ObjectLayerId;
 }
 
 /** Defaults of the P5 tool settings. */

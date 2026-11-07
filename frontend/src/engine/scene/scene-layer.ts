@@ -36,6 +36,7 @@ import { AmbientAnimator, viewAmbient } from './ambient-state';
 import { FogRenderer } from './fog-renderer';
 import { LightingRenderer } from './lighting-renderer';
 import { collectLights, nearestLights, needsFlickerFrames, type LightSource } from './lights';
+import { ImagesRenderer } from './images-renderer';
 import { ObjectsRenderer } from './objects-renderer';
 import { planSceneChange } from './scene-diff';
 import { shadowQuads, shadowSegments, type ShadowSegment } from './shadows';
@@ -88,6 +89,8 @@ const EXPLORED_GREY = Math.round((1 - FOG_EXPLORED_ALPHA) * 255) * 0x010101;
 /** Container of all scene rendering layers for a floor. */
 export class SceneLayer {
   readonly objects = new ObjectsRenderer();
+  /** P14 image objects (`below`: under the tiles, `above`: on the objects). */
+  readonly images: ImagesRenderer;
   readonly tokens: TokensRenderer;
   readonly lighting: LightingRenderer;
   /** GM veil (world space). */
@@ -136,6 +139,10 @@ export class SceneLayer {
     private readonly hooks: SceneLayerHooks,
   ) {
     this.tokens = new TokensRenderer(() => hooks.requestRender());
+    this.images = new ImagesRenderer(
+      () => hooks.requestRender(),
+      () => maxTextureSize(renderer),
+    );
     this.lighting = new LightingRenderer(renderer);
     this.fogWorld.addChild(this.fog.root);
     this.fogWorld.alpha = FOG_GM_ALPHA;
@@ -176,6 +183,7 @@ export class SceneLayer {
     this.setLayers(layers);
     if (!sizeChanged || grid === null) return;
     this.objects.setCellPx(grid.cellPx);
+    this.images.setCellPx(grid.cellPx);
     this.tokens.setCellPx(grid.cellPx);
     this.resetFog();
     this.invalidateAll();
@@ -184,6 +192,7 @@ export class SceneLayer {
   setLayers(layers: readonly LayerDef[]): void {
     this.layers = layers;
     this.objects.setLayers(layers);
+    this.images.setLayers(layers);
     this.hooks.requestRender();
   }
 
@@ -199,6 +208,8 @@ export class SceneLayer {
     this.viewers.clear();
     if (scene === null) {
       this.objects.clear();
+      this.images.clear();
+      this.images.setAssets(null);
       this.tokens.clear();
       this.lights = [];
       this.lighting.setLights([], new Map(), this.cellPx);
@@ -212,6 +223,8 @@ export class SceneLayer {
     for (const o of objects) this.objectCache.set(o.uid, o);
     for (const t of scene.tokens()) this.tokenCache.set(t.uid, t);
     this.objects.sync(objects);
+    this.images.setAssets((id) => scene.imageAsset?.(id) ?? null);
+    this.images.sync(objects);
     this.tokens.sync(scene.tokens(), (id) => scene.tokenDef(id));
     this.ambient.set(scene.ambient, performance.now(), false);
     this.resetFog();
@@ -227,6 +240,7 @@ export class SceneLayer {
     if (prev.mode !== next.mode) {
       this.objects.setMode(next.mode);
       this.objects.setLayers(this.layers);
+      this.images.setMode(next.mode);
       this.tokens.setMode(next.mode);
       if (viewerKind(prev.mode) !== viewerKind(next.mode)) {
         this.dirty.visionScene = true;
@@ -276,6 +290,7 @@ export class SceneLayer {
       return false;
     }
     this.objects.update(f.camera.zoom);
+    this.images.update();
     if (f.cameraChanged || this.gizmosDirty) {
       this.objects.drawGizmos(f.camera, f.viewport, (uid) => this.scene?.token(uid));
       this.gizmosDirty = false;
@@ -334,6 +349,7 @@ export class SceneLayer {
     if (this.emitTimer !== null) clearTimeout(this.emitTimer);
     this.listeners.clear();
     this.objects.destroy();
+    this.images.destroy();
     this.tokens.destroy();
     this.lighting.destroy();
     this.fog.destroy();
@@ -395,14 +411,17 @@ export class SceneLayer {
     });
     for (const uid of plan.removeObjects) {
       this.objects.remove(uid);
+      this.images.remove(uid);
       this.objectCache.delete(uid);
     }
     for (const uid of plan.redrawObjects) {
       const obj = scene.object(uid);
       if (obj === undefined) continue;
       this.objects.upsert(obj);
+      this.images.upsert(obj);
       this.objectCache.set(uid, obj);
     }
+    if (event.images === true) this.images.assetsChanged();
     if (plan.redrawObjects.length + plan.removeObjects.length > 0) this.gizmosDirty = true;
     for (const uid of plan.removeTokens) {
       this.tokens.remove(uid);
@@ -627,4 +646,19 @@ function viewRect(
   const hw = viewport.width / 2 / s;
   const hh = viewport.height / 2 / s;
   return { x0: camera.x - hw, y0: camera.y - hh, x1: camera.x + hw, y1: camera.y + hh };
+}
+
+/** Largest texture side the GPU accepts (WebGL / WebGPU), 4096 when unknown. */
+function maxTextureSize(renderer: Renderer): number {
+  try {
+    const r = renderer as unknown as {
+      gl?: WebGL2RenderingContext;
+      gpu?: { device?: { limits?: { maxTextureDimension2D?: number } } };
+    };
+    const gl = r.gl;
+    if (gl !== undefined) return Number(gl.getParameter(gl.MAX_TEXTURE_SIZE)) || 4096;
+    return r.gpu?.device?.limits?.maxTextureDimension2D ?? 4096;
+  } catch {
+    return 4096;
+  }
 }

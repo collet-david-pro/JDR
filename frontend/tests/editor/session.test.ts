@@ -132,8 +132,15 @@ describe('palette catalog', () => {
         { assetId: 'x', url: 'ux', name: 'X' },
       ]),
     ).toEqual([
-      { index: 1, assetId: 'a', name: 'A', thumb: '/api/v1/files/a?t=thumb', frames: 1 },
-      { index: 3, assetId: 'x', name: 'X', thumb: 'ux', frames: 1 },
+      {
+        index: 1,
+        assetId: 'a',
+        name: 'A',
+        thumb: '/api/v1/files/a?t=thumb',
+        frames: 1,
+        repeat: null,
+      },
+      { index: 3, assetId: 'x', name: 'X', thumb: 'ux', frames: 1, repeat: null },
     ]);
   });
 });
@@ -299,5 +306,39 @@ describe('EditorSession', () => {
     expect(engine.panMode).toBe(true);
     expect(session.handleKeyDown(key('Escape'))).toBe(true);
     session.dispose();
+  });
+});
+
+describe('texture palette entries (P14)', () => {
+  const texture = (id: string, width: number): TileAsset => ({
+    ...tile(id, width, width),
+    kind: 'texture',
+  });
+
+  it('mixes tiles and textures; a texture gets repeat = native width / cellPx', () => {
+    const { session } = setup();
+    const cellPx = session.doc.grid.cellPx;
+    expect(session.addTileAsset(tile('t1'))).toBe(1);
+    const index = session.addTileAsset(texture('x1', cellPx * 4));
+    expect(index).toBe(2);
+    expect(session.doc.palette[2]?.repeat).toBe(4);
+    expect(session.doc.palette[1]?.repeat).toBeUndefined();
+    expect(session.ui.palette.map((p) => p.repeat)).toEqual([null, 4]);
+    expect(session.ui.palette.map((p) => p.frames)).toEqual([1, 1]);
+    // A texture smaller than a cell still covers at least one cell.
+    const small = session.addTileAsset(texture('x2', 8));
+    expect(session.doc.palette[small]?.repeat).toBe(1);
+  });
+
+  it('changes the block size of a texture only (clamped), never of a tile', () => {
+    const { session } = setup();
+    session.addTileAsset(tile('t1'));
+    session.addTileAsset(texture('x1', session.doc.grid.cellPx * 2));
+    session.setTextureRepeat(1, 5);
+    expect(session.doc.palette[1]?.repeat).toBeUndefined();
+    session.setTextureRepeat(2, 5);
+    expect(session.doc.palette[2]?.repeat).toBe(5);
+    session.setTextureRepeat(2, 500);
+    expect(session.doc.palette[2]?.repeat).toBe(64);
   });
 });

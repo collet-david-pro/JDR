@@ -27,6 +27,7 @@ import {
   tokenBox,
   tokenRingColor,
 } from '../engine/scene/object-geometry';
+import type { ImageGeometry, ImagePlacement } from '../editor/contracts-images';
 import { TOKEN_FLICKER } from '../vision/flicker';
 
 /** What the scene part of the export draws (the objects are always drawn). */
@@ -79,6 +80,18 @@ export interface SnapshotTokenImage {
   readonly url: string;
 }
 
+/** P14: an image object of the export (player view), bottom → top. */
+export interface SnapshotImage {
+  readonly geometry: ImageGeometry;
+  /** Object opacity × layer opacity. */
+  readonly opacity: number;
+  readonly flipH: boolean;
+  readonly flipV: boolean;
+  readonly placement: ImagePlacement;
+  /** Index in SnapshotScene.tokenImages (shared loader), null = not drawn. */
+  readonly image: number | null;
+}
+
 export interface SnapshotScene {
   readonly floor: string;
   /** Map size in cells. */
@@ -91,6 +104,8 @@ export interface SnapshotScene {
   readonly lights: readonly SnapshotLight[];
   readonly tokens: readonly SnapshotToken[];
   readonly tokenImages: readonly SnapshotTokenImage[];
+  /** P14: image objects (not in `objects`). */
+  readonly images?: readonly SnapshotImage[];
   readonly ambient: Ambient;
   /** Fog chunks intersecting the extent (copies); absent chunk = unexplored. */
   readonly fog: readonly (readonly [ChunkKey, Uint8Array])[];
@@ -180,6 +195,7 @@ export function buildSceneSnapshot(
     )
     .sort((a, b) => order.indexOf(a.obj.layer) - order.indexOf(b.obj.layer) || a.i - b.i)
     .map(({ obj }) => obj);
+  const imageObjects = objects.filter((o) => o.type === 'image');
   const occluders = all.filter(
     (o) =>
       ((o.type === 'wall' || o.type === 'door' || o.type === 'window') && isPlayerObject(o)) ||
@@ -189,6 +205,29 @@ export function buildSceneSnapshot(
   const lights: SnapshotLight[] = [];
   const tokens: SnapshotToken[] = [];
   const tokenImages: SnapshotTokenImage[] = [];
+  const byUrl = new Map<string, number>();
+  const images: SnapshotImage[] = imageObjects.map((o) => {
+    const asset = scene.imageAsset?.(o.props.asset_id) ?? null;
+    let image: number | null = null;
+    if (asset?.url) {
+      const url = absoluteUrl(asset.url, baseUrl);
+      image = byUrl.get(url) ?? null;
+      if (image === null) {
+        image = tokenImages.length;
+        byUrl.set(url, image);
+        tokenImages.push({ index: image, name: asset.name, url });
+      }
+    }
+    const def = layers.find((l) => l.id === o.layer);
+    return {
+      geometry: o.geometry,
+      opacity: o.props.opacity * Math.min(1, Math.max(0, def?.opacity ?? 1)),
+      flipH: o.props.flip_h,
+      flipV: o.props.flip_v,
+      placement: o.props.placement,
+      image,
+    };
+  });
   const shown = scene.tokens().filter((t) => !t.hidden);
   if (content.lighting) {
     const token = (uid: string): PlacedToken | undefined => scene.token(uid);
@@ -222,7 +261,6 @@ export function buildSceneSnapshot(
     }
   }
   if (content.tokens) {
-    const byUrl = new Map<string, number>();
     for (const t of shown) {
       const def = scene.tokenDef(t.token_id);
       const box = tokenBox(t, def);
@@ -266,11 +304,12 @@ export function buildSceneSnapshot(
       floor: scene.floor,
       width: size.width,
       height: size.height,
-      objects,
+      objects: objects.filter((o) => o.type !== 'image'),
       occluders,
       lights,
       tokens,
       tokenImages,
+      images,
       ambient: scene.ambient,
       fog,
     },

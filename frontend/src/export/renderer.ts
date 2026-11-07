@@ -160,6 +160,11 @@ export class ExportScene {
     }
     ctx.imageSmoothingQuality = 'high';
     const { extent, ppc } = this;
+    if (this.painter !== null) {
+      // P14: background images right after the theme background, under the tiles.
+      this.painter.images(ctx, 'background', x, y, w, h, ox, oy);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
     // Cells overlapping the region (one cell of margin for rounding).
     const c0 = Math.max(0, Math.floor(x / ppc) - 1);
     const c1 = Math.min(extent.w - 1, Math.floor((x + w) / ppc) + 1);
@@ -182,7 +187,7 @@ export class ExportScene {
           const i = ((my % CHUNK_SIZE) * CHUNK_SIZE + (mx % CHUNK_SIZE)) * 4;
           const index = cells[i]!;
           if (index === 0) continue;
-          this.drawCell(ctx, col, row, index, cells[i + 1]!, cells[i + 2]!, ox, oy);
+          this.drawCell(ctx, col, row, index, cells[i + 1]!, cells[i + 2]!, ox, oy, mx, my);
         }
       }
     }
@@ -190,6 +195,7 @@ export class ExportScene {
     const painter = this.painter;
     if (painter !== null) {
       painter.objects(ctx, x, y, w, h, ox, oy);
+      painter.images(ctx, 'above', x, y, w, h, ox, oy);
       painter.tokens(ctx, x, y, w, h, ox, oy);
       if (painter.drawLighting) {
         this.lightCtx ??= this.extras.lightSurface?.() ?? null;
@@ -230,10 +236,17 @@ export class ExportScene {
     flags: number,
     ox: number,
     oy: number,
+    mx: number,
+    my: number,
   ): void {
+    // World-aligned textures (P14) ignore the rotation / variant of the cell.
+    if (this.images.worldAligned?.(index)) {
+      variant = 0;
+      flags = 0;
+    }
     const d = cellDraw(col, row, this.ppc, flags);
     if (d.w <= 0 || d.h <= 0) return;
-    const tile = this.images.tile(index, variant);
+    const tile = this.images.tile(index, variant, mx, my);
     ctx.imageSmoothingEnabled = tile.smooth;
     if (d.identity) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);

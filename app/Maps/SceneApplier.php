@@ -44,9 +44,26 @@ final class SceneApplier
 
     private ObjectLinkRules $links;
 
-    public function __construct(private MapState $state, private SceneStore $store)
+    /** @var array<int, int> asset id => image objects delta (P14, map_asset_refs) */
+    private array $refs = [];
+
+    /**
+     * @param \Closure(int): bool|null $canUseAsset may the editor put this asset on the map (image
+     *                                           objects; null = refused)
+     */
+    public function __construct(private MapState $state, private SceneStore $store, private ?\Closure $canUseAsset = null)
     {
         $this->links = new ObjectLinkRules($state, $store);
+    }
+
+    /**
+     * Image objects added / removed per asset (P14): asset id => delta (non-zero only).
+     *
+     * @return array<int, int>
+     */
+    public function refDeltas(): array
+    {
+        return array_filter($this->refs, static fn (int $d): bool => $d !== 0);
     }
 
     /**
@@ -166,6 +183,7 @@ final class SceneApplier
                 continue;
             }
             $this->store->deleteObject($row['id']);
+            $this->countImage($object, -1);
             $this->forget($this->objects, $this->objectKeys, $object['uid']);
             if ($this->objectCount !== null) {
                 $this->objectCount--;
@@ -197,6 +215,12 @@ final class SceneApplier
      */
     public function dropFloor(int $floorId): void
     {
+        // Called before the floor rows go (FK CASCADE): its images release their asset.
+        foreach ($this->store->allObjects() as $row) {
+            if ((int) $row['object']['floor'] === $floorId) {
+                $this->countImage($row['object'], -1);
+            }
+        }
         foreach ($this->objects as $uid => $entry) {
             if ((int) $entry['object']['floor'] === $floorId) {
                 $this->forget($this->objects, $this->objectKeys, $uid);
@@ -241,8 +265,10 @@ final class SceneApplier
         }
         $api = ObjectRules::canonical(['floor' => (string) $object['floor'], 'geometry' => $geometry, 'rev' => 1] + $object);
         $this->links->check($api, $field . '.object');
+        $this->requireImageAsset($api, $field . '.object');
         $id = $this->store->insertObject($api, ObjectRules::bbox($api, $this->state->width, $this->state->height));
         $this->store->syncLink($id, $api['props']['link'] ?? null);
+        $this->countImage($api, 1);
         $this->remember($this->objects, $this->objectKeys, $api['uid'], ['id' => $id, 'object' => $api]);
         $this->objectCount++;
 
@@ -275,11 +301,17 @@ final class SceneApplier
         $merged = ObjectRules::canonical($merged);
         if (array_key_exists('props', $op['patch'])) {
             $this->links->check($merged, $field . '.patch');
+            if (ObjectRulesImage::assetId($merged) !== ObjectRulesImage::assetId($current)) {
+                // Only a new asset is checked: moving an image whose asset went to the trash stays possible.
+                $this->requireImageAsset($merged, $field . '.patch');
+            }
         }
         $this->store->updateObject($stored['id'], $merged, ObjectRules::bbox($merged, $this->state->width, $this->state->height));
         if (array_key_exists('props', $op['patch'])) {
             $this->store->syncLink($stored['id'], $merged['props']['link'] ?? null);
         }
+        $this->countImage($current, -1);
+        $this->countImage($merged, 1);
         $this->objects[$current['uid']] = ['id' => $stored['id'], 'object' => $merged];
 
         return true;
@@ -292,6 +324,7 @@ final class SceneApplier
             return false;
         }
         $this->store->deleteObject($stored['id']);
+        $this->countImage($stored['object'], -1);
         $this->forget($this->objects, $this->objectKeys, $uid);
         if ($this->objectCount !== null) {
             $this->objectCount--;
@@ -424,6 +457,36 @@ final class SceneApplier
     }
 
     // ---- Helpers ---------------------------------------------------------------------------
+
+    /**
+     * The asset of an image object: live, usable by the editor in this game, of an image kind
+     * (ObjectRulesImage::ASSET_KINDS); 422 <field>.props.asset_id = not_found otherwise.
+     *
+     * @param array<string, mixed> $object
+     */
+    private function requireImageAsset(array $object, string $field): void
+    {
+        if (!ObjectRulesImage::handles($object['type'])) {
+            return;
+        }
+        $assetId = ObjectRulesImage::assetId($object);
+        $kind = $assetId === null ? null : $this->store->assetKind($assetId);
+        if ($assetId === null || $kind === null || !in_array($kind, ObjectRulesImage::ASSET_KINDS, true)
+            || $this->canUseAsset === null || !($this->canUseAsset)($assetId)) {
+            throw new ValidationException('', [$field . '.props.asset_id' => 'not_found']);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $object
+     */
+    private function countImage(array $object, int $sign): void
+    {
+        $assetId = ObjectRulesImage::assetId($object);
+        if ($assetId !== null) {
+            $this->refs[$assetId] = ($this->refs[$assetId] ?? 0) + $sign;
+        }
+    }
 
     private function requireFloor(mixed $floorId, string $field): void
     {

@@ -17,6 +17,7 @@ import type {
 } from '../contracts';
 import type { History } from '../history/History';
 import type { MapDocument } from '../model/MapDocument';
+import { imageCenter } from '../model/image-values';
 import { notePoints } from '../tools/geometry';
 import { changedObjectPatch, changedTokenPatch } from '../model/scene-values';
 import type { EditorUiState, SceneItem, ViewState } from '../state.svelte';
@@ -281,7 +282,9 @@ export class SceneControls {
             ? [o.geometry.x, o.geometry.y]
             : o.type === 'door' || o.type === 'window'
               ? o.geometry.a
-              : (notePoints(o)[0] ?? [0, 0]);
+              : o.type === 'image'
+                ? imageCenter(o.geometry)
+                : (notePoints(o)[0] ?? [0, 0]);
       items.push({ uid: o.uid, kind: o.type, name: null, x, y });
     }
     ui.sceneItems = items;

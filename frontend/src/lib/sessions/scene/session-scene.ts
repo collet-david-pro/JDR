@@ -19,6 +19,7 @@ import type {
   PlacedToken,
   TokenDefView,
 } from '../../../editor/contracts';
+import { imageAssetFromWire } from '../../../editor/contracts-images';
 import { decodeFogData } from '../../../editor/model/fog-wire';
 import { MapDocument } from '../../../editor/model/MapDocument';
 import { chunkKey } from '../../../editor/model/ops';
@@ -83,6 +84,8 @@ export class SessionScene {
       ...(state.ambient === null ? {} : { ambient: state.ambient }),
     });
     this.ambient = state.ambient;
+    // P14: signed URLs of the images the reader sees (snapshot map.images).
+    this.doc.setImageAssets((map.images ?? []).map(imageAssetFromWire), true);
     this.doc.loadScene(
       Object.values(state.objects).map((o) => this.shown(o)),
       Object.values(state.tokens),

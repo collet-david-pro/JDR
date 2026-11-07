@@ -223,6 +223,9 @@ final class IntegrityScanner
         foreach ($this->refs->noteCounts($mapId) as $assetId => $n) {
             $counts[$assetId] = ($counts[$assetId] ?? 0) + $n;
         }
+        foreach ($this->refs->imageCounts($mapId) as $assetId => $n) {
+            $counts[$assetId] = ($counts[$assetId] ?? 0) + $n;
+        }
         $expected = $this->existing($counts);
         $recorded = [];
         $trashed = [];
@@ -289,6 +292,9 @@ final class IntegrityScanner
             }
         }
         foreach ($this->refs->noteCounts($mapId) as $assetId => $n) {
+            $counts[$assetId] = ($counts[$assetId] ?? 0) + $n;
+        }
+        foreach ($this->refs->imageCounts($mapId) as $assetId => $n) {
             $counts[$assetId] = ($counts[$assetId] ?? 0) + $n;
         }
 

@@ -255,6 +255,8 @@ export class ObjectsRenderer {
         } else drawSecret(gfx, obj, this.cellPx, this.bucket);
         break;
       case 'light':
+      case 'image':
+        // Images: ImagesRenderer (own containers under the tiles / above the objects).
         break;
     }
   }

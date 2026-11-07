@@ -1,6 +1,7 @@
 <script lang="ts">
   import { setContext, untrack } from 'svelte';
   import AmbientPanel from './AmbientPanel.svelte';
+  import BackgroundDialog from './BackgroundDialog.svelte';
   import EditorCommandPalette from './EditorCommandPalette.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
@@ -21,6 +22,9 @@
   import { detectPlatform } from '../../editor/shortcuts';
   import { visibleChunkKeys } from '../../editor/sync/chunk-loader';
   import { MapSync } from '../../editor/sync/MapSync';
+  import { newClientOpId } from '../../editor/sync/OpsQueue';
+  import { imageAssetFromWire } from '../../editor/contracts-images';
+  import { watchImageAssets } from '../../editor/images/library';
   import { rejectionText } from '../../editor/sync/rejection-text';
   import { saveErrorText } from '../../editor/sync/save-status';
   import {
@@ -147,6 +151,23 @@
     }
   }
   session.refreshPalette();
+  // P14: assets of the image objects (signed URLs), and those of images added by others.
+  session.doc.setImageAssets((initial.map.images ?? []).map(imageAssetFromWire), true);
+  const stopImageWatch = watchImageAssets(session.doc, services().api);
+
+  /** P14 "resize the map to the image": saved first, then the editor reloads. */
+  async function resizeMap(width: number, height: number): Promise<void> {
+    await sync?.settle();
+    const fresh = await initial.client.get(initial.map.id);
+    await initial.client.sendOps(initial.map.id, {
+      base_revision: fresh.revision,
+      client_op_id: newClientOpId(),
+      ops: [{ type: 'map.meta', grid: { width, height } }],
+    });
+    markThumbnailStale(initial.map.id);
+    if (onreload !== undefined) onreload();
+    else window.location.reload();
+  }
 
   // ---- P5: token definitions, vision service ----------------------------------------------
   let tokensState = $state<'loading' | 'ready' | 'error'>('loading');
@@ -383,6 +404,7 @@
 
   $effect(() => () => {
     destroyed = true;
+    stopImageWatch();
     session.scene.flushExploration();
     sync?.dispose();
     // Leaving the editor sends a pending thumbnail (not after a restoration: old content).
@@ -497,6 +519,7 @@
   {exporting}
 />
 <HelpDialog bind:open={ui.helpOpen} />
+<BackgroundDialog {session} onresize={resizeMap} />
 <SnapshotDialog
   bind:open={ui.snapshotOpen}
   busy={versions.busy === 'snapshot'}

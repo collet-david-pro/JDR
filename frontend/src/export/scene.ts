@@ -27,6 +27,8 @@ export interface SnapshotPaletteEntry {
   readonly name: string;
   /** Absolute URL, or null when the asset has no usable image. */
   readonly url: string | null;
+  /** P14: block size of a world-aligned texture entry, absent for a tile. */
+  readonly repeat?: number | null;
 }
 
 export interface MapSnapshot {
@@ -173,6 +175,7 @@ export function buildSnapshot(
         index,
         name: entry?.name ?? `#${index}`,
         url: entry?.url ? absoluteUrl(entry.url, baseUrl) : null,
+        ...(entry?.repeat != null ? { repeat: entry.repeat } : {}),
       };
     });
   let sceneSnapshot: SnapshotScene | null = null;

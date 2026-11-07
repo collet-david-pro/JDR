@@ -9,6 +9,7 @@
   import { folderNames, isMapSort, MAP_SORTS, type MapSort } from '../../lib/maps/folders';
   import { MapImportModel } from '../../lib/maps/map-import.svelte';
   import { MapsTabModel } from '../../lib/maps/maps-tab.svelte';
+  import { addBackground } from '../../lib/maps/map-from-image';
   import { mapsClient, templatesClient } from '../../lib/maps/service';
   import type { MapTemplate } from '../../lib/maps/templates';
   import { t } from '../../lib/i18n';
@@ -257,6 +258,7 @@
   {folders}
   oncreate={(input) => model.create(input)}
   oncreated={created}
+  onimage={(map, assetId, geometry) => addBackground(mapsClient(), map, assetId, geometry)}
 />
 <MapEditDialog bind:open={editOpen} map={editing} {folders} onsave={save} />
 <TemplatePickerDialog

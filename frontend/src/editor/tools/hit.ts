@@ -4,6 +4,7 @@
  * Handles of selected objects: wall vertices, door / window ends, light radius (east of the
  * light, at dim_radius), the same positions as the engine `objects` overlay.
  */
+import { imageContains } from '../model/image-values';
 import type { LayerDef, MapObject, PlacedToken, Point, SceneView } from '../contracts';
 import { dist, notePoints, objectBox, polygonDistance, project, wallSegments } from './geometry';
 import type { ObjectSelection } from './types';
@@ -62,6 +63,8 @@ export function objectDistance(o: MapObject, p: Point): number {
       if ('a' in g) return project(p, g.a, g.b).distance;
       return dist(p, [g.x, g.y]);
     }
+    case 'image':
+      return imageContains(o.geometry, p[0], p[1]) ? 0 : Infinity;
   }
 }
 
@@ -76,6 +79,8 @@ const RANK: Record<MapObject['type'], number> = {
   trap: 0,
   secret: 1,
   zone: 3,
+  // P14: an image is picked only when nothing else is under the pointer.
+  image: 4,
 };
 
 /** Topmost object or token under p (tol in cells, px = cells per screen pixel). */

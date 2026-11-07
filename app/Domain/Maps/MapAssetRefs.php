@@ -8,10 +8,11 @@ defined('JDR_BOOT') || exit;
 
 use JDR\Core\Db;
 use JDR\Maps\ChunkCodec;
+use JDR\Maps\ObjectRulesImage;
 
 /**
  * What map_asset_refs must contain: cells per asset of the palette (chunks) + one per note carrying
- * an asset. Shared by the writer of whole documents and by the integrity check (P10b).
+ * an asset + one per image object (P14). Shared by the writer of whole documents and by the integrity check (P10b).
  */
 final class MapAssetRefs
 {
@@ -53,5 +54,24 @@ final class MapAssetRefs
         }
 
         return $out;
+    }
+
+    /**
+     * Image objects of a map per asset (P14: one reference per image object).
+     *
+     * @return array<int, int> asset id => images
+     */
+    public function imageCounts(int $mapId): array
+    {
+        $rows = $this->db->fetchAll(
+            'SELECT `type`, `props` FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ? AND `type` = ?',
+            [$mapId, ObjectRulesImage::TYPE],
+        );
+
+        return ObjectRulesImage::counts(array_map(static function (array $r): array {
+            $props = json_decode((string) $r['props'], true);
+
+            return ['type' => (string) $r['type'], 'props' => is_array($props) ? $props : []];
+        }, $rows));
     }
 }

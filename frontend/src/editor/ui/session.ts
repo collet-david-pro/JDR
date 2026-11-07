@@ -14,6 +14,7 @@ import type {
   TileLayerId,
 } from '../contracts';
 import type { MapOpConflict } from '../../lib/types';
+import { clampRepeat, defaultRepeat } from '../../engine/texture-tiles';
 import { EditorController } from '../EditorController';
 import { History } from '../history/History';
 import {
@@ -340,12 +341,26 @@ export class EditorSession {
   /** Adds a library asset to the palette (palette.add, not undoable) and selects it. */
   addTileAsset(asset: TileAsset): number {
     this.catalog.remember(asset);
-    const { index, op } = this.doc.paletteIndexFor(asset.id);
+    const repeat =
+      asset.kind === 'texture' ? defaultRepeat(asset.width, this.doc.grid.cellPx) : null;
+    const { index, op } = this.doc.paletteIndexFor(asset.id, repeat);
     if (op !== null) this.history.applyUntracked([op]);
     else this.doc.updatePaletteAsset(asset.id, { url: asset.urls.full, name: asset.name });
     this.syncMeta();
     this.selectTile(index);
     return index;
+  }
+
+  /** Changes the block size (cells) of a texture palette entry (palette.add again, not undoable). */
+  setTextureRepeat(index: number, repeat: number): void {
+    const entry = this.doc.palette[index];
+    if (entry == null || entry.repeat == null) return;
+    const next = clampRepeat(repeat);
+    if (next === entry.repeat) return;
+    this.history.applyUntracked([
+      { type: 'palette.add', index, asset_id: entry.assetId, repeat: next },
+    ]);
+    this.syncMeta();
   }
 
   selectTile(index: number): void {

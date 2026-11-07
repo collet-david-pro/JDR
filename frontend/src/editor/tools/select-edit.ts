@@ -12,6 +12,8 @@ import type {
   Point,
   SceneView,
 } from '../contracts';
+import type { ImageGeometry } from '../contracts-images';
+import { imageCenter, imageCorners } from '../model/image-values';
 import { round3 } from '../model/scene-values';
 import { notePoints, objectBox } from './geometry';
 import type { HandleHit } from './hit';
@@ -55,6 +57,8 @@ function movedGeometry(o: MapObject, dx: number, dy: number): MapObject['geometr
       if ('a' in g) return { a: mv(g.a), b: mv(g.b) };
       return { x: round3(g.x + dx), y: round3(g.y + dy) };
     }
+    case 'image':
+      return { ...o.geometry, x: round3(o.geometry.x + dx), y: round3(o.geometry.y + dy) };
   }
 }
 
@@ -72,7 +76,8 @@ export function clampDelta(
   let x1 = -Infinity;
   let y1 = -Infinity;
   for (const o of objects) {
-    const b = objectBox(o);
+    // P14: an image may overflow the map (background); its centre stays inside.
+    const b = o.type === 'image' ? centreBox(o.geometry) : objectBox(o);
     x0 = Math.min(x0, b.x0);
     y0 = Math.min(y0, b.y0);
     x1 = Math.max(x1, b.x1);
@@ -185,7 +190,14 @@ export function shapeOverlay(o: MapObject): Overlay {
       if ('a' in g) return { kind: 'segment', a: g.a, b: g.b, valid: true };
       return { kind: 'area', x: g.x - 0.4, y: g.y - 0.4, w: 0.8, h: 0.8 };
     }
+    case 'image':
+      return { kind: 'polyline', points: imageCorners(o.geometry), closed: true };
   }
+}
+
+function centreBox(g: ImageGeometry): { x0: number; y0: number; x1: number; y1: number } {
+  const [x, y] = imageCenter(g);
+  return { x0: x, y0: y, x1: x, y1: y };
 }
 
 /** Patch of a handle drag to point p (already snapped), or null when nothing changes. */

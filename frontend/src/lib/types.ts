@@ -2,6 +2,7 @@
  * API data types of phase P1 (etapes/P01 "Contrat d'API P1"). Identifiers are strings,
  * dates are ISO 8601 UTC strings.
  */
+import type { ImageAssetWire } from '../editor/contracts-images';
 import type { MapNote, NoteOp } from '../editor/contracts-notes';
 import type { FloorInfo, FogChunkWire, MapObject, MapOp, PlacedToken } from '../editor/contracts';
 
@@ -487,6 +488,8 @@ export interface MapPaletteEntry {
   readonly url: string | null;
   readonly thumb_url: string | null;
   readonly autotile: string | null;
+  /** P14: block size of a world-aligned texture, absent for a tile. */
+  readonly repeat?: number | null;
 }
 
 /** Layer of the stack (projet.md 12.1), bottom → top. */
@@ -516,6 +519,8 @@ export interface MapDetail extends Omit<MapSummary, 'grid'> {
   readonly notes: readonly MapNote[];
   /** P5: placed tokens of every floor. */
   readonly tokens_placed: readonly PlacedToken[];
+  /** P14: assets of the image objects the reader sees (signed URLs). */
+  readonly images?: readonly ImageAssetWire[];
   /** P8: how the map was generated (null = hand-made). */
   readonly generation?: MapGeneration | null;
 }
@@ -563,6 +568,7 @@ export type WireMapOp =
       readonly index: number;
       readonly asset_id: string;
       readonly autotile?: string | null;
+      readonly repeat?: number | null;
     }
   | {
       readonly type: 'map.meta';

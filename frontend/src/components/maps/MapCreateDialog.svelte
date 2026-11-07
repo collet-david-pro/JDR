@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import AssetPicker from '../AssetPicker.svelte';
   import Button from '../Button.svelte';
   import ErrorAlert from '../ErrorAlert.svelte';
   import Modal from '../Modal.svelte';
@@ -15,7 +17,11 @@
     type MapDraft,
   } from '../../lib/maps/map-form';
   import { t } from '../../lib/i18n';
-  import type { GameSettings, MapDetail, MapInput } from '../../lib/types';
+  import type { Asset, GameSettings, MapDetail, MapInput } from '../../lib/types';
+  import type { ImageGeometry } from '../../editor/contracts-images';
+  import { DEFAULT_IMAGE_CELL_PX, mapFromImage } from '../../editor/images/calibration';
+  import { uploadImage } from '../../editor/images/library';
+  import { assetsClient } from '../../lib/assets/service';
 
   /** New map: name, folder, size in cells, cell size and units (from the game settings). */
   interface Props {
@@ -26,6 +32,8 @@
     folders: readonly string[];
     oncreate: (input: MapInput) => Promise<MapDetail>;
     oncreated: (map: MapDetail) => void;
+    /** P14: adds the background image to the map just created (map read again). */
+    onimage?: (map: MapDetail, assetId: string, geometry: ImageGeometry) => Promise<MapDetail>;
   }
 
   let {
@@ -35,7 +43,54 @@
     folders,
     oncreate,
     oncreated,
+    onimage,
   }: Props = $props();
+
+  // ---- P14: map from an image ----
+  let image = $state<Asset | null>(null);
+  let imageCellPx = $state(String(DEFAULT_IMAGE_CELL_PX));
+  let pickerOpen = $state(false);
+  let uploading = $state(false);
+  let imageError = $state<string | null>(null);
+  const fromImage = $derived(
+    image === null
+      ? null
+      : mapFromImage({ width: image.width, height: image.height }, Number(imageCellPx)),
+  );
+
+  function useImage(asset: Asset): void {
+    image = asset;
+    imageError = null;
+  }
+
+  // The size of the map follows the image and the size of one of its cells.
+  $effect(() => {
+    const plan = fromImage;
+    if (plan !== null) untrack(() => applyImageSize(plan));
+  });
+
+  function applyImageSize(plan: NonNullable<typeof fromImage>): void {
+    draft.width = String(plan.width);
+    draft.height = String(plan.height);
+    draft.cell_px = String(plan.cellPx);
+    if (draft.name.trim() === '' && image !== null) draft.name = image.name;
+  }
+
+  async function sendImage(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file === undefined) return;
+    uploading = true;
+    imageError = null;
+    try {
+      useImage((await uploadImage(assetsClient(), file, 'background', t)).asset);
+    } catch (e) {
+      imageError = e instanceof Error ? e.message : t('errors.unknown');
+    } finally {
+      uploading = false;
+    }
+  }
 
   const uid = $props.id();
   // svelte-ignore state_referenced_locally
@@ -48,6 +103,8 @@
     if (open) {
       draft = newMapDraft(settings, folder);
       form.reset();
+      image = null;
+      imageError = null;
     }
   });
 
@@ -58,6 +115,10 @@
     const ok = await form.submit(
       async () => {
         if (checked.ok) result.map = await oncreate(checked.input);
+        const plan = fromImage;
+        if (result.map !== null && image !== null && plan !== null && onimage !== undefined) {
+          result.map = await onimage(result.map, String(image.id), plan.geometry);
+        }
       },
       { form: formEl, validate: () => (checked.ok ? {} : checked.errors) },
     );
@@ -79,6 +140,45 @@
       autocomplete="off"
       error={form.message('name')}
     />
+    {#if onimage !== undefined}
+      <fieldset class="from-image" data-testid="map-from-image">
+        <legend>{t('games.maps.from_image.title')}</legend>
+        <div class="row">
+          <Button size="small" onclick={() => (pickerOpen = true)}>
+            {t('games.maps.from_image.choose')}
+          </Button>
+          <label class="button button-small upload">
+            {t('games.maps.from_image.upload')}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onchange={sendImage}
+              disabled={uploading}
+              data-testid="map-from-image-upload"
+            />
+          </label>
+          {#if image !== null}
+            <span class="small" data-testid="map-from-image-name"
+              >{t('games.maps.from_image.chosen', {
+                name: image.name,
+                width: image.width,
+                height: image.height,
+              })}</span
+            >
+          {/if}
+        </div>
+        {#if imageError !== null}<p class="alert alert-error" role="alert">{imageError}</p>{/if}
+        {#if image !== null}
+          <TextField
+            label={t('games.maps.from_image.cell_px')}
+            name="image_cell_px"
+            inputmode="decimal"
+            bind:value={imageCellPx}
+            hint={t('games.maps.from_image.cell_px_hint')}
+          />
+        {/if}
+      </fieldset>
+    {/if}
     <TextField
       label={t('games.maps.fields.folder')}
       name="folder"
@@ -160,7 +260,36 @@
   </form>
 </Modal>
 
+{#if onimage !== undefined}
+  <AssetPicker
+    bind:open={pickerOpen}
+    kinds={['background', 'object', 'texture', 'token']}
+    taxonomy
+    title={t('games.maps.from_image.choose')}
+    onpick={useImage}
+  />
+{/if}
+
 <style>
+  .from-image {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-2);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .upload {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .upload input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));

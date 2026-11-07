@@ -10,6 +10,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 - Notes en Markdown sûr, épingles, zones à lire, pièges et secrets ; modèles de map, dont 4 livrés (taverne, crypte, forêt, grotte).
 - Palette de commandes (Cmd/Ctrl+K), aussi dans la console du MJ.
 - Historique de versions restaurable, export et import JSON ou ZIP (images incluses), onglet Maps avec dossiers, duplication et corbeille.
+- Images sur la map : battlemap en fond (recalage sur la grille, nouvelle map depuis une image) et images libres de la bibliothèque (déplacement, redimension, rotation, opacité, miroir), calque MJ jamais montré aux joueurs.
 - Export PNG en flux : haute résolution, fond transparent, mode impression (A4, A3, Letter).
 - Rendu WebGPU, avec repli WebGL2.
 

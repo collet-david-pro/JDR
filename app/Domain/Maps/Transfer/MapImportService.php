@@ -22,6 +22,7 @@ use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapOpsInput;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Users\User;
+use JDR\Maps\Document\MapDocumentImages;
 use JDR\Maps\Document\MapDocumentNotes;
 use JDR\Maps\Document\MapDocumentValidator;
 use JDR\Maps\Document\MapDocumentWriter;
@@ -164,12 +165,17 @@ final class MapImportService
                         $names[$note['sha256']] ??= $note['title'];
                     }
                 }
+                $kinds = [];
+                foreach (MapDocumentImages::hashes($doc['objects'] ?? []) as $sha) {
+                    $names[$sha] ??= '';
+                    $kinds[$sha] = 'object'; // P14: an image object needs an image kind (not tile)
+                }
                 $bySha = $this->resolver->resolve($user->id, array_keys($names));
                 foreach ($names as $sha => $name) {
                     if (isset($bySha[$sha]) || !isset($files[$sha]) || $reader === null) {
                         continue;
                     }
-                    $asset = $this->importAsset($user, $reader, $files[$sha], $name, $created);
+                    $asset = $this->importAsset($user, $reader, $files[$sha], $name, $created, $kinds[$sha] ?? 'tile');
                     if ($asset !== null) {
                         $bySha[$sha] = $asset->id;
                     }
@@ -189,9 +195,13 @@ final class MapImportService
                     if ($entry['autotile'] !== null) {
                         $item['autotile'] = $entry['autotile'];
                     }
+                    if (isset($entry['repeat'])) {
+                        $item['repeat'] = $entry['repeat'];
+                    }
                     $palette[] = $item;
                 }
                 $doc['notes'] = MapDocumentNotes::resolveImported($doc['notes'] ?? [], $bySha, $missing);
+                $doc['objects'] = MapDocumentImages::resolve($doc['objects'] ?? [], $bySha, [], $missing);
                 $missing = array_values($missing);
                 $tokens = $this->writer->resolveTokens($game->id, $doc['tokens_placed'], false);
                 $mapId = $this->writer->create($game->id, $user->id, null, $doc, $palette, $tokens['ids']);
@@ -227,7 +237,7 @@ final class MapImportService
      * @param list<Asset> $created assets created by this import (cleanup on failure)
      * @throws PayloadTooLargeException quota_exceeded
      */
-    private function importAsset(User $user, ZipReader $reader, ZipEntry $entry, string $name, array &$created): ?Asset
+    private function importAsset(User $user, ZipReader $reader, ZipEntry $entry, string $name, array &$created, string $kind = 'tile'): ?Asset
     {
         $tmp = $this->storage->newTmpPath();
         try {
@@ -241,7 +251,7 @@ final class MapImportService
             $result = $this->importer->import($tmp, new ImportRequest(
                 $user->id,
                 $name !== '' ? $name : 'image',
-                'tile',
+                $kind,
             ));
         } catch (HttpException $e) {
             if ($e->errorCode() === 'quota_exceeded') {

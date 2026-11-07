@@ -51,6 +51,7 @@ const TOOL_ACTIONS: Partial<Record<ShortcutAction, ToolId>> = {
   'tool.door': 'door',
   'tool.light': 'light',
   'tool.token': 'token',
+  'tool.image': 'image',
   'tool.fog': 'fog',
 };
 

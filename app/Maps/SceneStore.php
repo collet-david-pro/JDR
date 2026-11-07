@@ -120,4 +120,9 @@ interface SceneStore
      * @param array<string, mixed>|null $link
      */
     public function syncLink(int $objectId, ?array $link): void;
+
+    /**
+     * Kind of a live (not deleted) asset, null when there is none (P14 image objects).
+     */
+    public function assetKind(int $assetId): ?string;
 }

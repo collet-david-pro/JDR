@@ -350,6 +350,18 @@
               "pattern": "^[A-Za-z0-9_.:-]{1,40}$"
             }
           ]
+        },
+        "repeat": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            }
+          ]
         }
       }
     },

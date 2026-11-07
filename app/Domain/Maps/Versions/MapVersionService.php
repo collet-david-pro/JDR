@@ -20,10 +20,12 @@ use JDR\Domain\Support\Dates;
 use JDR\Domain\Users\User;
 use JDR\Domain\Sessions\Actions\MapOpsBroadcaster;
 use JDR\Maps\Document\MapDocumentBuilder;
+use JDR\Maps\Document\MapDocumentImages;
 use JDR\Maps\Document\MapDocumentMigrator;
 use JDR\Maps\Document\MapDocumentValidator;
 use JDR\Maps\Document\MapDocumentWriter;
 use JDR\Maps\Document\PaletteResolver;
+use JDR\Maps\ObjectRulesImage;
 
 /**
  * Map versions (projet.md 11.4 "Versions", contract P4c):
@@ -136,6 +138,7 @@ final class MapVersionService
             // P9: a session playing the map reloads it (map.ops.public {reload: true}, filtered snapshot).
             $capture = $this->broadcaster->prepare($locked, $user, [], $clientOpId ?? 'version-restore-' . $versionId);
             $doc['notes'] = $this->resolveNotes($doc['notes'] ?? [], $user->id);
+            $doc['objects'] = $this->resolveImages($doc['objects'] ?? [], $user->id);
             $revision = $this->writer->replace($locked, $doc, $this->resolvePalette($doc['palette'], $user->id), $tokens['ids']);
             if ($capture !== null) {
                 $this->broadcaster->publish($capture, $revision, [], [], [], ['layers' => $doc['layers']]);
@@ -240,6 +243,31 @@ final class MapVersionService
     }
 
     /**
+     * Assets of the image objects of a snapshot (P14): the recorded id when the asset still exists,
+     * else by hash; an image whose asset is gone everywhere is left out.
+     *
+     * @param list<array<string, mixed>> $objects
+     * @return list<array<string, mixed>>
+     */
+    private function resolveImages(array $objects, int $userId): array
+    {
+        $ids = [];
+        foreach ($objects as $object) {
+            $id = ObjectRulesImage::assetId($object);
+            if ($id !== null) {
+                $ids[] = $id;
+            }
+        }
+        $hashes = MapDocumentImages::hashes($objects);
+        if ($ids === [] && $hashes === []) {
+            return $objects;
+        }
+        $missing = [];
+
+        return MapDocumentImages::resolve($objects, $this->resolver->resolve($userId, $hashes), $this->resolver->existing($ids), $missing);
+    }
+
+    /**
      * Image of the notes of a snapshot: same rule as the palette below.
      *
      * @param list<array<string, mixed>> $notes
@@ -289,6 +317,9 @@ final class MapVersionService
             $item = ['asset_id' => $assetId];
             if ($entry['autotile'] !== null) {
                 $item['autotile'] = $entry['autotile'];
+            }
+            if (isset($entry['repeat'])) {
+                $item['repeat'] = $entry['repeat'];
             }
             $out[] = $item;
         }

@@ -19,7 +19,7 @@ use JDR\Maps\TokenRules;
  * - tiles.set {floor: id, layer: ground|terrain|decor, cells: [[x, y, index, variant, flags], ...] (<= 5 000)}
  *   x, y 0-399, index 0-65535, variant 0-255, flags 0-15 (bits 4-7 reserved); index 0 = erase
  *   (variant/flags forced to 0);
- * - palette.add {index 1-4095, asset_id, autotile?: null | identifier};
+ * - palette.add {index 1-4095, asset_id, autotile?: null | identifier, repeat?: null | 1-64 (texture block size)};
  * - map.meta {name?, grid?: {width?, height?, cell_px?, unit_label?, unit_per_cell?}, layers?, theme?, ambient?}.
  * P5 ops (etapes/P05 "Contrat d'API P5"; rules in ObjectRules / TokenRules):
  * - object.add {object: {uid, floor, type, layer, geometry, props, visibility, locked, sort_order, rev?}};
@@ -46,7 +46,7 @@ final class MapOpsInput
 
     private const KEYS = [
         'tiles.set' => ['type', 'floor', 'layer', 'cells'],
-        'palette.add' => ['type', 'index', 'asset_id', 'autotile'],
+        'palette.add' => ['type', 'index', 'asset_id', 'autotile', 'repeat'],
         'map.meta' => ['type', 'name', 'grid', 'layers', 'theme', 'ambient'],
         'object.add' => ['type', 'object'],
         'object.update' => ['type', 'uid', 'rev', 'patch'],
@@ -211,8 +211,13 @@ final class MapOpsInput
             $errors[$field . '.autotile'] = 'invalid';
         }
 
+        $repeat = MapInput::repeat($op['repeat'] ?? null);
+        if ($repeat === false) {
+            $errors[$field . '.repeat'] = 'invalid';
+        }
+
         return count($errors) === $before
-            ? ['type' => 'palette.add', 'index' => $index, 'asset_id' => $assetId, 'autotile' => $autotile]
+            ? ['type' => 'palette.add', 'index' => $index, 'asset_id' => $assetId, 'autotile' => $autotile, 'repeat' => $repeat]
             : null;
     }
 

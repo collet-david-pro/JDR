@@ -4,7 +4,14 @@
 import type { FogChunkWire } from '../../editor/contracts';
 
 export type ReloadReason =
-  'started' | 'resumed' | 'map_changed' | 'map_reload' | 'unknown_token' | 'assignment' | 'gone';
+  | 'started'
+  | 'resumed'
+  | 'map_changed'
+  | 'map_reload'
+  | 'unknown_token'
+  | 'unknown_image'
+  | 'assignment'
+  | 'gone';
 
 export type SessionEffect =
   /** Fetch GET /sessions/{id}/snapshot again and rebuild the state (SessionSync does it). */

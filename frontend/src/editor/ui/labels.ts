@@ -43,6 +43,8 @@ export function toolLabel(id: ToolId): string {
       return t('editor.tools.secret');
     case 'token':
       return t('editor.tools.token');
+    case 'image':
+      return t('editor.tools.image');
     case 'fog':
       return t('editor.tools.fog');
   }
@@ -216,6 +218,8 @@ export function noticeText(notice: ToolNotice): string {
       return t('editor.notices.polygon_limit');
     case 'passage_length':
       return t('editor.notices.passage_length');
+    case 'no_image':
+      return t('editor.notices.no_image');
     case 'invalid':
       return t('editor.notices.invalid');
   }
@@ -236,6 +240,7 @@ export function shortcutDescription(action: ShortcutAction): string | null {
     case 'tool.door':
     case 'tool.light':
     case 'tool.token':
+    case 'tool.image':
     case 'tool.fog':
       return toolLabel(action.slice(5) as ToolId);
     case 'confirm':

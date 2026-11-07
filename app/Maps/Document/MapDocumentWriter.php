@@ -18,6 +18,7 @@ use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Maps\ChunkCodec;
 use JDR\Maps\FogCodec;
 use JDR\Maps\ObjectRules;
+use JDR\Maps\ObjectRulesImage;
 
 /**
  * Writes a validated document (MapDocumentValidator::validate()) into the database, inside the
@@ -30,7 +31,7 @@ use JDR\Maps\ObjectRules;
  * links (props.link of door / stairs / portal) are attached by map name on import (create()), kept
  * as they are on restore, and map_links is rebuilt.
  * map_asset_refs are recomputed from the written cells (cells per asset of the palette; slots
- * left empty count nothing).
+ * left empty count nothing) + one per note with an image and per image object (P14).
  * P5: objects (bounding boxes computed, rev 1), placed tokens (definition resolved by
  * resolveTokens(): a token that cannot be resolved is skipped) and fog chunks are written too;
  * replace() deletes the previous ones first.
@@ -188,11 +189,18 @@ final class MapDocumentWriter
     {
         $width = (float) $doc['grid']['width'];
         $height = (float) $doc['grid']['height'];
+        $images = [];
         foreach ($doc['objects'] ?? [] as $object) {
+            if (ObjectRulesImage::handles($object['type']) && ObjectRulesImage::assetId($object) === null) {
+                continue; // P14: an image whose asset was not resolved (MapDocumentImages::resolve)
+            }
+            unset($object['asset']);
             $object['floor'] = $floorIds[$object['floor']];
             $object['rev'] = 1;
             $this->scene->insertObject($mapId, $object, ObjectRules::bbox($object, $width, $height));
+            $images[] = $object;
         }
+        $this->maps->applyRefDeltas($mapId, ObjectRulesImage::counts($images));
         foreach ($doc['tokens_placed'] ?? [] as $i => $token) {
             $tokenId = $tokenIds[$i] ?? null;
             if ($tokenId === null) {

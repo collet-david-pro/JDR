@@ -23,6 +23,7 @@ import type {
   WindowProps,
 } from '../contracts';
 import type { PinObject, SecretObject, TrapObject, ZoneObject } from '../contracts-notes';
+import { imageGeometry, imageProps } from './image-values';
 import { MapOpError } from './ops';
 
 /** Accepted pattern for object, token and note identifiers. */
@@ -47,6 +48,7 @@ const OBJECT_TYPES: readonly MapObject['type'][] = [
   'zone',
   'trap',
   'secret',
+  'image',
 ];
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -313,6 +315,8 @@ function geometry(type: MapObject['type'], g: MapObject['geometry'], b: Bounds) 
       if (x + w > b.width || y + h > b.height) bad('Stairs out of bounds');
       return { x, y, w, h };
     }
+    case 'image':
+      return imageGeometry(g, b);
   }
 }
 
@@ -339,6 +343,8 @@ function props(type: MapObject['type'], p: MapObject['props']): MapObject['props
       return trapProps(p as TrapObject['props']);
     case 'secret':
       return secretProps(p as SecretObject['props']);
+    case 'image':
+      return imageProps(p);
   }
 }
 

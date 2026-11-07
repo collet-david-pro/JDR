@@ -8,6 +8,7 @@
 import type { PaletteEntry } from '../editor/contracts';
 import { variantFrame, variantFrameCount } from './cell-transform';
 import { fallbackColor } from './fallback-color';
+import { repeatSlot, textureCellRect } from './texture-tiles';
 import { Assets, CanvasSource, Rectangle, Texture } from './pixi';
 
 export interface ResolvedTile {
@@ -20,7 +21,13 @@ type EntryState =
   | { readonly status: 'none' }
   | { readonly status: 'loading'; readonly url: string }
   | { readonly status: 'error'; readonly url: string }
-  | { readonly status: 'ready'; readonly url: string; readonly frames: readonly Texture[] };
+  | {
+      readonly status: 'ready';
+      readonly url: string;
+      readonly frames: readonly Texture[];
+      /** World-aligned portions of the image (P14), created on demand, key = row * repeat + col. */
+      readonly portions: Map<number, Texture>;
+    };
 
 /** 2 × 2 checkerboard (light/dark grey), nearest filtering, tinted per index. */
 function createMissingTexture(): Texture {
@@ -50,6 +57,8 @@ function absoluteUrl(url: string): string {
 /** Builds and caches the textures of the map palette. */
 export class PaletteTextures {
   private entries: EntryState[] = [];
+  /** Repeat of world-aligned (texture) entries, null for ordinary tiles. */
+  private repeats: (number | null)[] = [];
   private readonly missing: Texture = createMissingTexture();
   private readonly loaded = new Set<string>();
   private readonly fallbackCache = new Map<number, ResolvedTile>();
@@ -66,9 +75,13 @@ export class PaletteTextures {
   setPalette(palette: readonly (PaletteEntry | null)[]): void {
     const changed: number[] = [];
     const next: EntryState[] = [];
+    const repeats: (number | null)[] = [];
     for (let i = 0; i < palette.length; i++) {
       const entry = i === 0 ? null : (palette[i] ?? null);
       const prev = this.entries[i];
+      const repeat = entry?.repeat != null && entry.repeat >= 1 ? Math.trunc(entry.repeat) : null;
+      repeats.push(repeat);
+      const repeatChanged = this.repeats[i] !== repeat && prev !== undefined;
       const url = entry?.url ? absoluteUrl(entry.url) : null;
       if (url === null) {
         next.push({ status: 'none' });
@@ -76,7 +89,13 @@ export class PaletteTextures {
         continue;
       }
       if (prev !== undefined && prev.status !== 'none' && prev.url === url) {
-        next.push(prev);
+        if (repeatChanged && prev.status === 'ready') {
+          // Same image, other block size: the portions are cut again.
+          next.push({ ...prev, portions: new Map() });
+          changed.push(i);
+        } else {
+          next.push(prev);
+        }
         continue;
       }
       next.push({ status: 'loading', url });
@@ -85,12 +104,41 @@ export class PaletteTextures {
     }
     for (let i = palette.length; i < this.entries.length; i++) changed.push(i);
     this.entries = next;
+    this.repeats = repeats;
     if (changed.length > 0) this.onChange(changed);
   }
 
-  /** Texture and tint for a cell value. */
-  resolve(index: number, variant: number): ResolvedTile {
+  /** True for a world-aligned texture entry (cell rotation / variant are ignored). */
+  isWorld(index: number): boolean {
+    return this.repeats[index] != null;
+  }
+
+  /**
+   * Texture and tint for a cell value. World-aligned entries show the portion of the image
+   * matching the world cell (wx, wy).
+   */
+  resolve(index: number, variant: number, wx = 0, wy = 0): ResolvedTile {
     const state = this.entries[index];
+    const repeat = this.repeats[index];
+    if (state?.status === 'ready' && repeat != null) {
+      const base = state.frames[0];
+      if (base !== undefined) {
+        const col = repeatSlot(wx, repeat);
+        const row = repeatSlot(wy, repeat);
+        const key = row * repeat + col;
+        let part = state.portions.get(key);
+        if (part === undefined) {
+          const f = base.frame;
+          const r = textureCellRect(f.width, f.height, repeat, col, row);
+          part = new Texture({
+            source: base.source,
+            frame: new Rectangle(f.x + r.sx, f.y + r.sy, r.sw, r.sh),
+          });
+          state.portions.set(key, part);
+        }
+        return { texture: part, tint: 0xffffff };
+      }
+    }
     if (state?.status === 'ready') {
       const frame = state.frames[variantFrame(variant, state.frames.length)] ?? state.frames[0];
       if (frame !== undefined) return { texture: frame, tint: 0xffffff };
@@ -113,8 +161,9 @@ export class PaletteTextures {
     this.destroyed = true;
     for (const state of this.entries) {
       // Variant frames are our own Texture views on the loaded source (Assets owns the rest).
-      if (state.status === 'ready' && state.frames.length > 1) {
-        for (const t of state.frames) t.destroy(false);
+      if (state.status === 'ready') {
+        if (state.frames.length > 1) for (const t of state.frames) t.destroy(false);
+        for (const t of state.portions.values()) t.destroy(false);
       }
     }
     this.entries = [];
@@ -144,7 +193,12 @@ export class PaletteTextures {
     if (this.destroyed) return;
     const current = this.entries[index];
     if (current?.status !== 'loading' || current.url !== url) return;
-    this.entries[index] = { status: 'ready', url, frames: this.framesOf(texture) };
+    this.entries[index] = {
+      status: 'ready',
+      url,
+      frames: this.repeats[index] != null ? [texture] : this.framesOf(texture),
+      portions: new Map(),
+    };
     this.onChange([index]);
   }
 

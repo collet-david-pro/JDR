@@ -2,9 +2,13 @@
   import AssetPicker from '../AssetPicker.svelte';
   import type { EditorSession } from '../../editor/ui/session';
   import { t } from '../../lib/i18n';
-  import type { Asset } from '../../lib/types';
+  import type { Asset, AssetKind } from '../../lib/types';
+  import { MAX_TEXTURE_REPEAT } from '../../engine/texture-tiles';
 
-  /** Tile palette: library assets of kind "tile" added with palette.add (projet.md 15.2). */
+  /**
+   * Palette: library assets of kind "tile" (one cell each, projet.md 15.2) or "texture"
+   * (world-aligned, `repeat` × `repeat` cells, P14) added with palette.add.
+   */
   interface Props {
     session: EditorSession;
   }
@@ -13,6 +17,32 @@
   const ui = $derived(session.ui);
   const uid = $props.id();
   let picking = $state(false);
+  let pickKind = $state<AssetKind>('tile');
+  let filter = $state<'all' | 'tile' | 'texture'>('all');
+  const filters = [
+    { id: 'all', label: t('editor.palette.filter_all') },
+    { id: 'tile', label: t('editor.palette.filter_tile') },
+    { id: 'texture', label: t('editor.palette.filter_texture') },
+  ] as const;
+  const hasTextures = $derived(ui.palette.some((p) => p.repeat !== null));
+  const items = $derived(
+    ui.palette.filter((p) => filter === 'all' || (filter === 'texture') === (p.repeat !== null)),
+  );
+  const selected = $derived(
+    ui.tile === null ? null : ui.palette.find((p) => p.index === ui.tile?.index),
+  );
+
+  function openPicker(kind: AssetKind): void {
+    pickKind = kind;
+    picking = true;
+  }
+
+  function changeRepeat(event: Event): void {
+    const item = selected;
+    if (item === null || item === undefined || item.repeat === null) return;
+    const value = Number((event.currentTarget as HTMLInputElement).value);
+    if (Number.isFinite(value)) session.setTextureRepeat(item.index, value);
+  }
 
   function pick(asset: Asset): void {
     session.addTileAsset(asset);
@@ -22,21 +52,47 @@
 <section class="palette" aria-labelledby={`${uid}-title`}>
   <div class="head">
     <h2 id={`${uid}-title`}>{t('editor.palette.title')}</h2>
-    <button
-      type="button"
-      class="button button-small"
-      aria-haspopup="dialog"
-      data-testid="palette-add"
-      onclick={() => (picking = true)}
-    >
-      {t('editor.palette.add')}
-    </button>
+    <div class="actions">
+      <button
+        type="button"
+        class="button button-small"
+        aria-haspopup="dialog"
+        data-testid="palette-add"
+        onclick={() => openPicker('tile')}
+      >
+        {t('editor.palette.add')}
+      </button>
+      <button
+        type="button"
+        class="button button-small"
+        aria-haspopup="dialog"
+        data-testid="palette-add-texture"
+        onclick={() => openPicker('texture')}
+      >
+        {t('editor.palette.add_texture')}
+      </button>
+    </div>
   </div>
+  {#if hasTextures}
+    <div class="filter" role="group" aria-label={t('editor.palette.filter')}>
+      {#each filters as f (f.id)}
+        <button
+          type="button"
+          class="button button-small"
+          aria-pressed={filter === f.id}
+          data-testid={`palette-filter-${f.id}`}
+          onclick={() => (filter = f.id)}
+        >
+          {f.label}
+        </button>
+      {/each}
+    </div>
+  {/if}
   {#if ui.palette.length === 0}
     <p class="small muted">{t('editor.palette.empty')}</p>
   {:else}
     <ul>
-      {#each ui.palette as item (item.index)}
+      {#each items as item (item.index)}
         <li>
           <button
             type="button"
@@ -53,7 +109,11 @@
               <span class="placeholder" aria-hidden="true">{item.index}</span>
             {/if}
             <span class="label">{item.name}</span>
-            {#if item.frames > 1}
+            {#if item.repeat !== null}
+              <span class="frames small muted"
+                >{t('editor.palette.repeat_badge', { count: item.repeat })}</span
+              >
+            {:else if item.frames > 1}
               <span class="frames small muted"
                 >{t('editor.palette.frames', { count: item.frames })}</span
               >
@@ -62,13 +122,30 @@
         </li>
       {/each}
     </ul>
+    {#if selected !== null && selected !== undefined && selected.repeat !== null}
+      <label class="repeat small">
+        <span>{t('editor.palette.repeat')}</span>
+        <input
+          type="number"
+          min="1"
+          max={MAX_TEXTURE_REPEAT}
+          step="1"
+          value={selected.repeat}
+          data-testid="palette-repeat"
+          onchange={changeRepeat}
+        />
+        <span class="muted">{t('editor.palette.repeat_hint')}</span>
+      </label>
+    {/if}
   {/if}
 </section>
 
 <AssetPicker
   bind:open={picking}
-  kind="tile"
-  title={t('editor.palette.picker_title')}
+  kind={pickKind}
+  title={pickKind === 'texture'
+    ? t('editor.palette.picker_texture_title')
+    : t('editor.palette.picker_title')}
   onpick={pick}
 />
 
@@ -82,6 +159,23 @@
     align-items: center;
     gap: var(--space-2);
     margin-bottom: var(--space-2);
+  }
+  .actions,
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+  .filter {
+    margin-bottom: var(--space-2);
+  }
+  .repeat {
+    display: grid;
+    gap: var(--space-1);
+    margin-top: var(--space-2);
+  }
+  .repeat input {
+    width: 5rem;
   }
   h2 {
     margin: 0;
