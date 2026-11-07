@@ -6,6 +6,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.5.0] - 2026-11-07
+
+### Added
+- **Fond de map** : une battlemap toute faite s'importe en fond (« Image de fond… » dans l'éditeur), recalée sur la grille (taille d'une case dans l'image, décalage, ajuster à la map, redimensionner la map à l'image) ; un fond par étage. Il ne reste qu'à poser murs, portes et lumières.
+- **Nouvelle map depuis une image** (onglet Maps) : la taille de la map se calcule à partir de l'image et de la taille d'une case ; l'image est posée en fond.
+- **Outil Image** (J) : pose librement les images de la bibliothèque (objets, fonds, tokens, textures) ; déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles. Une image posée sur le calque MJ n'est jamais envoyée aux joueurs ni aux écrans.
+- **Textures dans la palette** : les textures de la bibliothèque peignent un sol continu, alignées sur la map (« Cases couvertes » réglable), au lieu de répéter le même motif à chaque case.
+
+### Fixed
+- **Import d'une map par l'interface** : les fichiers contenant des escaliers, portails, épingles, zones, pièges, secrets, notes ou images ne sont plus refusés (le serveur les valide).
+
 ## [0.4.0] - 2026-11-07
 
 ### Added
