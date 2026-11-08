@@ -167,7 +167,7 @@ return [
     'backup.download' => 'Télécharger la sauvegarde de la base d\'avant la mise à jour',
     'backup.discard' => 'Ne pas garder',
     'backup.gone' => 'Cette sauvegarde n\'existe plus ou le lien a expiré.',
-    'backup.assets_note' => 'La sauvegarde ci-dessus ne contient pas les assets (images, sons) : sauvegardez-les depuis {link}.',
+    'backup.assets_note' => 'La sauvegarde ci-dessus ne contient pas les assets (images) : sauvegardez-les depuis {link}.',
     'backup.assets_link' => 'Administration › Sauvegarde',
     'error.no_backup' => 'Aucune sauvegarde complète de la base de données pour cette mise à jour.',
 ];

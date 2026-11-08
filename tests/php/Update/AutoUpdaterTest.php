@@ -196,6 +196,15 @@ final class AutoUpdaterTest extends ApiTestCase
         self::assertSame('none', $this->auto()->tick());
     }
 
+    public function testAFailureIsNoLongerShownOnceTheSiteHasThatVersion(): void
+    {
+        $this->publish(self::PROBE, str_repeat('a', 64));
+        self::assertSame('failed', $this->auto()->tick());
+        self::assertSame('0.3.0', $this->auto('0.2.9')->status()['last_error']['version']);
+        self::assertNull($this->auto('0.3.0')->status()['last_error'], 'updated by hand to the failed version');
+        self::assertNull($this->auto('0.5.0')->status()['last_error']);
+    }
+
     public function testAFailedDownloadChangesNothing(): void
     {
         $this->publish();

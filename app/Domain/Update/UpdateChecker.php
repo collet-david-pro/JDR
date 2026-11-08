@@ -67,6 +67,14 @@ final class UpdateChecker
     /**
      * Setting update_channel, else "prerelease" while the running version is a pre-release, else "stable".
      */
+    /**
+     * Version installed on this site.
+     */
+    public function current(): string
+    {
+        return $this->current;
+    }
+
     public function channel(): string
     {
         $value = $this->settings->get(self::SETTING_CHANNEL);

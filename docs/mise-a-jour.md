@@ -64,7 +64,7 @@ Avant d'installer, le site fait toujours une **sauvegarde de la base**. À la fi
 
 - Après une mise à jour manuelle, ce fichier est supprimé après le téléchargement, et au plus tard **une heure** après la mise à jour.
 - Après une mise à jour automatique, il reste disponible **7 jours au plus**, ou jusqu'à ce que vous le téléchargiez ou l'écartiez.
-- Elle **ne contient pas les assets** (images, sons). Sauvegardez-les à part, voir [sauvegarde.md](sauvegarde.md).
+- Elle **ne contient pas les assets** (images). Sauvegardez-les à part, voir [sauvegarde.md](sauvegarde.md).
 - Elle se restaure depuis **Administration > Sauvegarde** (voir [sauvegarde.md](sauvegarde.md)).
 
 ## 3. Mise à jour par FTP

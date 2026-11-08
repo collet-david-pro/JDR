@@ -868,7 +868,7 @@
         "auto": "Mise à jour automatique : téléchargez-la pour la garder, sinon elle sera supprimée le {date} au plus tard. Elle se restaure depuis l'onglet Sauvegarde.",
         "download": "Télécharger la sauvegarde de la base d'avant la mise à jour",
         "discard": "Ne pas garder",
-        "assets_note": "La sauvegarde faite avant une mise à jour ne contient pas les assets (images, sons) :",
+        "assets_note": "La sauvegarde faite avant une mise à jour ne contient pas les assets (images) :",
         "assets_link": "sauvegardez-les depuis l'onglet Sauvegarde."
       }
     },

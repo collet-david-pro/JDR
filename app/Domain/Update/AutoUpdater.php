@@ -99,11 +99,27 @@ final class AutoUpdater
             'supported' => $this->supported(),
             'running' => is_file($this->path(self::RUN_FILE)),
             'last_done' => $state['last_done'] ?? null,
-            'last_error' => $state['last_error'] ?? null,
+            'last_error' => $this->lastError($state),
             'blocked' => $this->blocked(),
             'session_guard' => $this->sessionInProgress(),
             'check_ttl' => UpdateChecker::CACHE_SECONDS,
         ];
+    }
+
+    /**
+     * The last failure, unless the site has since reached that version (updated by hand): an old failure is no news.
+     *
+     * @param array<string, mixed> $state
+     */
+    private function lastError(array $state): mixed
+    {
+        $error = $state['last_error'] ?? null;
+        if (is_array($error) && is_string($error['version'] ?? null)
+            && !Semver::greaterThan($error['version'], $this->checker->current())) {
+            return null;
+        }
+
+        return $error;
     }
 
     private function blocked(): ?string
