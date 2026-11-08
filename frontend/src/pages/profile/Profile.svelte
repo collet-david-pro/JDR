@@ -7,6 +7,7 @@
   import DevicesSection from './DevicesSection.svelte';
   import InfoSection from './InfoSection.svelte';
   import PasswordSection from './PasswordSection.svelte';
+  import TokensSection from './TokensSection.svelte';
 
   let _props: PageProps = $props();
 </script>
@@ -22,6 +23,7 @@
     <p class="muted small">{t('profile.theme.hint')}</p>
     <ThemeControls />
   </section>
+  <TokensSection />
   <PasswordSection />
   <DevicesSection />
   <DataSection />

@@ -169,13 +169,14 @@ final class UpgradeFromPublishedTest extends DbTestCase
         $this->copyMigration('0005_floor_uids.php');
         $this->copyMigration('0006_notes_audience.php');
         $this->copyMigration('0007_site_name_clairvoie.php');
-        self::assertSame(['0005', '0006', '0007'], $this->migrateStepByStep());
+        $this->copyMigration('0008_player_tokens.php');
+        self::assertSame(['0005', '0006', '0007', '0008'], $this->migrateStepByStep());
         self::assertSame(\REQUIRED_DB_VERSION, (new Runner($this->db, $this->dir))->currentVersion());
         self::assertSame(\REQUIRED_DB_VERSION, json_decode((string) $this->db->fetchValue('SELECT `value` FROM ' . $this->db->t('settings') . " WHERE `key` = 'db_version'"), true));
 
         $after = $this->counts();
         self::assertSame(0, $after['map_note_users']);
-        unset($after['map_note_users']);
+        unset($after['map_note_users'], $after['player_tokens'], $after['game_token_choices']);
         self::assertSame($before, $after, 'no row lost or added in any table');
         self::assertSame('"Table du jeudi"', $this->db->fetchValue('SELECT `value` FROM ' . $this->db->t('settings') . " WHERE `key` = 'table_name'"));
 
@@ -220,6 +221,7 @@ final class UpgradeFromPublishedTest extends DbTestCase
         file_put_contents($this->dir . '/0005_floor_uids.php', str_replace($marker, "        throw new \\RuntimeException('simulated crash');\n" . $marker, $real));
         $this->copyMigration('0006_notes_audience.php');
         $this->copyMigration('0007_site_name_clairvoie.php');
+        $this->copyMigration('0008_player_tokens.php');
         try {
             $this->migrateStepByStep();
             self::fail('the simulated crash must stop the update');
@@ -231,9 +233,9 @@ final class UpgradeFromPublishedTest extends DbTestCase
 
         // The fixed file replays: "Retry" of update.php.
         $this->copyMigration('0005_floor_uids.php');
-        self::assertSame(['0005', '0006', '0007'], $this->migrateStepByStep());
+        self::assertSame(['0005', '0006', '0007', '0008'], $this->migrateStepByStep());
         $after = $this->counts();
-        unset($after['map_note_users']);
+        unset($after['map_note_users'], $after['player_tokens'], $after['game_token_choices']);
         self::assertSame($before, $after);
         self::assertSame(['f1', 'f1', 'f2', 'f3'], array_column($this->db->fetchAll('SELECT `uid` FROM ' . $this->db->t('map_floors') . ' ORDER BY `uid`'), 'uid'));
         self::assertCount(count($seed['notes']), $this->db->fetchAll('SELECT 1 FROM ' . $this->db->t('map_notes') . " WHERE `audience` IN ('gm', 'all')"));

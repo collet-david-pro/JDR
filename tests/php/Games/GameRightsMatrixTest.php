@@ -26,7 +26,8 @@ final class GameRightsMatrixTest extends GamesTestCase
         $routes = (new \ReflectionProperty(Router::class, 'routes'))->getValue($router);
         $out = [];
         foreach ($routes as $route) {
-            if (preg_match('#^/(games|tokens|encounters|maps)/\{id#', $route['pattern']) !== 1) {
+            if (preg_match('#^/(games|tokens|encounters|maps)/\{id#', $route['pattern']) !== 1
+                || str_ends_with($route['pattern'], '/my-token')) { // player routes: PlayerTokensTest
                 continue;
             }
             foreach ($route['methods'] as $method) {

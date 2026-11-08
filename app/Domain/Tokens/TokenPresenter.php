@@ -30,6 +30,13 @@ final class TokenPresenter
             'name' => $token->name,
             'asset_id' => $token->assetId,
             'image' => $token->assetUuid === null ? null : $this->urls->pair($apiBase, $token->assetUuid),
+            'gm_image' => $token->ownAssetUuid === null ? null : $this->urls->pair($apiBase, $token->ownAssetUuid),
+            'gm_image_forced' => $token->gmImageForced,
+            'player_token' => $token->playerTokenId === null ? null : [
+                'id' => $token->playerTokenId,
+                'name' => $token->playerTokenName,
+                'image' => $token->playerAssetUuid === null ? null : $this->urls->pair($apiBase, $token->playerAssetUuid),
+            ],
             'kind' => $token->kind,
             'size_w' => self::number($token->sizeW),
             'size_h' => self::number($token->sizeH),

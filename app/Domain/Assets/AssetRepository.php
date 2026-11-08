@@ -140,6 +140,8 @@ final class AssetRepository
         } else {
             $where[] = 'a.`owner_user_id` = ?';
             $params[] = $userId;
+            // Images made by the token generator live in the token collection, not in the library.
+            $where[] = "a.`source` NOT IN ('player_token', 'player_token_src')";
         }
         if (($filters['kind'] ?? null) !== null) {
             $where[] = 'a.`kind` = ?';
@@ -296,8 +298,16 @@ final class AssetRepository
             $tokens .= ' AND t.`default_owner_user_id` = ?';
             $params[] = $playerId;
         }
+        // Images of the tokens the members chose in their collection (see Tokens\Token: effective image).
+        $chosen = 'SELECT pt.`asset_id` FROM ' . $this->db->t('game_token_choices') . ' c INNER JOIN '
+            . $this->db->t('player_tokens') . ' pt ON pt.`id` = c.`player_token_id` WHERE c.`game_id` = ? AND pt.`asset_id` IS NOT NULL';
+        $params[] = $gameId;
+        if ($playerId !== null) {
+            $chosen .= ' AND c.`user_id` = ?';
+            $params[] = $playerId;
+        }
         $sql = 'SELECT g.`cover_asset_id` AS asset_id FROM ' . $this->db->t('games') . ' g WHERE g.`id` = ? '
-            . 'AND g.`cover_asset_id` IS NOT NULL UNION ' . $tokens;
+            . 'AND g.`cover_asset_id` IS NOT NULL UNION ' . $tokens . ' UNION ' . $chosen;
         if ($playerId === null) {
             $sql .= ' UNION SELECT r.`asset_id` FROM ' . $this->db->t('map_asset_refs') . ' r INNER JOIN '
                 . $this->db->t('maps') . ' m ON m.`id` = r.`map_id` WHERE m.`game_id` = ? AND m.`deleted_at` IS NULL '
@@ -327,11 +337,14 @@ final class AssetRepository
             . ' OR (' . $editor . ' AND EXISTS (SELECT 1 FROM ' . $this->db->t('map_asset_refs') . ' r INNER JOIN '
             . $this->db->t('maps') . ' m ON m.`id` = r.`map_id` WHERE m.`game_id` = g.`id` AND m.`deleted_at` IS NULL '
             . 'AND r.`asset_id` = ? AND r.`ref_count` > 0))'
+            . ' OR (EXISTS (SELECT 1 FROM ' . $this->db->t('game_token_choices') . ' c INNER JOIN ' . $this->db->t('player_tokens')
+            . ' pt ON pt.`id` = c.`player_token_id` WHERE c.`game_id` = g.`id` AND pt.`asset_id` = ?) AND ' . $editor . ')'
             . ') LIMIT 1';
         $params = [
             $assetId, $userId, $userId,
             $assetId, $userId, $userId, $userId, $userId,
             $userId, $userId, $assetId,
+            $assetId, $userId, $userId,
         ];
 
         return $this->db->fetchValue($sql, $params) !== null;

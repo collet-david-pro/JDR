@@ -5,6 +5,7 @@
  * without a second execution (processed_ops).
  */
 import type { ApiClient } from '../api';
+import type { ActiveSession } from './active';
 import { normalizeSessionCode } from './code';
 import type {
   ActionsResponse,
@@ -60,6 +61,15 @@ export class SessionsClient {
     };
   }
 
+  /** Open sessions of every game of the user, one request (GET /me/sessions/active). */
+  async active(signal?: AbortSignal): Promise<ActiveSession[]> {
+    const { data } = await this.api.get<ActiveSession[]>(
+      '/me/sessions/active',
+      signal ? { signal } : {},
+    );
+    return Array.isArray(data) ? data : [];
+  }
+
   async get(id: string, signal?: AbortSignal): Promise<Session> {
     return (await this.api.get<Session>(`/sessions/${seg(id)}`, signal ? { signal } : {})).data;
   }
@@ -69,11 +79,21 @@ export class SessionsClient {
   }
 
   /** Joins with a code typed by the user (normalised here: "k7f2-qm9x" ⇒ "K7F2QM9X"). */
-  async join(code: string, o: WriteOptions = {}): Promise<JoinResult> {
+  async join(
+    code: string,
+    o: WriteOptions = {},
+    playerTokenId: string | null = null,
+  ): Promise<JoinResult> {
     return (
       await this.api.post<JoinResult>(
         '/sessions/join',
-        body({ code: normalizeSessionCode(code) }, o),
+        body(
+          {
+            code: normalizeSessionCode(code),
+            ...(playerTokenId === null ? {} : { player_token_id: playerTokenId }),
+          },
+          o,
+        ),
         opts(o),
       )
     ).data;

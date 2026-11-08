@@ -19,7 +19,9 @@ use JDR\Tests\MapsP5\MapSceneRightsTest;
 use JDR\Tests\MapsP9\ChangeMapTest;
 use JDR\Tests\MapsP9\StairsLinksTest;
 use JDR\Tests\MapsP9c\TemplatesRightsTest;
+use JDR\Tests\PlayerTokens\PlayerTokensTest;
 use JDR\Tests\Sessions\PresenceTest;
+use JDR\Tests\Sessions\ActiveSessionsTest;
 use JDR\Tests\Sessions\SessionRightsMatrixTest;
 
 /**
@@ -147,6 +149,15 @@ final class RouteCoverageTest extends ApiTestCase
             'GET /tokens/{id:\\d+}' => [self::USER, GameRightsMatrixTest::class],
             'PATCH /tokens/{id:\\d+}' => [self::USER, GameRightsMatrixTest::class],
             'DELETE /tokens/{id:\\d+}' => [self::USER, GameRightsMatrixTest::class],
+            'GET /me/player-tokens' => [self::USER, PlayerTokensTest::class],
+            'POST /me/player-tokens' => [self::USER, PlayerTokensTest::class],
+            'GET /me/player-tokens/{id:\\d+}' => [self::USER, PlayerTokensTest::class],
+            'PATCH /me/player-tokens/{id:\\d+}' => [self::USER, PlayerTokensTest::class],
+            'POST /me/player-tokens/{id:\\d+}/design' => [self::USER, PlayerTokensTest::class],
+            'POST /me/player-tokens/{id:\\d+}/duplicate' => [self::USER, PlayerTokensTest::class],
+            'DELETE /me/player-tokens/{id:\\d+}' => [self::USER, PlayerTokensTest::class],
+            'GET /games/{id:\\d+}/my-token' => [self::USER, PlayerTokensTest::class],
+            'PUT /games/{id:\\d+}/my-token' => [self::USER, PlayerTokensTest::class],
             'GET /games/{id:\\d+}/encounters' => [self::USER, EncountersApiTest::class],
             'POST /games/{id:\\d+}/encounters' => [self::USER, EncountersApiTest::class],
             'PATCH /encounters/{id:\\d+}' => [self::USER, EncountersApiTest::class],
@@ -181,6 +192,7 @@ final class RouteCoverageTest extends ApiTestCase
             'GET /stream' => [self::USER, LeakTest::class],
             'POST /games/{id:\\d+}/sessions' => [self::USER, SessionRightsMatrixTest::class],
             'GET /games/{id:\\d+}/sessions' => [self::USER, SessionRightsMatrixTest::class],
+            'GET /me/sessions/active' => [self::USER, ActiveSessionsTest::class],
             'POST /sessions/join' => [self::USER, 'Join by code: rate join (10 per minute), the code is the invitation.'],
             'GET /sessions/{id:\\d+}' => [self::USER, SessionRightsMatrixTest::class],
             'PATCH /sessions/{id:\\d+}' => [self::USER, SessionRightsMatrixTest::class],

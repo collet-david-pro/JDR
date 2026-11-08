@@ -7,7 +7,7 @@ namespace JDR\Domain\Tokens;
 defined('JDR_BOOT') || exit;
 
 /**
- * Token definition (row of tokens + uuid of its live image). Every distance is in cells.
+ * Token definition (row of tokens + uuid of its effective image: the player's chosen token, unless the GM forces their own). Every distance is in cells.
  */
 final class Token
 {
@@ -33,6 +33,11 @@ final class Token
         public readonly string $createdAt,
         public readonly string $updatedAt,
         public readonly ?string $deletedAt,
+        public readonly bool $gmImageForced = false,
+        public readonly ?string $ownAssetUuid = null,
+        public readonly ?int $playerTokenId = null,
+        public readonly ?string $playerTokenName = null,
+        public readonly ?string $playerAssetUuid = null,
     ) {
     }
 
@@ -45,13 +50,19 @@ final class Token
         $light = $row['light'] === null ? null : json_decode((string) $row['light'], true);
         $assetLive = $row['asset_id'] !== null && ($row['asset_uuid'] ?? null) !== null
             && ($row['asset_deleted_at'] ?? null) === null;
+        $own = $assetLive ? (string) $row['asset_uuid'] : null;
+        $playerLive = ($row['player_asset_uuid'] ?? null) !== null && ($row['player_asset_deleted_at'] ?? null) === null;
+        $player = $playerLive ? (string) $row['player_asset_uuid'] : null;
+        $forced = (int) ($row['gm_image_forced'] ?? 0) === 1;
+        // The effective image: the player's choice wins unless the GM imposed their own image.
+        $effective = !$forced && $player !== null ? $player : $own;
 
         return new self(
             (int) $row['id'],
             (int) $row['game_id'],
             (string) $row['name'],
             $row['asset_id'] === null ? null : (int) $row['asset_id'],
-            $assetLive ? (string) $row['asset_uuid'] : null,
+            $effective,
             (string) $row['kind'],
             (float) $row['size_w'],
             (float) $row['size_h'],
@@ -62,6 +73,11 @@ final class Token
             (string) $row['created_at'],
             (string) $row['updated_at'],
             $row['deleted_at'] === null ? null : (string) $row['deleted_at'],
+            $forced,
+            $own,
+            ($row['player_token_id'] ?? null) === null ? null : (int) $row['player_token_id'],
+            ($row['player_token_name'] ?? null) === null ? null : (string) $row['player_token_name'],
+            $player,
         );
     }
 }

@@ -13,6 +13,7 @@ use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
 use JDR\Domain\Games\Game;
 use JDR\Domain\Games\GameMemberRepository;
+use JDR\Domain\PlayerTokens\PlayerTokenService;
 use JDR\Domain\Tokens\TokenRepository;
 use JDR\Domain\Users\User;
 
@@ -30,6 +31,7 @@ final class SessionPlayers
         private SessionEvents $events,
         private GameMemberRepository $members,
         private TokenRepository $tokens,
+        private PlayerTokenService $playerTokens,
     ) {
     }
 
@@ -37,7 +39,7 @@ final class SessionPlayers
      * POST /sessions/join {code}: creates game_members(player) if absent, then the session player
      * (or brings back a disconnected one). The GM and co-GMs just get the ids.
      *
-     * @param array<array-key, mixed> $body {code, client_op_id?}
+     * @param array<array-key, mixed> $body {code, player_token_id?, client_op_id?}
      * @return array{session_id: int, game_id: int}
      * @throws ValidationException|GoneException|ForbiddenException 422 session_code_invalid, 410 session_not_joinable, 403 kicked
      */
@@ -49,7 +51,7 @@ final class SessionPlayers
             throw new ValidationException('', [], 'session_code_invalid');
         }
 
-        return $this->ops->once($user, $opId, 'join:' . $code, function () use ($user, $code, $opId): array {
+        return $this->ops->once($user, $opId, 'join:' . $code, function () use ($user, $code, $opId, $body): array {
             $found = $this->sessions->findByCode($code);
             $session = $found === null ? null : $this->sessions->findForUpdate($found->id);
             $ctx = $session === null ? null : $this->gameOf($session, $user);
@@ -69,6 +71,14 @@ final class SessionPlayers
             }
             if ($ctx['member_role'] === null) {
                 $this->members->add($session->gameId, $user->id, Game::ROLE_PLAYER);
+            }
+            $picked = $body['player_token_id'] ?? null;
+            if ($picked !== null) {
+                if (!is_int($picked) && !(is_string($picked) && ctype_digit($picked))) {
+                    throw new ValidationException('', ['player_token_id' => 'invalid']);
+                }
+                // First choice while joining only: changing it later goes through PUT /games/{id}/my-token.
+                $this->playerTokens->chooseWhenJoining($user, $session->gameId, (int) $picked);
             }
             if ($player === null) {
                 $this->sessions->insertPlayer($session->id, $user->id);

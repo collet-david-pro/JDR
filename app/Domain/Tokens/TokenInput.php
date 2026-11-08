@@ -27,7 +27,7 @@ final class TokenInput
     public const VISION_DEFAULTS = ['enabled' => true, 'range' => 12, 'dark' => 0];
     public const LIGHT_DEFAULTS = ['radius' => 4, 'dim_radius' => 8, 'color' => '#ffcc66', 'intensity' => 0.8, 'flicker' => false];
 
-    private const FIELDS = ['name', 'asset_id', 'kind', 'size_w', 'size_h', 'default_owner_user_id', 'vision', 'light', 'ring_color'];
+    private const FIELDS = ['name', 'asset_id', 'kind', 'size_w', 'size_h', 'default_owner_user_id', 'vision', 'light', 'ring_color', 'gm_image_forced'];
 
     /**
      * @param array<array-key, mixed> $body
@@ -233,6 +233,13 @@ final class TokenInput
                         $errors['ring_color'] = 'invalid';
                     } else {
                         $out['ring_color'] = $color;
+                    }
+                    break;
+                case 'gm_image_forced':
+                    if (!is_bool($value)) {
+                        $errors['gm_image_forced'] = 'invalid';
+                    } else {
+                        $out['gm_image_forced'] = $value ? 1 : 0;
                     }
                     break;
             }

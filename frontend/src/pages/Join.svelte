@@ -1,5 +1,6 @@
 <script lang="ts">
   import HelpLink from '../components/HelpLink.svelte';
+  import PlayerTokenPicker from '../components/player-tokens/PlayerTokenPicker.svelte';
   import { onMount } from 'svelte';
   import { errorMessage } from '../lib/errors';
   import { t } from '../lib/i18n';
@@ -14,6 +15,7 @@
   // svelte-ignore state_referenced_locally
   let code = $state(formatSessionCode(params['code'] ?? ''));
   let busy = $state(false);
+  let tokenId = $state<string | null>(null);
   let message = $state<string | null>(null);
   let input: HTMLInputElement | undefined = $state();
   const valid = $derived(isValidSessionCode(code));
@@ -26,7 +28,7 @@
     busy = true;
     message = null;
     try {
-      const joined = await sessionsClient().join(code);
+      const joined = await sessionsClient().join(code, {}, tokenId);
       router.navigate(`/sessions/${encodeURIComponent(joined.session_id)}`);
     } catch (error) {
       message = errorMessage(error, t);
@@ -58,6 +60,11 @@
         data-testid="join-code"
       />
     </label>
+    <fieldset class="token-choice">
+      <legend>{t('player_tokens.join.legend')}</legend>
+      <p class="muted small">{t('player_tokens.join.hint')}</p>
+      <PlayerTokenPicker bind:value={tokenId} disabled={busy} />
+    </fieldset>
     {#if message !== null}
       <p id="join-error" class="alert alert-error" role="alert" data-testid="join-error">
         {message}
@@ -85,6 +92,20 @@
   .field {
     display: grid;
     gap: var(--space-1);
+  }
+  .token-choice {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .token-choice legend {
+    padding: 0;
+    font-weight: 600;
+  }
+  .token-choice p {
+    margin: 0;
   }
   input {
     padding: var(--space-2) var(--space-3);

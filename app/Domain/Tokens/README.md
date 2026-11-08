@@ -13,6 +13,7 @@ Définitions de jetons d'une partie (image, taille, attributs).
 
 - Le MJ et les co-MJ voient tous les jetons, un joueur seulement ceux qui lui sont destinés.
 - Suppression logique (`TokenRepository`) : les lectures ignorent les jetons supprimés.
+- Image effective (`Token::assetUuid`) : le token choisi par le propriétaire par défaut (domaine `PlayerTokens`) l'emporte sur l'image du MJ, sauf `gm_image_forced` ; `gm_image` expose toujours l'image du MJ.
 
 ## Tests
 

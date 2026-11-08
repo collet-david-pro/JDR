@@ -46,7 +46,7 @@ final class TokenRepository
         }
         $rows = $this->memo->remember(
             'game_tokens:' . $gameId . ':' . ($ownerId ?? ''),
-            ['tokens', 'assets'],
+            ['tokens', 'assets', 'player_tokens', 'game_token_choices'],
             fn (): array => $this->db->fetchAll($sql . ' ORDER BY t.`name`, t.`id` LIMIT 2000', $params),
         );
 
@@ -89,7 +89,7 @@ final class TokenRepository
     {
         $sets = [];
         $params = [];
-        foreach (['name', 'asset_id', 'kind', 'size_w', 'size_h', 'default_owner_user_id', 'vision', 'light', 'ring_color'] as $column) {
+        foreach (['name', 'asset_id', 'kind', 'size_w', 'size_h', 'default_owner_user_id', 'vision', 'light', 'ring_color', 'gm_image_forced'] as $column) {
             if (!array_key_exists($column, $changes)) {
                 continue;
             }
@@ -104,6 +104,19 @@ final class TokenRepository
         $params[] = $this->clock->sql();
         $params[] = $id;
         $this->db->execute('UPDATE ' . $this->db->t('tokens') . ' SET ' . implode(', ', $sets) . ' WHERE `id` = ?', $params);
+    }
+
+    /**
+     * The live token of the game whose default owner is $userId (first by id), if any.
+     */
+    public function findOwnedBy(int $gameId, int $userId): ?Token
+    {
+        $row = $this->db->fetchOne(
+            $this->select() . ' WHERE t.`game_id` = ? AND t.`deleted_at` IS NULL AND t.`default_owner_user_id` = ? ORDER BY t.`id` LIMIT 1',
+            [$gameId, $userId],
+        );
+
+        return $row === null ? null : Token::fromRow($row);
     }
 
     /**
@@ -178,7 +191,12 @@ final class TokenRepository
 
     private function select(): string
     {
-        return 'SELECT t.*, a.`uuid` AS asset_uuid, a.`deleted_at` AS asset_deleted_at FROM ' . $this->db->t('tokens') . ' t '
-            . 'LEFT JOIN ' . $this->db->t('assets') . ' a ON a.`id` = t.`asset_id`';
+        return 'SELECT t.*, a.`uuid` AS asset_uuid, a.`deleted_at` AS asset_deleted_at, '
+            . 'pt.`id` AS player_token_id, pt.`name` AS player_token_name, '
+            . 'pa.`uuid` AS player_asset_uuid, pa.`deleted_at` AS player_asset_deleted_at FROM ' . $this->db->t('tokens') . ' t '
+            . 'LEFT JOIN ' . $this->db->t('assets') . ' a ON a.`id` = t.`asset_id` '
+            . 'LEFT JOIN ' . $this->db->t('game_token_choices') . ' c ON c.`game_id` = t.`game_id` AND c.`user_id` = t.`default_owner_user_id` '
+            . 'LEFT JOIN ' . $this->db->t('player_tokens') . ' pt ON pt.`id` = c.`player_token_id` '
+            . 'LEFT JOIN ' . $this->db->t('assets') . ' pa ON pa.`id` = pt.`asset_id`';
     }
 }

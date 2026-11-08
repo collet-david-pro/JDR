@@ -396,6 +396,15 @@ export interface Token {
   readonly vision: TokenVision;
   readonly light: TokenLight | null;
   readonly ring_color: string | null;
+  /** The GM's own image (`image` is the effective one: the player's token wins unless forced). */
+  readonly gm_image?: { readonly full: string; readonly thumb: string } | null;
+  readonly gm_image_forced?: boolean;
+  /** Token the default owner chose in their collection for this game. */
+  readonly player_token?: {
+    readonly id: string;
+    readonly name: string;
+    readonly image: { readonly full: string; readonly thumb: string } | null;
+  } | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -411,6 +420,8 @@ export interface TokenInput {
   readonly vision: TokenVision;
   readonly light: TokenLight | null;
   readonly ring_color: string | null;
+  /** PATCH only: the GM imposes their own image over the player's token. */
+  readonly gm_image_forced?: boolean;
 }
 
 export interface EncounterToken {
@@ -478,6 +489,7 @@ export interface MapAmbient {
   readonly tint: string | null;
   readonly time_of_day: string | number | null;
   readonly weather: { readonly type: string; readonly intensity: number };
+  readonly snap_step?: number;
 }
 
 /** Palette entry (index 0 is null). */

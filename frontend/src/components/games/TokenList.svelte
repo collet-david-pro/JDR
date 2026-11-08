@@ -79,6 +79,7 @@
                 type="button"
                 class="button button-small"
                 onclick={() => onedit(token)}
+                data-testid="token-edit"
                 aria-label={t('games.tokens.edit_named', { name: token.name })}
                 >{t('common.edit')}</button
               >

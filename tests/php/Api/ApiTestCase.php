@@ -43,6 +43,7 @@ abstract class ApiTestCase extends DbTestCase
             '0001_initial.sql' => (string) file_get_contents(self::migrationsDir() . '/0001_initial.sql'),
             '0005_floor_uids.php' => (string) file_get_contents(self::migrationsDir() . '/0005_floor_uids.php'),
             '0006_notes_audience.php' => (string) file_get_contents(self::migrationsDir() . '/0006_notes_audience.php'),
+            '0008_player_tokens.php' => (string) file_get_contents(self::migrationsDir() . '/0008_player_tokens.php'),
         ]);
         try {
             (new Runner(self::newDb(), $dir))->runAll();

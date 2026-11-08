@@ -63,7 +63,7 @@ final class ApiClient
      * @param array<string, string> $fields
      * @param array<string, string> $headers
      */
-    public function upload(string $path, string $file, array $fields = [], ?string $clientName = null, array $headers = [], int $error = UPLOAD_ERR_OK): Response
+    public function upload(string $path, string $file, array $fields = [], ?string $clientName = null, array $headers = [], int $error = UPLOAD_ERR_OK, array $extraFiles = []): Response
     {
         $size = is_file($file) ? (int) filesize($file) : 0;
         $headers += [
@@ -75,7 +75,11 @@ final class ApiClient
             $headers += ['X-CSRF-Token' => $this->csrf];
         }
         $request = Request::create('POST', '/api/v1' . $path, $headers, '', '', ['REMOTE_ADDR' => $this->ip], $this->cookies);
-        $request->setAttribute('multipart_files', ['file' => UploadedFile::fromPath($file, $clientName ?? basename($file), $error)]);
+        $files = ['file' => UploadedFile::fromPath($file, $clientName ?? basename($file), $error)];
+        foreach ($extraFiles as $field => $path) {
+            $files[$field] = UploadedFile::fromPath($path, basename($path));
+        }
+        $request->setAttribute('multipart_files', $files);
         $request->setAttribute('multipart_fields', $fields);
 
         return $this->send($request);

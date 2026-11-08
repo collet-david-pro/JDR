@@ -101,7 +101,7 @@ export function tokenToDraft(token: Token): TokenDraft {
   return {
     name: token.name,
     asset_id: token.asset_id,
-    image_url: token.image?.thumb ?? null,
+    image_url: (token.player_token ? token.gm_image : token.image)?.thumb ?? null,
     kind: token.kind,
     size_w: numberToInput(token.size_w, 2),
     size_h: numberToInput(token.size_h, 2),

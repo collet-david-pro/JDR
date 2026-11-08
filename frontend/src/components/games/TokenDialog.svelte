@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import AssetPicker from '../AssetPicker.svelte';
   import Button from '../Button.svelte';
   import CheckboxField from '../CheckboxField.svelte';
@@ -43,15 +44,20 @@
 
   let draft = $state<TokenDraft>(emptyTokenDraft());
   let kind = $state<string>('pc');
+  let forced = $state(false);
   let pickerOpen = $state(false);
   let formEl: HTMLFormElement | undefined = $state();
   const form = new FormState();
 
   $effect(() => {
     if (open) {
-      draft = token === null ? emptyTokenDraft() : tokenToDraft(token);
-      kind = draft.kind;
-      form.reset();
+      // Only opening resets the form: a refreshed token list must not wipe what is being typed.
+      untrack(() => {
+        draft = token === null ? emptyTokenDraft() : tokenToDraft(token);
+        kind = draft.kind;
+        forced = token?.gm_image_forced === true;
+        form.reset();
+      });
     }
   });
 
@@ -91,7 +97,10 @@
         validate: () => {
           const result = validateToken(draft);
           if (!result.ok) return result.errors;
-          holder.input = result.input;
+          holder.input =
+            token?.player_token != null
+              ? { ...result.input, gm_image_forced: forced }
+              : result.input;
           return {};
         },
       },
@@ -124,6 +133,20 @@
         {/if}
       </div>
     </div>
+
+    {#if token?.player_token}
+      <div class="player-token" data-testid="player-token-block">
+        {#if token.player_token.image}<img src={token.player_token.image.thumb} alt="" />{/if}
+        <div class="stack">
+          <p>{t('player_tokens.gm.player_token', { name: token.player_token.name })}</p>
+          <CheckboxField
+            label={t('player_tokens.gm.force')}
+            hint={t('player_tokens.gm.force_hint')}
+            bind:checked={forced}
+          />
+        </div>
+      </div>
+    {/if}
 
     <TextField
       label={t('games.tokens.name')}
@@ -268,6 +291,19 @@
 <AssetPicker bind:open={pickerOpen} kind="token" onpick={pick} />
 
 <style>
+  .player-token {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+  }
+  .player-token img {
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: contain;
+  }
+  .player-token p {
+    margin: 0;
+  }
   .image-row {
     display: flex;
     gap: var(--space-3);

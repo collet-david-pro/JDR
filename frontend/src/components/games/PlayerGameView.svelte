@@ -1,9 +1,12 @@
 <script lang="ts">
   import HelpLink from '../HelpLink.svelte';
   import ConfirmDialog from '../ConfirmDialog.svelte';
+  import PlayerTokenPicker from '../player-tokens/PlayerTokenPicker.svelte';
   import TokenList from './TokenList.svelte';
+  import { playerTokensClient } from '../../lib/player-tokens/client';
   import { DEFAULT_SETTINGS } from '../../lib/games/game-form';
   import type { GamePageModel } from '../../lib/games/game-page.svelte';
+  import { errorMessage } from '../../lib/errors';
   import { t } from '../../lib/i18n';
   import { href, services, sessionsClient } from '../../lib/services';
   import type { Session } from '../../lib/sessions';
@@ -25,8 +28,17 @@
   const settings = $derived({ ...DEFAULT_SETTINGS, ...game?.settings });
   let confirmOpen = $state(false);
   let leaving = $state(false);
+  /** Token chosen in the personal collection for this game (null = none). */
+  let chosenId = $state<string | null>(null);
+  let savedId = $state<string | null>(null);
+  let choiceReady = $state(false);
+  let choosing = $state(false);
+  let choiceError = $state<string | null>(null);
   /** The open session of the game (lobby, running or paused), if the server lists one. */
   let openSession = $state.raw<Session | null>(null);
+  const inSession = $derived(
+    openSession !== null && (openSession.state === 'running' || openSession.state === 'paused'),
+  );
 
   $effect(() => {
     const id = model.gameId;
@@ -39,6 +51,35 @@
         openSession = null;
       });
   });
+
+  $effect(() => {
+    const id = model.gameId;
+    playerTokensClient()
+      .choice(id)
+      .then((current) => {
+        chosenId = current?.id ?? null;
+        savedId = chosenId;
+        choiceReady = true;
+      })
+      .catch(() => {
+        choiceReady = true;
+      });
+  });
+
+  async function saveChoice(): Promise<void> {
+    choosing = true;
+    choiceError = null;
+    try {
+      await playerTokensClient().choose(model.gameId, chosenId);
+      savedId = chosenId;
+      await model.loadLists();
+      toasts.success(t('player_tokens.game.saved'));
+    } catch (error) {
+      choiceError = errorMessage(error, t);
+    } finally {
+      choosing = false;
+    }
+  }
 
   async function leave(): Promise<void> {
     const me = auth.user?.id;
@@ -99,6 +140,26 @@
         <p class="muted">{t('games.player.no_tokens')}</p>
       {:else}
         <TokenList tokens={model.tokens} {settings} />
+      {/if}
+    </section>
+
+    <section class="card stack" aria-labelledby="my-token-choice" data-testid="my-token-choice">
+      <h2 id="my-token-choice">{t('player_tokens.game.title')}</h2>
+      <p class="muted">
+        {inSession ? t('player_tokens.game.locked') : t('player_tokens.game.hint')}
+      </p>
+      {#if choiceReady}
+        <PlayerTokenPicker bind:value={chosenId} disabled={inSession || choosing} />
+        {#if choiceError !== null}<p class="alert alert-error" role="alert">{choiceError}</p>{/if}
+        <p>
+          <button
+            type="button"
+            class="button button-primary"
+            disabled={inSession || choosing || chosenId === savedId}
+            onclick={saveChoice}
+            data-testid="my-token-save">{t('player_tokens.game.save')}</button
+          >
+        </p>
       {/if}
     </section>
 

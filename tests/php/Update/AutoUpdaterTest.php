@@ -40,7 +40,7 @@ final class AutoUpdaterTest extends ApiTestCase
         $this->secretKey = sodium_crypto_sign_secretkey($pair);
         $this->signature = new ReleaseSignature(base64_encode(sodium_crypto_sign_publickey($pair)), true);
         $this->db->pdo()->exec('DROP TABLE IF EXISTS ' . $this->db->t('update_probe'));
-        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0008'");
+        $this->db->execute('DELETE FROM ' . $this->db->t('schema_migrations') . " WHERE `version` >= '0009'");
         Fixture::markRealMigrationsApplied($this->db);
         $this->createUser('Keeper', 'admin');
         $this->settings()->set('app_version', '0.1.0');
@@ -65,7 +65,7 @@ final class AutoUpdaterTest extends ApiTestCase
      */
     private function publish(string $migration = self::PROBE, ?string $sha = '', string $base = self::BASE, string $sign = 'valid'): void
     {
-        $files = Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0008_probe.sql' => $migration];
+        $files = Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0009_probe.sql' => $migration];
         $this->zip = Fixture::zip($this->install . '/storage', $files, '0.3.0');
         $name = 'jdr-update-v0.3.0.zip';
         $assets = [['name' => $name, 'browser_download_url' => $base . $name, 'size' => (int) filesize($this->zip)]];
@@ -112,7 +112,7 @@ final class AutoUpdaterTest extends ApiTestCase
         self::assertSame('done', $this->auto()->tick());
         self::assertSame('0.3.0', $this->installedVersion());
         self::assertFileExists($this->install . '/app/New/Added.php');
-        self::assertSame(1, (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0008' AND `status` = 'applied'"));
+        self::assertSame(1, (int) $this->db->fetchValue('SELECT COUNT(*) FROM ' . $this->db->t('schema_migrations') . " WHERE `version` = '0009' AND `status` = 'applied'"));
         self::assertFalse($this->settings()->bool('maintenance'));
         self::assertFalse(AutoUpdater::runPending($this->storage));
         self::assertSame('0.3.0', $this->auto()->status()['last_done']['version']);
@@ -227,7 +227,7 @@ final class AutoUpdaterTest extends ApiTestCase
 
     public function testFilesUploadedByFtpFinishOnTheirOwn(): void
     {
-        $files = Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0008_probe.sql' => self::PROBE];
+        $files = Fixture::newFiles() + Fixture::realMigrations() + ['migrations/0009_probe.sql' => self::PROBE];
         Fixture::remove($this->install);
         $this->install = Fixture::install($files, '0.3.0');
         $this->storage = UpdateStorage::for($this->install, $this->install . '/storage');

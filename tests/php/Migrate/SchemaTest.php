@@ -45,7 +45,7 @@ final class SchemaTest extends DbTestCase
         'party_positions' => ['game_id', 'world_map_id', 'floor_id', 'x', 'y', 'updated_at'],
         'tokens' => [
             'id', 'game_id', 'name', 'asset_id', 'kind', 'size_w', 'size_h', 'default_owner_user_id', 'vision', 'light',
-            'ring_color', 'created_at', 'updated_at', 'deleted_at',
+            'ring_color', 'gm_image_forced', 'created_at', 'updated_at', 'deleted_at', // gm_image_forced: 0008
         ],
         'encounters' => ['id', 'game_id', 'name', 'notes', 'created_at', 'updated_at'],
         'encounter_tokens' => ['encounter_id', 'token_id', 'dx', 'dy'],
@@ -105,6 +105,8 @@ final class SchemaTest extends DbTestCase
     private const LATER_COLUMNS = [
         'event_seq' => ['id', 'purged_upto'],
         'map_note_users' => ['note_id', 'user_id'],
+        'player_tokens' => ['id', 'user_id', 'name', 'asset_id', 'source_asset_id', 'design', 'created_at', 'updated_at'],
+        'game_token_choices' => ['game_id', 'user_id', 'player_token_id', 'updated_at'],
     ];
 
     /**
@@ -135,6 +137,12 @@ final class SchemaTest extends DbTestCase
         'tokens_game' => ['tokens', 'game_id', 'games', 'CASCADE'],
         'tokens_asset' => ['tokens', 'asset_id', 'assets', 'SET NULL'],
         'tokens_default_owner_user' => ['tokens', 'default_owner_user_id', 'users', 'SET NULL'],
+        'player_tokens_user' => ['player_tokens', 'user_id', 'users', 'CASCADE'],
+        'player_tokens_asset' => ['player_tokens', 'asset_id', 'assets', 'SET NULL'],
+        'player_tokens_source' => ['player_tokens', 'source_asset_id', 'assets', 'SET NULL'],
+        'game_token_choices_game' => ['game_token_choices', 'game_id', 'games', 'CASCADE'],
+        'game_token_choices_user' => ['game_token_choices', 'user_id', 'users', 'CASCADE'],
+        'game_token_choices_token' => ['game_token_choices', 'player_token_id', 'player_tokens', 'CASCADE'],
         'encounters_game' => ['encounters', 'game_id', 'games', 'CASCADE'],
         'encounter_tokens_encounter' => ['encounter_tokens', 'encounter_id', 'encounters', 'CASCADE'],
         'encounter_tokens_token' => ['encounter_tokens', 'token_id', 'tokens', 'CASCADE'],

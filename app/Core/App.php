@@ -18,6 +18,7 @@ use JDR\Domain\Assets\PipelineImageProcessor;
 use JDR\Domain\Auth\Authenticator;
 use JDR\Domain\Displays\DisplayAuth;
 use JDR\Domain\Games\GameUserData;
+use JDR\Domain\PlayerTokens\PlayerTokenUserData;
 use JDR\Domain\Maps\MapUserData;
 use JDR\Domain\Users\User;
 use JDR\Domain\Settings\SecretBox;
@@ -138,6 +139,7 @@ final class App
             if ($config !== null) {
                 $extensions->add($c->get(AssetUserData::class));
                 $extensions->add($c->get(GameUserData::class));
+                $extensions->add($c->get(PlayerTokenUserData::class));
                 // After the games (transfer to a co-GM) so that maps follow their new GM.
                 $extensions->add($c->get(MapUserData::class));
             }
