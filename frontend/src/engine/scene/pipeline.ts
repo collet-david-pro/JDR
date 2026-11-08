@@ -18,6 +18,8 @@ export const RENDER_PIPELINE = [
   'lighting',
   /** 9. Fog: GM veil (world space) or player mask (multiply, screen-space render texture). */
   'fog',
+  /** Animated weather (rain, snow, fog), screen space, over the fog and under the grid. */
+  'weather',
   /** 11. Grid lines and map border, screen space. */
   'grid',
   'border',

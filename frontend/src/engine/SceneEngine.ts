@@ -304,6 +304,7 @@ export class SceneEngine implements SceneEngineApi {
       tokens: [],
       lighting: [lighting.lightSprite],
       fog: [this.worldFog, lighting.fogSprite],
+      weather: [this.sceneLayer.weather.root],
       grid: [gridRenderer.lines],
       border: [gridRenderer.border],
       gizmos: [this.sceneLayer.objects.gizmos],

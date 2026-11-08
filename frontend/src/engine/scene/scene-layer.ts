@@ -30,9 +30,10 @@ import {
   MAX_SHADOW_LIGHTS,
 } from '../../scene/style';
 import type { VisionService, VisionSource } from '../../vision';
-import type { Viewport } from '../camera';
+import { worldTransform, type Viewport } from '../camera';
 import { Container, type Renderer } from '../pixi';
 import { AmbientAnimator, viewAmbient } from './ambient-state';
+import { WeatherRenderer } from './weather-renderer';
 import { FogRenderer } from './fog-renderer';
 import { LightingRenderer } from './lighting-renderer';
 import { collectLights, nearestLights, needsFlickerFrames, type LightSource } from './lights';
@@ -84,6 +85,8 @@ export interface SceneLayerHooks {
   readonly reducedMotion: boolean;
 }
 
+const NO_WEATHER = Object.freeze({ type: 'none', intensity: 0 } as const);
+
 const EXPLORED_GREY = Math.round((1 - FOG_EXPLORED_ALPHA) * 255) * 0x010101;
 
 /** Container of all scene rendering layers for a floor. */
@@ -96,6 +99,8 @@ export class SceneLayer {
   /** GM veil (world space). */
   readonly fogWorld = new Container();
   private readonly fog = new FogRenderer();
+  /** Animated weather (screen space). */
+  readonly weather = new WeatherRenderer();
 
   private scene: SceneView | null = null;
   private unsubscribe: (() => void) | null = null;
@@ -286,6 +291,7 @@ export class SceneLayer {
       this.lighting.shadowSprite.visible = false;
       this.lighting.fogSprite.visible = false;
       this.fogWorld.visible = false;
+      this.weather.update(f.now, NO_WEATHER, 0, 0, 0, 0, 1, true);
       this.animating = false;
       return false;
     }
@@ -329,7 +335,19 @@ export class SceneLayer {
       mask,
       view,
     });
+    const wt = worldTransform(f.camera, f.viewport, grid.cellPx);
+    const weatherAnimating = this.weather.update(
+      f.now,
+      this.scene.ambient.weather,
+      f.viewport.width,
+      f.viewport.height,
+      wt.tx,
+      wt.ty,
+      wt.scale,
+      frozen,
+    );
     this.animating =
+      weatherAnimating ||
       (this.viewOptions.lighting && this.ambient.active(f.now)) ||
       needsFlickerFrames(this.lights, view, { lighting: this.viewOptions.lighting, frozen });
     return this.animating;
@@ -354,6 +372,7 @@ export class SceneLayer {
     this.tokens.destroy();
     this.lighting.destroy();
     this.fog.destroy();
+    this.weather.destroy();
     this.fogWorld.destroy({ children: true });
     if (this.ownsVision) this.vision.destroy();
     this.scene = null;
