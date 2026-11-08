@@ -82,7 +82,7 @@ export default defineConfig({
             grepInvert: /games, sessions, GM console|keyboard-only walkthrough/,
           }
         : {}),
-      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|images|help)\.spec\.ts/,
+      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|images|help|player-tokens|weather)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },
     })),

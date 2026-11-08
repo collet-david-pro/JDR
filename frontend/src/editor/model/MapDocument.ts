@@ -41,7 +41,7 @@ import { DEFAULT_LAYERS, EMPTY_CELL, MapOpError, chunkKey, parseChunkKey } from 
 import { FloorView } from './FloorView';
 import { NotesState, isNoteOp } from './NotesState';
 import { SceneState, isSceneOp, type SceneOp } from './SceneState';
-import { DEFAULT_AMBIENT, ambientOf } from './scene-values';
+import { DEFAULT_AMBIENT, ambientOf, snapStepOf } from './scene-values';
 import { validateLayers } from './validate';
 
 /** Maximum map side length, in cells. */
@@ -320,6 +320,10 @@ export class MapDocument implements MapView, SceneView {
   }
   get ambient(): Ambient {
     return this.cur.scene.ambient;
+  }
+  /** Snapping step of walls, doors and windows, in cells. */
+  get snapStep(): number {
+    return snapStepOf(this.cur.scene.ambient.snap_step);
   }
   objects(): readonly MapObject[] {
     return this.cur.scene.objects();
@@ -851,7 +855,10 @@ export class MapDocument implements MapView, SceneView {
     const next = ambientOf({ ...cur, ...patch });
     const inverse: Record<string, unknown> = {};
     for (const k of Object.keys(patch) as (keyof Ambient)[]) {
-      if (JSON.stringify(cur[k]) !== JSON.stringify(next[k])) inverse[k] = cur[k];
+      if (JSON.stringify(cur[k]) !== JSON.stringify(next[k])) {
+        // An absent snap step means the default: the inverse must say so explicitly.
+        inverse[k] = k === 'snap_step' ? snapStepOf(cur[k]) : cur[k];
+      }
     }
     return Object.keys(inverse).length === 0 ? null : { next, inverse: inverse as AmbientPatch };
   }

@@ -480,6 +480,15 @@ export function sameValue(a: unknown, b: unknown): boolean {
   );
 }
 
+/** Snapping steps of walls, doors and windows, in cells (default: half a cell). */
+export const SNAP_STEPS = Object.freeze([1, 0.5, 0.25, 0.125]);
+export const DEFAULT_SNAP_STEP = 0.5;
+
+/** Valid snapping step, else the default. */
+export function snapStepOf(value: unknown): number {
+  return typeof value === 'number' && SNAP_STEPS.includes(value) ? value : DEFAULT_SNAP_STEP;
+}
+
 /** Default ambient settings of a scene. */
 export const DEFAULT_AMBIENT: Ambient = Object.freeze({
   darkness: 0,
@@ -509,11 +518,13 @@ export function ambientOf(value: unknown): Ambient {
     ? (w.type as (typeof types)[number])
     : 'none';
   const intensity = typeof w.intensity === 'number' ? Math.min(1, Math.max(0, w.intensity)) : 0;
+  const step = snapStepOf(a['snap_step']);
   return Object.freeze({
     darkness,
     tint,
     time_of_day: tod,
     weather: Object.freeze({ type, intensity }),
+    ...(step !== DEFAULT_SNAP_STEP ? { snap_step: step } : {}),
   });
 }
 

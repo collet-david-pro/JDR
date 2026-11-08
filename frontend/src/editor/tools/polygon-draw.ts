@@ -5,7 +5,7 @@
  */
 import type { MapPointerEvent, Overlay, Point } from '../contracts';
 import { MAX_POLYGON_POINTS } from '../model/scene-values';
-import { DoubleClick, tolerance } from './object-common';
+import { DoubleClick, snapMark, snapStep, tolerance } from './object-common';
 import { dedupePoints, dist, samePoint, snapPoint, type Snapped } from './geometry';
 import type { ToolContext, ToolNotice, ToolResult } from './types';
 
@@ -39,7 +39,15 @@ export function createPolygonDraw(ctx: ToolContext): PolygonDraw {
     if (!e.mods.alt && first !== undefined && points.length >= 3 && dist(raw, first) <= tol) {
       return { point: first, kind: 'wall_end' };
     }
-    return snapPoint(raw, ctx.doc.objects(), tol, ctx.doc.grid, e.mods.alt);
+    return snapPoint(
+      raw,
+      ctx.doc.objects(),
+      tol,
+      ctx.doc.grid,
+      e.mods.alt,
+      undefined,
+      snapStep(ctx),
+    );
   };
 
   const preview = (s: Snapped | null): Overlay | null => {
@@ -52,7 +60,11 @@ export function createPolygonDraw(ctx: ToolContext): PolygonDraw {
         ...(s !== null ? { cursor: s.point } : {}),
       });
     }
-    if (s !== null && s.kind !== 'none') items.push({ kind: 'snap', x: s.point[0], y: s.point[1] });
+    if (s !== null && s.kind !== 'none') {
+      items.push(
+        points.length > 0 ? snapMark(ctx, s.point) : { kind: 'snap', x: s.point[0], y: s.point[1] },
+      );
+    }
     return items.length === 0 ? null : items.length === 1 ? items[0]! : { kind: 'group', items };
   };
 

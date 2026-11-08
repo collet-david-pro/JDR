@@ -8,7 +8,7 @@
 import type { Overlay, Point } from '../contracts';
 import { snapPoint } from './geometry';
 import { handleAt, hitTest, insideRect, type HandleHit, type Hit } from './hit';
-import { command, DoubleClick, pixelSize, tolerance } from './object-common';
+import { command, DoubleClick, pixelSize, snapStep, tolerance } from './object-common';
 import { rectBetween } from './raster';
 import {
   clampDelta,
@@ -130,8 +130,15 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
   };
 
   const handlePoint = (handle: HandleHit, p: Point, free: boolean): Point =>
-    snapPoint(p, ctx.doc.objects(), tolerance(ctx), ctx.doc.grid, free, (o) => o.uid === handle.uid)
-      .point;
+    snapPoint(
+      p,
+      ctx.doc.objects(),
+      tolerance(ctx),
+      ctx.doc.grid,
+      free,
+      (o) => o.uid === handle.uid,
+      snapStep(ctx),
+    ).point;
 
   /** Double click on a door: open / close it (checked before the handles of its ends). */
   const doorToggle = (hit: Hit | null, p: Point, shift: boolean): ToolResult | null => {

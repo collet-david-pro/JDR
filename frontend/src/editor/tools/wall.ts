@@ -1,11 +1,19 @@
 /**
  * Wall tool (W, projet.md 15.2): polyline — click = point, double click / Enter = finish,
- * Escape = cancel, clicking the first point closes the wall. Snapping to the half-cell grid and
+ * Escape = cancel, clicking the first point closes the wall. Snapping to the map's step (half a cell by default) and
  * to wall ends / middles (Alt: free). "Room" option: drag a rectangle of closed walls.
  */
 import type { MapPointerEvent, Overlay, Point } from '../contracts';
 import { MAX_WALL_POINTS } from '../model/scene-values';
-import { command, DoubleClick, lockedLayer, newWall, tolerance } from './object-common';
+import {
+  command,
+  DoubleClick,
+  lockedLayer,
+  newWall,
+  snapMark,
+  snapStep,
+  tolerance,
+} from './object-common';
 import { dedupePoints, dist, samePoint, snapPoint, type Snapped } from './geometry';
 import type { Tool, ToolContext, ToolResult } from './types';
 
@@ -24,7 +32,15 @@ export function createWallTool(ctx: ToolContext): Tool {
     if (!e.mods.alt && first !== undefined && points.length >= 3 && dist(raw, first) <= tol) {
       return { point: first, kind: 'wall_end' };
     }
-    return snapPoint(raw, ctx.doc.objects(), tol, ctx.doc.grid, e.mods.alt);
+    return snapPoint(
+      raw,
+      ctx.doc.objects(),
+      tol,
+      ctx.doc.grid,
+      e.mods.alt,
+      undefined,
+      snapStep(ctx),
+    );
   };
 
   const roomPoints = (a: Point, b: Point): Point[] => [a, [b[0], a[1]], b, [a[0], b[1]]];
@@ -41,7 +57,13 @@ export function createWallTool(ctx: ToolContext): Tool {
         ...(s !== null ? { cursor: s.point } : {}),
       });
     }
-    if (s !== null && s.kind !== 'none') items.push({ kind: 'snap', x: s.point[0], y: s.point[1] });
+    if (s !== null && s.kind !== 'none') {
+      items.push(
+        points.length > 0 || roomFrom !== null
+          ? snapMark(ctx, s.point)
+          : { kind: 'snap', x: s.point[0], y: s.point[1] },
+      );
+    }
     return items.length === 0 ? null : items.length === 1 ? items[0]! : { kind: 'group', items };
   };
 

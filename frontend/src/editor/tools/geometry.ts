@@ -58,7 +58,8 @@ export function snapToGrid(p: Point, step = 0.5): Point {
 }
 
 /**
- * Snapped point: wall ends then wall middles within `tolerance` cells, else the half-cell grid.
+ * Snapped point: wall ends then wall middles within `tolerance` cells (never more than `step`),
+ * else the grid of `step` cells (default half a cell).
  * `alt`: no snapping (rounded to 3 decimals). The result is clamped to the map.
  */
 export function snapPoint(
@@ -68,10 +69,11 @@ export function snapPoint(
   bounds: { readonly width: number; readonly height: number },
   alt: boolean,
   exclude?: (o: MapObject) => boolean,
+  step = 0.5,
 ): Snapped {
   if (alt) return { point: clampPoint(p, bounds.width, bounds.height), kind: 'none' };
   let best: Snapped | null = null;
-  let bestD = tolerance;
+  let bestD = Math.min(tolerance, step);
   const consider = (q: Point, kind: SnapKind) => {
     const d = dist(p, q);
     // Ends win over middles at equal distance.
@@ -96,7 +98,7 @@ export function snapPoint(
     const found: Snapped = best;
     return { point: clampPoint(found.point, bounds.width, bounds.height), kind: found.kind };
   }
-  return { point: clampPoint(snapToGrid(p), bounds.width, bounds.height), kind: 'grid' };
+  return { point: clampPoint(snapToGrid(p, step), bounds.width, bounds.height), kind: 'grid' };
 }
 
 /** True when two points are equal within a tolerance. */

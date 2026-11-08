@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SnapStepSelect from './SnapStepSelect.svelte';
   import type { WeatherType } from '../../editor/contracts';
   import { WEATHER_TYPES, weatherLabel } from '../../editor/ui/scene-labels';
   import type { EditorSession } from '../../editor/ui/session';
@@ -24,6 +25,8 @@
 
 <section class="panel" aria-labelledby={`${uid}-title`} data-testid="ambient-panel">
   <h2 id={`${uid}-title`}>{t('editor.ambient.title')}</h2>
+  <SnapStepSelect {session} testid="snap-step-map" />
+  <p class="small muted">{t('editor.snap.hint')}</p>
   <label class="field">
     <span>{t('editor.ambient.darkness', { value: Math.round(a.darkness * 100) })}</span>
     <input
@@ -72,6 +75,7 @@
   <label class="row">
     <span>{t('editor.ambient.weather')}</span>
     <select
+      data-testid="ambient-weather"
       value={a.weather.type}
       onchange={(e) =>
         session.scene.setAmbient({
@@ -90,6 +94,7 @@
       >
       <input
         type="range"
+        data-testid="ambient-weather-intensity"
         min="0"
         max="1"
         step="0.1"

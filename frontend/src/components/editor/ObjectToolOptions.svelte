@@ -1,5 +1,6 @@
 <script lang="ts">
   import LinkEditor from './LinkEditor.svelte';
+  import SnapStepSelect from './SnapStepSelect.svelte';
   import { PORTAL_ICONS } from '../../editor/model/scene-values';
   import { LIGHT_PRESET_IDS } from '../../editor/tools/object-common';
   import { FOG_BRUSH_MAX, FOG_BRUSH_MIN } from '../../editor/tools/types';
@@ -53,6 +54,7 @@
     <input type="checkbox" bind:checked={ui.wallRoom} data-testid="wall-room" />
     {t('editor.options.wall_room')}
   </label>
+  <SnapStepSelect {session} testid="snap-step-wall" />
   <p class="small muted">
     {ui.wallRoom ? t('editor.options.wall_room_hint') : t('editor.options.wall_hint')}
   </p>
@@ -94,6 +96,7 @@
     <span>{t('editor.options.opening_width', { value: ui.openingWidth })}</span>
     <input type="range" min="0.5" max="6" step="0.5" bind:value={ui.openingWidth} />
   </label>
+  <SnapStepSelect {session} testid="snap-step-door" />
   <p class="small muted">{t('editor.options.door_hint')}</p>
 {:else if ui.tool === 'light'}
   <fieldset>

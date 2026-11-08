@@ -108,7 +108,8 @@ export const REQUIRED_KEYS = [
   'chunks',
 ] as const;
 const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per_cell'];
-const AMBIENT_KEYS = ['darkness', 'tint', 'time_of_day', 'weather'];
+const AMBIENT_KEYS = ['darkness', 'tint', 'time_of_day', 'weather', 'snap_step'];
+const SNAP_STEPS = [1, 0.5, 0.25, 0.125];
 const WEATHER_KEYS = ['type', 'intensity'];
 const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat'];
 const LAYER_KEYS = ['id', 'kind', 'visible', 'locked', 'opacity', 'gm_only'];
@@ -486,6 +487,15 @@ function checkAmbient(c: Collector, v: unknown): void {
     'time_of_day',
     (x, p) => x === null || c.number(x, p, 0, 24),
     'ambient.time_of_day',
+  );
+  c.optional(
+    v,
+    'snap_step',
+    (x, p) => {
+      if (typeof x !== 'number') c.add(p, 'type');
+      else if (!SNAP_STEPS.includes(x)) c.add(p, 'enum');
+    },
+    'ambient.snap_step',
   );
   c.optional(
     v,

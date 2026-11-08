@@ -117,7 +117,10 @@
       "wrong_kind": "Ce fichier a été envoyé pour un autre type de restauration.",
       "archive_limit": "La sauvegarde des assets dépasse les limites d'une archive ZIP (65 535 fichiers, 4 Gio).",
       "restore_failed": "La restauration a échoué ; le site reste en maintenance. Relancez-la avec un fichier de sauvegarde."
-    }
+    },
+    "player_token_limit": "Vous avez atteint la limite de 100 tokens. Supprimez-en un avant d'en créer un autre.",
+    "session_in_progress": "Une séance est en cours : le token ne peut être changé qu'entre deux séances.",
+    "player_token_in_use": "Ce token est utilisé dans une ou plusieurs parties."
   },
   "pages": {
     "not_found": {
@@ -1911,7 +1914,7 @@
       "time": "Heure : {value}",
       "weather": "Météo",
       "weather_intensity": "Intensité : {value} %",
-      "weather_hint": "Météo enregistrée avec la map (effets visuels à une étape ultérieure)."
+      "weather_hint": "Météo enregistrée avec la map. Pluie, neige, brume et orage sont animés ; le mouvement réduit du système ou le mode performance les remplace par un voile fixe."
     },
     "properties": {
       "title": "Propriétés",
@@ -2199,6 +2202,39 @@
       "tools": "Largeur de la barre d'outils",
       "panels": "Largeur des panneaux",
       "hint": "Glisser pour régler la largeur, double-clic pour la valeur par défaut"
+    },
+    "snap": {
+      "title": "Pas d'aimantation (murs, portes, fenêtres)",
+      "step_1": "1 case",
+      "step_1_2": "1/2 case (défaut)",
+      "step_1_4": "1/4 de case",
+      "step_1_8": "1/8 de case",
+      "hint": "Pas d'aimantation des murs, portes, fenêtres et passages secrets de cette map. Alt désactive l'aimantation."
+    },
+    "resize": {
+      "command": "Taille de la map…",
+      "title": "Taille de la map",
+      "current": "Taille actuelle : {width} × {height} cases.",
+      "width": "Largeur (cases)",
+      "height": "Hauteur (cases)",
+      "anchor": "Point d'ancrage",
+      "anchor_hint": "Le côté choisi garde sa place : en agrandissant, les cases ajoutées sont du côté opposé ; en réduisant, c'est le côté opposé qui est rogné. Tout le contenu des étages suit (tuiles, murs, portes, objets, images, tokens, lumières, brouillard, notes épinglées, points d'arrivée des liens).",
+      "anchor_tl": "Haut gauche",
+      "anchor_t": "Haut",
+      "anchor_tr": "Haut droite",
+      "anchor_l": "Gauche",
+      "anchor_c": "Centre",
+      "anchor_r": "Droite",
+      "anchor_bl": "Bas gauche",
+      "anchor_b": "Bas",
+      "anchor_br": "Bas droite",
+      "invalid": "La largeur et la hauteur sont des nombres entiers de {min} à {max} cases.",
+      "lost": "Sortiront de la map et seront supprimés (étages chargés) : {objects} objet(s), {tokens} token(s) placé(s), {tiles} case(s) de tuiles.",
+      "confirm": "Je confirme la suppression de ce contenu.",
+      "snapshot_hint": "Une version est enregistrée juste avant : elle se restaure depuis l'historique pour annuler en une fois.",
+      "snapshot_label": "Avant redimensionnement",
+      "apply": "Appliquer",
+      "failed": "Le changement de taille a échoué. Rien n'a été modifié."
     }
   },
   "maps": {
@@ -2878,5 +2914,119 @@
   "feedback": {
     "bug": "Signaler un problème",
     "idea": "Proposer une idée"
+  },
+  "player_tokens": {
+    "title": "Mes tokens",
+    "hint": "Fabriquez vos pions et choisissez-en un par partie. Jusqu'à {max} tokens.",
+    "new": "Nouveau token",
+    "count": "{count} sur {max}",
+    "empty": "Vous n'avez pas encore de token.",
+    "used": {
+      "one": "Utilisé dans {count} partie",
+      "other": "Utilisé dans {count} parties"
+    },
+    "edit": "Modifier",
+    "rename": "Renommer",
+    "duplicate": "Dupliquer",
+    "copy_name": "{name} (copie)",
+    "delete_title": "Supprimer ce token ?",
+    "delete_text": "Le token « {name} » sera supprimé de votre collection.",
+    "delete_used": {
+      "one": "Le token « {name} » est utilisé dans {count} partie. Cette partie retombera sur l'image du MJ.",
+      "other": "Le token « {name} » est utilisé dans {count} parties. Ces parties retomberont sur l'image du MJ."
+    },
+    "deleted": "Token supprimé.",
+    "saved": "Token enregistré.",
+    "gen": {
+      "create_title": "Nouveau token",
+      "edit_title": "Modifier le token",
+      "preview": "Aperçu du token",
+      "preview_hint": "Aperçu en direct du token.",
+      "portrait_hint": "Faites glisser pour cadrer, molette ou pincement pour zoomer ; flèches et + / - au clavier.",
+      "name": "Nom",
+      "name_required": "Donnez un nom au token.",
+      "shape": "Forme",
+      "bg": "Couleur de fond",
+      "ring": "Couleur de l'anneau",
+      "ring_width": "Épaisseur de l'anneau",
+      "mode": "Contenu",
+      "mode_emblem": "Emblème",
+      "mode_portrait": "Portrait",
+      "emblem_color": "Couleur de l'emblème",
+      "choose_image": "Choisir une image",
+      "zoom": "Zoom",
+      "no_image": "Choisissez une image pour la cadrer.",
+      "image_error": "Cette image ne peut pas être lue.",
+      "save": "Enregistrer le token"
+    },
+    "shape": {
+      "disc": "Disque",
+      "hex": "Hexagone",
+      "shield": "Écu",
+      "square": "Carré",
+      "diamond": "Losange"
+    },
+    "group": {
+      "class": "Classes et équipement",
+      "creature": "Créatures et silhouettes",
+      "symbol": "Symboles"
+    },
+    "emblems": {
+      "sword": "Épée",
+      "shield": "Bouclier",
+      "axe": "Hache",
+      "bow": "Arc",
+      "staff": "Bâton",
+      "dagger": "Dague",
+      "book": "Livre",
+      "cross": "Croix sacrée",
+      "potion": "Potion",
+      "lute": "Luth",
+      "hero": "Héros",
+      "hood": "Silhouette encapuchonnée",
+      "wizard": "Chapeau de mage",
+      "helm": "Casque",
+      "horns": "Casque à cornes",
+      "wolf": "Loup",
+      "dragon": "Dragon",
+      "spider": "Araignée",
+      "bat": "Chauve-souris",
+      "paw": "Patte",
+      "skull": "Crâne",
+      "star": "Étoile",
+      "heart": "Cœur",
+      "flame": "Flamme",
+      "moon": "Lune",
+      "sun": "Soleil",
+      "bolt": "Éclair",
+      "gem": "Gemme",
+      "crown": "Couronne",
+      "key": "Clé",
+      "eye": "Œil",
+      "leaf": "Feuille",
+      "drop": "Goutte"
+    },
+    "picker": {
+      "label": "Mes tokens",
+      "none": "Aucun (image du MJ)",
+      "empty": "Vous n'avez pas encore de token.",
+      "manage": "Créer ou modifier mes tokens"
+    },
+    "join": {
+      "legend": "Mon token",
+      "hint": "Facultatif : choisissez le token qui vous représentera dans cette partie."
+    },
+    "game": {
+      "title": "Mon token",
+      "hint": "Le token choisi remplace l'image du MJ sur votre pion. Changement possible hors séance.",
+      "locked": "Une séance est en cours : le token se change entre deux séances.",
+      "save": "Utiliser ce token",
+      "saved": "Token de la partie mis à jour."
+    },
+    "gm": {
+      "player_token": "Token choisi par le joueur : {name}",
+      "force": "Imposer mon image",
+      "force_hint": "Utilise votre image à la place de celle du joueur. Décochez pour revenir à la sienne."
+    }
   }
 }

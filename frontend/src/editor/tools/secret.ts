@@ -5,7 +5,7 @@
 import type { MapPointerEvent, Overlay, Point } from '../contracts';
 import { dist, snapPoint } from './geometry';
 import { newNoteObject, polygonOf, validNote } from './note-objects';
-import { command, lockedLayer, tolerance } from './object-common';
+import { command, lockedLayer, snapMark, snapStep, tolerance } from './object-common';
 import { createPolygonDraw } from './polygon-draw';
 import type { Tool, ToolContext, ToolResult } from './types';
 
@@ -20,8 +20,15 @@ export function createSecretTool(ctx: ToolContext): Tool {
   let from: Point | null = null;
 
   const snap = (e: MapPointerEvent): Point =>
-    snapPoint([e.world.x, e.world.y], ctx.doc.objects(), tolerance(ctx), ctx.doc.grid, e.mods.alt)
-      .point;
+    snapPoint(
+      [e.world.x, e.world.y],
+      ctx.doc.objects(),
+      tolerance(ctx),
+      ctx.doc.grid,
+      e.mods.alt,
+      undefined,
+      snapStep(ctx),
+    ).point;
 
   const props = (kind: 'passage' | 'room' | 'object') => ({
     kind,
@@ -30,7 +37,7 @@ export function createSecretTool(ctx: ToolContext): Tool {
 
   const preview = (to: Point | null): Overlay | null => {
     if (from === null) return null;
-    if (to === null) return { kind: 'snap', x: from[0], y: from[1] };
+    if (to === null) return snapMark(ctx, from);
     const len = dist(from, to);
     return { kind: 'segment', a: from, b: to, valid: len >= PASSAGE_MIN && len <= PASSAGE_MAX };
   };

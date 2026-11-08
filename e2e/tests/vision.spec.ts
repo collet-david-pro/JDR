@@ -351,3 +351,39 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   await expectSaved(page);
   expect(errors).toEqual([]);
 });
+
+test("A61: wall snapping step 1/4 set on the map, coordinates saved", async ({
+  page,
+  browserName,
+}) => {
+  test.setTimeout(90_000);
+  const errors = watchErrors(page);
+  const { gameId } = await gmWithGameAndToken(page);
+  await page.getByTestId("map-new").click();
+  const form = page.getByTestId("map-create-form");
+  await form.locator('input[name="name"]').fill("Pas fin");
+  await form.locator('input[name="width"]').fill("20");
+  await form.locator('input[name="height"]').fill("14");
+  await page.getByTestId("map-create").click();
+  await expect(page).toHaveURL(new RegExp(`/games/${gameId}/maps/\\d+/edit$`));
+  const mapId = new URL(page.url()).pathname.split("/")[4] as string;
+  test.skip(!(await editorReady(page)), `${browserName}: neither WebGPU nor WebGL 2`);
+  const m = await calibrate(page);
+
+  await page.getByTestId("snap-step-map").selectOption("0.25");
+  await page.getByTestId("tool-wall").click();
+  // The map setting is recalled in the tool options.
+  await expect(page.getByTestId("snap-step-wall")).toHaveValue("0.25");
+  await clickCell(page, m, 3.26, 4.02);
+  await clickCell(page, m, 7.74, 4.02);
+  await page.keyboard.press("Enter");
+  await expectSaved(page);
+  const saved = (await (await page.request.get(`/api/v1/maps/${mapId}`)).json()).data;
+  expect(saved.ambient.snap_step).toBe(0.25);
+  const wall = saved.objects.find((o: { type: string }) => o.type === "wall");
+  expect(wall.geometry.points).toEqual([
+    [3.25, 4],
+    [7.75, 4],
+  ]);
+  expect(errors).toEqual([]);
+});

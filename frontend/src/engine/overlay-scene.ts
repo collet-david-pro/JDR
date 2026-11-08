@@ -158,6 +158,18 @@ export function drawSceneOverlay(
       break;
     }
     case 'snap': {
+      if (o.step !== undefined && o.step > 0 && o.step < 1) {
+        // Fine grid marks around the point, only while drawing.
+        const n = Math.round(1.5 / o.step);
+        const cx = Math.round(o.x / o.step);
+        const cy = Math.round(o.y / o.step);
+        for (let i = -n; i <= n; i++) {
+          for (let j = -n; j <= n; j++) {
+            const q = toScreen((cx + i) * o.step, (cy + j) * o.step);
+            g.circle(q.x, q.y, 1.5).fill({ color: OVERLAY_ACCENT, alpha: 0.55 });
+          }
+        }
+      }
       const p = toScreen(o.x, o.y);
       const r = 6;
       g.poly([p.x, p.y - r, p.x + r, p.y, p.x, p.y + r, p.x - r, p.y], true)

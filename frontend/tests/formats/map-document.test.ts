@@ -118,6 +118,8 @@ describe('map document validation (format_version 1)', () => {
     ['ambient.tint', 'red', 'ambient.tint:pattern'],
     ['ambient.time_of_day', 25, 'ambient.time_of_day:range'],
     ['ambient.weather.type', 'hail', 'ambient.weather.type:enum'],
+    ['ambient.snap_step', 0.3, 'ambient.snap_step:enum'],
+    ['ambient.snap_step', '0.5', 'ambient.snap_step:type'],
     ['palette', [], 'palette:required'],
     ['palette', [{ asset: 'sha256:' + 'a'.repeat(64) }], 'palette.0:const'],
     ['palette', [null, { asset: 'sha256:ABC' }], 'palette.1.asset:pattern'],

@@ -7,6 +7,7 @@
     revealEffectLabel,
     secretKindLabel,
   } from '../../editor/ui/note-labels';
+  import SnapStepSelect from './SnapStepSelect.svelte';
   import { NotesView } from '../../editor/ui/notes-view.svelte';
   import type { EditorSession } from '../../editor/ui/session';
   import { t } from '../../lib/i18n';
@@ -113,6 +114,7 @@
   <p class="small muted">
     {ui.secretKind === 'passage' ? t('editor.notes.passage_hint') : t('editor.notes.polygon_hint')}
   </p>
+  <SnapStepSelect {session} testid="snap-step-secret" />
   {#if ui.secretKind === 'passage'}
     <p class="small muted" data-testid="passage-opening-hint">
       {t('editor.notes.passage_opening')}

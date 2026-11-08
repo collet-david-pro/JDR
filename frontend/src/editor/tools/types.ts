@@ -132,6 +132,8 @@ export interface Tool {
 /** What tools read from the document (implemented by MapDocument). */
 export interface ToolDocument extends MapView, SceneView {
   readonly floor: string;
+  /** Snapping step of walls, doors and windows, in cells (absent = 0.5). */
+  readonly snapStep?: number;
   /** Floors by level (stairs targets). */
   floors(): readonly { readonly uid: string; readonly name: string; readonly level: number }[];
   getIndex(layer: TileLayerId, x: number, y: number): number;

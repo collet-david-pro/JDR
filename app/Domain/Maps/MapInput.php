@@ -45,6 +45,10 @@ final class MapInput
         'weather' => ['type' => 'none', 'intensity' => 0],
     ];
 
+    /** Wall/door/window snapping step in cells (ambient.snap_step; absent = 0.5). */
+    public const SNAP_STEPS = [1.0, 0.5, 0.25, 0.125];
+    private const AMBIENT_EXTRA_KEYS = ['snap_step'];
+
     private const LAYER_KEYS = ['id', 'kind', 'visible', 'locked', 'opacity', 'gm_only'];
     private const GRID_KEYS = ['width', 'height', 'cell_px', 'unit_label', 'unit_per_cell'];
 
@@ -330,7 +334,7 @@ final class MapInput
      */
     public static function ambient(mixed $value, array $base, string $field, array &$errors): ?array
     {
-        $patch = Fields::object($value, array_keys(self::DEFAULT_AMBIENT));
+        $patch = Fields::object($value, [...array_keys(self::DEFAULT_AMBIENT), ...self::AMBIENT_EXTRA_KEYS]);
         if ($patch === null) {
             $errors[$field] = 'invalid';
 
@@ -367,6 +371,9 @@ final class MapInput
                 'darkness' => self::bounded($v, 0, 1, false, 3),
                 'tint' => Fields::color($v) === null ? [null, 'invalid'] : [Fields::color($v), null],
                 'time_of_day' => $v === null ? [null, null] : self::bounded($v, 0, 24, false, 2),
+                'snap_step' => (is_int($v) || is_float($v)) && in_array((float) $v, self::SNAP_STEPS, true)
+                    ? [(float) $v, null]
+                    : [null, 'invalid'],
                 default => [null, 'invalid'],
             };
             if ($error !== null) {
@@ -451,7 +458,7 @@ final class MapInput
         }
         $errors = [];
 
-        return self::ambient(array_intersect_key($data, self::DEFAULT_AMBIENT), self::DEFAULT_AMBIENT, 'ambient', $errors)
+        return self::ambient(array_intersect_key($data, self::DEFAULT_AMBIENT + array_flip(self::AMBIENT_EXTRA_KEYS)), self::DEFAULT_AMBIENT, 'ambient', $errors)
             ?? self::DEFAULT_AMBIENT;
     }
 

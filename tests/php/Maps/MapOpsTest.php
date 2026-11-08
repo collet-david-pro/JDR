@@ -217,10 +217,19 @@ final class MapOpsTest extends MapsTestCase
             [['ambient' => ['tint' => 'red']], ['ops.0.ambient.tint' => 'invalid']],
             [['ambient' => ['weather' => ['type' => 'acid']]], ['ops.0.ambient.weather.type' => 'invalid']],
             [['ambient' => ['fog' => 1]], ['ops.0.ambient' => 'invalid']],
+            [['ambient' => ['snap_step' => 0.3]], ['ops.0.ambient.snap_step' => 'invalid']],
+            [['ambient' => ['snap_step' => '0.5']], ['ops.0.ambient.snap_step' => 'invalid']],
         ];
         foreach ($cases as [$meta, $errors]) {
             self::assertFieldErrors($this->sendOps($gm, $map['id'], [['type' => 'map.meta'] + $meta]), $errors);
         }
+        // Snapping step: allowed values only, absent = 0.5 (not stored), kept across other ambient edits.
+        foreach ([1, 0.25, 0.125] as $step) {
+            $this->opsOk($gm, $map['id'], [['type' => 'map.meta', 'ambient' => ['snap_step' => $step]]]);
+            self::assertEquals($step, self::data($gm->get('/maps/' . $map['id']))['ambient']['snap_step']);
+        }
+        $this->opsOk($gm, $map['id'], [['type' => 'map.meta', 'ambient' => ['darkness' => 0.5]]]);
+        self::assertEquals(0.125, self::data($gm->get('/maps/' . $map['id']))['ambient']['snap_step']);
         // Minimal layer stack (12.1 shorthand): defaults filled in.
         $this->opsOk($gm, $map['id'], [['type' => 'map.meta', 'layers' => [['id' => 'ground', 'kind' => 'tiles'], ['id' => 'terrain', 'kind' => 'tiles'], ['id' => 'decor', 'kind' => 'tiles']]]]);
         self::assertSame(['id' => 'terrain', 'kind' => 'tiles', 'visible' => true, 'locked' => false, 'opacity' => 1], self::data($gm->get('/maps/' . $map['id']))['layers'][1]);

@@ -6,6 +6,7 @@ import type {
   LightProps,
   MapOp,
   ObjectLayerId,
+  Overlay,
   Point,
   WallObject,
   WindowObject,
@@ -29,6 +30,19 @@ export function pixelSize(ctx: ToolContext): number {
 /** Pointer tolerance in cells. */
 export function tolerance(ctx: ToolContext): number {
   return HIT_TOLERANCE_PX * pixelSize(ctx);
+}
+
+/** Snapping step of walls, doors and windows of the map, in cells. */
+export function snapStep(ctx: ToolContext): number {
+  return ctx.doc.snapStep ?? 0.5;
+}
+
+/** Snap indicator; fine steps (below half a cell) also carry the step so the grid marks show. */
+export function snapMark(ctx: ToolContext, point: Point): Overlay {
+  const step = snapStep(ctx);
+  return step < 0.5
+    ? { kind: 'snap', x: point[0], y: point[1], step }
+    : { kind: 'snap', x: point[0], y: point[1] };
 }
 
 /** Generates a new object identifier. */

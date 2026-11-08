@@ -6,7 +6,7 @@
  */
 import type { MapObject, MapOp, Point, WallObject } from '../contracts';
 import { round3 } from '../model/scene-values';
-import { command, lockedLayer, newOpening, newWall, tolerance } from './object-common';
+import { command, lockedLayer, newOpening, newWall, snapStep, tolerance } from './object-common';
 import { dedupePoints, dist, project, snapToGrid, wallSegments } from './geometry';
 import type { Tool, ToolContext, ToolResult } from './types';
 
@@ -37,13 +37,14 @@ export function wallAt(objects: readonly MapObject[], p: Point, tol: number): Wa
 
 /**
  * Opening of `width` cells centred on the projection of p on the segment (snapped to the
- * half-cell grid unless `free`), kept inside the segment. Null when the segment is too short.
+ * grid of `step` cells unless `free`), kept inside the segment. Null when the segment is too short.
  */
 export function openingOn(
   hit: WallHit,
   p: Point,
   width: number,
   free: boolean,
+  step = 0.5,
 ): [Point, Point] | null {
   const len = dist(hit.a, hit.b);
   const w = Math.min(width, len);
@@ -51,7 +52,7 @@ export function openingOn(
   const ux = (hit.b[0] - hit.a[0]) / len;
   const uy = (hit.b[1] - hit.a[1]) / len;
   let centre = project(p, hit.a, hit.b).point;
-  if (!free) centre = project(snapToGrid(centre), hit.a, hit.b).point;
+  if (!free) centre = project(snapToGrid(centre, step), hit.a, hit.b).point;
   // Distance of the centre from a, clamped so that the opening stays on the segment.
   const s = Math.max(
     w / 2,
@@ -126,7 +127,7 @@ export function createDoorTool(ctx: ToolContext): Tool {
     const hit = wallAt(ctx.doc.objects(), p, tolerance(ctx));
     if (hit === null) return { hit: null, ends: null };
     const width = Math.min(20, Math.max(0.1, ctx.settings.openingWidth));
-    return { hit, ends: openingOn(hit, p, width, free) };
+    return { hit, ends: openingOn(hit, p, width, free, snapStep(ctx)) };
   };
 
   const preview = (x: number, y: number, free: boolean): ToolResult => {

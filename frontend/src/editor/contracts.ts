@@ -190,7 +190,13 @@ export type Overlay =
       readonly dimRadius: number;
     }
   /** Snap indicator (wall end / middle, grid point). */
-  | { readonly kind: 'snap'; readonly x: number; readonly y: number }
+  | {
+      readonly kind: 'snap';
+      readonly x: number;
+      readonly y: number;
+      /** Fine snapping step in cells: the engine draws grid marks around the point. */
+      readonly step?: number;
+    }
   /** Rectangle drag in cells (float), e.g. lasso / fog rectangle. */
   | {
       readonly kind: 'area';
@@ -646,6 +652,8 @@ export interface Ambient {
   /** 0–24 h; when set, darkness and tint follow the day/night curve (vision/ambient.ts). */
   readonly time_of_day: number | null;
   readonly weather: Weather;
+  /** Wall / door / window snapping step in cells (1, 0.5, 0.25, 0.125); absent = 0.5. */
+  readonly snap_step?: number;
 }
 
 /** [cx, cy, base64 raw-deflate of the 2 048-byte fog bitmap]. */
