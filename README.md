@@ -163,7 +163,7 @@ L'éditeur dessine à la grille, enregistre tout seul et sait tout annuler. Une 
 <summary><b>Tout ce que fait l'éditeur</b></summary>
 
 - **Terrain** : calques Sol, Terrain et Décor, tuiles et textures continues, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
-- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case), fond recalé sur la grille à chaque étage, outil Image pour poser librement les objets de la bibliothèque (déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ).
+- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case, ou l'image s'ajuste à la taille de map voulue en gardant ses proportions), fond recalé sur la grille à chaque étage, outil Image pour poser librement les objets de la bibliothèque, animés compris (déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ).
 - **Murs, portes et fenêtres** : murs tracés point par point ou par pièce, avec aimantation ; portes ouvertes, fermées, verrouillées ou secrètes ; fenêtres vitrées, à barreaux ou simples ouvertures. Les murs arrêtent la vue, la lumière et les déplacements.
 - **Lumières** : torche, lanterne, bougie, feu de camp, lumière magique ; couleur, intensité, vacillement, cône.
 - **Ambiance** : obscurité, teinte, cycle jour et nuit, ombres portées, et un aperçu « comme tous les joueurs » ou « comme ce personnage ».
