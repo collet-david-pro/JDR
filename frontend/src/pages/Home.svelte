@@ -45,17 +45,11 @@
     }
   }
 
-  // Sessions to resume, once the games are known.
-  $effect(() => {
-    if (!games.loaded) return;
-    const list = [...games.gm, ...games.player];
-    void activeSessions(sessionsClient(), list).then((found) => {
-      active = found;
-    });
-  });
-
   onMount(() => {
     void games.load();
+    void activeSessions(sessionsClient()).then((found) => {
+      active = found;
+    });
     api
       .get<StorageUsage>('/me/storage')
       .then(({ data }) => {

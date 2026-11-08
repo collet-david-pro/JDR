@@ -14,10 +14,10 @@ import {
   readiness,
   unassignedTokens,
 } from '../../src/lib/sessions/console/players';
-import { activeSessions, MAX_GAMES_LISTED } from '../../src/lib/sessions/active';
+import { activeSessions } from '../../src/lib/sessions/active';
 import { createSessionState } from '../../src/lib/sessions/state';
 import { createFogBitmap } from '../../src/formats/fog-codec';
-import { definition, session, snapshot } from '../sessions/fixtures';
+import { session, snapshot } from '../sessions/fixtures';
 
 const state = () => {
   const base = createSessionState(snapshot('gm'), '1');
@@ -107,29 +107,17 @@ describe('map ops', () => {
 });
 
 describe('activeSessions', () => {
-  it('keeps the open sessions, ignores failing games and caps the requests', async () => {
-    const list = vi.fn(async (id: string) => {
-      if (id === 'bad')
-        throw new ApiError({ code: 'forbidden', message: 'x', status: 403, requestId: null });
-      return {
-        items: [
-          session('gm', { id: `s-${id}`, state: 'running' }),
-          session('gm', { id: `e-${id}`, state: 'ended' }),
-        ],
-        nextCursor: null,
-      };
-    });
-    const found = await activeSessions({ list }, [
-      { id: 'a', name: 'A' },
-      { id: 'bad', name: 'B' },
-      { id: 'a', name: 'A' },
+  it('keeps the open sessions from one request and ignores a failure', async () => {
+    const active = vi.fn(async () => [
+      { game: { id: 'a', name: 'A' }, session: session('gm', { id: 's-a', state: 'running' }) },
+      { game: { id: 'a', name: 'A' }, session: session('gm', { id: 'e-a', state: 'ended' }) },
     ]);
+    const found = await activeSessions({ active });
     expect(found.map((f) => f.session.id)).toEqual(['s-a']);
-    expect(list).toHaveBeenCalledTimes(2);
-    const many = Array.from({ length: 40 }, (_, i) => ({ id: String(i), name: 'g' }));
-    list.mockClear();
-    await activeSessions({ list }, many);
-    expect(list).toHaveBeenCalledTimes(MAX_GAMES_LISTED);
-    expect(definition().id).toBe('21');
+    expect(active).toHaveBeenCalledTimes(1);
+    const failing = vi.fn(async () => {
+      throw new ApiError({ code: 'forbidden', message: 'x', status: 403, requestId: null });
+    });
+    expect(await activeSessions({ active: failing })).toEqual([]);
   });
 });

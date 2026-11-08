@@ -8,26 +8,13 @@ export interface ActiveSession {
   readonly session: Session;
 }
 
-/** Most games listed at once (one request each). */
-export const MAX_GAMES_LISTED = 12;
-
-/**
- * The open session of each game (errors of one game are ignored: the dashboard stays usable).
- */
+/** The open sessions of all the games, in one request (an error leaves the dashboard usable). */
 export async function activeSessions(
-  client: Pick<SessionsClient, 'list'>,
-  games: readonly Pick<Game, 'id' | 'name'>[],
+  client: Pick<SessionsClient, 'active'>,
 ): Promise<ActiveSession[]> {
-  const unique = [...new Map(games.map((g) => [g.id, g])).values()].slice(0, MAX_GAMES_LISTED);
-  const found = await Promise.all(
-    unique.map(async (game): Promise<ActiveSession[]> => {
-      try {
-        const page = await client.list(game.id, { limit: 5 });
-        return page.items.filter((s) => s.state !== 'ended').map((session) => ({ game, session }));
-      } catch {
-        return [];
-      }
-    }),
-  );
-  return found.flat();
+  try {
+    return (await client.active()).filter((a) => a.session.state !== 'ended');
+  } catch {
+    return [];
+  }
 }

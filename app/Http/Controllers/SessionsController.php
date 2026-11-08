@@ -44,6 +44,14 @@ final class SessionsController
     }
 
     /**
+     * GET /me/sessions/active -> [{game: {id, name}, session: Session}] (open sessions of all my games)
+     */
+    public function active(Request $request): Response
+    {
+        return Response::ok($this->sessions->active(CurrentUser::require($request), $this->apiBase($request)));
+    }
+
+    /**
      * GET /sessions/{id} -> Session
      */
     public function show(Request $request): Response

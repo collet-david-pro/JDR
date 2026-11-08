@@ -14,6 +14,7 @@ use JDR\Domain\Assets\AssetPolicy;
 use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Displays\DisplayCleanup;
 use JDR\Domain\Games\GamePolicy;
+use JDR\Domain\Games\GameSettings;
 use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Users\User;
 
@@ -28,6 +29,7 @@ final class SessionService
 {
     public const LIST_DEFAULT = 50;
     public const LIST_MAX = 200;
+    public const ACTIVE_MAX = 60;
 
     public function __construct(
         private SessionRepository $sessions,
@@ -104,6 +106,51 @@ final class SessionService
         );
 
         return [$this->presenter->many($rows, $view, $apiBase), $next];
+    }
+
+    /**
+     * Open sessions of every game of the user (dashboard "sessions to resume"), through the
+     * presenter with the viewer's role in each game: a fixed number of queries whatever the count
+     * of games. Items are {game: {id, name}, session}.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function active(User $user, string $apiBase): array
+    {
+        $rows = $this->sessions->openForUser($user->id, self::ACTIVE_MAX);
+        if ($rows === []) {
+            return [];
+        }
+        $head = null;
+        $byRole = [SessionContext::GM => [], SessionContext::PLAYER => []];
+        $games = [];
+        foreach ($rows as $row) {
+            $session = Session::fromRow($row);
+            $role = (string) $row['viewer_role'] === SessionContext::GM ? SessionContext::GM : SessionContext::PLAYER;
+            $settings = GameSettings::fromJson($row['game_settings'] === null ? null : (string) $row['game_settings']);
+            $games[$session->gameId] = ['name' => (string) $row['game_name'], 'settings' => $settings, 'gm' => (int) $row['game_gm_user_id']];
+            $byRole[$role][] = $session;
+        }
+        $presented = [];
+        foreach ($byRole as $role => $sessions) {
+            if ($sessions === []) {
+                continue;
+            }
+            $g = $games[$sessions[0]->gameId];
+            $view = new SessionContext($sessions[0], $g['gm'], $g['settings'], $role);
+            foreach ($this->presenter->many($sessions, $view, $apiBase, $head) as $item) {
+                $presented[(int) $item['id']] = $item;
+            }
+        }
+        $out = [];
+        foreach ($rows as $row) {
+            $item = $presented[(int) $row['id']];
+            $g = $games[(int) $row['game_id']];
+            $item['settings'] = (new SessionContext(Session::fromRow($row), $g['gm'], $g['settings'], SessionContext::PLAYER))->publicSettings();
+            $out[] = ['game' => ['id' => (int) $row['game_id'], 'name' => $g['name']], 'session' => $item];
+        }
+
+        return $out;
     }
 
     /**

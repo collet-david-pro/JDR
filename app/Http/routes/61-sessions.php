@@ -21,6 +21,7 @@ return static function (Router $r): void {
 
     $r->post('/games/{id:\d+}/sessions', [SessionsController::class, 'create'], $auth);
     $r->get('/games/{id:\d+}/sessions', [SessionsController::class, 'index'], $auth);
+    $r->get('/me/sessions/active', [SessionsController::class, 'active'], $auth);
     $r->post('/sessions/join', [SessionsController::class, 'join'], $auth + ['rate' => 'join']);
 
     $r->get($session, [SessionsController::class, 'show'], $auth);

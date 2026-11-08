@@ -176,6 +176,31 @@ final class SessionRepository
     }
 
     /**
+     * Open sessions (lobby, running, paused) of every live game the user takes part in, in one
+     * query: all of them as GM / co-GM, only those joined (not kicked) as a player. Each row also
+     * carries the game name, its GM, its settings and the viewer's role (gm | player).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function openForUser(int $userId, int $limit): array
+    {
+        $t = fn (string $n): string => $this->db->t($n);
+        $cols = 's.' . str_replace(', `', ', s.`', self::COLUMNS);
+
+        return $this->db->fetchAll(
+            'SELECT ' . $cols . ', g.`name` AS game_name, g.`gm_user_id` AS game_gm_user_id, g.`settings` AS game_settings, '
+            . "CASE WHEN g.`gm_user_id` = ? OR gm.`role` = 'co_gm' THEN 'gm' ELSE 'player' END AS viewer_role "
+            . 'FROM ' . $t('play_sessions') . ' s '
+            . 'INNER JOIN ' . $t('games') . ' g ON g.`id` = s.`game_id` AND g.`deleted_at` IS NULL '
+            . 'LEFT JOIN ' . $t('game_members') . ' gm ON gm.`game_id` = g.`id` AND gm.`user_id` = ? '
+            . "WHERE s.`state` <> 'ended' AND (g.`gm_user_id` = ? OR gm.`role` = 'co_gm' OR (gm.`user_id` IS NOT NULL AND EXISTS ("
+            . 'SELECT 1 FROM ' . $t('session_players') . " p WHERE p.`session_id` = s.`id` AND p.`user_id` = ? AND p.`status` <> 'kicked'))) "
+            . 'ORDER BY s.`id` DESC LIMIT ' . max(1, $limit),
+            [$userId, $userId, $userId, $userId],
+        );
+    }
+
+    /**
      * Deletes the sessions ended before $before (players, assignments, displays by FK CASCADE).
      */
     public function purgeEnded(string $before, int $limit): int
