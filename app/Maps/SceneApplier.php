@@ -211,6 +211,130 @@ final class SceneApplier
     }
 
     /**
+     * Moves every object, placed token and fog chunk by (dx, dy) cells (anchor of a resize).
+     * What no longer fits in the new $width x $height map is deleted, as for a shrink: an object
+     * must stay whole inside the map, a token must keep its position inside it.
+     */
+    public function shift(int $dx, int $dy, int $width, int $height): void
+    {
+        $this->flush();
+        foreach ($this->store->allObjects() as $row) {
+            $object = self::shiftObject($row['object'], $dx, $dy);
+            if (ObjectRules::fitsIn($object, $width, $height)) {
+                $this->store->updateObject($row['id'], $object, ObjectRules::bbox($object, $width, $height));
+                $this->remember($this->objects, $this->objectKeys, $object['uid'], ['id' => $row['id'], 'object' => $object]);
+                continue;
+            }
+            $this->store->deleteObject($row['id']);
+            $this->countImage($row['object'], -1);
+            $this->forget($this->objects, $this->objectKeys, $object['uid']);
+            if ($this->objectCount !== null) {
+                $this->objectCount--;
+            }
+        }
+        foreach ($this->store->allTokens() as $row) {
+            $token = $row['token'];
+            $token['x'] = round($token['x'] + $dx, 3);
+            $token['y'] = round($token['y'] + $dy, 3);
+            $errors = [];
+            if (TokenRules::checkBounds($token, 'token', $errors, $width, $height)) {
+                $this->store->updateToken($row['id'], $token);
+                $this->remember($this->tokens, $this->tokenKeys, $token['uid'], ['id' => $row['id'], 'token' => $token]);
+                continue;
+            }
+            $this->store->deleteToken($row['id']);
+            $this->forget($this->tokens, $this->tokenKeys, $row['token']['uid']);
+            if ($this->tokenCount !== null) {
+                $this->tokenCount--;
+            }
+        }
+        $this->shiftFog($dx, $dy, $width, $height);
+    }
+
+    /**
+     * Fog bitmaps (4 x 4 sub-cells per cell) moved by (dx, dy) cells, clipped to the new map.
+     */
+    private function shiftFog(int $dx, int $dy, int $width, int $height): void
+    {
+        $this->fog = [];
+        $old = $this->store->allFog();
+        if ($old === []) {
+            return;
+        }
+        $this->store->deleteAllFog();
+        $sx = $dx * 4;
+        $sy = $dy * 4;
+        $maxX = $width * 4;
+        $maxY = $height * 4;
+        $new = [];
+        foreach ($old as $chunk) {
+            $raw = FogCodec::decode($chunk['data']);
+            if ($raw === null) {
+                continue;
+            }
+            $gx0 = $chunk['cx'] * 128;
+            $gy0 = $chunk['cy'] * 128;
+            for ($byte = 0; $byte < FogCodec::RAW_BYTES; $byte++) {
+                $value = ord($raw[$byte]);
+                if ($value === 0) {
+                    continue;
+                }
+                $row = intdiv($byte, 16);
+                $col = ($byte % 16) * 8;
+                for ($bit = 0; $bit < 8; $bit++) {
+                    if (($value & (0x80 >> $bit)) === 0) {
+                        continue;
+                    }
+                    $nx = $gx0 + $col + $bit + $sx;
+                    $ny = $gy0 + $row + $sy;
+                    if ($nx < 0 || $ny < 0 || $nx >= $maxX || $ny >= $maxY) {
+                        continue;
+                    }
+                    $key = $chunk['floor_id'] . '|' . ($nx >> 7) . ':' . ($ny >> 7);
+                    $new[$key] ??= ['floor' => $chunk['floor_id'], 'cx' => $nx >> 7, 'cy' => $ny >> 7, 'raw' => FogCodec::blank()];
+                    $position = (($ny & 127) * 128) + ($nx & 127);
+                    $new[$key]['raw'][$position >> 3] = chr(ord($new[$key]['raw'][$position >> 3]) | (0x80 >> ($position & 7)));
+                }
+            }
+        }
+        foreach ($new as $chunk) {
+            $this->store->writeFog($chunk['floor'], $chunk['cx'], $chunk['cy'], $chunk['raw'], false);
+        }
+    }
+
+    /**
+     * The object with its geometry moved by (dx, dy) cells.
+     *
+     * @param array<string, mixed> $object
+     * @return array<string, mixed>
+     */
+    public static function shiftObject(array $object, int $dx, int $dy): array
+    {
+        $g = $object['geometry'];
+        $move = static fn (array $p): array => array_is_list($p)
+            ? [round($p[0] + $dx, 3), round($p[1] + $dy, 3)]
+            : ['x' => round($p['x'] + $dx, 3), 'y' => round($p['y'] + $dy, 3)] + $p;
+        foreach (['x' => $dx, 'y' => $dy] as $key => $delta) {
+            if (isset($g[$key])) {
+                $g[$key] = round($g[$key] + $delta, 3);
+            }
+        }
+        foreach (['a', 'b'] as $key) {
+            if (isset($g[$key]) && is_array($g[$key])) {
+                $g[$key] = $move($g[$key]);
+            }
+        }
+        foreach (['points', 'polygon'] as $key) {
+            if (isset($g[$key]) && is_array($g[$key])) {
+                $g[$key] = array_map($move, $g[$key]);
+            }
+        }
+        $object['geometry'] = $g;
+
+        return $object;
+    }
+
+    /**
      * A floor was removed (its rows are gone, FK CASCADE): forget what was read about it.
      */
     public function dropFloor(int $floorId): void

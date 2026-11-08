@@ -504,6 +504,14 @@ final class MapSceneRepository
     }
 
     /**
+     * Deletes every fog chunk of a map.
+     */
+    public function deleteAllFog(int $mapId): void
+    {
+        $this->db->execute('DELETE FROM ' . $this->db->t('map_fog') . ' WHERE `map_id` = ?', [$mapId]);
+    }
+
+    /**
      * Deletes fog chunks lying beyond the given chunk coordinates.
      */
     public function deleteFogBeyond(int $mapId, int $minCx, int $minCy): void

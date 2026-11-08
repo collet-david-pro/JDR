@@ -28,6 +28,11 @@ final class MapChunkStore implements ChunkStore
     /**
      * Selects and locks the chunks lying beyond the given chunk coordinates.
      */
+    public function lockAll(): array
+    {
+        return $this->maps->chunksAllForUpdate($this->mapId);
+    }
+
     public function lockBeyond(int $minCx, int $minCy): array
     {
         return $this->maps->chunksBeyondForUpdate($this->mapId, $minCx, $minCy);

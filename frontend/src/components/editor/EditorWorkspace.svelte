@@ -2,6 +2,7 @@
   import { setContext, untrack } from 'svelte';
   import AmbientPanel from './AmbientPanel.svelte';
   import BackgroundDialog from './BackgroundDialog.svelte';
+  import ResizeDialog from './ResizeDialog.svelte';
   import EditorCommandPalette from './EditorCommandPalette.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
@@ -184,6 +185,29 @@
       base_revision: fresh.revision,
       client_op_id: newClientOpId(),
       ops: [{ type: 'map.meta', grid: { width, height } }, ...after.map(toWireOp)],
+    });
+    markThumbnailStale(initial.map.id);
+    if (onreload !== undefined) onreload();
+    else window.location.reload();
+  }
+
+  /** "Taille de la map": snapshot first (the history restores it), then one atomic lot with the shift. */
+  async function resizeMapAnchored(
+    width: number,
+    height: number,
+    shiftX: number,
+    shiftY: number,
+  ): Promise<void> {
+    await sync?.settle();
+    await initial.client.createVersion(initial.map.id, t('editor.resize.snapshot_label'));
+    const fresh = await initial.client.get(initial.map.id);
+    const grid: Record<string, number> = { width, height };
+    if (shiftX !== 0) grid['shift_x'] = shiftX;
+    if (shiftY !== 0) grid['shift_y'] = shiftY;
+    await initial.client.sendOps(initial.map.id, {
+      base_revision: fresh.revision,
+      client_op_id: newClientOpId(),
+      ops: [{ type: 'map.meta', grid } as unknown as MapOp],
     });
     markThumbnailStale(initial.map.id);
     if (onreload !== undefined) onreload();
@@ -568,6 +592,7 @@
 />
 <HelpDialog bind:open={ui.helpOpen} />
 <BackgroundDialog {session} onresize={resizeMap} />
+<ResizeDialog {session} onapply={resizeMapAnchored} />
 <SnapshotDialog
   bind:open={ui.snapshotOpen}
   busy={versions.busy === 'snapshot'}

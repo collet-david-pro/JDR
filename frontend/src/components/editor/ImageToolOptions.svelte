@@ -63,6 +63,9 @@
   <Button size="small" onclick={() => (ui.backgroundOpen = true)} data-testid="image-background">
     {t('editor.images.background_command')}
   </Button>
+  <Button size="small" onclick={() => (ui.resizeOpen = true)} data-testid="map-resize">
+    {t('editor.resize.command')}
+  </Button>
 </div>
 
 <AssetPicker

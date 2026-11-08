@@ -122,6 +122,10 @@ final class MapOpsService
             );
             $applied = $applier->apply($ops, $envelope['base_revision']);
             $conflicts = $applier->conflicts();
+            $shifted = $applier->shifted();
+            if ($shifted !== null) {
+                $this->links->shiftArrivals($locked->id, $shifted['dx'], $shifted['dy'], $shifted['width'], $shifted['height']);
+            }
             if ($applied === 0) {
                 // Only conflicts / no-op removes: nothing changed, the revision stays.
                 $response = ['revision' => $locked->revision, 'applied' => 0, 'conflicts' => $conflicts];

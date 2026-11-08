@@ -417,3 +417,98 @@ test("background set from the size of the map wanted: the map is resized to the 
   expect(await editorReady(page)).toBe(true);
   expect(errors).toEqual([]);
 });
+
+test("map size dialog: 10 x 10 grown to 20 x 15 anchored at the centre moves the wall", async ({
+  page,
+  browserName,
+}) => {
+  const errors = watchErrors(page);
+  const gmName = await createUser("Redimension");
+  await login(page, gmName, userPassword);
+  const headers = await csrf(page.request);
+  const game = await page.request.post("/api/v1/games", {
+    headers,
+    data: { name: unique("Taille ") },
+  });
+  const gameId = (await game.json()).data.id as string;
+  const created = await page.request.post(`/api/v1/games/${gameId}/maps`, {
+    headers,
+    data: { name: "Cour", width: 10, height: 10 },
+  });
+  const map = (await created.json()).data;
+  const mapId = map.id as string;
+  const added = await page.request.post(`/api/v1/maps/${mapId}/ops`, {
+    headers,
+    data: {
+      base_revision: map.revision ?? 0,
+      client_op_id: unique("op"),
+      ops: [
+        {
+          type: "object.add",
+          object: {
+            uid: "mur-redim-0000001",
+            floor: map.floors[0].id,
+            layer: "walls",
+            visibility: "all",
+            locked: false,
+            sort_order: 0,
+            rev: 1,
+            type: "wall",
+            geometry: {
+              points: [
+                [2, 2],
+                [8, 2],
+              ],
+              closed: false,
+            },
+            props: {
+              kind: "stone",
+              thickness: 0.15,
+              blocks_vision: true,
+              blocks_light: true,
+              blocks_move: true,
+              texture_asset: null,
+              height: null,
+            },
+          },
+        },
+      ],
+    },
+  });
+  expect(added.ok(), await added.text()).toBeTruthy();
+
+  await page.goto(`/games/${gameId}/maps/${mapId}/edit`);
+  const ready = await editorReady(page);
+  test.skip(
+    !ready,
+    `${browserName}: neither WebGPU nor WebGL 2 in this headless browser`,
+  );
+
+  await page.getByTestId("tool-image").click();
+  await page.getByTestId("map-resize").click();
+  await expect(page.getByTestId("resize-dialog")).toBeVisible();
+  await page.getByTestId("resize-width").fill("20");
+  await page.getByTestId("resize-height").fill("15");
+  await page.getByTestId("resize-anchor-c").check({ force: true });
+  await page.getByTestId("resize-submit").click();
+
+  await expect
+    .poll(
+      async () => {
+        const res = await page.request.get(`/api/v1/maps/${mapId}`);
+        const grid = (await res.json()).data.grid as Record<string, number>;
+        return [grid["width"], grid["height"]];
+      },
+      { timeout: 20_000 },
+    )
+    .toEqual([20, 15]);
+  const [wall] = (await mapObjects(page.request, mapId)).filter(
+    (o) => o.type === "wall",
+  );
+  expect(wall?.geometry["points"]).toEqual([
+    [7, 4],
+    [13, 4],
+  ]);
+  expect(await editorReady(page)).toBe(true);
+  expect(errors).toEqual([]);
+});

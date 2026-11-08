@@ -370,6 +370,16 @@ final class MapRepository
     }
 
     /**
+     * Selects and locks every chunk of the map (all floors and layers).
+     *
+     * @return list<array{floor_id: int, layer: string, cx: int, cy: int, data: string}>
+     */
+    public function chunksAllForUpdate(int $mapId): array
+    {
+        return $this->chunksBeyondForUpdate($mapId, 0, 0);
+    }
+
+    /**
      * Inserts a chunk.
      */
     public function insertChunk(int $mapId, int $floorId, string $layer, int $cx, int $cy, string $data, int $revision): void

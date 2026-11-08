@@ -139,6 +139,8 @@ export class EditorUiState implements EditorSettings {
   /** Background dialog (P14) open; `backgroundTarget`: background image recalibrated (null = new). */
   backgroundOpen = $state(false);
   backgroundTarget = $state<string | null>(null);
+  /** "Taille de la map" dialog open. */
+  resizeOpen = $state(false);
   /** Note dialog: `uid` null = new note; `linkObject` = pin / zone to link the new note to. */
   noteDialog = $state.raw<{ uid: string | null; linkObject: string | null } | null>(null);
   resetSecretsOpen = $state(false);

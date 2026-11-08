@@ -20,7 +20,7 @@ use JDR\Maps\TokenRules;
  *   x, y 0-399, index 0-65535, variant 0-255, flags 0-15 (bits 4-7 reserved); index 0 = erase
  *   (variant/flags forced to 0);
  * - palette.add {index 1-4095, asset_id, autotile?: null | identifier, repeat?: null | 1-64 (texture block size)};
- * - map.meta {name?, grid?: {width?, height?, cell_px?, unit_label?, unit_per_cell?}, layers?, theme?, ambient?}.
+ * - map.meta {name?, grid?: {width?, height?, cell_px?, unit_label?, unit_per_cell?, shift_x?, shift_y?}, layers?, theme?, ambient?}.
  * P5 ops (etapes/P05 "Contrat d'API P5"; rules in ObjectRules / TokenRules):
  * - object.add {object: {uid, floor, type, layer, geometry, props, visibility, locked, sort_order, rev?}};
  * - object.update {uid, rev, patch: {geometry?, props?, visibility?, layer?, locked?, sort_order?}}
@@ -234,11 +234,28 @@ final class MapOpsInput
             $out['name'] = MapInput::name($op['name'], $field . '.name', $errors);
         }
         if (array_key_exists('grid', $op)) {
-            $grid = Fields::object($op['grid'], ['width', 'height', 'cell_px', 'unit_label', 'unit_per_cell']);
+            $grid = Fields::object($op['grid'], ['width', 'height', 'cell_px', 'unit_label', 'unit_per_cell', 'shift_x', 'shift_y']);
             if ($grid === null) {
                 $errors[$field . '.grid'] = 'invalid';
             } else {
+                // shift_x / shift_y: whole cells the content of every floor moves by (anchor of a resize).
+                $shift = [];
+                foreach (['shift_x', 'shift_y'] as $key) {
+                    if (!array_key_exists($key, $grid)) {
+                        continue;
+                    }
+                    $value = Fields::int($grid[$key], -MapInput::GRID_MAX, MapInput::GRID_MAX);
+                    if ($value === null) {
+                        $errors[$field . '.grid.' . $key] = 'invalid';
+                    } else {
+                        $shift[$key] = $value;
+                    }
+                    unset($grid[$key]);
+                }
                 $out['grid'] = MapInput::grid($grid, $field . '.grid.', $errors);
+                if ($out['grid'] !== null) {
+                    $out['grid'] += $shift;
+                }
             }
         }
         if (array_key_exists('layers', $op)) {

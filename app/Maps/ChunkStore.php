@@ -25,6 +25,13 @@ interface ChunkStore
      *
      * @return list<array{floor_id: int, layer: string, cx: int, cy: int, data: string}>
      */
+    /**
+     * Selects and locks every chunk of the map (all floors and layers), for a content shift.
+     *
+     * @return list<array{floor_id: int, layer: string, cx: int, cy: int, data: string}>
+     */
+    public function lockAll(): array;
+
     public function lockBeyond(int $minCx, int $minCy): array;
 
     /**

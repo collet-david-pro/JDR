@@ -151,6 +151,16 @@ final class MapSceneStore implements SceneStore
     /**
      * Deletes fog chunks beyond the given chunk coordinates.
      */
+    public function allFog(): array
+    {
+        return $this->scene->allFog($this->mapId);
+    }
+
+    public function deleteAllFog(): void
+    {
+        $this->scene->deleteAllFog($this->mapId);
+    }
+
     public function deleteFogBeyond(int $minCx, int $minCy): void
     {
         $this->scene->deleteFogBeyond($this->mapId, $minCx, $minCy);

@@ -18,7 +18,9 @@ use JDR\Domain\Maps\MapNotesOps;
  * - palette.add: append-only palette; same asset at the same index = no-op, another asset at a
  *   used index = 409 revision_conflict (the client must reload); index > size = 422;
  * - map.meta: name, grid, layers, theme, ambient; a width/height change is refused (409) when
- *   base_revision != revision; shrinking clears the cells left outside the map.
+ *   base_revision != revision; shrinking clears the cells left outside the map. grid.shift_x / shift_y
+ *   (anchor of a resize) move every tile, object, placed token and fog chunk first, in the same lot;
+ *   what leaves the new map is deleted (SceneApplier::shift), the arrival points of other maps' links follow.
  *
  * - P5 ops (object.*, maptoken.*, fog.*): SceneApplier (conflicts collected per op; a shrink of
  *   the map also removes the objects / tokens / fog left outside).
@@ -36,6 +38,9 @@ final class OpsApplier
     private array $deltas = [];
 
     private ?SceneApplier $scene;
+
+    /** @var array{dx: int, dy: int, width: int, height: int}|null */
+    private ?array $shifted = null;
 
     private ?FloorApplier $floors;
 
@@ -353,11 +358,19 @@ final class OpsApplier
         $grid = $op['grid'] ?? [];
         $width = $grid['width'] ?? $s->width;
         $height = $grid['height'] ?? $s->height;
-        if ($width !== $s->width || $height !== $s->height) {
+        $shiftX = (int) ($grid['shift_x'] ?? 0);
+        $shiftY = (int) ($grid['shift_y'] ?? 0);
+        $shifts = $shiftX !== 0 || $shiftY !== 0;
+        if ($width !== $s->width || $height !== $s->height || $shifts) {
             if ($baseRevision !== $s->revision) {
                 throw new ConflictException('', [$field . '.grid' => 'revision_conflict']);
             }
-            if ($width < $s->width || $height < $s->height) {
+            if ($shifts) {
+                // Content moves first (what leaves the new map is dropped), in the same lot as the new size.
+                $this->shiftTiles($shiftX, $shiftY, $width, $height);
+                $this->scene?->shift($shiftX, $shiftY, $width, $height);
+                $this->shifted = ['dx' => $shiftX, 'dy' => $shiftY, 'width' => $width, 'height' => $height];
+            } elseif ($width < $s->width || $height < $s->height) {
                 $this->shrink($width, $height);
                 $this->scene?->shrink($width, $height);
             }
@@ -391,6 +404,63 @@ final class OpsApplier
                 $s->change('ambient');
             }
         }
+    }
+
+    /**
+     * Moves every tile of every floor and layer by (dx, dy) cells; a tile that lands outside the
+     * new $width x $height map is erased (its asset reference released).
+     */
+    private function shiftTiles(int $dx, int $dy, int $width, int $height): void
+    {
+        foreach ($this->store->lockAll() as $row) {
+            $key = ChunkBuffer::key($row['floor_id'], $row['layer'], $row['cx'], $row['cy']);
+            if (!isset($this->buffers[$key])) {
+                $this->buffers[$key] = new ChunkBuffer(
+                    $row['floor_id'],
+                    $row['layer'],
+                    $row['cx'],
+                    $row['cy'],
+                    $this->decode($row['data'], $row['layer']),
+                    true,
+                );
+            }
+        }
+        $moves = [];
+        foreach ($this->buffers as $buffer) {
+            for ($y = 0; $y < 32; $y++) {
+                for ($x = 0; $x < 32; $x++) {
+                    $offset = ChunkCodec::offset($x, $y);
+                    [$index, $variant, $flags] = ChunkCodec::cellAt($buffer->raw, $offset);
+                    if ($index === 0) {
+                        continue;
+                    }
+                    ChunkCodec::setCell($buffer->raw, $offset, 0, 0, 0);
+                    $buffer->dirty = true;
+                    $nx = ($buffer->cx << 5) + $x + $dx;
+                    $ny = ($buffer->cy << 5) + $y + $dy;
+                    if ($nx < 0 || $ny < 0 || $nx >= $width || $ny >= $height) {
+                        $this->count($this->state->assetOf($index), -1);
+                        continue;
+                    }
+                    $moves[] = [$buffer->floorId, $buffer->layer, $nx, $ny, $index, $variant, $flags];
+                }
+            }
+        }
+        foreach ($moves as [$floorId, $layer, $nx, $ny, $index, $variant, $flags]) {
+            $target = $this->buffer($floorId, $layer, $nx >> 5, $ny >> 5);
+            ChunkCodec::setCell($target->raw, ChunkCodec::offset($nx & 31, $ny & 31), $index, $variant, $flags);
+            $target->dirty = true;
+        }
+    }
+
+    /**
+     * The content shift applied by a map.meta (null when none): dx, dy, new width and height.
+     *
+     * @return array{dx: int, dy: int, width: int, height: int}|null
+     */
+    public function shifted(): ?array
+    {
+        return $this->shifted;
     }
 
     /**

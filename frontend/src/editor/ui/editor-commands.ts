@@ -212,6 +212,14 @@ export function buildEditorCommands(session: EditorSession, cb: EditorCommandCal
     run: () => (ui.backgroundOpen = true),
   });
   add({
+    id: 'editor.resize',
+    label: t('editor.resize.command'),
+    group: g.map,
+    keywords: [t('palette.kw.image')],
+    when: () => ui.editable,
+    run: () => (ui.resizeOpen = true),
+  });
+  add({
     id: 'editor.generate',
     label: t('editor.generate.button'),
     group: g.view,

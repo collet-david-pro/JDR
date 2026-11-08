@@ -105,6 +105,16 @@ interface SceneStore
     /**
      * Deletes the fog chunks of every floor starting at or beyond these chunk coordinates.
      */
+    /**
+     * Every fog chunk of the map (all floors), compressed data.
+     *
+     * @return list<array{floor_id: int, cx: int, cy: int, data: string}>
+     */
+    public function allFog(): array;
+
+    /** Deletes every fog chunk of the map (a content shift rewrites them). */
+    public function deleteAllFog(): void;
+
     public function deleteFogBeyond(int $minCx, int $minCy): void;
 
     /**

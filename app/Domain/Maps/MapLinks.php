@@ -145,6 +145,38 @@ final class MapLinks
     }
 
     /**
+     * The map was resized with an anchor: the arrival points of the links of other maps that lead
+     * to it follow the content (moved by dx, dy cells); one that now lies outside the map loses
+     * its point (the party arrives at the default place).
+     */
+    public function shiftArrivals(int $mapId, int $dx, int $dy, int $width, int $height): void
+    {
+        $t = $this->db->t('map_links');
+        $rows = $this->db->fetchAll(
+            'SELECT l.`id`, l.`from_object_id`, o.`props` FROM ' . $t . ' l JOIN ' . $this->db->t('map_objects') . ' o ON o.`id` = l.`from_object_id` '
+            . 'WHERE l.`to_map_id` = ? AND l.`from_map_id` <> ? AND (l.`to_x` IS NOT NULL OR l.`to_y` IS NOT NULL)',
+            [$mapId, $mapId],
+        );
+        foreach ($rows as $row) {
+            $props = json_decode((string) $row['props'], true);
+            $link = is_array($props) && is_array($props['link'] ?? null) ? $props['link'] : null;
+            if ($link === null || ($link['map_id'] ?? null) !== $mapId || !isset($link['x'], $link['y'])) {
+                continue;
+            }
+            $x = round($link['x'] + $dx, 3);
+            $y = round($link['y'] + $dy, 3);
+            $inside = $x >= 0 && $y >= 0 && $x <= $width && $y <= $height;
+            $props['link']['x'] = $inside ? $x : null;
+            $props['link']['y'] = $inside ? $y : null;
+            $this->db->execute(
+                'UPDATE ' . $this->db->t('map_objects') . ' SET `props` = ? WHERE `id` = ?',
+                [json_encode($props, MapRepository::JSON_FLAGS), (int) $row['from_object_id']],
+            );
+            $this->db->execute('UPDATE ' . $t . ' SET `to_x` = ?, `to_y` = ? WHERE `id` = ?', [$inside ? $x : null, $inside ? $y : null, (int) $row['id']]);
+        }
+    }
+
+    /**
      * Objects (API form) with props.link.broken = true when the target map is in the trash.
      *
      * @param list<array<string, mixed>> $objects
