@@ -6,6 +6,16 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.6.0] - 2026-11-08
+
+### Added
+- **Fond à la taille de map voulue** : mode « Taille de la map » dans « Image de fond… » et « Nouvelle map depuis une image » ; on donne la largeur ou la hauteur en cases, l'autre suit les proportions de l'image, et la map est redimensionnée d'un coup (même plus du double), avec un avertissement si elle rétrécit.
+- **Images animées sur la map** : les GIF et WebP animés posés avec l'outil Image s'animent dans l'éditeur, la vue joueur et les écrans (fixes si le navigateur réduit les animations ou en mode performance ; première image à l'export PNG).
+- **Colonnes de l'éditeur réglables** : poignée entre les colonnes latérales et la map, à la souris ou au clavier, double-clic pour revenir au défaut ; largeur retenue par le navigateur.
+
+### Changed
+- **Le site s'appelle Clairvoie** partout (installeur, mise à jour, pages, e-mails, documentation). Un site qui avait gardé le nom par défaut « JDR » est renommé à la mise à jour ; un nom choisi par l'administrateur est conservé.
+
 ## [0.5.0] - 2026-11-07
 
 ### Added
