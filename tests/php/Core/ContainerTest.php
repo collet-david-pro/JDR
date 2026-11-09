@@ -6,8 +6,11 @@ namespace JDR\Tests\Core;
 
 use JDR\Core\Clock;
 use JDR\Core\Container;
+use JDR\Core\I18n;
 use JDR\Core\SystemStatus;
+use JDR\Core\View;
 use JDR\Http\Controllers\SystemController;
+use JDR\Http\Shell;
 use PHPUnit\Framework\TestCase;
 
 final class ContainerTest extends TestCase
@@ -17,6 +20,8 @@ final class ContainerTest extends TestCase
         $c = new Container();
         $status = SystemStatus::fixed('ok', '0001');
         $c->set(SystemStatus::class, static fn () => $status);
+        // Scalar constructor arguments are never autowired: registered as App::create() does.
+        $c->set(Shell::class, static fn () => new Shell(sys_get_temp_dir(), new View(I18n::forLocale())));
         $controller = $c->get(SystemController::class);
         self::assertInstanceOf(SystemController::class, $controller);
         self::assertSame($controller, $c->get(SystemController::class));

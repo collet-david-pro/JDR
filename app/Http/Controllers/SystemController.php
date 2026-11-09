@@ -9,13 +9,14 @@ defined('JDR_BOOT') || exit;
 use JDR\Core\Request;
 use JDR\Core\Response;
 use JDR\Core\SystemStatus;
+use JDR\Http\Shell;
 
 /**
  * Public system endpoints (health check, version).
  */
 final class SystemController
 {
-    public function __construct(private SystemStatus $status)
+    public function __construct(private SystemStatus $status, private Shell $shell)
     {
     }
 
@@ -32,7 +33,8 @@ final class SystemController
     }
 
     /**
-     * GET /version
+     * GET /version. "build" and "maintenance" let an open page reload itself after a site update
+     * (frontend/src/lib/version-watch.ts), once the maintenance is over.
      */
     public function version(Request $request): Response
     {
@@ -40,6 +42,8 @@ final class SystemController
             'version' => \APP_VERSION,
             'protocol' => \PROTOCOL_VERSION,
             'required_db_version' => \REQUIRED_DB_VERSION,
+            'build' => $this->shell->build(),
+            'maintenance' => $this->status->needsMaintenance(\REQUIRED_DB_VERSION),
         ]);
     }
 }

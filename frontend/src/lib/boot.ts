@@ -2,7 +2,7 @@
  * Boot configuration injected by the PHP shell (app/Views/shell.php):
  *
  *   <script id="jdr-boot" type="application/json">
- *     {"version":"1.0.0","api_base":"/base/api/v1","routing_mode":"rewrite","base_path":"/base","csrf":null,"maintenance":false}
+ *     {"version":"1.0.0","build":"assets/main-AbC1.js","api_base":"/base/api/v1","routing_mode":"rewrite","base_path":"/base","csrf":null,"maintenance":false}
  *   </script>
  *
  * In query routing mode api_base is "/base/index.php?r=/api/v1".
@@ -15,6 +15,8 @@ export type RoutingMode = 'rewrite' | 'query';
 
 export interface BootConfig {
   readonly version: string;
+  /** Entry file of the front build served with this page, "" when unknown (development). */
+  readonly build: string;
   /** API prefix, e.g. "/api/v1" or "/base/index.php?r=/api/v1". Never ends with "/". */
   readonly apiBase: string;
   readonly routingMode: RoutingMode;
@@ -33,6 +35,7 @@ export const BOOT_ELEMENT_ID = 'jdr-boot';
 /** Boot configuration used in development. */
 export const DEV_BOOT_CONFIG: BootConfig = Object.freeze({
   version: 'dev',
+  build: '',
   apiBase: '/api/v1',
   routingMode: 'rewrite',
   basePath: '',
@@ -77,12 +80,22 @@ export function parseBootConfig(text: string): BootConfig {
     throw new BootConfigError('Boot configuration: "csrf" must be null or a non-empty string');
   }
 
+  const build = typeof obj['build'] === 'string' ? obj['build'] : '';
   const maintenance = obj['maintenance'] === true;
 
   const feedbackRaw = obj['feedback_url'];
   const feedbackUrl = typeof feedbackRaw === 'string' ? (validRepoUrl(feedbackRaw) ?? '') : '';
 
-  return Object.freeze({ version, apiBase, routingMode, basePath, csrf, maintenance, feedbackUrl });
+  return Object.freeze({
+    version,
+    build,
+    apiBase,
+    routingMode,
+    basePath,
+    csrf,
+    maintenance,
+    feedbackUrl,
+  });
 }
 
 function normalizeBasePath(value: unknown): string {

@@ -15,6 +15,7 @@ describe('parseBootConfig', () => {
   it('accepts the rewrite-mode shell payload', () => {
     expect(parse(valid)).toEqual({
       version: '1.2.3',
+      build: '',
       apiBase: '/base/api/v1',
       routingMode: 'rewrite',
       basePath: '/base',
@@ -22,6 +23,11 @@ describe('parseBootConfig', () => {
       maintenance: false,
       feedbackUrl: '',
     });
+  });
+
+  it('reads the build identifier (absent or not a string = "")', () => {
+    expect(parse({ ...valid, build: 'assets/main-X.js' }).build).toBe('assets/main-X.js');
+    expect(parse({ ...valid, build: 3 }).build).toBe('');
   });
 
   it('reads the maintenance flag (absent or not true = off)', () => {

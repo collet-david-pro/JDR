@@ -111,9 +111,18 @@ final class AppTest extends TestCase
         $response = $this->app(null)->handle(Request::create('GET', '/api/v1/version'));
         self::assertSame(200, $response->status());
         self::assertSame(
-            ['version' => \APP_VERSION, 'protocol' => 2, 'required_db_version' => \REQUIRED_DB_VERSION],
+            ['version' => \APP_VERSION, 'protocol' => 2, 'required_db_version' => \REQUIRED_DB_VERSION, 'build' => '', 'maintenance' => false],
             $response->payload()['data'],
         );
+    }
+
+    public function testVersionGivesTheBuildAndTheMaintenanceState(): void
+    {
+        file_put_contents($this->root . '/assets/vite-manifest.json', '{"src/main.ts":{"file":"assets/main-Xy9.js"}}');
+        $data = $this->app(self::config(), SystemStatus::fixed('ok', \REQUIRED_DB_VERSION, true))
+            ->handle(Request::create('GET', '/api/v1/version'))->payload()['data'];
+        self::assertSame('assets/main-Xy9.js', $data['build']);
+        self::assertTrue($data['maintenance']);
     }
 
     public function testUnknownApiRouteIs404Envelope(): void
@@ -206,6 +215,7 @@ final class AppTest extends TestCase
         preg_match('#<script id="jdr-boot" type="application/json">(.+?)</script>#', $html, $boot);
         self::assertSame([
             'version' => \APP_VERSION,
+            'build' => 'assets/main-AbC123.js',
             'api_base' => '/jdr/api/v1',
             'routing_mode' => 'rewrite',
             'base_path' => '/jdr',

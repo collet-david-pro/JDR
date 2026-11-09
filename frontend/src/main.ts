@@ -7,7 +7,15 @@ import { readBootConfig, type BootConfig } from './lib/boot';
 import { t } from './lib/i18n';
 import type { PageComponent } from './lib/page';
 import { setServices } from './lib/services';
+import { sessionStore } from './lib/session-store';
 import { registerServiceWorker } from './lib/sw-register';
+import {
+  autoReloadRoute,
+  claimReload,
+  isEditing,
+  watchVersion,
+  type ServedVersion,
+} from './lib/version-watch';
 import { Router } from './router';
 import { routes } from './routes';
 import { requiresLogin, loginPath } from './lib/guard';
@@ -70,6 +78,24 @@ function start(): void {
       appStatus.applyUpdate = activate;
     });
   }
+
+  watchVersion({
+    current: boot.build,
+    fetchVersion: async () => (await api.get<ServedVersion>('/version')).data,
+    onNewVersion: (build) => {
+      if (!autoReloadRoute(router.state.match?.route.name) || !claimReload(sessionStore(), build)) {
+        appStatus.applyUpdate ??= () => window.location.reload();
+        return;
+      }
+      const reload = (): void => {
+        if (isEditing(document.activeElement)) window.setTimeout(reload, 30_000);
+        else window.location.reload();
+      };
+      reload();
+    },
+    window,
+    document,
+  });
 }
 
 start();

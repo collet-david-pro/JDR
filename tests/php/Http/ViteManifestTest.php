@@ -65,6 +65,7 @@ final class ViteManifestTest extends TestCase
     {
         self::assertSame([
             'version' => \APP_VERSION,
+            'build' => '',
             'api_base' => '/index.php?r=/api/v1',
             'routing_mode' => 'query',
             'base_path' => '',

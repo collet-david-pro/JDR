@@ -27,12 +27,16 @@ final class Shell
     }
 
     /**
-     * @return array{version: string, api_base: string, routing_mode: string, base_path: string, csrf: string|null, maintenance: bool, feedback_url: string}
+     * $build: entry file of the front build (see build()); the SPA compares it with GET /version to
+     * reload itself after a site update.
+     *
+     * @return array{version: string, build: string, api_base: string, routing_mode: string, base_path: string, csrf: string|null, maintenance: bool, feedback_url: string}
      */
-    public static function bootData(string $basePath, string $routingMode, ?string $csrf, bool $maintenance = false, string $feedbackUrl = ''): array
+    public static function bootData(string $basePath, string $routingMode, ?string $csrf, bool $maintenance = false, string $feedbackUrl = '', string $build = ''): array
     {
         return [
             'version' => \APP_VERSION,
+            'build' => $build,
             'api_base' => Config::apiBase($basePath, $routingMode),
             'routing_mode' => $routingMode,
             'base_path' => $basePath,
@@ -40,6 +44,14 @@ final class Shell
             'maintenance' => $maintenance,
             'feedback_url' => $feedbackUrl,
         ];
+    }
+
+    /**
+     * Identifier of the current front build (hashed entry file, changes with every build); '' without a build.
+     */
+    public function build(): string
+    {
+        return ViteManifest::load($this->publicRoot . '/' . self::MANIFEST)?->entry(self::ENTRY)['file'] ?? '';
     }
 
     /**
@@ -70,7 +82,7 @@ final class Shell
             'script' => $assetUrl($entry['file']),
             'styles' => array_map($assetUrl, $entry['css']),
             'preloads' => array_map($assetUrl, $entry['preload']),
-            'bootJson' => self::encodeBootData(self::bootData($basePath, $routingMode, $csrf, $maintenance, $feedbackUrl)),
+            'bootJson' => self::encodeBootData(self::bootData($basePath, $routingMode, $csrf, $maintenance, $feedbackUrl, $entry['file'])),
         ]));
     }
 }
