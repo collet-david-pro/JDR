@@ -12,6 +12,8 @@
  *   resolved with the server state, reload), counted in `lastUndoSkipped`.
  * - P5 rev rule: when the target implements `apply`, the ops emitted to the save queue are the
  *   ops as applied (object / token updates carry the rev current at execution, undo or redo).
+ * - External steps (pushExternal): a change made outside the ops (map resize, done on the server
+ *   before a reload) takes its place in the stacks; undoing or redoing it runs its callback.
  */
 import type { CellValue, Command, MapOp, TileLayerId } from '../contracts';
 import { compactOps } from '../model/ops';
@@ -62,6 +64,16 @@ export interface HistoryState {
   readonly redoSize: number;
 }
 
+/**
+ * A step made outside the ops. `run` does its undo (in the undo stack) or its redo (in the redo
+ * stack), usually ending with a page reload; it resolves false when it failed (the step stays).
+ */
+export interface ExternalStep {
+  /** i18n key, as a command label. */
+  readonly label: string;
+  run(): Promise<boolean>;
+}
+
 /** Why ops were applied: sent to the sync queue (P4b) in every case. */
 export type OpsOrigin = 'do' | 'undo' | 'redo' | 'untracked';
 
@@ -81,6 +93,7 @@ interface Entry {
   time: number;
   /** Foreign stamps of the objects / tokens touched, right after this entry's last write. */
   stamps: Map<string, number>;
+  readonly external?: ExternalStep;
 }
 
 /** Undo/redo stack of editor commands with merge support. */
@@ -174,6 +187,8 @@ export class History {
   undo(): boolean {
     const entry = this.undoStack.pop();
     if (entry === undefined) return false;
+    if (entry.external !== undefined)
+      return this.runExternal(entry, entry.external, this.undoStack);
     this.compact(entry);
     const { ops, skipped } = this.ownInverse(entry);
     let applied: MapOp[];
@@ -195,6 +210,8 @@ export class History {
   redo(): boolean {
     const entry = this.redoStack.pop();
     if (entry === undefined) return false;
+    if (entry.external !== undefined)
+      return this.runExternal(entry, entry.external, this.redoStack);
     let inverse: MapOp[];
     let applied: MapOp[];
     try {
@@ -214,6 +231,22 @@ export class History {
     this.emitOps(applied, 'redo');
     this.emitChange();
     return true;
+  }
+
+  /** Records an external step on top of the undo stack (to undo it) or of the redo stack. */
+  pushExternal(stack: 'undo' | 'redo', step: ExternalStep): void {
+    const entry: Entry = {
+      label: step.label,
+      mergeKey: undefined,
+      ops: [],
+      inverseParts: [],
+      time: this.now(),
+      stamps: new Map(),
+      external: step,
+    };
+    (stack === 'undo' ? this.undoStack : this.redoStack).push(entry);
+    this.mergeBarrier = true;
+    this.emitChange();
   }
 
   /** The next command never merges with the previous one (e.g. end of a stroke). */
@@ -244,6 +277,19 @@ export class History {
   private applyTarget(ops: readonly MapOp[]): { ops: MapOp[]; inverse: MapOp[] } {
     if (this.target.apply !== undefined) return this.target.apply(ops);
     return { ops: [...ops], inverse: this.target.applyOps(ops) };
+  }
+
+  private runExternal(entry: Entry, step: ExternalStep, stack: Entry[]): boolean {
+    this.mergeBarrier = true;
+    this.emitChange();
+    const restore = (): void => {
+      stack.push(entry);
+      this.emitChange();
+    };
+    step.run().then((ok) => {
+      if (!ok) restore();
+    }, restore);
+    return true;
   }
 
   private recordStamps(entry: Entry, ops: readonly MapOp[]): void {

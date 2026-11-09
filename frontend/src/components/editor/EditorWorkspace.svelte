@@ -65,6 +65,12 @@
   import { requestPersistentStorage } from '../../lib/persistence/idb';
   import type { MapDetail, MapGeneration, Token } from '../../lib/types';
   import { toasts } from '../../stores/toasts.svelte';
+  import { sessionStore } from '../../lib/session-store';
+  import {
+    saveResizeStep,
+    takeResizeStep,
+    type ResizeStep,
+  } from '../../editor/versions/resize-step';
   import { createVisionService } from '../../vision/index';
   import ColumnResizer from './ColumnResizer.svelte';
   import {
@@ -199,19 +205,56 @@
     shiftY: number,
   ): Promise<void> {
     await sync?.settle();
-    await initial.client.createVersion(initial.map.id, t('editor.resize.snapshot_label'));
+    const version = await initial.client.createVersion(
+      initial.map.id,
+      t('editor.resize.snapshot_label'),
+    );
     const fresh = await initial.client.get(initial.map.id);
     const grid: Record<string, number> = { width, height };
     if (shiftX !== 0) grid['shift_x'] = shiftX;
     if (shiftY !== 0) grid['shift_y'] = shiftY;
-    await initial.client.sendOps(initial.map.id, {
+    const result = await initial.client.sendOps(initial.map.id, {
       base_revision: fresh.revision,
       client_op_id: newClientOpId(),
       ops: [{ type: 'map.meta', grid } as unknown as MapOp],
     });
+    // Ctrl+Z after the reload restores the snapshot (resize-step.ts).
+    saveResizeStep(sessionStore(), {
+      mapId: initial.map.id,
+      revision: result.revision,
+      stack: 'undo',
+      version,
+      params: { width, height, shiftX, shiftY },
+    });
     markThumbnailStale(initial.map.id);
     if (onreload !== undefined) onreload();
     else window.location.reload();
+  }
+
+  /** Resize undone by Ctrl+Z: its snapshot is being restored (onRestored keeps the redo). */
+  let resizeUndone: ResizeStep | null = null;
+  const resizeStep = takeResizeStep(sessionStore(), initial.map.id, initial.map.revision);
+  if (resizeStep !== null) {
+    session.history.pushExternal(resizeStep.stack, {
+      label: 'editor.command.resize',
+      run: async () => {
+        try {
+          if (resizeStep.stack === 'undo') {
+            resizeUndone = resizeStep;
+            await versions.restore(resizeStep.version);
+          } else {
+            const p = resizeStep.params;
+            await resizeMapAnchored(p.width, p.height, p.shiftX, p.shiftY);
+          }
+          return true;
+        } catch (error) {
+          resizeUndone = null;
+          if (resizeStep.stack === 'undo') toasts.show('error', t('editor.resize.undo_failed'));
+          else toasts.error(error);
+          return false;
+        }
+      },
+    });
   }
 
   // ---- P5: token definitions, vision service ----------------------------------------------
@@ -277,8 +320,15 @@
     client: initial.client,
     settle: () => sync?.settle() ?? Promise.resolve(false),
     setEditable: (editable) => session.setEditable(editable),
-    onRestored: () => {
+    onRestored: (result, version) => {
       restored = true;
+      if (resizeUndone !== null && resizeUndone.version.id === version.id) {
+        saveResizeStep(sessionStore(), {
+          ...resizeUndone,
+          stack: 'redo',
+          revision: result.revision,
+        });
+      }
       markThumbnailStale(initial.map.id);
       toasts.info(t('editor.versions.restored'));
       if (onreload !== undefined) onreload();

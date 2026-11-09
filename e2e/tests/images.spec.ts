@@ -418,7 +418,7 @@ test("background set from the size of the map wanted: the map is resized to the 
   expect(errors).toEqual([]);
 });
 
-test("map size dialog: 10 x 10 grown to 20 x 15 anchored at the centre moves the wall", async ({
+test("map size dialog: 10 x 10 grown to 20 x 15 anchored at the centre moves the wall, undo and redo", async ({
   page,
   browserName,
 }) => {
@@ -510,5 +510,21 @@ test("map size dialog: 10 x 10 grown to 20 x 15 anchored at the centre moves the
     [13, 4],
   ]);
   expect(await editorReady(page)).toBe(true);
+
+  // Undo after the reload: the snapshot taken before is restored; redo resizes again.
+  const size = async () => {
+    const res = await page.request.get(`/api/v1/maps/${mapId}`);
+    const grid = (await res.json()).data.grid as Record<string, number>;
+    return [grid["width"], grid["height"]];
+  };
+  await expect(page.getByTestId("editor-undo")).toBeEnabled();
+  await page.getByTestId("editor-undo").click();
+  await expect.poll(size, { timeout: 20_000 }).toEqual([10, 10]);
+  expect(await editorReady(page)).toBe(true);
+  await expect(page.getByTestId("editor-redo")).toBeEnabled();
+  await page.getByTestId("editor-redo").click();
+  await expect.poll(size, { timeout: 20_000 }).toEqual([20, 15]);
+  expect(await editorReady(page)).toBe(true);
+  await expect(page.getByTestId("editor-undo")).toBeEnabled();
   expect(errors).toEqual([]);
 });

@@ -176,6 +176,8 @@ export function commandLabel(key: string): string {
       return t('editor.command.door_toggle');
     case 'editor.command.ambient':
       return t('editor.command.ambient');
+    case 'editor.command.resize':
+      return t('editor.command.resize');
     default:
       return key;
   }

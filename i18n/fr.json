@@ -1723,6 +1723,7 @@
       "delete": "supprimer",
       "door_toggle": "ouvrir / fermer la porte",
       "ambient": "ambiance",
+      "resize": "changer la taille de la map",
       "generate": "générer",
       "stairs": "poser un escalier",
       "portal": "poser un portail",
@@ -2231,10 +2232,11 @@
       "invalid": "La largeur et la hauteur sont des nombres entiers de {min} à {max} cases.",
       "lost": "Sortiront de la map et seront supprimés (étages chargés) : {objects} objet(s), {tokens} token(s) placé(s), {tiles} case(s) de tuiles.",
       "confirm": "Je confirme la suppression de ce contenu.",
-      "snapshot_hint": "Une version est enregistrée juste avant : elle se restaure depuis l'historique pour annuler en une fois.",
+      "snapshot_hint": "Une version est enregistrée juste avant : Ctrl+Z (⌘Z) la restaure aussitôt après, et elle reste dans l'historique des versions.",
       "snapshot_label": "Avant redimensionnement",
       "apply": "Appliquer",
-      "failed": "Le changement de taille a échoué. Rien n'a été modifié."
+      "failed": "Le changement de taille a échoué. Rien n'a été modifié.",
+      "undo_failed": "Annulation impossible : restaurez la version « Avant redimensionnement » depuis l'historique."
     }
   },
   "maps": {

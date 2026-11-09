@@ -21,7 +21,7 @@ Pour le recaler plus tard, sélectionnez-le et utilisez **Recaler le fond…** d
 
 **Taille de la map…** (bouton de l'outil Image, ou palette de commandes **Ctrl+K**) change la largeur et la hauteur en cases (de 1 à 400). Choisissez un **point d'ancrage** parmi les neuf positions : haut gauche par défaut, le côté choisi garde sa place. Avec un autre ancrage (le centre, par exemple), tout le contenu des étages suit : tuiles, murs, portes, objets, images, tokens placés, lumières, brouillard révélé, notes épinglées et points d'arrivée des liens venant d'autres maps.
 
-Si la map rétrécit, la fenêtre compte ce qui sortira de la map (étages chargés) et demande confirmation. Un objet (mur, porte, lumière, passage…) qui dépasse de la nouvelle map est **supprimé en entier**, un token placé hors de la map aussi, une image reste tant qu'une partie la recouvre. Une version nommée « Avant redimensionnement » est enregistrée juste avant : restaurez-la depuis l'**Historique** pour tout annuler d'un coup.
+Si la map rétrécit, la fenêtre compte ce qui sortira de la map (étages chargés) et demande confirmation. Un objet (mur, porte, lumière, passage…) qui dépasse de la nouvelle map est **supprimé en entier**, un token placé hors de la map aussi, une image reste tant qu'une partie la recouvre. Une version nommée « Avant redimensionnement » est enregistrée juste avant : **Ctrl+Z** (⌘Z sur Mac) la restaure aussitôt après le rechargement (**Ctrl+Y** refait le redimensionnement) ; plus tard, restaurez-la depuis l'**Historique**.
 
 ## Nouvelle map depuis une image
 

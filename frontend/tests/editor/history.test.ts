@@ -216,3 +216,44 @@ describe('History', () => {
     expect(history.state).toMatchObject({ canUndo: false, canRedo: false });
   });
 });
+
+describe('History external steps (map resize across a reload)', () => {
+  it('sits under the later commands and runs once they are undone', async () => {
+    const doc = makeDoc();
+    const history = new History(doc);
+    const run = vi.fn(() => Promise.resolve(true));
+    history.pushExternal('undo', { label: 'editor.command.resize', run });
+    expect(history.state).toMatchObject({ canUndo: true, undoLabel: 'editor.command.resize' });
+    history.execute(paint('ground', [[1, 1, 3, 0, 0]]));
+    history.undo();
+    expect(run).not.toHaveBeenCalled();
+    expect(history.undo()).toBe(true);
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(history.state.undoSize).toBe(0);
+    await Promise.resolve();
+    expect(history.state.undoSize).toBe(0);
+  });
+
+  it('goes back to its stack when it fails', async () => {
+    const history = new History(makeDoc());
+    history.pushExternal('redo', {
+      label: 'editor.command.resize',
+      run: () => Promise.resolve(false),
+    });
+    expect(history.redo()).toBe(true);
+    expect(history.state.canRedo).toBe(false);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(history.state).toMatchObject({ canRedo: true, redoLabel: 'editor.command.resize' });
+  });
+
+  it('a new command drops a pending redo step', () => {
+    const history = new History(makeDoc());
+    history.pushExternal('redo', {
+      label: 'editor.command.resize',
+      run: () => Promise.resolve(true),
+    });
+    history.execute(paint('ground', [[1, 1, 3, 0, 0]]));
+    expect(history.state.canRedo).toBe(false);
+  });
+});
