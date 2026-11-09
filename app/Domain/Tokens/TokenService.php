@@ -6,6 +6,7 @@ namespace JDR\Domain\Tokens;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Core\Db;
 use JDR\Core\Errors\ForbiddenException;
 use JDR\Core\Errors\NotFoundException;
 use JDR\Core\Errors\ValidationException;
@@ -14,6 +15,7 @@ use JDR\Domain\Assets\AssetRepository;
 use JDR\Domain\Games\Game;
 use JDR\Domain\Games\GameMemberRepository;
 use JDR\Domain\Games\GamePolicy;
+use JDR\Domain\Sessions\Actions\TokenDefinitionBroadcaster;
 use JDR\Domain\Users\User;
 
 /**
@@ -21,6 +23,8 @@ use JDR\Domain\Users\User;
  * reads only the tokens they own by default (others: 403); non-members get 404.
  * The image must be usable by the editor (own, general, or already used by the game) and the
  * default owner must belong to the game (GM included).
+ * A change of a token placed on the map of an open session is pushed to its clients
+ * (TokenDefinitionBroadcaster, same transaction).
  */
 final class TokenService
 {
@@ -30,6 +34,8 @@ final class TokenService
         private GameMemberRepository $members,
         private AssetRepository $assets,
         private AssetPolicy $assetPolicy,
+        private Db $db,
+        private TokenDefinitionBroadcaster $broadcaster,
     ) {
     }
 
@@ -87,7 +93,10 @@ final class TokenService
         $changes = TokenInput::patch($body, $token);
         $this->checkReferences($user, $game, $changes, $token);
         if ($changes !== []) {
-            $this->tokens->update($token->id, $changes);
+            $this->db->transaction(function () use ($user, $token, $changes): void {
+                $this->tokens->update($token->id, $changes);
+                $this->broadcaster->changed($user, $token->gameId, $token->id);
+            });
         }
 
         return $this->tokens->find($token->id) ?? $token;

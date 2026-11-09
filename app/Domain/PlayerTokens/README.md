@@ -14,7 +14,7 @@ Tokens fabriqués par les joueurs (générateur côté front) : collection perso
 - Le PNG (512 px, carré) et le portrait source sont des assets du compte (`source` = `player_token` / `player_token_src`) : réencodés par `AssetImporter`, quota compté, absents de la bibliothèque, supprimés quand plus aucun token de la collection ne les référence.
 - Tout accès à la collection est limité à son propriétaire (404 sinon) ; choisir un token exige une partie visible (404 sinon) et un token de sa collection.
 - Le choix est refusé pendant une séance en cours (`running`, `paused`), sauf le premier choix fait en rejoignant la partie.
-- L'image effective d'une définition de token est résolue dans `TokenRepository::select()` : token du joueur (propriétaire par défaut) sauf si `tokens.gm_image_forced` ; aucun nouvel événement de séance, les clients lisent `image` comme avant.
+- L'image effective d'une définition de token est résolue dans `TokenRepository::select()` : token du joueur (propriétaire par défaut) sauf si `tokens.gm_image_forced` ; les clients lisent `image` comme avant. Modifier une définition posée sur la map d'une séance ouverte (dont la bascule « Imposer mon image ») fait recharger leur instantané aux clients (`Sessions/Actions/TokenDefinitionBroadcaster.php`).
 - Le design (JSON borné) est opaque pour le serveur ; il sert à rééditer le token.
 
 ## Tests
