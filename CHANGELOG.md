@@ -6,6 +6,22 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.7.0] - 2026-11-09
+
+### Added
+- **Tokens des joueurs** : chaque joueur crée ses tokens dans son profil (forme, fond, anneau, emblème parmi 33 ou portrait cadré à la souris, au doigt ou au clavier), en garde jusqu'à 100 et choisit lequel il utilise dans chaque partie (en rejoignant une séance, ou depuis la page de la partie hors séance). Son token remplace l'image du MJ sur son pion ; « Imposer mon image » sur la fiche du token rend la main au MJ.
+- **Changer la taille d'une map** : « Taille de la map… » (outil Image ou Ctrl+K), de 1 à 400 cases, avec un point d'ancrage parmi neuf ; tout le contenu des étages suit (tuiles, murs, objets, images, tokens, lumières, brouillard, notes, arrivées des liens). Si la map rétrécit, la fenêtre compte ce qui sera perdu et demande confirmation ; une version « Avant redimensionnement » est enregistrée juste avant, et Ctrl+Z (⌘Z) annule le redimensionnement juste après (Ctrl+Y le refait).
+- **Pas d'aimantation par map** pour les murs, portes et fenêtres : 1, 1/2, 1/4 ou 1/8 de case, avec des repères de grille fine pendant le tracé.
+- **Météo animée** : pluie, orage, neige et brume s'animent à l'identique chez le MJ, les joueurs et les écrans ; simple voile fixe en mouvement réduit ou en mode performance.
+- **Rechargement automatique après une mise à jour du site** : un écran de projection ou une vue de séance ouverts avant la mise à jour se rechargent d'eux-mêmes dès qu'elle est terminée (pas pendant une saisie) ; ailleurs, un bandeau propose de recharger.
+
+### Changed
+- **Accueil** : les séances à reprendre se chargent en une seule requête.
+
+### Fixed
+- **Token d'une séance en cours** : « Imposer mon image » et toute modification d'un token posé sur la map jouée s'affichent aussitôt chez le MJ, les joueurs et les écrans (plus besoin de recharger).
+- **Mise à jour automatique** : un échec n'est plus affiché une fois le site passé à cette version par une autre voie.
+
 ## [0.6.0] - 2026-11-08
 
 ### Added
