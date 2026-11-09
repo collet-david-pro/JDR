@@ -67,6 +67,10 @@ Avant d'installer, le site fait toujours une **sauvegarde de la base**. À la fi
 - Elle **ne contient pas les assets** (images). Sauvegardez-les à part, voir [sauvegarde.md](sauvegarde.md).
 - Elle se restaure depuis **Administration > Sauvegarde** (voir [sauvegarde.md](sauvegarde.md)).
 
+### Les pages déjà ouvertes
+
+Une page ouverte avant la mise à jour la détecte d'elle-même (toutes les 5 minutes, au retour de l'onglet ou du réseau). Les écrans de projection, les vues de séance et la page « Rejoindre » se rechargent seuls une fois la mise à jour terminée, jamais pendant une saisie. Les autres pages, l'éditeur compris, affichent un bandeau qui propose de recharger.
+
 ## 3. Mise à jour par FTP
 
 1. Téléchargez `jdr-update-vX.Y.Z.zip` sur votre ordinateur et décompressez-le.

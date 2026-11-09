@@ -5,6 +5,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 ### Éditeur de maps
 
 - Grille carrée, calques, tuiles par blocs, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
+- Taille de la map modifiable (1 à 400 cases) avec un point d'ancrage : tout le contenu des étages suit ; Ctrl+Z annule juste après.
 - Jusqu'à 10 étages par map, avec l'étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map.
 - Enregistrement automatique avec file d'attente hors ligne (IndexedDB) : une coupure réseau ou un onglet fermé brutalement ne fait pas perdre les modifications.
 - Notes en Markdown sûr, épingles, zones à lire, pièges et secrets ; modèles de map, dont 4 livrés (taverne, crypte, forêt, grotte).
@@ -16,9 +17,9 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 
 ### Murs, lumière, vision et brouillard
 
-- Murs en polyligne ou par pièce, avec aimantation. Portes (ouvrables, verrouillées, secrètes) et fenêtres.
+- Murs en polyligne ou par pièce, avec aimantation (pas réglable par map : 1, 1/2, 1/4 ou 1/8 de case). Portes (ouvrables, verrouillées, secrètes) et fenêtres.
 - Lumières préréglées (torche, lanterne, bougie, feu de camp, lumière magique) : couleur, vacillement, cônes.
-- Lumière et vision arrêtées par les murs, calculées dans un Web Worker. Ambiance (obscurité, teinte, cycle jour et nuit) et ombres portées.
+- Lumière et vision arrêtées par les murs, calculées dans un Web Worker. Ambiance (obscurité, teinte, cycle jour et nuit) et ombres portées. Météo animée (pluie, orage, neige, brume), fixe en mouvement réduit.
 - Brouillard de guerre explorable, enregistré sur le serveur. Outil Révéler/masquer. Vue « comme le joueur ».
 
 ### Génération procédurale
@@ -44,7 +45,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 - Des écrans de projection se branchent à la séance avec un code à 6 chiffres ou un QR code. Aucun compte à créer.
 - L'écran ne montre que la vue de table, calculée par le serveur.
 - Échelle réelle (25 mm par case par défaut), calibrée à la diagonale ou à la règle. Rotation, miroir, pilotage de la caméra, verrou de vue.
-- Jusqu'à 8 écrans par séance. Révocation immédiate.
+- Jusqu'à 8 écrans par séance. Révocation immédiate. Rechargement automatique après une mise à jour du site.
 - Détails : [irl.md](irl.md).
 
 ### Bibliothèque d'images
@@ -57,6 +58,7 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 
 - Parties : création, archivage, corbeille. Membres et co-MJ.
 - Définitions de tokens avec image, taille, vision et lumière. Rencontres préparées à l'avance.
+- Générateur de token joueur (forme, couleurs, anneau, emblème ou portrait), collection personnelle de 100 tokens, choix du token par partie ; le MJ peut imposer son image.
 - Cloisonnement strict des données entre les parties.
 
 ### Administration, sécurité et mise à jour

@@ -54,6 +54,10 @@ Jusqu'à **8 écrans** par séance, chacun avec ses réglages. À la fin d'une s
 
 La page demande un **Wake Lock** (`navigator.wakeLock`) et le redemande à chaque retour de visibilité. Sans Wake Lock, elle joue une vidéo invisible (`canvas.captureStream()`), et à défaut affiche un bandeau d'avertissement. État exposé : `data-wake` = `active`, `video`, `unsupported` ou `idle`. Conseils : désactiver la mise en veille de l'appareil, passer en plein écran, utiliser un mode kiosque (navigateur verrouillé sur `/display`), brancher l'appareil au secteur.
 
+## Après une mise à jour du site
+
+L'écran n'a pas à être rechargé à la main. Il compare toutes les 5 minutes (et au retour du réseau ou de l'onglet) la version servie à la sienne ; dès que la mise à jour est terminée, il se recharge seul et reprend la séance. Il ne recharge pas pendant la maintenance de la mise à jour, et une seule fois par version.
+
 ## Menu discret
 
 Touche **M**, ou **appui long de 2 s dans un coin** : calibrer, rotation, miroir, état du Wake Lock, plage de zoom, **Quitter** (désappairer, avec confirmation), Fermer.

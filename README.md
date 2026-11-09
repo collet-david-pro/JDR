@@ -144,6 +144,7 @@ Une **partie** regroupe tout ce qu'il faut à une campagne : ses maps, ses perso
 - **Parties** que l'on archive ou récupère dans la corbeille, avec des **co-MJ** qui préparent et dirigent comme vous.
 - **Joueurs** ajoutés par pseudo ou e-mail, ou qui arrivent seuls avec le code d'une séance.
 - **Tokens** (personnages, monstres, objets) avec image, taille, anneau de couleur, vision, vision dans le noir et lumière portée. Une quarantaine sont fournis : héros, monstres, PNJ et animaux.
+- **Tokens des joueurs** : chaque joueur crée les siens sans logiciel de dessin (forme, couleurs, anneau, emblème ou portrait cadré) et choisit lequel il utilise dans chaque partie ; le MJ peut toujours imposer son image.
 - **Rencontres** préparées à l'avance (une embuscade, une bande de gobelins) qui se posent d'un coup sur la carte.
 - **Bibliothèque d'images** par glisser-déposer, avec catégories, tags, favoris, quotas et packs à échanger entre sites ; une bibliothèque générale partagée par tous les MJ, avec un pack de sols, de décors et de tokens.
 - **Cloisonnement strict** : rien ne passe d'une partie à l'autre.
@@ -163,10 +164,10 @@ L'éditeur dessine à la grille, enregistre tout seul et sait tout annuler. Une 
 <summary><b>Tout ce que fait l'éditeur</b></summary>
 
 - **Terrain** : calques Sol, Terrain et Décor, tuiles et textures continues, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
-- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case, ou l'image s'ajuste à la taille de map voulue en gardant ses proportions), fond recalé sur la grille à chaque étage, outil Image pour poser librement les objets de la bibliothèque, animés compris (déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ).
-- **Murs, portes et fenêtres** : murs tracés point par point ou par pièce, avec aimantation ; portes ouvertes, fermées, verrouillées ou secrètes ; fenêtres vitrées, à barreaux ou simples ouvertures. Les murs arrêtent la vue, la lumière et les déplacements.
+- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case, ou l'image s'ajuste à la taille de map voulue en gardant ses proportions), fond recalé sur la grille à chaque étage, outil Image pour poser librement les objets de la bibliothèque, animés compris (déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ). La taille de la map se change à tout moment, avec un point d'ancrage, et le contenu suit.
+- **Murs, portes et fenêtres** : murs tracés point par point ou par pièce, avec aimantation réglable jusqu'au huitième de case ; portes ouvertes, fermées, verrouillées ou secrètes ; fenêtres vitrées, à barreaux ou simples ouvertures. Les murs arrêtent la vue, la lumière et les déplacements.
 - **Lumières** : torche, lanterne, bougie, feu de camp, lumière magique ; couleur, intensité, vacillement, cône.
-- **Ambiance** : obscurité, teinte, cycle jour et nuit, ombres portées, et un aperçu « comme tous les joueurs » ou « comme ce personnage ».
+- **Ambiance** : obscurité, teinte, cycle jour et nuit, ombres portées, météo animée (pluie, orage, neige, brume), et un aperçu « comme tous les joueurs » ou « comme ce personnage ».
 - **Étages** : jusqu'à 10 par map, l'étage du dessous visible en transparence ; escaliers, portails et portes qui mènent à un autre étage ou à une autre map.
 - **Notes et secrets** : notes en Markdown (réservées au MJ ou partagées), épingles, zones qui suggèrent un texte quand un personnage y entre, pièges et passages secrets.
 - **Modèles** : enregistrer une map comme modèle, ou partir d'un des 4 modèles fournis (taverne, crypte, forêt, grotte).
@@ -218,7 +219,7 @@ Une tablette, une télévision posée à plat ou un vidéoprojecteur affiche la 
 - Écrans reliés à la séance par un **code à 6 chiffres** ou un **QR code**, **sans compte** ; jusqu'à 8 par séance, révocables à tout moment.
 - **Échelle réelle** : 25 mm par case par défaut, calibrée à partir de la diagonale de l'écran ou d'une règle posée contre lui.
 - **Rotation** et **miroir** (écran vu de côté, projection au plafond), suivi de la caméra du MJ ou **vue verrouillée**, tokens affichés ou non.
-- L'écran reste allumé et ne montre que la vue de table : jamais un token caché, une note ou une porte secrète.
+- L'écran reste allumé et ne montre que la vue de table : jamais un token caché, une note ou une porte secrète. Après une mise à jour du site, il se recharge seul.
 
 <table>
 <tr>
