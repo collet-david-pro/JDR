@@ -95,7 +95,7 @@ export class GeneratePanelModel {
   outcome = $state.raw<GenOutcome | null>(null);
   /** Key of the request that produced `outcome`. */
   outcomeKey = $state<string | null>(null);
-  errorCode = $state<'zone_too_small' | 'failed' | null>(null);
+  errorCode = $state<'zone_too_small' | 'map_size' | 'failed' | null>(null);
   errorMessage = $state('');
   missing = $state.raw<PackKey[]>([]);
   busy = $state<'apply' | null>(null);
@@ -174,6 +174,17 @@ export class GeneratePanelModel {
     return { width: this.deps.grid.width, height: this.deps.grid.height };
   }
 
+  /**
+   * The current map is outside the size range of the generator: its validation would clamp the
+   * size, and a result of another size cannot be applied (objects off the map, cells left empty).
+   */
+  get mapSizeOutOfRange(): boolean {
+    if (this.effectiveTarget !== 'map') return false;
+    const { min, max } = this.info.size;
+    const { width, height } = this.size;
+    return width < min || height < min || width > max || height > max;
+  }
+
   get zoneTooSmall(): boolean {
     if (this.effectiveTarget !== 'selection') return false;
     const { width, height } = this.size;
@@ -198,7 +209,8 @@ export class GeneratePanelModel {
   }
 
   get canApply(): boolean {
-    if (this.busy !== null || this.zoneTooSmall || !this.seedValid) return false;
+    if (this.busy !== null || this.zoneTooSmall || this.mapSizeOutOfRange || !this.seedValid)
+      return false;
     if (this.effectiveTarget === 'new') return this.newName.trim() !== '' && this.sizeValid;
     return true;
   }
@@ -352,6 +364,13 @@ export class GeneratePanelModel {
     if (this.zoneTooSmall) {
       this.status = 'error';
       this.errorCode = 'zone_too_small';
+      this.outcome = null;
+      this.outcomeKey = null;
+      return null;
+    }
+    if (this.mapSizeOutOfRange) {
+      this.status = 'error';
+      this.errorCode = 'map_size';
       this.outcome = null;
       this.outcomeKey = null;
       return null;

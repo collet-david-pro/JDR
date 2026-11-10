@@ -2021,6 +2021,7 @@
       "fingerprint": "Empreinte {print}",
       "missing": "Éléments du jeu d'images absents : {keys}",
       "error_zone_too_small": "La zone est trop petite : elle doit faire au moins 8 cases de côté.",
+      "error_map_size": "Ce générateur demande une map de {min} à {max} cases de côté ; celle-ci fait {width} × {height} cases. Redimensionnez la map ou choisissez « Nouvelle map ».",
       "error_failed": "La génération a échoué. {message}",
       "ready": "Aperçu prêt.",
       "apply": "Appliquer",

@@ -225,6 +225,35 @@ describe('target', () => {
     expect(model.errorCode).toBe('zone_too_small');
     expect(runs).toHaveLength(0);
   });
+
+  it('a current map outside the size range of the generator blocks Apply and explains', async () => {
+    // Default new map (30 x 20) with the village (30..200): the generator would clamp the height
+    // to 30 and the walls below row 20 would be refused by the map (nothing applied).
+    const { model, runs } = makeModel({ grid: { width: 30, height: 20 } });
+    model.setGenerator('village');
+    model.setPreset('hamlet');
+    expect(model.mapSizeOutOfRange).toBe(true);
+    expect(model.canApply).toBe(false);
+    model.schedule();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(model.status).toBe('error');
+    expect(model.errorCode).toBe('map_size');
+    expect(runs).toHaveLength(0);
+    expect(await model.apply()).toBeNull();
+    // Same map, a dungeon (20..400) fits; the "new map" target is not bound to the map size.
+    model.setGenerator('dungeon');
+    expect(model.mapSizeOutOfRange).toBe(false);
+    expect(model.canApply).toBe(true);
+    model.setGenerator('village');
+    model.setTarget('new');
+    expect(model.mapSizeOutOfRange).toBe(false);
+    expect(model.canApply).toBe(true);
+    // Too large for the village (> 200 cells): the band past 200 would be emptied.
+    const big = makeModel({ grid: { width: 250, height: 120 } });
+    big.model.setGenerator('village');
+    expect(big.model.mapSizeOutOfRange).toBe(true);
+    expect(big.model.canApply).toBe(false);
+  });
 });
 
 describe('preview run', () => {

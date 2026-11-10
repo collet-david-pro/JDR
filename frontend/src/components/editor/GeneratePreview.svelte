@@ -75,7 +75,14 @@
     <p class="alert alert-error small" role="alert" data-testid="gen-error">
       {model.errorCode === 'zone_too_small'
         ? t('editor.generate.error_zone_too_small')
-        : t('editor.generate.error_failed', { message: model.errorMessage })}
+        : model.errorCode === 'map_size'
+          ? t('editor.generate.error_map_size', {
+              min: model.info.size.min,
+              max: model.info.size.max,
+              width: model.size.width,
+              height: model.size.height,
+            })
+          : t('editor.generate.error_failed', { message: model.errorMessage })}
     </p>
   {/if}
   {#if outcome !== null && model.status !== 'error'}

@@ -61,6 +61,13 @@ export function applyGeneration(
     offset = { x: 0, y: 0 };
     objects = 'all';
   }
+  // A result larger than its target would put walls, doors and lights off the map: the map
+  // refuses them and nothing is applied. Refuse it here, before any operation, with a clear cause.
+  if (result.width > tiles.w || result.height > tiles.h) {
+    throw new Error(
+      `applyGeneration: a ${result.width} x ${result.height} result does not fit ${tiles.w} x ${tiles.h}`,
+    );
+  }
   const uid = newUid ?? (() => newObjectUid());
   const target: BindTarget = {
     floor,

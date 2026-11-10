@@ -163,6 +163,23 @@ describe('applyGeneration', () => {
     ).toThrow(/rect/);
   });
 
+  it('refuses a result larger than its target before any change', () => {
+    const s = session();
+    const big = { ...result(), width: 10, height: 11 };
+    expect(() => applyGeneration(s, { result: big, pack: PACK, target: 'map' }, uids())).toThrow(
+      /does not fit 10 x 10/,
+    );
+    expect(() =>
+      applyGeneration(
+        s,
+        { result: result(), pack: PACK, target: 'selection', rect: { x: 0, y: 0, w: 2, h: 5 } },
+        uids(),
+      ),
+    ).toThrow(/does not fit 2 x 5/);
+    expect(isMapEmpty(s.doc, 'f1')).toBe(true);
+    expect(s.history.state.undoSize).toBe(0);
+  });
+
   it('reuses an existing palette entry for the same asset', () => {
     const s = session();
     applyGeneration(s, { result: result(), pack: PACK, target: 'map' }, uids());
