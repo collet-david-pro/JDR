@@ -6,6 +6,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.7.1] - 2026-11-11
+
+### Fixed
+- **Générer dans la map actuelle** : sur une map trop petite (ou trop grande) pour le générateur, par exemple un village sur une map de 30 × 20 cases, « Appliquer » échouait avec une erreur inattendue alors que l'aperçu semblait correct. L'aperçu l'indique désormais et « Appliquer » reste désactivé.
+- **Villages** (nouvelle version du générateur) : les côtés verticaux des clôtures rurales sont tournés (ils ressemblaient à des barreaux) ; les bougies murales sont posées dans la pièce, à l'écart des portes et des fenêtres, au lieu d'éclairer la rue à travers le mur. À graine égale, un nouveau village diffère de l'ancien ; les maps déjà générées ne changent pas.
+
 ## [0.7.0] - 2026-11-09
 
 ### Added
