@@ -7,4 +7,4 @@ Les murs bloquent la vue, la lumière et les déplacements. Ils décident de ce 
 - Panneau **Propriétés** : épaisseur, ce que l'objet bloque (vision, lumière, déplacement), sens d'ouverture des portes, visibilité (tous, MJ seulement, caché jusqu'à révélation).
 - Pendant la séance, un clic du MJ sur une porte l'ouvre ou la ferme.
 
-Le **Mode performance** (menu Vue) allège les calculs de vision sur les très grandes maps.
+Le **Mode performance** (menu **Affichage**) allège les calculs de vision sur les très grandes maps.

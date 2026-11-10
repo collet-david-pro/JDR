@@ -13,4 +13,4 @@ Le sol est fait de **tuiles** posées sur trois calques : **Sol**, **Terrain** e
 - **Règle** (M) : mesure une distance. **Alt** désactive l'aimantation à la grille.
 - **Main** (H) : déplace la vue. Maintenez **Espace** pour passer temporairement à la main.
 
-Dans le panneau **Calques** : visibilité, verrou, solo et opacité de chaque calque, et ordre des calques. Le menu **Grille** règle l'affichage et le thème de la grille (parchemin, ardoise, plan technique, sombre, clair).
+Dans l'onglet **Calques** des panneaux : visibilité, verrou, solo et opacité de chaque calque, et ordre des calques. Le menu **Affichage** de la barre du haut règle l'affichage et le thème de la grille (parchemin, ardoise, plan technique, sombre, clair).

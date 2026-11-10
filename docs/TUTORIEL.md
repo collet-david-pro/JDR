@@ -66,12 +66,12 @@ Deux voies : partir d'un modèle ou générer la map. Dans les deux cas, vous fi
 
 ### Retoucher dans l'éditeur
 
-Vos modifications sont **enregistrées automatiquement**. **Ctrl+Z** annule. **Tab** masque ou affiche les panneaux.
+Vos modifications sont **enregistrées automatiquement**. **Ctrl+Z** annule. Les outils sont à gauche, rangés par usage ; à droite, les panneaux en onglets (**Propriétés**, **Palette**, **Calques**, **Tokens**, **Notes**, **Ambiance**) suivent l'outil choisi. Le menu **Affichage** de la barre du haut règle la vue, la grille et le brouillard affiché.
 
-- **Terrain** : choisissez une tuile dans la palette, un calque (**Sol**, **Terrain**, **Décor**), puis un outil : pinceau (B), gomme (E), remplissage (G), formes (U).
+- **Terrain** : choisissez une tuile dans l'onglet **Palette**, un calque (**Sol**, **Terrain**, **Décor**), puis un outil : pinceau (B), gomme (E), remplissage (G), formes (U).
 - **Murs et portes** : outil **Mur** (W), un clic par point, double-clic pour finir. Outil **Porte / fenêtre** (D) : cliquez sur un mur. Les murs bloquent la vue, la lumière et les déplacements. Une porte peut être ouverte, verrouillée ou secrète.
-- **Lumières** : outil **Lumière** (L), cliquez pour poser, glissez pour régler le rayon. Des préréglages existent (torche, lanterne, bougie…). Le panneau **Ambiance** règle l'obscurité, la teinte et l'heure.
-- **Tokens** : d'abord créez-les dans l'onglet **Tokens** de la partie (le pack de base en contient une quarantaine, déjà prêts). Dans l'éditeur, outil **Token** (K), choisissez un token dans le panneau **Tokens**, puis cliquez sur une case.
+- **Lumières** : outil **Lumière** (L), cliquez pour poser, glissez pour régler le rayon. Des préréglages existent (torche, lanterne, bougie…). L'onglet **Ambiance** règle l'obscurité, la teinte et l'heure.
+- **Tokens** : d'abord créez-les dans l'onglet **Tokens** de la partie (le pack de base en contient une quarantaine, déjà prêts). Dans l'éditeur, outil **Token** (K), choisissez un token dans l'onglet **Tokens**, puis cliquez sur une case.
 
 ![Éditeur avec un donjon](../frontend/src/help/img/editeur.webp)
 

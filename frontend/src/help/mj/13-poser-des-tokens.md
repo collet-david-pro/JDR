@@ -1,6 +1,6 @@
 # Poser des tokens sur la map
 
-Dans l'éditeur, outil **Token** (K) : choisissez un token dans le panneau **Tokens** (ceux de la partie), puis cliquez sur une case. Le panneau Propriétés règle l'échelle, la rotation, la lumière propre et **Caché aux joueurs**.
+Dans l'éditeur, outil **Token** (K) : choisissez un token dans l'onglet **Tokens** (il s'affiche avec l'outil) (ceux de la partie), puis cliquez sur une case. Le panneau Propriétés règle l'échelle, la rotation, la lumière propre et **Caché aux joueurs**.
 
 Les rencontres préparées se posent aussi d'un clic (voir [rencontres](#mj-preparer-une-rencontre)).
 

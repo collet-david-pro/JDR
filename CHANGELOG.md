@@ -6,6 +6,9 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+### Changed
+- **Nouvelle disposition de l'éditeur** : la barre du haut tient sur une ligne. Les réglages de vue (vue MJ ou joueur, éclairage, brouillard, ombres, exploration, étage du dessous, grille et son thème, mode performance, réinitialisation du brouillard) sont regroupés dans un menu **Affichage**. Les outils sont rangés par usage (Naviguer, Terrain, Structure, Placer, Notes et secrets, Table), ce qui laisse voir les options de l'outil. Les panneaux de droite passent en onglets (Propriétés, Palette, Calques, Tokens, Notes, Ambiance, plus Historique et Générer quand ils sont ouverts), qui suivent l'outil choisi et la sélection. Le zoom est dans la barre d'état. Aide et captures mises à jour.
+
 ## [0.7.1] - 2026-11-11
 
 ### Fixed
