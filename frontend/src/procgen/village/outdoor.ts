@@ -21,7 +21,12 @@ export interface OutdoorInput {
   rngFence: Rng;
   rngSpots: Rng;
   rngTrees: Rng;
+  /** v2: fence cells of a north-south run turned a quarter (the sprite is an east-west fence). */
+  orientFences?: boolean;
 }
+
+/** Cell flag: a quarter turn clockwise (projet.md 12.2, bits 0-1 = rotation). */
+const QUARTER_TURN = 1;
 
 /** Places the outdoor decor and lights of the village. */
 export function placeOutdoor(i: OutdoorInput): { decor: GenCell[]; lights: GenLight[] } {
@@ -70,6 +75,19 @@ export function placeOutdoor(i: OutdoorInput): { decor: GenCell[]; lights: GenLi
         }
       }
     });
+  }
+
+  // A fence piece with fence neighbours above or below only belongs to a north-south run.
+  if (i.orientFences === true) {
+    const fenceAt = new Uint8Array(W * H);
+    for (const d of decor) fenceAt[d.y * W + d.x] = 1;
+    const at = (x: number, y: number): boolean =>
+      x >= 0 && y >= 0 && x < W && y < H && fenceAt[y * W + x] === 1;
+    for (const d of decor) {
+      const vertical = at(d.x, d.y - 1) || at(d.x, d.y + 1);
+      const horizontal = at(d.x - 1, d.y) || at(d.x + 1, d.y);
+      if (vertical && !horizontal) d.flags = QUARTER_TURN;
+    }
   }
 
   // Well (rural: near a road; town: centre of the square) and stalls (town).

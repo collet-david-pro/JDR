@@ -7,7 +7,7 @@ import {
 } from '../../src/procgen/registry';
 import { isPackKey } from '../../src/procgen/pack-keys';
 import { VILLAGE_THEMES } from '../../src/procgen/themes/village';
-import { villageGenerator } from '../../src/procgen/village';
+import { VILLAGE_VERSION, villageGenerator, villageGeneratorV1 } from '../../src/procgen/village';
 import {
   VILLAGE_DEFAULTS,
   VILLAGE_PRESETS,
@@ -15,7 +15,10 @@ import {
 } from '../../src/procgen/village/params';
 import { analyse } from './village-checks';
 
-beforeAll(() => registerGenerator(villageGenerator));
+beforeAll(() => {
+  registerGenerator(villageGeneratorV1);
+  registerGenerator(villageGenerator);
+});
 afterAll(() => unregisterGenerator('village'));
 
 describe('village params', () => {
@@ -48,8 +51,8 @@ describe('village params', () => {
 
 describe('village generator', () => {
   it('is deterministic and uses only pack keys', () => {
-    const a = runGenerator('village', 1, 'det', {});
-    const b = runGenerator('village', 1, 'det', {});
+    const a = runGenerator('village', VILLAGE_VERSION, 'det', {});
+    const b = runGenerator('village', VILLAGE_VERSION, 'det', {});
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     const f = a.floors[0]!;
     for (const c of [...f.ground, ...f.terrain, ...f.decor])
@@ -63,15 +66,21 @@ describe('village generator', () => {
   });
   it('refuses zones and honours cancellation', () => {
     expect(() =>
-      runGenerator('village', 1, 'z', {}, { zone: { width: 30, height: 30, openings: [] } }),
+      runGenerator(
+        'village',
+        VILLAGE_VERSION,
+        'z',
+        {},
+        { zone: { width: 30, height: 30, openings: [] } },
+      ),
     ).toThrow('zone_unsupported');
-    expect(() => runGenerator('village', 1, 'c', {}, { isCancelled: () => true })).toThrow(
-      GenCancelled,
-    );
+    expect(() =>
+      runGenerator('village', VILLAGE_VERSION, 'c', {}, { isCancelled: () => true }),
+    ).toThrow(GenCancelled);
   });
   it('at most one cell per layer and cell', () => {
     for (const theme of ['rural', 'town']) {
-      const f = runGenerator('village', 1, 'uniq', { theme }).floors[0]!;
+      const f = runGenerator('village', VILLAGE_VERSION, 'uniq', { theme }).floors[0]!;
       const seen = new Set<number>();
       for (const d of f.decor) {
         const k = d.y * 1000 + d.x;
@@ -91,7 +100,7 @@ describe('village structure (D9)', () => {
       it(`200 seeds ${w}x${h} ${theme}: access, rooms, cut walls, windows`, () => {
         for (let s = 0; s < 200; s++) {
           const p = validateVillage({ width: w, height: h, theme, buildings: 12 });
-          const r = runGenerator('village', 1, `d9-${s}`, p);
+          const r = runGenerator('village', VILLAGE_VERSION, `d9-${s}`, p);
           const problems = analyse(r, p);
           expect(problems.slice(0, 3), `${theme} ${w}x${h} d9-${s}`).toEqual([]);
         }

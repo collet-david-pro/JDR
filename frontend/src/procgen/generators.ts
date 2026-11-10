@@ -15,7 +15,7 @@ import { DUNGEON_THEME_IDS } from './themes/dungeon';
 import { OUTDOOR_THEME_IDS } from './themes/outdoor';
 import { VILLAGE_THEME_IDS } from './themes/village';
 import type { GeneratorId } from './types';
-import { villageGenerator } from './village';
+import { villageGenerator, villageGeneratorV1 } from './village';
 import { VILLAGE_DEFAULTS, VILLAGE_PRESETS } from './village/params';
 
 /** One slider / select / switch of the panel. Bounds mirror the generator's `validate`. */
@@ -144,11 +144,14 @@ export function isGeneratorId(value: unknown): value is GeneratorId {
   return typeof value === 'string' && (GENERATOR_IDS as readonly string[]).includes(value);
 }
 
-/** Idempotent: registers the four generators once per realm (page or worker). */
+/** Idempotent: registers the four generators (and their older versions) once per realm. */
 export function registerAllGenerators(): void {
   const known = new Set(listGenerators().map((g) => g.id));
   if (!known.has('dungeon')) registerGenerator(dungeonGenerator);
   if (!known.has('cave')) registerGenerator(caveGenerator);
   if (!known.has('outdoor')) registerGenerator(outdoorGenerator);
-  if (!known.has('village')) registerGenerator(villageGenerator);
+  if (!known.has('village')) {
+    registerGenerator(villageGeneratorV1);
+    registerGenerator(villageGenerator);
+  }
 }

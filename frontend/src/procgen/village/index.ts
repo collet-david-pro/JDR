@@ -29,11 +29,17 @@ export {
 } from './params';
 export { cutWalls } from './cutwalls';
 
-/** Version of the village generator algorithm. */
-export const VILLAGE_VERSION = 1;
+/**
+ * Version of the village generator algorithm (the current one). v2: fences of north-south runs
+ * are turned a quarter (v1 drew every fence piece east-west, a ladder along the sides of a
+ * plot), and wall lights stay off windows and doors, inside their room (v1 put them on the wall
+ * line, where a candle also lit the street and the next room). v1 stays callable.
+ */
+export const VILLAGE_VERSION = 2;
 const PHASES = 9;
 
-function generate(p: VillageParams, ctx: GenContext): GenResult {
+function generate(p: VillageParams, ctx: GenContext, version: number): GenResult {
+  const v2 = version >= 2;
   if (ctx.zone !== undefined) throw new Error('zone_unsupported');
   const { rng } = ctx;
   const W = p.width;
@@ -112,7 +118,7 @@ function generate(p: VillageParams, ctx: GenContext): GenResult {
         cells: room.cells.length,
       });
     }
-    const furniture = furnishBuilding(plan, ruleSet, p.decor, rf.fork(`b${k}`));
+    const furniture = furnishBuilding(plan, ruleSet, p.decor, rf.fork(`b${k}`), v2);
     decor.push(...furniture.decor);
     lights.push(...furniture.lights);
     for (const pl of plan.exterior) {
@@ -146,6 +152,7 @@ function generate(p: VillageParams, ctx: GenContext): GenResult {
     rngFence: rng.fork('fences'),
     rngSpots: rng.fork('spots'),
     rngTrees: rng.fork('trees'),
+    orientFences: v2,
   });
   decor.push(...out.decor);
   lights.push(...out.lights);
@@ -158,7 +165,7 @@ function generate(p: VillageParams, ctx: GenContext): GenResult {
   phase('done');
   return {
     generator: 'village',
-    gen_version: VILLAGE_VERSION,
+    gen_version: version,
     seed: ctx.seed,
     width: W,
     height: H,
@@ -188,12 +195,18 @@ function generate(p: VillageParams, ctx: GenContext): GenResult {
   };
 }
 
-/** Village generator. */
-export const villageGenerator: Generator<VillageParams> = {
-  id: 'village',
-  version: VILLAGE_VERSION,
-  defaults: { ...VILLAGE_DEFAULTS },
-  presets: VILLAGE_PRESETS,
-  validate: validateVillage,
-  generate,
-};
+function villageOf(version: number): Generator<VillageParams> {
+  return {
+    id: 'village',
+    version,
+    defaults: { ...VILLAGE_DEFAULTS },
+    presets: VILLAGE_PRESETS,
+    validate: validateVillage,
+    generate: (p, ctx) => generate(p, ctx, version),
+  };
+}
+
+/** Village generator (current version). */
+export const villageGenerator: Generator<VillageParams> = villageOf(VILLAGE_VERSION);
+/** Village generator v1, kept for the maps generated with it (same seed, same result). */
+export const villageGeneratorV1: Generator<VillageParams> = villageOf(1);

@@ -18,12 +18,15 @@ import { main, unique, userPassword } from "../helpers/env";
  * Without WebGPU / WebGL 2 in the headless browser the scenarios are skipped.
  */
 
+/** Current version of each generator (the panel generates with it): *_VERSION in frontend/src/procgen. */
+const VERSIONS: Record<string, number> = { dungeon: 1, cave: 1, outdoor: 1, village: 2 };
+
 const golden = (generator: string): Record<string, string> =>
   JSON.parse(
     readFileSync(
       path.resolve(
         path.dirname(fileURLToPath(import.meta.url)),
-        `../../frontend/tests/procgen/golden/${generator}.v1.json`,
+        `../../frontend/tests/procgen/golden/${generator}.v${VERSIONS[generator]}.json`,
       ),
       "utf8",
     ),

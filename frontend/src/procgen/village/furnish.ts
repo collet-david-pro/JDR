@@ -25,12 +25,19 @@ export function villageRules(name: string): RuleSet {
   return set;
 }
 
-/** Furnishes a building. */
+/**
+ * Wall lights of village v2: kept off windows and doors and moved this far (cells) into their
+ * room, so a candle lights its room only (on the wall line it would light both sides).
+ */
+export const WALL_LIGHT_INSET = 0.15;
+
+/** Furnishes a building (`indoorLights`: v2 placement of the wall lights, see above). */
 export function furnishBuilding(
   plan: BuildingPlan,
   ruleSet: RuleSet,
   density: number,
   rng: Rng,
+  indoorLights = false,
 ): { decor: GenCell[]; lights: GenLight[] } {
   let minX = Infinity;
   let minY = Infinity;
@@ -64,6 +71,15 @@ export function furnishBuilding(
     density: density * 2,
     rng,
     blocking: (key) => packKey(key).blocking,
+    ...(indoorLights
+      ? {
+          lightInset: WALL_LIGHT_INSET,
+          lightAvoid: [...plan.doors, ...plan.windows].map((o) => ({
+            a: [o.a[0] - ox, o.a[1] - oy] as const,
+            b: [o.b[0] - ox, o.b[1] - oy] as const,
+          })),
+        }
+      : {}),
   });
   return {
     decor: res.decor.map((c) => ({ ...c, x: c.x + ox, y: c.y + oy })),

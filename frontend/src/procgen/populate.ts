@@ -38,6 +38,13 @@ export interface PopulateInput {
   reserved?: readonly P[];
   /** Light preset of the torches when the rules do not set one (default torch). */
   lightPreset?: LightPresetId;
+  /**
+   * Distance (cells) between a wall light and its wall, towards its cell. 0 (default) puts it on
+   * the wall line, where it lights both sides (vision: a source on a wall is not occluded by it).
+   */
+  lightInset?: number;
+  /** Wall edges (windows, doors) that never carry a light. */
+  lightAvoid?: readonly PopulateOpening[];
 }
 export interface PopulateResult {
   decor: GenCell[];
@@ -293,16 +300,19 @@ export function populate(input: PopulateInput): PopulateResult {
   const torches = ruleSet.torches;
   if (torches !== null) {
     const preset = torches.preset ?? input.lightPreset ?? 'torch';
+    const reach = 0.5 - (input.lightInset ?? 0);
+    // Midpoints (doubled, integers) of the edges that must stay free of lights.
+    const avoid = new Set<number>();
+    for (const o of input.lightAvoid ?? []) avoid.add((o.a[1] + o.b[1]) * 4096 + o.a[0] + o.b[0]);
     const spots: [number, number][] = [];
     for (const region of regions) {
       for (const [x, y] of region.cells) {
         if (floor.get(x, y) === 0) continue;
         const side = wallSide(floor, x, y);
         if (side < 0) continue;
-        spots.push([
-          round3(x + 0.5 + DIRS[side]![0] * 0.5),
-          round3(y + 0.5 + DIRS[side]![1] * 0.5),
-        ]);
+        const [dx, dy] = DIRS[side]!;
+        if (avoid.size > 0 && avoid.has((2 * y + 1 + dy) * 4096 + 2 * x + 1 + dx)) continue;
+        spots.push([round3(x + 0.5 + dx * reach), round3(y + 0.5 + dy * reach)]);
       }
     }
     rng.shuffle(spots);
