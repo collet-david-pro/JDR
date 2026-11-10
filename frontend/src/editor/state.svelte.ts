@@ -37,6 +37,7 @@ import {
   type ToolId,
 } from './tools/types';
 import type { PaletteItem } from './ui/palette';
+import type { PanelTab } from './ui/layout';
 import type { SaveStatus } from './sync/OpsQueue';
 
 /** A token definition as listed in the Tokens panel (simple values). */
@@ -191,6 +192,10 @@ export class EditorUiState implements EditorSettings {
   theme = $state<GridTheme>('parchment');
   gridVisible = $state(true);
   panelsOpen = $state(true);
+  /** Tab of the right column (editor/ui/layout.ts). */
+  panelTab = $state<PanelTab>('palette');
+  /** "Affichage" menu of the top bar open. */
+  viewMenuOpen = $state(false);
   helpOpen = $state(false);
   /** History panel shown (P4c). */
   historyOpen = $state(false);

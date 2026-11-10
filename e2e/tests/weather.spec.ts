@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { AdminApi, login } from "../helpers/app";
 import { main, unique, userPassword } from "../helpers/env";
+import { editorTab } from "../helpers/editor";
 
 async function gmEditor(page: Page): Promise<boolean> {
   const gm = unique("Meteo");
@@ -55,6 +56,7 @@ test("weather: rain draws an animated layer, reduced motion freezes it", async (
   test.setTimeout(120_000);
   test.skip(!(await gmEditor(page)), `${browserName}: neither WebGPU nor WebGL 2`);
 
+  await editorTab(page, "ambient");
   const clear = await frame(page);
   await page.getByTestId("ambient-weather").selectOption("rain");
   await page.getByTestId("ambient-weather-intensity").fill("1");

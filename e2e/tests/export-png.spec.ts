@@ -7,6 +7,7 @@ import { inflateSync } from "node:zlib";
 import { AdminApi, login } from "../helpers/app";
 import { resetRateLimits } from "../helpers/db";
 import { main, unique, userPassword } from "../helpers/env";
+import { closeViewMenu, openViewMenu } from "../helpers/editor";
 
 /**
  * PNG export (projet.md 17, 23 P4): ×1 / ×2 / ×4 at the announced size, 8 000 × 8 000 px without
@@ -477,8 +478,10 @@ test("exported pixels match the editor preview", async ({
   await expectSaved(page);
   // P5: the GM view veils the unexplored fog; the export below has no fog nor lighting, so
   // the preview compared with it is the plain view (same options).
+  await openViewMenu(page);
   await page.getByTestId("view-fog").uncheck();
   await page.getByTestId("view-lighting").uncheck();
+  await closeViewMenu(page);
   // Pointer away (no brush preview), let the engine settle, capture the preview.
   await page.mouse.move(1, 1);
   await page.waitForTimeout(500);

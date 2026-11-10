@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { resetRateLimits } from "../helpers/db";
 import { main } from "../helpers/env";
 import { createGame, createMap, openUser, watchErrors, type Actor, type MapRef } from "../helpers/sessions";
+import { editorTab } from "../helpers/editor";
 
 /**
  * P9b2a: notes, pins, zones, traps and secrets in the map editor. The editor is driven through the
@@ -47,6 +48,7 @@ test("notes: Markdown dialog, pins, zone, trap and secret passage, delete and un
     const dialog = page.getByTestId("note-dialog");
 
     // 1. A note written with the toolbar; the body is shown as text, never as HTML.
+    await editorTab(page, "notes");
     await page.getByTestId("note-add").click();
     await expect(dialog).toBeVisible();
     await dialog.locator('input[name="title"]').fill("Auberge du Cerf");
@@ -125,6 +127,7 @@ test("notes: Markdown dialog, pins, zone, trap and secret passage, delete and un
       props: { kind: "passage" },
     });
     const objectCount = d.objects.length;
+    await editorTab(page, "notes");
     await expect(page.getByTestId("note-list").locator("li")).toHaveCount(1);
 
     // 3. Delete the note (the confirmation counts the linked pin), then undo.
@@ -146,6 +149,7 @@ test("notes: Markdown dialog, pins, zone, trap and secret passage, delete and un
     expect(d.objects.find((o: any) => o.type === "pin").props.note).toBe(noteUid);
 
     // 4. Reset of the traps and secrets: confirmation, then the map stays saved and complete.
+    await editorTab(page, "notes");
     await page.getByTestId("secrets-reset").click();
     await page.getByTestId("secrets-reset-confirm").click();
     await saved(page);

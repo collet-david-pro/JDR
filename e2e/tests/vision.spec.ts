@@ -3,6 +3,7 @@ import { inflateSync, inflateRawSync } from "node:zlib";
 import { AdminApi, login } from "../helpers/app";
 import { resetRateLimits } from "../helpers/db";
 import { main, unique, userPassword } from "../helpers/env";
+import { closeViewMenu, editorTab, openViewMenu } from "../helpers/editor";
 
 /**
  * P5 (projet.md 2.5, 14.2, 23 P5): a room of walls with a door, a light and a placed token;
@@ -260,6 +261,7 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   const m = await calibrate(page);
 
   // Night: full darkness (lighting is what makes the difference).
+  await editorTab(page, "ambient");
   await page.getByTestId("ambient-darkness").fill("1");
   // 1. A room of walls (2,2)–(12,10), a door on the bottom wall, a torch, a token.
   await page.getByTestId("tool-wall").click();
@@ -269,6 +271,7 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   await clickCell(page, m, 7, 10);
   await page.getByTestId("tool-light").click();
   await clickCell(page, m, 5, 6);
+  await editorTab(page, "tokens");
   await page.getByTestId(`token-def-${tokenId}`).click();
   await expect(page.getByTestId("tool-token")).toHaveAttribute("aria-pressed", "true");
   await clickCell(page, m, 9.4, 6.4);
@@ -284,7 +287,9 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   expect(saved.tokens_placed[0]).toMatchObject({ token_id: tokenId, x: 9.5, y: 6.5 });
 
   // 2. A wall stops the light: bright inside near the torch, dark behind the bottom wall.
+  await openViewMenu(page);
   await page.getByTestId("view-fog").uncheck();
+  await closeViewMenu(page);
   let sample = await shot(page, m);
   const inside = sample(5.5, 8.5);
   const behind = sample(5.5, 11.5);
@@ -317,15 +322,19 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   // 4. "See as the player" (every PC): unexplored areas are black, the lit room is seen.
   // WebKit on Linux runners (software GL) sometimes leaves the fog pass out of the screenshot:
   // checked there by step 6, and here on Chromium, Firefox and WebKit on macOS.
+  await openViewMenu(page);
   await page.getByTestId("view-fog").check();
   await page.getByTestId("view-mode").selectOption("all_pcs");
+  await closeViewMenu(page);
   if (!(browserName === "webkit" && process.platform === "linux")) {
     // Software rendering may need more than one frame to show the new view.
     await expect.poll(async () => (await shot(page, m))(16.5, 4.5), { timeout: 10_000 }).toBeLessThan(12);
     sample = await shot(page, m);
     expect(sample(5.5, 8.5)).toBeGreaterThan(sample(16.5, 4.5) + 25);
   }
+  await openViewMenu(page);
   await page.getByTestId("view-mode").selectOption("gm");
+  await closeViewMenu(page);
 
   // 5. Reveal fog with the F tool (rectangle outside the room), saved on the server.
   await page.getByTestId("tool-fog").click();
@@ -342,8 +351,10 @@ test("P5: walls stop the light, door opens fast, player view, fog kept after rel
   expect(await editorReady(page)).toBe(true);
   expect(await fogOf(page.request, mapId, floor)).toEqual(fog);
   const m2 = await calibrate(page);
+  await openViewMenu(page);
   await page.getByTestId("view-lighting").uncheck();
   await page.getByTestId("view-mode").selectOption("all_pcs");
+  await closeViewMenu(page);
   sample = await shot(page, m2);
   expect(sample(16.5, 4.5), `explored ${sample(16.5, 4.5)} vs unexplored ${sample(16.5, 12.5)}`).toBeGreaterThan(
     sample(16.5, 12.5) + 15,
@@ -370,6 +381,7 @@ test("A61: wall snapping step 1/4 set on the map, coordinates saved", async ({
   test.skip(!(await editorReady(page)), `${browserName}: neither WebGPU nor WebGL 2`);
   const m = await calibrate(page);
 
+  await editorTab(page, "ambient");
   await page.getByTestId("snap-step-map").selectOption("0.25");
   await page.getByTestId("tool-wall").click();
   // The map setting is recalled in the tool options.

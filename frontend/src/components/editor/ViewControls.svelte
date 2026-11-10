@@ -1,11 +1,15 @@
 <script lang="ts">
+  import type { GridTheme } from '../../editor/contracts';
   import type { EditorSession } from '../../editor/ui/session';
   import type { ViewState } from '../../editor/state.svelte';
+  import { themeLabel } from '../../editor/ui/labels';
+  import { GRID_THEME_IDS } from '../../engine/grid-themes';
   import { t } from '../../lib/i18n';
 
   /**
    * View of the map (projet.md 14.2, 18.1 p.5 "vue joueur"): GM view or "see as" a placed token
-   * / every PC, render switches, fog exploration, fog reset, performance mode.
+   * / every PC, render switches, fog exploration, fog reset, performance mode, grid. Shown in the
+   * "Affichage" menu of the top bar (ViewMenu).
    */
   interface Props {
     session: EditorSession;
@@ -39,12 +43,11 @@
 </script>
 
 <div class="group view" role="group" aria-label={t('editor.view.label')}>
-  <label class="inline">
-    <span class="visually-hidden">{t('editor.view.label')}</span>
+  <label class="field">
+    <span>{t('editor.view.label')}</span>
     <select
       class="select"
       value={choice}
-      title={t('editor.view.label')}
       data-testid="view-mode"
       onchange={(e) => choose(e.currentTarget.value)}
     >
@@ -69,12 +72,33 @@
       {switchLabel(key)}
     </label>
   {/each}
-  <label class="inline">
-    <span class="visually-hidden">{t('editor.view.performance')}</span>
+  <label class="inline check">
+    <input
+      type="checkbox"
+      checked={ui.gridVisible}
+      data-testid="editor-grid"
+      onchange={(event) => session.setGridVisible(event.currentTarget.checked)}
+    />
+    {t('editor.grid.show')}
+  </label>
+  <label class="field">
+    <span>{t('editor.grid.theme')}</span>
+    <select
+      class="select"
+      value={ui.theme}
+      data-testid="editor-theme"
+      onchange={(event) => session.setTheme(event.currentTarget.value as GridTheme)}
+    >
+      {#each GRID_THEME_IDS as theme (theme)}
+        <option value={theme}>{themeLabel(theme)}</option>
+      {/each}
+    </select>
+  </label>
+  <label class="field">
+    <span>{t('editor.view.performance')}</span>
     <select
       class="select"
       value={view.performance}
-      title={t('editor.view.performance')}
       data-testid="view-performance"
       onchange={(e) =>
         session.scene.setView({ performance: e.currentTarget.value as ViewState['performance'] })}
@@ -106,9 +130,14 @@
 <style>
   .group {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1) var(--space-2);
-    align-items: center;
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: stretch;
+  }
+  .field {
+    display: grid;
+    gap: var(--space-1);
+    font-size: var(--font-size-sm);
   }
   .inline {
     display: inline-flex;

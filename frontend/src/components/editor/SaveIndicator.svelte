@@ -58,7 +58,7 @@
     display: inline-flex;
     gap: var(--space-2);
     align-items: center;
-    width: 19rem;
+    width: 17rem;
     max-width: 100%;
   }
   .indicator.wide {

@@ -20,6 +20,7 @@ import {
   type Actor,
   type MapRef,
 } from '../helpers/sessions';
+import { closeViewMenu, editorTab, openViewMenu } from '../helpers/editor';
 
 /**
  * Screenshots and animation of the README (P13-4b ter), light theme, with a demonstration
@@ -553,9 +554,12 @@ test('readme screenshots', async ({ browser }) => {
     await page.setViewportSize({ width: 1440, height: 860 });
     await page.goto(`/games/${gameId}/maps/${crypt.id}/edit`);
     await expect(page.getByTestId('editor-viewport')).toHaveAttribute('data-state', 'ready', { timeout: 40_000 });
+    await openViewMenu(page);
     await page.getByTestId('view-shadows').check();
     await page.getByTestId('view-fog').uncheck();
     await page.getByTestId('editor-grid').uncheck();
+    await closeViewMenu(page);
+    await editorTab(page, 'properties');
     const list = page.getByTestId('scene-object-list');
     await list.locator('summary').click();
     await list.getByTestId('scene-item-light').nth(8).click();

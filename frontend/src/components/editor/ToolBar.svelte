@@ -1,7 +1,8 @@
 <script lang="ts">
   import ToolOptions from './ToolOptions.svelte';
   import type { ToolId } from '../../editor/tools/types';
-  import { toolLabel } from '../../editor/ui/labels';
+  import { toolGroupLabel, toolLabel } from '../../editor/ui/labels';
+  import { groupTools } from '../../editor/ui/layout';
   import type { EditorSession } from '../../editor/ui/session';
   import { t } from '../../lib/i18n';
 
@@ -12,7 +13,10 @@
 
   let { session }: Props = $props();
   const ui = $derived(session.ui);
-  const tools = $derived(Object.values(session.controller.tools));
+  const groups = $derived(groupTools(Object.values(session.controller.tools)));
+  /** Keyboard order: the groups one after the other. */
+  const tools = $derived(groups.flatMap((group) => group.tools));
+  const uid = $props.id();
 
   let list: HTMLDivElement | undefined = $state();
   let focusIndex = $state(-1);
@@ -55,20 +59,30 @@
     tabindex="-1"
     onkeydown={keydown}
   >
-    {#each tools as tool, index (tool.id)}
-      <button
-        type="button"
-        class="tool"
-        aria-pressed={ui.tool === tool.id}
-        tabindex={index === current ? 0 : -1}
-        title={tool.shortcut === '' ? null : t('editor.tools.shortcut', { key: tool.shortcut })}
-        data-testid={`tool-${tool.id}`}
-        onclick={() => choose(tool.id, index)}
-        onfocus={() => (focusIndex = index)}
-      >
-        <span class="label">{toolLabel(tool.id)}</span>
-        {#if tool.shortcut !== ''}<kbd aria-hidden="true">{tool.shortcut}</kbd>{/if}
-      </button>
+    {#each groups as group (group.id)}
+      <div class="group" role="group" aria-labelledby={`${uid}-${group.id}`}>
+        <span class="group-label" id={`${uid}-${group.id}`}>{toolGroupLabel(group.id)}</span>
+        <div class="grid">
+          {#each group.tools as tool (tool.id)}
+            {@const index = tools.indexOf(tool)}
+            <button
+              type="button"
+              class="tool"
+              aria-pressed={ui.tool === tool.id}
+              tabindex={index === current ? 0 : -1}
+              title={tool.shortcut === ''
+                ? null
+                : t('editor.tools.shortcut', { key: tool.shortcut })}
+              data-testid={`tool-${tool.id}`}
+              onclick={() => choose(tool.id, index)}
+              onfocus={() => (focusIndex = index)}
+            >
+              <span class="label">{toolLabel(tool.id)}</span>
+              {#if tool.shortcut !== ''}<kbd aria-hidden="true">{tool.shortcut}</kbd>{/if}
+            </button>
+          {/each}
+        </div>
+      </div>
     {/each}
   </div>
   <ToolOptions {session} />
@@ -91,17 +105,36 @@
   }
   .tools {
     display: grid;
+    gap: var(--space-2);
+  }
+  .group {
+    display: grid;
+    gap: 2px;
+  }
+  .group-label {
+    padding: 0 var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
     gap: 2px;
   }
   .tools:focus {
     outline: none;
   }
   .tool {
+    position: relative;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-1) var(--space-2);
+    min-height: 2rem;
+    padding: var(--space-1) 0.9rem var(--space-1) var(--space-2);
+    overflow-wrap: normal;
+    hyphens: auto;
     border: var(--border-width) solid transparent;
     border-radius: var(--radius-sm);
     background: none;
@@ -120,14 +153,16 @@
     color: var(--color-primary);
     font-weight: var(--font-weight-medium);
   }
+  .label {
+    line-height: 1.2;
+  }
   kbd {
-    min-width: 1.4em;
-    padding: 0 var(--space-1);
-    border: var(--border-width) solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
+    position: absolute;
+    top: 2px;
+    right: 3px;
     font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
-    text-align: center;
+    font-size: 0.65rem;
+    line-height: 1;
     color: var(--color-text-muted);
   }
   @media (max-width: 48rem) {

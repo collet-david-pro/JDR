@@ -1,21 +1,16 @@
 <script lang="ts">
   import { setContext, untrack } from 'svelte';
-  import AmbientPanel from './AmbientPanel.svelte';
   import BackgroundDialog from './BackgroundDialog.svelte';
   import ResizeDialog from './ResizeDialog.svelte';
   import EditorCommandPalette from './EditorCommandPalette.svelte';
+  import EditorPanels from './EditorPanels.svelte';
   import EditorTopBar from './EditorTopBar.svelte';
   import EngineUnsupported from './EngineUnsupported.svelte';
   import GeneratePanel from './GeneratePanel.svelte';
   import HelpDialog from './HelpDialog.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
-  import LayersPanel from './LayersPanel.svelte';
-  import NotesPanel from './NotesPanel.svelte';
-  import PalettePanel from './PalettePanel.svelte';
-  import PropertiesPanel from './PropertiesPanel.svelte';
   import SnapshotDialog from './SnapshotDialog.svelte';
   import StatusBar from './StatusBar.svelte';
-  import TokensPanel from './TokensPanel.svelte';
   import ToolBar from './ToolBar.svelte';
   import ConfirmDialog from '../ConfirmDialog.svelte';
   import ExportPngDialog from '../export/ExportPngDialog.svelte';
@@ -575,6 +570,16 @@
       data-state={engineState}
       onpointerdown={() => viewport?.focus({ preventScroll: true })}
     ></div>
+    {#if !ui.panelsOpen}
+      <button
+        type="button"
+        class="show-panels button button-small"
+        aria-pressed="false"
+        data-testid="editor-panels"
+        onclick={() => session.togglePanels()}
+        ><span aria-hidden="true">«</span> {t('editor.panels.button')}</button
+      >
+    {/if}
     {#if loadFailed}
       <div class="state alert alert-error" role="alert" data-testid="editor-load-error">
         <span>{t('editor.save.load_error')}</span>
@@ -597,16 +602,16 @@
   </div>
 
   {#if ui.panelsOpen}
-    <aside class="panels" aria-label={t('editor.panels.hide')}>
-      {#if ui.historyOpen}
+    <EditorPanels {session} {gameId} {tokensState}>
+      {#snippet history()}
         <HistoryPanel
           model={versions}
           ready={ui.save !== null}
           onsnapshot={() => (ui.snapshotOpen = true)}
           onclose={() => (ui.historyOpen = false)}
         />
-      {/if}
-      {#if ui.generateOpen}
+      {/snippet}
+      {#snippet generate()}
         <GeneratePanel
           {session}
           mapId={initial.map.id}
@@ -617,14 +622,8 @@
           ready={ui.editable && ui.save !== null}
           onclose={closeGenerate}
         />
-      {/if}
-      <PropertiesPanel {session} />
-      <LayersPanel {session} />
-      <PalettePanel {session} />
-      <TokensPanel {session} state={tokensState} />
-      <NotesPanel {session} {gameId} />
-      <AmbientPanel {session} />
-    </aside>
+      {/snippet}
+    </EditorPanels>
   {/if}
 
   <StatusBar {session} {debug} />
@@ -668,7 +667,7 @@
     /* Above the site header and banner (z-banner 50), below dialogs and toasts. */
     z-index: 60;
     display: grid;
-    grid-template-columns: var(--tools-w, 11rem) minmax(0, 1fr) var(--panels-w, 18rem);
+    grid-template-columns: var(--tools-w, 13rem) minmax(0, 1fr) var(--panels-w, 18rem);
     grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       'top top top'
@@ -678,7 +677,7 @@
     color: var(--color-text);
   }
   .editor.panels-hidden {
-    grid-template-columns: var(--tools-w, 11rem) minmax(0, 1fr) 0;
+    grid-template-columns: var(--tools-w, 13rem) minmax(0, 1fr) 0;
   }
   .stage {
     grid-area: stage;
@@ -700,6 +699,13 @@
     outline: 2px solid var(--color-focus);
     outline-offset: -2px;
   }
+  .show-panels {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 2;
+    box-shadow: var(--shadow-md);
+  }
   .state {
     position: absolute;
     inset: auto var(--space-4) var(--space-4) var(--space-4);
@@ -709,23 +715,12 @@
     inset: 50% auto auto 50%;
     transform: translate(-50%, -50%);
   }
-  .panels {
-    grid-area: panels;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    min-width: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    border-left: var(--border-width) solid var(--color-border);
-    background: var(--color-surface);
-  }
   @media (max-width: 48rem) {
     .editor,
     .editor.panels-hidden {
       grid-template-columns: auto minmax(0, 1fr) 0;
     }
-    .panels {
+    .editor :global(.panels) {
       position: fixed;
       top: 3rem;
       right: 0;

@@ -11,6 +11,7 @@ import { inflateRawSync } from "node:zlib";
 import { AdminApi, login } from "../helpers/app";
 import { resetRateLimits } from "../helpers/db";
 import { main, unique, userPassword } from "../helpers/env";
+import { editorTab } from "../helpers/editor";
 
 /**
  * Maps P4b (projet.md 15.1, 13.5, 23 P4): Maps tab, server save, reload, brutal close of the
@@ -362,10 +363,12 @@ test("P4: 10 000 cells then brutal close of the tab ⇒ nothing older than 1.5 s
   // 2. Normal network: fill another layer, close 1.6 s later.
   await page2.getByTestId("editor-viewport").focus();
   await page2.keyboard.press("2");
+  await editorTab(page2, "layers");
   await expect(page2.getByTestId("layer-activate-terrain")).toHaveAttribute(
     "aria-pressed",
     "true",
   );
+  await editorTab(page2, "palette");
   await page2.getByTestId("palette-item-1").click();
   await page2.getByTestId("tool-fill").click();
   const c2 = await centre(page2);

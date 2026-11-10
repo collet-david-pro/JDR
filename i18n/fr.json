@@ -1552,6 +1552,7 @@
   },
   "editor": {
     "back": "Retour à la partie",
+    "back_short": "Partie",
     "undo": "Annuler",
     "undo_label": "Annuler : {action}",
     "redo": "Rétablir",
@@ -1596,7 +1597,13 @@
       "zone": "Zone",
       "trap": "Piège",
       "secret": "Secret",
-      "image": "Image"
+      "image": "Image",
+      "group_navigate": "Naviguer",
+      "group_terrain": "Terrain",
+      "group_structure": "Structure",
+      "group_place": "Placer",
+      "group_story": "Notes et secrets",
+      "group_table": "Table"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1684,7 +1691,18 @@
     },
     "panels": {
       "show": "Afficher les panneaux",
-      "hide": "Masquer les panneaux"
+      "hide": "Masquer les panneaux",
+      "button": "Panneaux",
+      "label": "Panneaux de l'éditeur",
+      "tab_properties": "Propriétés",
+      "tab_palette": "Palette",
+      "tab_layers": "Calques",
+      "tab_tokens": "Tokens",
+      "tab_notes": "Notes",
+      "tab_ambient": "Ambiance",
+      "tab_history": "Historique",
+      "tab_generate": "Générer",
+      "show_tab": "Afficher le panneau {tab}"
     },
     "status": {
       "label": "Barre d'état",
@@ -1979,7 +1997,8 @@
       "fog_reset_title": "Réinitialiser le brouillard",
       "fog_reset_message": "Tout le brouillard exploré de cet étage sera effacé. Cette action ne peut pas être annulée.",
       "fog_reset_confirm": "Réinitialiser",
-      "fog_reset_done": "Brouillard réinitialisé."
+      "fog_reset_done": "Brouillard réinitialisé.",
+      "menu": "Affichage"
     },
     "shortcuts": {
       "generate": "Ouvrir le panneau Générer"
@@ -2238,7 +2257,8 @@
       "apply": "Appliquer",
       "failed": "Le changement de taille a échoué. Rien n'a été modifié.",
       "undo_failed": "Annulation impossible : restaurez la version « Avant redimensionnement » depuis l'historique."
-    }
+    },
+    "zoom_label": "Zoom"
   },
   "maps": {
     "default_floor_name": "Rez-de-chaussée",

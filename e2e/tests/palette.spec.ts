@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { resetRateLimits } from "../helpers/db";
 import { main } from "../helpers/env";
 import { createGame, createMap, createSession, openUser, startSession, watchErrors } from "../helpers/sessions";
+import { openViewMenu } from "../helpers/editor";
 
 /**
  * P9c2: the Cmd/Ctrl+K command palette, in the editor and in the GM console. Commands are searched by
@@ -66,6 +67,7 @@ test("1. editor: search a tool, run it, undo through the palette", async ({ brow
     await expect(page.getByTestId("tool-pipette")).toHaveAttribute("aria-pressed", "true");
 
     // Undo is offered only once something can be undone.
+    await openViewMenu(page);
     const before = await page.getByTestId("editor-theme").inputValue();
     await page.getByTestId("editor-theme").selectOption("slate");
     await expect(page.getByTestId("editor-undo")).toBeEnabled();

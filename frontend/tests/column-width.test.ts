@@ -37,11 +37,11 @@ describe('column widths', () => {
   });
 
   it('persists and falls back to defaults', () => {
-    expect(loadColumns()).toEqual({ tools: 176, panels: 288 });
+    expect(loadColumns()).toEqual({ tools: 208, panels: 288 });
     saveColumns({ tools: 200, panels: 400 });
     expect(loadColumns()).toEqual({ tools: 200, panels: 400 });
     window.localStorage.setItem('jdr.editor.columns', '{bad');
-    expect(loadColumns()).toEqual({ tools: 176, panels: 288 });
+    expect(loadColumns()).toEqual({ tools: 208, panels: 288 });
     window.localStorage.setItem('jdr.editor.columns', '{"tools":99999,"panels":"x"}');
     expect(loadColumns()).toEqual({ tools: COLUMN_LIMITS.tools.max, panels: 288 });
   });

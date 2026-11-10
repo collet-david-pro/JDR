@@ -10,7 +10,8 @@ import { GRID_THEME_IDS } from '../../engine/grid-themes';
 import { shortcutLabel, type Platform, type ShortcutAction } from '../shortcuts';
 import type { ToolId } from '../tools/types';
 import type { ExportKind } from './export-source';
-import { layerLabel, shortcutDescription, themeLabel, toolLabel } from './labels';
+import { layerLabel, panelTabLabel, shortcutDescription, themeLabel, toolLabel } from './labels';
+import { BASE_TABS } from './layout';
 import type { EditorSession } from './session';
 
 export interface EditorCommandCallbacks {
@@ -194,6 +195,17 @@ export function buildEditorCommands(session: EditorSession, cb: EditorCommandCal
     shortcut: keys('panels.toggle'),
     run: () => session.togglePanels(),
   });
+  for (const tab of BASE_TABS) {
+    add({
+      id: `editor.panel.${tab}`,
+      label: t('editor.panels.show_tab', { tab: panelTabLabel(tab) }),
+      group: g.view,
+      run: () => {
+        ui.panelTab = tab;
+        if (!ui.panelsOpen) session.togglePanels();
+      },
+    });
+  }
   add({
     id: 'editor.history',
     label: t('editor.versions.button'),

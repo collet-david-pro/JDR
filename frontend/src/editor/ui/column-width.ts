@@ -4,7 +4,7 @@ export type ColumnId = 'tools' | 'panels';
 
 /** Default, minimum and maximum widths in px (the map keeps at least MIN_STAGE). */
 export const COLUMN_LIMITS: Record<ColumnId, { def: number; min: number; max: number }> = {
-  tools: { def: 176, min: 120, max: 360 },
+  tools: { def: 208, min: 120, max: 360 },
   panels: { def: 288, min: 200, max: 640 },
 };
 /** Minimum width left to the map area. */

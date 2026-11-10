@@ -3,11 +3,9 @@
   import ExportMenu from './ExportMenu.svelte';
   import FloorSelector from './FloorSelector.svelte';
   import SaveIndicator from './SaveIndicator.svelte';
-  import ViewControls from './ViewControls.svelte';
+  import ViewMenu from './ViewMenu.svelte';
   import type { ExportKind } from '../../editor/ui/export-source';
-  import { GRID_THEME_IDS } from '../../engine/grid-themes';
-  import type { GridTheme } from '../../editor/contracts';
-  import { commandLabel, themeLabel } from '../../editor/ui/labels';
+  import { commandLabel } from '../../editor/ui/labels';
   import type { EditorSession } from '../../editor/ui/session';
   import { t } from '../../lib/i18n';
   import { href } from '../../lib/services';
@@ -57,9 +55,14 @@
 </script>
 
 <header class="topbar">
-  <a class="button button-ghost button-small back" href={href(`/games/${gameId}?tab=maps`)}>
+  <a
+    class="button button-ghost button-small back"
+    href={href(`/games/${gameId}?tab=maps`)}
+    aria-label={t('editor.back')}
+    title={t('editor.back')}
+  >
     <span aria-hidden="true">←</span>
-    {t('editor.back')}
+    {t('editor.back_short')}
   </a>
   <h1 class="name" title={t('editor.map_title', { map: mapName, game: gameName })}>
     {mapName}
@@ -93,55 +96,8 @@
     </button>
   </div>
 
-  <div class="group">
-    <label class="inline">
-      <span class="visually-hidden">{t('editor.grid.theme')}</span>
-      <select
-        class="select"
-        value={ui.theme}
-        title={t('editor.grid.theme')}
-        data-testid="editor-theme"
-        onchange={(event) => session.setTheme(event.currentTarget.value as GridTheme)}
-      >
-        {#each GRID_THEME_IDS as theme (theme)}
-          <option value={theme}>{themeLabel(theme)}</option>
-        {/each}
-      </select>
-    </label>
-    <label class="inline check">
-      <input
-        type="checkbox"
-        checked={ui.gridVisible}
-        data-testid="editor-grid"
-        onchange={(event) => session.setGridVisible(event.currentTarget.checked)}
-      />
-      {t('editor.grid.show')}
-    </label>
-  </div>
-
-  <div class="group" role="group" aria-label={t('editor.zoom_fit')}>
-    <button
-      type="button"
-      class="button button-small"
-      title={t('editor.zoom_out')}
-      aria-label={t('editor.zoom_out')}
-      onclick={() => session.zoomBy(1 / 1.25)}><span aria-hidden="true">−</span></button
-    >
-    <button
-      type="button"
-      class="button button-small"
-      title={t('editor.zoom_in')}
-      aria-label={t('editor.zoom_in')}
-      onclick={() => session.zoomBy(1.25)}><span aria-hidden="true">+</span></button
-    >
-    <button type="button" class="button button-small" onclick={() => session.zoomFit()}>
-      {t('editor.zoom_fit')}
-    </button>
-  </div>
-
-  <ViewControls {session} />
-
   <div class="group end">
+    <ViewMenu {session} />
     <button
       type="button"
       class="button button-small"
@@ -167,16 +123,7 @@
       data-testid="editor-help"
       onclick={() => (ui.helpOpen = true)}
     >
-      {t('editor.help_button')} <kbd>?</kbd>
-    </button>
-    <button
-      type="button"
-      class="button button-small"
-      aria-pressed={ui.panelsOpen}
-      data-testid="editor-panels"
-      onclick={() => session.togglePanels()}
-    >
-      {ui.panelsOpen ? t('editor.panels.hide') : t('editor.panels.show')}
+      {t('editor.help_button')}
     </button>
   </div>
 </header>
@@ -186,7 +133,7 @@
     grid-area: top;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-2) var(--space-3);
+    gap: var(--space-2);
     align-items: center;
     padding: var(--space-2) var(--space-3);
     border-bottom: var(--border-width) solid var(--color-border);
@@ -210,24 +157,5 @@
   }
   .end {
     margin-left: auto;
-  }
-  .inline {
-    display: inline-flex;
-    gap: var(--space-1);
-    align-items: center;
-    font-size: var(--font-size-sm);
-  }
-  .select {
-    padding: var(--space-1) var(--space-2);
-    border: var(--border-width) solid var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--color-surface);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--font-size-sm);
-  }
-  kbd {
-    font-family: var(--font-mono);
-    font-size: var(--font-size-xs);
   }
 </style>

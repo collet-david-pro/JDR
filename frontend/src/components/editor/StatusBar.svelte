@@ -23,14 +23,38 @@
       ? t('editor.status.no_cell')
       : t('editor.status.cell', { x: ui.cursor.x, y: ui.cursor.y })}
   </span>
-  <span data-testid="status-zoom">
-    {t('editor.status.zoom', { value: Math.round(ui.zoom * 100) })}
-  </span>
   <span data-testid="status-layer">{layerLabel(ui.layer)}</span>
   <span data-testid="status-history" data-count={ui.history.undoSize}>
     {t('editor.status.history', { count: ui.history.undoSize })}
   </span>
   <span class="end">
+    <span class="zoom" role="group" aria-label={t('editor.zoom_label')}>
+      <button
+        type="button"
+        class="button button-small button-ghost"
+        title={t('editor.zoom_out')}
+        aria-label={t('editor.zoom_out')}
+        data-testid="editor-zoom-out"
+        onclick={() => session.zoomBy(1 / 1.25)}><span aria-hidden="true">−</span></button
+      >
+      <span data-testid="status-zoom">
+        {t('editor.status.zoom', { value: Math.round(ui.zoom * 100) })}
+      </span>
+      <button
+        type="button"
+        class="button button-small button-ghost"
+        title={t('editor.zoom_in')}
+        aria-label={t('editor.zoom_in')}
+        data-testid="editor-zoom-in"
+        onclick={() => session.zoomBy(1.25)}><span aria-hidden="true">+</span></button
+      >
+      <button
+        type="button"
+        class="button button-small button-ghost"
+        data-testid="editor-zoom-fit"
+        onclick={() => session.zoomFit()}>{t('editor.zoom_fit')}</button
+      >
+    </span>
     {#if ui.visionMs !== null}
       <span
         class:visually-hidden={!debug}
@@ -68,6 +92,14 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);
     font-variant-numeric: tabular-nums;
+  }
+  .zoom {
+    display: inline-flex;
+    gap: var(--space-1);
+    align-items: center;
+  }
+  .zoom .button {
+    padding-block: 0;
   }
   .end {
     display: flex;

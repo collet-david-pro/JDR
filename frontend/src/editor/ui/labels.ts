@@ -3,6 +3,47 @@ import type { GridTheme, LayerId } from '../contracts';
 import type { ShortcutAction } from '../shortcuts';
 import type { BrushShape, ShapeKind, ToolId, ToolNotice } from '../tools/types';
 import { t } from '../../lib/i18n';
+import type { PanelTab, ToolGroupId } from './layout';
+
+/** Label of a tab of the right column (layout.ts). */
+export function panelTabLabel(tab: PanelTab): string {
+  switch (tab) {
+    case 'properties':
+      return t('editor.panels.tab_properties');
+    case 'palette':
+      return t('editor.panels.tab_palette');
+    case 'layers':
+      return t('editor.panels.tab_layers');
+    case 'tokens':
+      return t('editor.panels.tab_tokens');
+    case 'notes':
+      return t('editor.panels.tab_notes');
+    case 'ambient':
+      return t('editor.panels.tab_ambient');
+    case 'history':
+      return t('editor.panels.tab_history');
+    case 'generate':
+      return t('editor.panels.tab_generate');
+  }
+}
+
+/** French label of a tool group of the left bar (layout.ts). */
+export function toolGroupLabel(id: ToolGroupId): string {
+  switch (id) {
+    case 'navigate':
+      return t('editor.tools.group_navigate');
+    case 'terrain':
+      return t('editor.tools.group_terrain');
+    case 'structure':
+      return t('editor.tools.group_structure');
+    case 'place':
+      return t('editor.tools.group_place');
+    case 'story':
+      return t('editor.tools.group_story');
+    case 'table':
+      return t('editor.tools.group_table');
+  }
+}
 
 /** Label of a tool. */
 export function toolLabel(id: ToolId): string {

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { AdminApi, login } from '../helpers/app';
 import { resetRateLimits } from '../helpers/db';
 import { main, unique, userPassword } from '../helpers/env';
+import { editorTab } from '../helpers/editor';
 
 /**
  * Map editor (projet.md 15), on a map created from the Maps tab: the page and its controls are found through
@@ -165,6 +166,7 @@ test('GM paints on a map: palette, brush, undo/redo, layers, fill limit', async 
 
   // Active layer with the keyboard (2 = terrain), then hide the ground layer.
   await page.keyboard.press('2');
+  await editorTab(page, 'layers');
   await expect(page.getByTestId('layer-activate-terrain')).toHaveAttribute('aria-pressed', 'true');
   const visible = page.getByTestId('layer-visible-ground');
   await expect(visible).toHaveAttribute('aria-pressed', 'true');
