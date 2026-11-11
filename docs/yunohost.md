@@ -9,7 +9,7 @@ Remplacez `/jdr/` par le chemin que vous avez choisi pour l'application, et `<do
 ## 1. Installer l'application et envoyer les fichiers
 
 1. Installez l'application **My Webapp** sur votre domaine, avec le chemin voulu (par exemple `/jdr`).
-2. Envoyez **tout le contenu** de `jdr-v0.7.1-full.zip` dans le dossier web de l'application, sans oublier les fichiers cachés. Voir [installation.md](installation.md) pour la préparation de la base de données.
+2. Envoyez **tout le contenu** de `jdr-v0.8.0-full.zip` dans le dossier web de l'application, sans oublier les fichiers cachés. Voir [installation.md](installation.md) pour la préparation de la base de données.
 3. Ne lancez pas encore l'installation : protégez d'abord les dossiers privés (étape 3).
 
 ## 2. Trouver le fichier de configuration Nginx de l'application

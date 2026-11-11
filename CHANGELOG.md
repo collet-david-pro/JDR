@@ -6,6 +6,8 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+## [0.8.0] - 2026-11-11
+
 ### Added
 - **Très grandes battlemaps** : une image de fond de plus de 4096 px est découpée en morceaux par le navigateur, envoyée morceau par morceau et assemblée sur la map ; le serveur ne traite jamais plus d'un morceau à la fois (mémoire d'un hébergement mutualisé). Le dialogue « Image de fond » recale et redimensionne l'ensemble comme une seule image.
 - **Textures de murs et images de porte** : choix dans la bibliothèque (propriétés d'un mur ou d'une porte, options de l'outil Mur) ; la texture est répétée le long du mur, l'image posée sur la porte (ouverte ou fermée). Affichées dans l'éditeur, en séance et à l'export PNG ; prises en charge par l'export et l'import ZIP, l'annulation et l'historique des versions.
