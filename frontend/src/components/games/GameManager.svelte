@@ -20,6 +20,7 @@
   import { formatDateTime } from '../../lib/format';
   import { t } from '../../lib/i18n';
   import { toasts } from '../../stores/toasts.svelte';
+  import { offerTour } from '../../stores/tour.svelte';
 
   /** GM / co-GM view of a game, with tabs (WAI-ARIA tabs pattern). */
   interface Props {
@@ -46,6 +47,13 @@
   const helpAnchor = $derived(HELP_ANCHORS[current]);
   let restoring = $state(false);
   const listFailure = $derived(model.listError === null ? null : describeError(model.listError, t));
+
+  let tourOffered = false;
+  $effect(() => {
+    if (tourOffered || !game || tabs.length === 0) return;
+    tourOffered = true;
+    offerTour('game');
+  });
 
   const tabId = (tab: GameTab): string => `${uid}-tab-${tab}`;
   const panelId = (tab: GameTab): string => `${uid}-panel-${tab}`;
@@ -118,6 +126,7 @@
           type="button"
           role="tab"
           id={tabId(tab)}
+          data-tour={`game-tab-${tab}`}
           aria-selected={current === tab}
           aria-controls={panelId(tab)}
           tabindex={current === tab ? 0 : -1}

@@ -70,7 +70,7 @@
   }
 </script>
 
-<div class="panels">
+<div class="panels" data-tour="console-panels">
   <div class="tabs" role="tablist" aria-label={t('sessions.panels.label')}>
     {#each PANELS as panel, index (panel)}
       <button

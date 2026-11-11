@@ -15,6 +15,8 @@
   import AdminStats from './AdminStats.svelte';
   import AdminUpdate from './AdminUpdate.svelte';
   import AdminUsers from './AdminUsers.svelte';
+  import { onMount } from 'svelte';
+  import { offerTour } from '../../stores/tour.svelte';
 
   let { params }: PageProps = $props();
 
@@ -48,6 +50,8 @@
   };
 
   const current = $derived((params['rest'] ?? '').replace(/\/+$/, ''));
+  onMount(() => offerTour('admin'));
+
   const tabHref = (slug: string): string => href(slug === '' ? '/admin' : `/admin/${slug}`);
 </script>
 
@@ -56,19 +60,21 @@
     <h1>{t('pages.admin.title')}</h1>
     <HelpLink anchor={ADMIN_HELP[current] ?? 'admin-tableau-de-bord'} />
   </div>
-  <nav aria-label={t('admin.tabs.label')}>
+  <nav aria-label={t('admin.tabs.label')} data-tour="admin-tabs">
     <ul class="tabs">
       {#each tabs as tab (tab.slug)}
         <li>
-          <a href={tabHref(tab.slug)} aria-current={current === tab.slug ? 'page' : undefined}
-            >{tab.label}</a
+          <a
+            href={tabHref(tab.slug)}
+            data-tour={`admin-tab-${tab.slug === '' ? 'dashboard' : tab.slug}`}
+            aria-current={current === tab.slug ? 'page' : undefined}>{tab.label}</a
           >
         </li>
       {/each}
     </ul>
   </nav>
 
-  <div class="panel">
+  <div class="panel" data-tour="admin-panel">
     {#if current === ''}
       <AdminStats />
     {:else if current === 'users'}

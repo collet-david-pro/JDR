@@ -68,6 +68,7 @@
   } from '../../editor/versions/resize-step';
   import { createVisionService } from '../../vision/index';
   import ColumnResizer from './ColumnResizer.svelte';
+  import { offerTour } from '../../stores/tour.svelte';
   import {
     clampWidth,
     loadColumns,
@@ -472,6 +473,7 @@
           session.attach(created);
           engineState = 'ready';
           host.focus({ preventScroll: true });
+          offerTour('editor');
           const visible = visibleChunkKeys(grid, created.camera.get(), {
             width: host.clientWidth,
             height: host.clientHeight,

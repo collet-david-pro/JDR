@@ -593,6 +593,12 @@
       "delete": "Supprimer mon compte",
       "delete_confirm": "Votre compte et vos données seront supprimés définitivement. Saisissez votre mot de passe pour confirmer.",
       "deleted": "Votre compte a été supprimé."
+    },
+    "tours": {
+      "title": "Visites guidées",
+      "hint": "Une courte visite présente chaque écran la première fois que vous l'ouvrez : tableau de bord, partie, éditeur, console du MJ, vue du joueur et administration.",
+      "reset": "Revoir les visites guidées",
+      "done": "C'est noté : chaque visite se relancera à la prochaine ouverture de son écran."
     }
   },
   "admin": {
@@ -3050,6 +3056,146 @@
       "player_token": "Token choisi par le joueur : {name}",
       "force": "Imposer mon image",
       "force_hint": "Utilise votre image à la place de celle du joueur. Décochez pour revenir à la sienne."
+    }
+  },
+  "tour": {
+    "label": "Visite guidée",
+    "progress": "Étape {n} sur {total}",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "done": "Terminer",
+    "skip": "Passer la visite",
+    "home": {
+      "welcome": {
+        "title": "Bienvenue sur Clairvoie",
+        "body": "Voici un tour rapide du tableau de bord. Vous pouvez le passer à tout moment et le revoir depuis votre profil."
+      },
+      "gm": {
+        "title": "Vos parties de MJ",
+        "body": "Créez une partie pour préparer vos maps et vos tokens, inviter vos joueurs et lancer des séances."
+      },
+      "player": {
+        "title": "Vos parties de joueur",
+        "body": "Les parties où un MJ vous a invité apparaissent ici."
+      },
+      "join": {
+        "title": "Rejoindre une séance",
+        "body": "Saisissez le code donné par le MJ pour entrer dans sa séance. Vos séances en cours sont listées juste en dessous."
+      },
+      "nav": {
+        "title": "La barre du haut",
+        "body": "Elle mène au tableau de bord, à la bibliothèque d'images, à votre profil et, pour un administrateur, à l'administration."
+      },
+      "help": {
+        "title": "L'aide",
+        "body": "Elle décrit chaque écran. Le bouton ? à côté d'un titre ouvre directement la bonne page."
+      }
+    },
+    "game": {
+      "intro": {
+        "title": "Votre partie",
+        "body": "Une partie regroupe vos maps, vos tokens, vos joueurs et vos séances. Chaque onglet en gère une partie."
+      },
+      "maps": {
+        "title": "Maps",
+        "body": "Dessinez vos lieux dans l'éditeur, ou générez un donjon, une grotte ou un village. Une map peut avoir plusieurs étages."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "body": "Préparez vos personnages et vos monstres : image, taille, vision, lumière et joueur propriétaire."
+      },
+      "players": {
+        "title": "Joueurs",
+        "body": "Ajoutez vos joueurs par pseudo ou par e-mail, ou laissez-les arriver avec le code d'une séance."
+      },
+      "sessions": {
+        "title": "Séances",
+        "body": "Créez une séance pour jouer : vous ouvrez la console du MJ et obtenez un code à donner aux joueurs."
+      }
+    },
+    "editor": {
+      "top": {
+        "title": "La barre du haut",
+        "body": "Retour à la partie, étages, annuler et rétablir. À droite : historique, génération, export et raccourcis clavier."
+      },
+      "view": {
+        "title": "Affichage",
+        "body": "Voyez la map comme vos joueurs, réglez l'éclairage, le brouillard et la grille. Rien n'est modifié sur la map."
+      },
+      "tools": {
+        "title": "Les outils",
+        "body": "Rangés par usage : terrain, murs et portes, objets à placer, notes et secrets. La lettre en coin est le raccourci clavier."
+      },
+      "map": {
+        "title": "La map",
+        "body": "Peignez, posez et sélectionnez ici. La molette zoome ; maintenez Espace pour déplacer la vue."
+      },
+      "panels": {
+        "title": "Les panneaux",
+        "body": "Propriétés, palette, calques, tokens, notes et ambiance. L'onglet suit l'outil choisi et l'objet sélectionné."
+      },
+      "status": {
+        "title": "La barre d'état",
+        "body": "Case sous la souris, calque actif et zoom. Tout s'enregistre automatiquement ; Ctrl+K ouvre la palette de commandes."
+      }
+    },
+    "console": {
+      "header": {
+        "title": "La console du MJ",
+        "body": "Démarrez, mettez en pause ou terminez la séance depuis cette barre."
+      },
+      "code": {
+        "title": "Le code de séance",
+        "body": "Donnez ce code à vos joueurs : ils le saisissent sur leur accueil pour vous rejoindre."
+      },
+      "map": {
+        "title": "La map de la séance",
+        "body": "Vous voyez tout. Vos joueurs ne voient que ce que leurs tokens découvrent et ce que vous révélez."
+      },
+      "panels": {
+        "title": "Les panneaux",
+        "body": "Joueurs, tokens, révélations, ambiance, notes, maps et écrans de table : tout se pilote d'ici."
+      }
+    },
+    "play": {
+      "map": {
+        "title": "La map",
+        "body": "Vous voyez ce que vos tokens voient. Glissez votre token pour le déplacer ; la molette zoome."
+      },
+      "follow": {
+        "title": "Suivre le MJ",
+        "body": "Cochée, votre vue suit celle du MJ. Décochez pour regarder où vous voulez."
+      },
+      "notes": {
+        "title": "Notes",
+        "body": "Les notes que le MJ vous a partagées."
+      },
+      "center": {
+        "title": "Centrer",
+        "body": "Ramène la vue sur votre personnage."
+      },
+      "leave": {
+        "title": "Quitter",
+        "body": "Quitte la séance ; vous pourrez la rejoindre de nouveau avec le même code."
+      }
+    },
+    "admin": {
+      "tabs": {
+        "title": "L'administration",
+        "body": "Comptes, invitations, réglages du site, bibliothèque générale, diagnostic, journal et migrations."
+      },
+      "dashboard": {
+        "title": "Le contenu de l'onglet",
+        "body": "Il s'affiche ici. Le tableau de bord donne les chiffres du site : comptes, parties, stockage, séances en cours."
+      },
+      "update": {
+        "title": "Mise à jour",
+        "body": "Le site installe les nouvelles versions publiées, avec sauvegarde et retour arrière."
+      },
+      "backup": {
+        "title": "Sauvegarde",
+        "body": "Téléchargez une sauvegarde complète du site ou restaurez-en une."
+      }
     }
   }
 }

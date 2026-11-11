@@ -14,7 +14,7 @@ use JDR\Core\Errors\ValidationException;
  */
 final class UserPrefs
 {
-    public const KEYS = ['theme_scheme', 'theme_style', 'editor', 'shortcuts'];
+    public const KEYS = ['theme_scheme', 'theme_style', 'editor', 'shortcuts', 'tours'];
     private const ENUMS = [
         'theme_scheme' => ['light', 'dark', 'auto'],
         'theme_style' => ['modern', 'fantasy', 'scifi'],

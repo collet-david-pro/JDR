@@ -34,6 +34,8 @@ export class AuthStore {
   registrationMode = $state<RegistrationMode>('closed');
   smtpEnabled = $state(false);
   error = $state.raw<ApiError | null>(null);
+  /** Account preferences (GET /auth/me), kept up to date by savePref. */
+  prefs = $state.raw<Prefs>({});
   readonly isAdmin: boolean = $derived(this.user?.role === 'admin');
 
   constructor(
@@ -99,6 +101,10 @@ export class AuthStore {
   /** PUT /me/prefs/{key} (signed in only). Failures are not fatal: the device keeps it. */
   async savePref(key: string, value: unknown): Promise<void> {
     if (this.user === null) return;
+    const next: Record<string, unknown> = { ...this.prefs };
+    if (value === null) delete next[key];
+    else next[key] = value;
+    this.prefs = next;
     try {
       await this.api.put(`/me/prefs/${encodeURIComponent(key)}`, { value });
     } catch (error) {
@@ -117,6 +123,7 @@ export class AuthStore {
 
   private signedOut(): void {
     this.user = null;
+    this.prefs = {};
     this.theme.setRemoteSync(null);
   }
 
@@ -125,6 +132,7 @@ export class AuthStore {
     this.registrationMode = me.registration_mode;
     this.smtpEnabled = me.smtp_enabled === true;
     this.user = me.user;
+    this.prefs = me.user === null ? {} : (me.prefs ?? {});
     if (me.user === null) {
       this.theme.setRemoteSync(null);
       return;

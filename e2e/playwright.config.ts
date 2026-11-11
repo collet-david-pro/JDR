@@ -33,6 +33,18 @@ const deviceOf = {
   webkit: devices['Desktop Safari'],
 } as const;
 
+/**
+ * Guided tours turned off on every site (they cover the page on a first visit); tour.spec.ts
+ * turns them back on with an empty storage state.
+ */
+const toursOff = {
+  cookies: [],
+  origins: [main.baseURL, updateSite.baseURL].map((origin) => ({
+    origin,
+    localStorage: [{ name: 'jdr.tours.off', value: '1' }],
+  })),
+};
+
 const server = (port: number, dbName: string) => ({
   command: 'bash ../dev/e2e-serve.sh',
   url: `http://127.0.0.1:${port}/install.php`,
@@ -59,6 +71,7 @@ export default defineConfig({
     locale: 'fr-FR',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    storageState: toursOff,
   },
   webServer: [
     server(main.port, main.dbName),
@@ -82,7 +95,7 @@ export default defineConfig({
             grepInvert: /games, sessions, GM console|keyboard-only walkthrough/,
           }
         : {}),
-      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|images|help|player-tokens|weather)\.spec\.ts/,
+      testMatch: /(a11y|auth|admin|library|games|editor|maps|versions|procgen|export-png|vision|sessions-gm|sessions-player|sessions-criteria|update|display|displays-gm|displays-criteria|floors|notes-session|palette|templates|images|help|player-tokens|weather|tour)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...deviceOf[name as keyof typeof deviceOf] },
     })),

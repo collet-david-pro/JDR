@@ -41,7 +41,7 @@
   <a class="brand" href={href('/')}>{t('app.name')}</a>
 
   {#if auth.user}
-    <nav aria-label={t('nav.label')}>
+    <nav aria-label={t('nav.label')} data-tour="nav">
       <ul>
         {#each links as link (link.to)}
           <li>

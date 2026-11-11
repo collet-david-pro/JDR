@@ -22,6 +22,16 @@ import { requiresLogin, loginPath } from './lib/guard';
 import { appStatus } from './stores/app.svelte';
 import { AuthStore } from './stores/auth.svelte';
 import { prefs } from './stores/prefs.svelte';
+import { tour } from './stores/tour.svelte';
+
+/** localStorage, or null when the browser refuses it (private mode, sandbox). */
+function deviceStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 function start(): void {
   // Theme first, to limit the flash before the first render.
@@ -69,6 +79,14 @@ function start(): void {
   appStatus.maintenanceFlag = boot.maintenance;
   const auth: AuthStore = new AuthStore(api, prefs);
   setServices({ boot, api, router, auth });
+  tour.connect(
+    {
+      userId: () => auth.user?.id ?? null,
+      remote: () => auth.prefs['tours'],
+      save: (value) => void auth.savePref('tours', value),
+    },
+    deviceStorage(),
+  );
   router.start();
   mount(App, { target });
   void auth.bootstrap();

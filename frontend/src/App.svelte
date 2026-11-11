@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import AppHeader from './components/AppHeader.svelte';
   import Toasts from './components/Toasts.svelte';
+  import TourHost from './components/TourHost.svelte';
   import { describeError } from './lib/errors';
   import { decideAccess, maintenanceLocked } from './lib/guard';
   import { t } from './lib/i18n';
@@ -141,6 +142,7 @@
 </footer>
 
 <Toasts />
+<TourHost {path} />
 
 <style>
   .skip-link {

@@ -49,7 +49,7 @@
   }
 </script>
 
-<nav class="toolbar" aria-label={t('editor.tools.label')}>
+<nav class="toolbar" aria-label={t('editor.tools.label')} data-tour="editor-tools">
   <div
     class="tools"
     role="toolbar"

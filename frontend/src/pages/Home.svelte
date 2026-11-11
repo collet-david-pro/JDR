@@ -15,6 +15,7 @@
   import { formatSessionCode, isValidSessionCode } from '../lib/sessions';
   import { sessionProblem, sessionStateLabel } from '../lib/sessions/labels';
   import type { StorageUsage } from '../lib/types';
+  import { offerTour } from '../stores/tour.svelte';
 
   let _props: PageProps = $props();
 
@@ -46,6 +47,7 @@
   }
 
   onMount(() => {
+    offerTour('home');
     void games.load();
     void activeSessions(sessionsClient()).then((found) => {
       active = found;
@@ -71,7 +73,7 @@
   </header>
 
   <div class="grid">
-    <section class="card games" aria-labelledby="gm-games">
+    <section class="card games" aria-labelledby="gm-games" data-tour="home-gm">
       <div class="section-head">
         <div class="title-row">
           <h2 id="gm-games">{t('dashboard.gm_games')}</h2>
@@ -102,7 +104,7 @@
       <GameShelf model={games} />
     </section>
 
-    <section class="card games" aria-labelledby="player-games">
+    <section class="card games" aria-labelledby="player-games" data-tour="home-player">
       <h2 id="player-games">{t('dashboard.player_games')}</h2>
       {#if gamesFailure}
         <p class="small muted">{t('games.dashboard.unavailable')}</p>
@@ -119,7 +121,7 @@
       {/if}
     </section>
 
-    <section class="card" aria-labelledby="join-session">
+    <section class="card" aria-labelledby="join-session" data-tour="home-join">
       <h2 id="join-session">{t('dashboard.join.title')}</h2>
       <form class="join" novalidate onsubmit={join}>
         <label for="join-code" class="visually-hidden">{t('dashboard.join.label')}</label>

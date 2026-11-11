@@ -92,10 +92,20 @@ final class MeApiTest extends ApiTestCase
         self::assertSame(['key' => 'invalid'], $client->put('/me/prefs/is_admin', ['value' => true])->payload()['error']['fields']);
         self::assertSame(['value' => 'required'], $client->put('/me/prefs/theme_style', [])->payload()['error']['fields']);
         self::assertSame(422, $client->put('/me/prefs/shortcuts', ['value' => ['x' => str_repeat('a', 20000)]])->status());
+        // Guided tours seen: an object, never a list.
+        self::assertSame(204, $client->put('/me/prefs/tours', ['value' => ['home' => true, 'editor' => true]])->status());
+        self::assertSame(422, $client->put('/me/prefs/tours', ['value' => ['home']])->status());
         self::assertSame(
-            ['editor' => ['grid' => true, 'snap' => 0.5], 'theme_scheme' => 'dark', 'theme_style' => 'scifi'],
+            [
+                'editor' => ['grid' => true, 'snap' => 0.5],
+                'theme_scheme' => 'dark',
+                'theme_style' => 'scifi',
+                'tours' => ['home' => true, 'editor' => true],
+            ],
             $client->me()['prefs'],
         );
+        self::assertSame(204, $client->put('/me/prefs/tours', ['value' => null])->status());
+        self::assertArrayNotHasKey('tours', $client->me()['prefs']);
         self::assertSame(204, $client->put('/me/prefs/theme_style', ['value' => null])->status());
         self::assertArrayNotHasKey('theme_style', $client->me()['prefs']);
     }

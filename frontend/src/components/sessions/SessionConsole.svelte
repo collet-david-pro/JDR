@@ -27,6 +27,7 @@
   import type { SessionAction } from '../../lib/sessions/types';
   import { toasts } from '../../stores/toasts.svelte';
   import { createVisionService } from '../../vision/index';
+  import { offerTour } from '../../stores/tour.svelte';
 
   /**
    * GM console of a session (projet.md 18.1 p.6): the map in GM view with the pointer tools,
@@ -205,6 +206,7 @@
           created = e;
           engine = e;
           engineState = 'ready';
+          offerTour('console');
         })
         .catch((error: unknown) => {
           if (cancelled) return;

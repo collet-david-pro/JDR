@@ -54,7 +54,7 @@
   );
 </script>
 
-<header class="topbar">
+<header class="topbar" data-tour="editor-top">
   <a
     class="button button-ghost button-small back"
     href={href(`/games/${gameId}?tab=maps`)}

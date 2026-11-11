@@ -14,6 +14,7 @@
   import type { SessionRun } from '../../lib/sessions/session-run.svelte';
   import { toasts } from '../../stores/toasts.svelte';
   import { createVisionService } from '../../vision/index';
+  import { offerTour } from '../../stores/tour.svelte';
 
   /**
    * Game view of a player (projet.md 18.1 p.8): the map seen through the player's tokens
@@ -123,6 +124,7 @@
           created = e;
           engine = e;
           engineState = 'ready';
+          offerTour('play');
         })
         .catch((error: unknown) => {
           if (cancelled) return;
@@ -218,7 +220,7 @@
       <h1 class="name">{snap?.session.name ?? ''}</h1>
       <HelpLink anchor="joueur-jouer-une-seance" />
       <NetworkIndicator />
-      <label class="follow">
+      <label class="follow" data-tour="play-follow">
         <input
           type="checkbox"
           checked={followOn}
