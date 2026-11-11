@@ -7,10 +7,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 ## [Non publié]
 
 ### Added
+- **Très grandes battlemaps** : une image de fond de plus de 4096 px est découpée en morceaux par le navigateur, envoyée morceau par morceau et assemblée sur la map ; le serveur ne traite jamais plus d'un morceau à la fois (mémoire d'un hébergement mutualisé). Le dialogue « Image de fond » recale et redimensionne l'ensemble comme une seule image.
+- **Textures de murs et images de porte** : choix dans la bibliothèque (propriétés d'un mur ou d'une porte, options de l'outil Mur) ; la texture est répétée le long du mur, l'image posée sur la porte (ouverte ou fermée). Affichées dans l'éditeur, en séance et à l'export PNG ; prises en charge par l'export et l'import ZIP, l'annulation et l'historique des versions.
 - **Visites guidées** : la première fois qu'on ouvre le tableau de bord, une partie, l'éditeur, la console du MJ, la vue du joueur ou l'administration, une courte visite présente l'écran pas à pas, en mettant en lumière chaque zone. Une visite passée ou terminée ne revient plus (le choix suit le compte sur tous ses appareils) ; le profil permet de les revoir. Nouvelle page d'aide « Visites guidées ».
 
 ### Changed
 - **Nouvelle disposition de l'éditeur** : la barre du haut tient sur une ligne. Les réglages de vue (vue MJ ou joueur, éclairage, brouillard, ombres, exploration, étage du dessous, grille et son thème, mode performance, réinitialisation du brouillard) sont regroupés dans un menu **Affichage**. Les outils sont rangés par usage (Naviguer, Terrain, Structure, Placer, Notes et secrets, Table), ce qui laisse voir les options de l'outil. Les panneaux de droite passent en onglets (Propriétés, Palette, Calques, Tokens, Notes, Ambiance, plus Historique et Générer quand ils sont ouverts), qui suivent l'outil choisi et la sélection. Le zoom est dans la barre d'état. Aide et captures mises à jour.
+- **Salle d'attente** : le préchargement télécharge aussi les images posées sur la map, les textures de murs et les images de porte, limitées à ce que le joueur ou l'écran de table a le droit de voir.
+
+### Fixed
+- **Import d'une map en ZIP** : les images de la palette gardent leur type (tuile ou texture) et leur catégorie ; les textures n'étaient plus rangées comme tuiles.
+- **Palette** : le serveur refuse désormais d'ajouter à la palette une image qui n'est ni une tuile ni une texture.
 
 ## [0.7.1] - 2026-11-11
 

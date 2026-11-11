@@ -8,4 +8,4 @@
 
 L'export contient le dernier état **enregistré** de la map.
 
-**Importer** : bouton **Importer** de l'onglet Maps. Choisissez un fichier JSON ou ZIP exporté par l'application. L'aperçu indique ce que contient le fichier, signale les images introuvables (leurs cases restent vides) et convertit les anciennes versions. Les tokens posés sont retrouvés par leur nom ; ceux qui n'existent pas dans la partie sont ignorés.
+**Importer** : bouton **Importer** de l'onglet Maps. Choisissez un fichier JSON ou ZIP exporté par l'application. L'aperçu indique ce que contient le fichier, signale les images introuvables (leurs cases restent vides) et convertit les anciennes versions. Les images de la palette gardent leur type (tuile ou texture) et leur catégorie : une texture importée reste une texture dans votre bibliothèque. Les tokens posés sont retrouvés par leur nom ; ceux qui n'existent pas dans la partie sont ignorés.
