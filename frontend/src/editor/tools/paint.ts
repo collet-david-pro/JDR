@@ -10,6 +10,7 @@ import {
   tilesCommand,
 } from './common';
 import { brushFootprint, lineCells, type Point } from './raster';
+import { isIdentity, symmetricCells } from './symmetry';
 import type { Tool, ToolContext, ToolResult } from './types';
 
 interface Stroke {
@@ -27,11 +28,19 @@ export function createPaintTool(ctx: ToolContext, mode: 'brush' | 'eraser'): Too
   let stroke: Stroke | null = null;
   const erase = mode === 'eraser';
 
+  /** Cells plus their mirrored / repeated copies (tile brush only; the eraser mirrors too). */
+  const withSymmetry = (cells: readonly Point[]): Point[] => {
+    const spec = ctx.settings.symmetry;
+    if (spec === undefined || isIdentity(spec)) return [...cells];
+    return symmetricCells(cells, spec, ctx.doc.grid.width, ctx.doc.grid.height);
+  };
   const footprintAt = (x: number, y: number): Point[] => {
     const fp = brushFootprint(clampBrushSize(ctx.settings.brushSize), ctx.settings.brushShape);
-    return clipPoints(
-      ctx,
-      fp.map(([dx, dy]) => [x + dx, y + dy] as const),
+    return withSymmetry(
+      clipPoints(
+        ctx,
+        fp.map(([dx, dy]) => [x + dx, y + dy] as const),
+      ),
     );
   };
   const hover = (e: MapPointerEvent): Overlay => ({
@@ -45,9 +54,8 @@ export function createPaintTool(ctx: ToolContext, mode: 'brush' | 'eraser'): Too
     const w = ctx.doc.grid.width;
     const cells: TileCell[] = [];
     for (const [px, py] of path) {
-      for (const [dx, dy] of fp) {
-        const x = px + dx;
-        const y = py + dy;
+      const footprint = fp.map(([dx, dy]) => [px + dx, py + dy] as Point);
+      for (const [x, y] of withSymmetry(footprint)) {
         if (!inMap(ctx, x, y)) continue;
         const lin = y * w + x;
         if (s.painted.has(lin)) continue;

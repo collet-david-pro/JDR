@@ -27,6 +27,7 @@ import {
 import type { Viewport } from './camera';
 import { cacheTextureBytes, nextRenderMode, type ChunkRenderMode } from './cache-lod';
 import { cellSprite } from './cell-transform';
+import { edgeMask, edgeStrips } from './soft-edges';
 import { chunkDisplay, hasWork, planChunkWork, type ChunkState } from './chunk-plan';
 import {
   CHUNK_MARGIN,
@@ -193,6 +194,20 @@ export class TileMapRenderer {
         this.existing.delete(key);
       }
       this.views.get(key)?.invalidate();
+      // Soft edges read the cells of the neighbouring chunks.
+      if (this.textures.anySoft) {
+        const p = parseChunkKey(key);
+        if (p !== null) {
+          for (const [dx, dy] of [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ] as const) {
+            this.views.get(`${p.cx + dx}:${p.cy + dy}` as ChunkKey)?.invalidate();
+          }
+        }
+      }
     }
   }
 
@@ -383,6 +398,23 @@ export class TileMapRenderer {
       const cells = view.chunkCells(def.id as TileLayerId, chunk.key);
       if (cells === null) continue;
       const groups = new Map<number, ParticleContainer>();
+      const edgeGroups = new Map<number, ParticleContainer>();
+      const soft = this.textures.anySoft;
+      const at = (lx: number, ly: number): number => {
+        if (lx >= 0 && ly >= 0 && lx < CHUNK_SIZE && ly < CHUNK_SIZE) {
+          return cells[(ly * CHUNK_SIZE + lx) * 4] ?? 0;
+        }
+        const gx = chunk.cx * CHUNK_SIZE + lx;
+        const gy = chunk.cy * CHUNK_SIZE + ly;
+        if (gx < 0 || gy < 0 || gx >= view.grid.width || gy >= view.grid.height) return 0;
+        const other = view.chunkCells(
+          def.id as TileLayerId,
+          `${Math.floor(gx / CHUNK_SIZE)}:${Math.floor(gy / CHUNK_SIZE)}` as ChunkKey,
+        );
+        return other === null
+          ? 0
+          : (other[((gy % CHUNK_SIZE) * CHUNK_SIZE + (gx % CHUNK_SIZE)) * 4] ?? 0);
+      };
       for (let i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++) {
         const index = cells[i * 4] ?? 0;
         if (index === 0) continue;
@@ -423,11 +455,64 @@ export class TileMapRenderer {
           }),
         );
         particles++;
+        if (!soft || !this.textures.isSoft(index)) continue;
+        const mask = edgeMask(
+          index,
+          at(lx, ly - 1),
+          at(lx + 1, ly),
+          at(lx, ly + 1),
+          at(lx - 1, ly),
+          (n) => this.textures.isSoft(n),
+        );
+        if (mask === 0) continue;
+        const wx = chunk.cx * CHUNK_SIZE + lx;
+        const wy = chunk.cy * CHUNK_SIZE + ly;
+        for (const strip of edgeStrips(mask)) {
+          // The neighbour on that side (same lookup as edgeMask).
+          const n =
+            strip.side === 1
+              ? at(lx, ly - 1)
+              : strip.side === 2
+                ? at(lx + 1, ly)
+                : strip.side === 4
+                  ? at(lx, ly + 1)
+                  : at(lx - 1, ly);
+          const nt = this.textures.isWorld(n)
+            ? this.textures.resolve(n, 0, wx, wy)
+            : this.textures.resolve(n, 0);
+          const part = this.textures.stripTexture(nt.texture, strip);
+          if (part === null) continue;
+          const uid = part.source.uid;
+          let group = edgeGroups.get(uid);
+          if (group === undefined) {
+            group = new ParticleContainer({
+              texture: part,
+              dynamicProperties: STATIC_PROPERTIES,
+              boundsArea: bounds,
+            });
+            edgeGroups.set(uid, group);
+          }
+          group.particleChildren.push(
+            new Particle({
+              texture: part,
+              x: (lx + strip.x) * cellPx,
+              y: (ly + strip.y) * cellPx,
+              scaleX: (strip.w * cellPx) / part.frame.width,
+              scaleY: (strip.h * cellPx) / part.frame.height,
+              anchorX: 0,
+              anchorY: 0,
+              tint: nt.tint,
+              alpha: strip.alpha,
+            }),
+          );
+          particles++;
+          indices.add(n);
+        }
       }
       if (groups.size === 0) continue;
       const layer = new Container({ alpha: Math.min(1, Math.max(0, def.opacity)) });
       layer.label = def.id;
-      for (const group of groups.values()) {
+      for (const group of [...groups.values(), ...edgeGroups.values()]) {
         group.update();
         layer.addChild(group);
       }

@@ -28,8 +28,8 @@ export const TOOL_GROUPS: readonly {
   { id: 'navigate', tools: ['select', 'hand', 'ruler', 'pipette'] },
   { id: 'terrain', tools: ['brush', 'eraser', 'fill', 'shape'] },
   { id: 'structure', tools: ['wall', 'door', 'light'] },
-  { id: 'place', tools: ['token', 'image', 'stairs', 'portal'] },
-  { id: 'story', tools: ['pin', 'zone', 'trap', 'secret'] },
+  { id: 'place', tools: ['token', 'image', 'scatter', 'stairs', 'portal'] },
+  { id: 'story', tools: ['pin', 'zone', 'trap', 'secret', 'text'] },
   { id: 'table', tools: ['fog'] },
 ];
 

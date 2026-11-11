@@ -44,6 +44,12 @@
     if (Number.isFinite(value)) session.setTextureRepeat(item.index, value);
   }
 
+  function toggleSoft(event: Event): void {
+    const item = selected;
+    if (item === null || item === undefined) return;
+    session.setSoftEdges(item.index, (event.currentTarget as HTMLInputElement).checked);
+  }
+
   function pick(asset: Asset): void {
     session.addTileAsset(asset);
   }
@@ -122,6 +128,18 @@
         </li>
       {/each}
     </ul>
+    {#if selected !== null && selected !== undefined}
+      <label class="soft small">
+        <input
+          type="checkbox"
+          checked={selected.soft}
+          data-testid="palette-soft"
+          onchange={toggleSoft}
+        />
+        <span>{t('editor.palette.soft_edges')}</span>
+        <span class="muted">{t('editor.palette.soft_edges_hint')}</span>
+      </label>
+    {/if}
     {#if selected !== null && selected !== undefined && selected.repeat !== null}
       <label class="repeat small">
         <span>{t('editor.palette.repeat')}</span>
@@ -168,6 +186,13 @@
   }
   .filter {
     margin-bottom: var(--space-2);
+  }
+  .soft {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
   }
   .repeat {
     display: grid;

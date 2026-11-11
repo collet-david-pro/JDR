@@ -19,11 +19,14 @@ import type {
   WindowProps,
 } from './contracts';
 import type { ImagePlacement } from './contracts-images';
+import type { TextFont } from './contracts-text';
 import type { PinIcon, SecretKind } from './contracts-notes';
 import type { EditorSettings } from './EditorController';
 import type { HistoryState } from './history/History';
 import { DEFAULT_AMBIENT } from './model/scene-values';
 import { clampBrushSize } from './tools/common';
+import type { ScatterOptions } from './tools/scatter-math';
+import type { SymmetryAxes, SymmetrySpec } from './tools/symmetry';
 import {
   DEFAULT_OBJECT_SETTINGS as D,
   EMPTY_OBJECT_SELECTION,
@@ -138,6 +141,31 @@ export class EditorUiState implements EditorSettings {
   imageAssetId = $state<string | null>(null);
   imagePlacement = $state<ImagePlacement>('above');
   imageLayer = $state<ObjectLayerId>('props');
+  // ---- Lot l17 text tool ----
+  textContent = $state('');
+  textSize = $state(0.6);
+  textColor = $state('#222222');
+  textFont = $state<TextFont>('sans');
+  textRotation = $state(0);
+  textLayer = $state<ObjectLayerId>('labels');
+  /** Uid of the text object whose content the properties panel must focus (double click). */
+  textEditUid = $state<string | null>(null);
+  // ---- Symmetry / repeat of the tile brush ----
+  symmetryAxes = $state<SymmetryAxes>('none');
+  /** Mirror axes at a chosen position instead of the centre of the map. */
+  symmetryCustom = $state(false);
+  symmetryAxisX = $state(0);
+  symmetryAxisY = $state(0);
+  repeatStepX = $state(0);
+  repeatStepY = $state(0);
+  repeatCount = $state(0);
+  // ---- Object brush ----
+  scatterAssetIds = $state.raw<readonly string[]>([]);
+  scatterDensity = $state(0.5);
+  scatterSpacing = $state(0);
+  scatterRadius = $state(2);
+  scatterRotation = $state(false);
+  scatterScaleVariation = $state(0);
   /** Background dialog (P14) open; `backgroundTarget`: background image recalibrated (null = new). */
   backgroundOpen = $state(false);
   backgroundTarget = $state<string | null>(null);
@@ -146,6 +174,25 @@ export class EditorUiState implements EditorSettings {
   /** Note dialog: `uid` null = new note; `linkObject` = pin / zone to link the new note to. */
   noteDialog = $state.raw<{ uid: string | null; linkObject: string | null } | null>(null);
   resetSecretsOpen = $state(false);
+  get symmetry(): SymmetrySpec {
+    return {
+      axes: this.symmetryAxes,
+      axisX: this.symmetryCustom ? this.symmetryAxisX : null,
+      axisY: this.symmetryCustom ? this.symmetryAxisY : null,
+      repeatStepX: this.repeatStepX,
+      repeatStepY: this.repeatStepY,
+      repeatCount: this.repeatCount,
+    };
+  }
+  get scatter(): ScatterOptions {
+    return {
+      density: this.scatterDensity,
+      spacing: this.scatterSpacing,
+      radius: this.scatterRadius,
+      randomRotation: this.scatterRotation,
+      scaleVariation: this.scatterScaleVariation,
+    };
+  }
   /** Selected objects / placed tokens (uids). */
   objectSelection = $state.raw<ObjectSelection>(EMPTY_OBJECT_SELECTION);
 

@@ -35,7 +35,7 @@ import {
 import { worldToScreen, type Viewport } from '../camera';
 import { dashSegments } from '../overlay-geometry';
 import { Assets, Container, Graphics, Sprite, TilingSprite } from '../pixi';
-import type { Texture } from '../pixi';
+import type { Text, Texture } from '../pixi';
 import {
   doorShape,
   lightPosition,
@@ -47,6 +47,7 @@ import {
 } from './object-geometry';
 import { drawPin, drawSecret, drawTrap, drawZone } from './note-shapes';
 import { drawPortal, drawStairs } from './passage-shapes';
+import { addTextLabel } from './text-shape';
 import {
   OBJECT_LAYER_IDS,
   doorDrawnAsWall,
@@ -65,7 +66,7 @@ interface Entry {
   readonly gfx: Graphics;
   layer: ObjectLayerId;
   /** Textured wall strips / door images drawn over the plain shape (rebuilt by draw). */
-  skins: (Sprite | TilingSprite)[];
+  skins: (Sprite | TilingSprite | Text)[];
 }
 
 type SkinState =
@@ -285,6 +286,9 @@ export class ObjectsRenderer {
             WALL_COLORS[SECRET_AS_WALL.kind],
           );
         } else drawSecret(gfx, obj, this.cellPx, this.bucket);
+        break;
+      case 'text':
+        entry.skins.push(addTextLabel(gfx, obj, this.cellPx, this.bucket));
         break;
       case 'light':
       case 'image':

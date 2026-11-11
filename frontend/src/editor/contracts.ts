@@ -23,6 +23,7 @@
  * sending floor.add + tiles.set / object.add / maptoken.add / fog.reveal for the same uid.
  */
 import type { ImageAssetView, ImageObject } from './contracts-images';
+import type { TextObject } from './contracts-text';
 import type { NoteObject, NoteOp } from './contracts-notes';
 
 /** Edge length of a chunk in cells (matches the server chunk format). */
@@ -80,7 +81,17 @@ export type TileCell = readonly [
   flags: number,
 ];
 
-export type GridTheme = 'parchment' | 'slate' | 'blueprint' | 'dark' | 'light';
+export type GridTheme =
+  | 'parchment'
+  | 'slate'
+  | 'blueprint'
+  | 'dark'
+  | 'light'
+  | 'dots'
+  | 'crosses'
+  | 'major5'
+  | 'ink'
+  | 'glow';
 
 export interface GridSpec {
   readonly width: number;
@@ -398,7 +409,9 @@ export type MapObjectType =
   | 'trap'
   | 'secret'
   /** P14 (contracts-images.ts). */
-  | 'image';
+  | 'image'
+  /** Lot l17 (contracts-text.ts). */
+  | 'text';
 
 /**
  * Where a door / stairs / portal leads (P9a). Normalized by the server: all four keys, floor = a floor UID of the
@@ -571,7 +584,8 @@ export type MapObject =
   | StairsObject
   | PortalObject
   | NoteObject
-  | ImageObject;
+  | ImageObject
+  | TextObject;
 
 /** object.update patch: geometry and props replace the whole value (no deep merge). */
 export interface ObjectPatch {

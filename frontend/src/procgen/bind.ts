@@ -79,6 +79,7 @@ function bbox(o: MapObject): [number, number, number, number] {
     case 'zone':
     case 'trap':
     case 'secret':
+    case 'text':
     case 'image': {
       const b = objectBox(o);
       return [b.x0, b.y0, b.x1, b.y1];
@@ -186,7 +187,14 @@ export function bindResult(
   if (t.scene !== null && t.replace.objects !== 'none') {
     for (const o of t.scene.objects()) {
       // Pins, zones, traps and secrets are the GM's notes: the generator never removes them.
-      if (o.type === 'pin' || o.type === 'zone' || o.type === 'trap' || o.type === 'secret')
+      // Text labels are the GM's too.
+      if (
+        o.type === 'pin' ||
+        o.type === 'zone' ||
+        o.type === 'trap' ||
+        o.type === 'secret' ||
+        o.type === 'text'
+      )
         continue;
       if (t.replace.objects === 'all') removed.push(o);
       else {

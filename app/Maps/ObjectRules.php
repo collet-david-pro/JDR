@@ -25,7 +25,7 @@ use JDR\Domain\Maps\MapInput;
  */
 final class ObjectRules
 {
-    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal', ...ObjectRulesNotes::TYPES, ...ObjectRulesImage::TYPES];
+    public const TYPES = ['wall', 'door', 'window', 'light', 'stairs', 'portal', ...ObjectRulesNotes::TYPES, ...ObjectRulesImage::TYPES, ...ObjectRulesText::TYPES];
     public const VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'];
     public const UID_PATTERN = '/^[A-Za-z0-9_-]{1,21}$/D';
     public const SORT_MAX = 1000000;
@@ -45,7 +45,7 @@ final class ObjectRules
     public const FLICKER_TYPES = ['none', 'torch', 'pulse'];
     public const FLICKER_SPEED_MIN = 0.1;
     public const FLICKER_SPEED_MAX = 10.0;
-    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props', 'pin' => 'props', 'zone' => 'gm', 'trap' => 'props', 'secret' => 'props', 'image' => 'props'];
+    public const DEFAULT_LAYERS = ['wall' => 'walls', 'door' => 'walls', 'window' => 'walls', 'light' => 'lighting', 'stairs' => 'props', 'portal' => 'props', 'pin' => 'props', 'zone' => 'gm', 'trap' => 'props', 'secret' => 'props', 'image' => 'props', 'text' => 'labels'];
 
     /** Keys of an object, in canonical order (API form). */
     public const OBJECT_KEYS = ['uid', 'floor', 'type', 'layer', 'geometry', 'props', 'visibility', 'locked', 'sort_order', 'rev'];
@@ -63,6 +63,7 @@ final class ObjectRules
         'trap' => ['x', 'y', 'polygon'],
         'secret' => ['a', 'b', 'polygon'],
         'image' => ObjectRulesImage::GEOMETRY_KEYS,
+        'text' => ['x', 'y'],
     ];
     private const PROPS_KEYS = [
         'wall' => ['kind', 'thickness', 'blocks_vision', 'blocks_light', 'blocks_move', 'texture_asset', 'height'],
@@ -76,6 +77,7 @@ final class ObjectRules
         'trap' => ['note', 'reveal_effect'],
         'secret' => ['kind', 'note'],
         'image' => ObjectRulesImage::PROPS_KEYS,
+        'text' => ObjectRulesText::PROPS_KEYS,
     ];
     /** Props keys the document may omit (reserved for P9): default null. */
     private const LENIENT_PROPS = ['texture_asset', 'height', 'asset_open', 'asset_closed'];
@@ -283,6 +285,9 @@ final class ObjectRules
         if (ObjectRulesImage::handles($type)) {
             return ObjectRulesImage::geometry($g, $field, $errors, $width, $height);
         }
+        if (ObjectRulesText::handles($type)) {
+            return ObjectRulesText::geometry($g, $field, $errors, $width, $height);
+        }
         switch ($type) {
             case 'wall':
                 $points = $g['points'];
@@ -350,6 +355,9 @@ final class ObjectRules
         }
         if (ObjectRulesImage::handles($type)) {
             return ObjectRulesImage::props($value, $field, $errors, $lenient);
+        }
+        if (ObjectRulesText::handles($type)) {
+            return ObjectRulesText::props($value, $field, $errors);
         }
         $keys = self::PROPS_KEYS[$type];
         $p = Fields::object($value, $keys);
@@ -432,6 +440,9 @@ final class ObjectRules
         }
         if (ObjectRulesImage::handles($object['type'])) {
             return ObjectRulesImage::bbox($object, $width, $height);
+        }
+        if (ObjectRulesText::handles($object['type'])) {
+            return ObjectRulesText::bbox($object, $width, $height);
         }
         if (ObjectRulesNotes::handles($object['type'])) {
             return ObjectRulesNotes::bbox($object, $width, $height);

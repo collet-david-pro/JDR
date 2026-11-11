@@ -14,7 +14,7 @@ final class Map
 {
     public const FORMAT_VERSION = 1;
     public const KINDS = ['battle', 'world'];
-    public const THEMES = ['parchment', 'slate', 'blueprint', 'dark', 'light'];
+    public const THEMES = ['parchment', 'slate', 'blueprint', 'dark', 'light', 'dots', 'crosses', 'major5', 'ink', 'glow'];
 
     /**
      * @param array<string, mixed>                                     $ambient

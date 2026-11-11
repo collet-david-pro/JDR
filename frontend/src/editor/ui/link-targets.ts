@@ -13,11 +13,21 @@ export interface LinkFloorItem {
   readonly level: number;
 }
 
+/** Size (cells) and preview of a map, for picking an arrival point with the mouse. */
+export interface LinkMapInfo {
+  readonly width: number;
+  readonly height: number;
+  /** Signed thumbnail URL, null until the map has one. */
+  readonly thumbUrl: string | null;
+}
+
 export interface LinkTargetsDeps {
   readonly currentMapId: string;
   readonly currentFloors: () => readonly LinkFloorItem[];
   readonly listMaps: () => Promise<readonly LinkMapItem[]>;
   readonly floorsOf: (mapId: string) => Promise<readonly LinkFloorItem[]>;
+  /** Size and thumbnail of a map (absent: no point picker). */
+  readonly infoOf?: (mapId: string) => Promise<LinkMapInfo>;
 }
 
 /** Computes the maps and floors that a link or portal can target. */
@@ -37,6 +47,17 @@ export class LinkTargets {
       throw error;
     });
     return this.mapsCache;
+  }
+
+  /** True when the arrival point can be picked on a preview of the target map. */
+  get canPick(): boolean {
+    return this.deps.infoOf !== undefined;
+  }
+
+  info(mapId: string): Promise<LinkMapInfo> {
+    return this.deps.infoOf === undefined
+      ? Promise.reject(new Error('no map info'))
+      : this.deps.infoOf(mapId);
   }
 
   floors(mapId: string): Promise<readonly LinkFloorItem[]> {

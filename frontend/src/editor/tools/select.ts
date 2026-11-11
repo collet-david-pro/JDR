@@ -10,6 +10,7 @@ import { snapPoint } from './geometry';
 import { handleAt, hitTest, insideRect, type HandleHit, type Hit } from './hit';
 import { command, DoubleClick, pixelSize, snapStep, tolerance } from './object-common';
 import { rectBetween } from './raster';
+import { nearestSnapShift, objectAnchors, snapTargets } from './snap-targets';
 import {
   clampDelta,
   deleteOps,
@@ -124,9 +125,29 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
 
   const moveDelta = (p: Point, start: Point, free: boolean) => {
     const { objects, tokens } = editable(ctx.doc, objSel);
-    const [sx, sy] = snapDelta(ctx.doc, tokens, p[0] - start[0], p[1] - start[1], free);
+    const rx = p[0] - start[0];
+    const ry = p[1] - start[1];
+    let [sx, sy] = snapDelta(ctx.doc, tokens, rx, ry, free);
+    let mark: Point | null = null;
+    // Objects alone: stick to ends / middles / corners / centres of the other objects (Alt: free).
+    if (!free && tokens.length === 0 && objects.length > 0) {
+      const moving = new Set(objects.map((o) => o.uid));
+      const anchors = objects.flatMap((o) =>
+        objectAnchors(o).map((a): Point => [a[0] + rx, a[1] + ry]),
+      );
+      const hit = nearestSnapShift(
+        anchors,
+        snapTargets(ctx.doc.objects(), (o) => moving.has(o.uid)),
+        Math.min(tolerance(ctx), 0.5),
+      );
+      if (hit !== null) {
+        sx = rx + hit.dx;
+        sy = ry + hit.dy;
+        mark = hit.target;
+      }
+    }
     const [dx, dy] = clampDelta(objects, tokens, sx, sy, width, height);
-    return { objects, tokens, dx, dy };
+    return { objects, tokens, dx, dy, mark };
   };
 
   const handlePoint = (handle: HandleHit, p: Point, free: boolean): Point =>
@@ -143,6 +164,13 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
   /** Double click on a door: open / close it (checked before the handles of its ends). */
   const doorToggle = (hit: Hit | null, p: Point, shift: boolean): ToolResult | null => {
     const o = hit?.kind === 'object' ? ctx.doc.object(hit.uid) : undefined;
+    if (o?.type === 'text' && !shift) {
+      // Lot l17: double click on a text label asks the panel to edit it.
+      if (!dbl.press(p)) return null;
+      objSel = { objects: [o.uid], tokens: [] };
+      rects = [];
+      return { ...result(), editText: o.uid };
+    }
     if (o?.type !== 'door' || shift) {
       dbl.reset();
       return null;
@@ -222,13 +250,12 @@ export function createSelectTool(ctx: ToolContext): SelectTool {
             if (!gesture.moved && far < DRAG_PX * pixelSize(ctx)) return {};
             gesture.moved = true;
             dbl.reset();
-            const { objects, tokens, dx, dy } = moveDelta(p, gesture.start, e.mods.alt);
+            const { objects, tokens, dx, dy, mark } = moveDelta(p, gesture.start, e.mods.alt);
             return {
-              overlay: fullSelectionOverlay(
-                rects,
-                objSel,
-                movePreview(ctx.doc, objects, tokens, dx, dy),
-              ),
+              overlay: fullSelectionOverlay(rects, objSel, [
+                ...movePreview(ctx.doc, objects, tokens, dx, dy),
+                ...(mark !== null ? [{ kind: 'snap' as const, x: mark[0], y: mark[1] }] : []),
+              ]),
             };
           }
           gesture.moved = true;

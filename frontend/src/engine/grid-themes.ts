@@ -4,6 +4,7 @@
  */
 
 import type { GridTheme } from '../editor/contracts';
+import type { GridStyle } from './grid-lines';
 
 export interface GridThemeDef {
   /** Map area background (under the tiles). */
@@ -16,6 +17,10 @@ export interface GridThemeDef {
   /** Map border. */
   readonly border: number;
   readonly borderAlpha: number;
+  /** Grid drawing style (default `lines`). */
+  readonly style?: GridStyle;
+  /** Every Nth line is drawn thicker and stronger (style `lines` only; 0 or absent = none). */
+  readonly major?: number;
 }
 
 /** Identifiers of the grid themes. */
@@ -25,6 +30,11 @@ export const GRID_THEME_IDS: readonly GridTheme[] = [
   'blueprint',
   'dark',
   'light',
+  'dots',
+  'crosses',
+  'major5',
+  'ink',
+  'glow',
 ];
 
 /** Grid theme used when none is specified. */
@@ -71,6 +81,54 @@ export const GRID_THEMES: Readonly<Record<GridTheme, GridThemeDef>> = Object.fre
     lineAlpha: 0.16,
     border: 0x4b5059,
     borderAlpha: 0.9,
+  },
+  dots: {
+    background: 0x2a2d33,
+    outside: 0x16181b,
+    line: 0xffffff,
+    lineAlpha: 0.55,
+    border: 0x8a8d96,
+    borderAlpha: 0.9,
+    style: 'dots',
+  },
+  crosses: {
+    background: 0xf7f3ea,
+    outside: 0xd8d3c6,
+    line: 0x2b2b2b,
+    lineAlpha: 0.6,
+    border: 0x4b4b4b,
+    borderAlpha: 0.9,
+    style: 'crosses',
+  },
+  major5: {
+    background: 0xe9eef3,
+    outside: 0xc9d1d9,
+    line: 0x1f4f8a,
+    lineAlpha: 0.22,
+    border: 0x1f3a5f,
+    borderAlpha: 0.9,
+    style: 'lines',
+    major: 5,
+  },
+  ink: {
+    background: 0xefe3c2,
+    outside: 0xc4b48c,
+    line: 0x1b2a41,
+    lineAlpha: 0.3,
+    border: 0x1b2a41,
+    borderAlpha: 0.9,
+    style: 'lines',
+    major: 5,
+  },
+  glow: {
+    background: 0x0b0b1a,
+    outside: 0x050510,
+    line: 0x00f0ff,
+    lineAlpha: 0.4,
+    border: 0xff2bd6,
+    borderAlpha: 0.95,
+    style: 'lines',
+    major: 5,
   },
 });
 

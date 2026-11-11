@@ -321,10 +321,27 @@ final class OpsApplier
             if ($current['asset_id'] !== $op['asset_id']) {
                 throw new ConflictException('', [$field . '.index' => 'conflict']);
             }
-            // Same asset: the block size of a texture entry is the only field that can change.
+            // Same asset: only the block size of a texture entry and the autotile value can change.
             $repeat = $op['repeat'] ?? null;
+            $changed = false;
             if ($repeat !== null && isset($current['repeat']) && $current['repeat'] !== $repeat) {
                 $current['repeat'] = $repeat;
+                $changed = true;
+            }
+            // Soft edges (l14): the autotile value is re-sent to change it; "none" clears it.
+            $autotile = $op['autotile'] ?? null;
+            if ($autotile !== null) {
+                if ($autotile === 'none') {
+                    if (isset($current['autotile'])) {
+                        unset($current['autotile']);
+                        $changed = true;
+                    }
+                } elseif (($current['autotile'] ?? null) !== $autotile) {
+                    $current['autotile'] = $autotile;
+                    $changed = true;
+                }
+            }
+            if ($changed) {
                 $this->state->palette[$index] = $current;
                 $this->state->change('palette');
             }
@@ -335,7 +352,7 @@ final class OpsApplier
             throw new ValidationException('', [$field . '.asset_id' => 'not_found']);
         }
         $entry = ['asset_id' => $op['asset_id']];
-        if ($op['autotile'] !== null) {
+        if ($op['autotile'] !== null && $op['autotile'] !== 'none') {
             $entry['autotile'] = $op['autotile'];
         }
         if (($op['repeat'] ?? null) !== null) {

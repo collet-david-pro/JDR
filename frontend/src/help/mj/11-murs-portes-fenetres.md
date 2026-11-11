@@ -11,3 +11,5 @@ Les murs bloquent la vue, la lumière et les déplacements. Ils décident de ce 
 - Pendant la séance, un clic du MJ sur une porte l'ouvre ou la ferme.
 
 Le **Mode performance** (menu **Affichage**) allège les calculs de vision sur les très grandes maps.
+
+**Aimantation au déplacement** : avec l'outil Sélection, glisser des objets les aimante aux extrémités et milieux de murs et de portes, et aux coins et centres des autres objets proches ; un repère marque le point aimanté. **Alt** désactive l'aimantation.

@@ -82,6 +82,7 @@
         case 'trap':
         case 'secret':
         case 'image':
+        case 'text':
           // The generator never removes the notes' objects nor the images: not content.
           return false;
       }

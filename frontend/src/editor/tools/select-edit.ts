@@ -2,6 +2,7 @@
  * Edits of the selection tool on objects and placed tokens: move (snapped, kept in the map),
  * handles (wall vertex, door end, light radius), delete, door open / close. Pure functions.
  */
+import { textCorners } from '../text-geometry';
 import type {
   DoorObject,
   MapObject,
@@ -59,6 +60,8 @@ function movedGeometry(o: MapObject, dx: number, dy: number): MapObject['geometr
     }
     case 'image':
       return { ...o.geometry, x: round3(o.geometry.x + dx), y: round3(o.geometry.y + dy) };
+    case 'text':
+      return { x: round3(o.geometry.x + dx), y: round3(o.geometry.y + dy) };
   }
 }
 
@@ -192,6 +195,8 @@ export function shapeOverlay(o: MapObject): Overlay {
     }
     case 'image':
       return { kind: 'polyline', points: imageCorners(o.geometry), closed: true };
+    case 'text':
+      return { kind: 'polyline', points: textCorners(o), closed: true };
   }
 }
 

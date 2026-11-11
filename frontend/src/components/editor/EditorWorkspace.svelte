@@ -68,6 +68,7 @@
   } from '../../editor/versions/resize-step';
   import { createVisionService } from '../../vision/index';
   import ColumnResizer from './ColumnResizer.svelte';
+  import MiniMap from './MiniMap.svelte';
   import { offerTour } from '../../stores/tour.svelte';
   import {
     clampWidth,
@@ -153,6 +154,10 @@
       currentFloors: () => session.doc.floors(),
       listMaps: async () =>
         (await initial.client.list(gameId)).map((m) => ({ id: m.id, name: m.name })),
+      infoOf: async (mapId) => {
+        const m = await initial.client.get(mapId);
+        return { width: m.grid.width, height: m.grid.height, thumbUrl: m.thumb_url };
+      },
       floorsOf: async (mapId) =>
         (await initial.client.get(mapId)).floors.map((f) => ({
           uid: f.uid,
@@ -293,6 +298,8 @@
   let destroyed = false;
   /** The engine, for the visible area of the PNG export (never in $state). */
   let engineRef: SceneEngine | null = null;
+  /** Same engine, reactive, for the minimap. */
+  let minimapEngine = $state.raw<SceneEngine | null>(null);
 
   // ---- Thumbnail (P4c): after confirmed saves, at most once a minute ----------------------
   const thumbnailRenderer = new ThumbnailRenderer();
@@ -470,6 +477,7 @@
           }
           engine = created;
           engineRef = created;
+          minimapEngine = created;
           session.attach(created);
           engineState = 'ready';
           host.focus({ preventScroll: true });
@@ -489,6 +497,7 @@
     return () => {
       cancelled = true;
       engineRef = null;
+      minimapEngine = null;
       session.detach();
       engine?.destroy();
     };
@@ -572,6 +581,18 @@
       data-state={engineState}
       onpointerdown={() => viewport?.focus({ preventScroll: true })}
     ></div>
+    {#if engineState === 'ready' && minimapEngine !== null && viewport !== undefined}
+      <MiniMap
+        engine={minimapEngine}
+        {grid}
+        viewportSize={() => ({
+          width: viewport?.clientWidth ?? 0,
+          height: viewport?.clientHeight ?? 0,
+        })}
+        revision={() => session.doc.revision}
+        draw={(maxPx) => thumbnailRenderer.draw(session.doc, maxPx)}
+      />
+    {/if}
     {#if !ui.panelsOpen}
       <button
         type="button"

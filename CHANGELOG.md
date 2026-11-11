@@ -8,6 +8,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ### Added
 - **Générateur de tokens côté MJ** : la fiche d'un token de la partie propose « Générer une image ». Le générateur des tokens joueurs (forme, couleurs, anneau, emblème ou portrait) dessine l'image d'un PNJ ou d'un monstre, rangée dans la bibliothèque comme image de token.
+- **Minimap de l'éditeur** : encart repliable en bas à gauche, avec le cadre de la vue ; cliquer ou glisser dedans recentre la caméra.
+- **Symétrie et répétition** : le pinceau et la gomme de tuiles peignent en miroir (vertical, horizontal ou les deux, autour du centre de la map ou d'un axe choisi) ou en motif répété ; un trait reste une seule annulation.
+- **Pinceau d'objets** : nouvel outil qui disperse au pinceau des images de la bibliothèque (densité, espacement minimal, rotation et échelle aléatoires) ; un trait = une annulation.
+- **Bords adoucis** : option par tuile ou texture de la palette ; la frontière entre deux cases d'images différentes ayant l'option est fondue (éditeur, séance, export PNG).
+- **Aimantation au déplacement** : les objets déplacés s'aimantent aux extrémités et milieux des murs et portes et aux coins et centres des autres objets (Alt : libre), avec un repère.
+- **Arrivée d'un lien à la souris** : portails, escaliers et portes ont un bouton « Choisir sur la map » pour cliquer le point d'arrivée sur un aperçu de la map cible ; la saisie numérique reste.
+- **Thèmes de grille supplémentaires** : pointillés, croix aux intersections, marquage toutes les 5 cases, encre sur parchemin et lueur, dans l'éditeur, en séance et à l'export PNG.
+- **Outil texte** : étiquettes libres sur la map (texte court, taille, couleur, police, rotation), posées au clic et modifiables par double-clic ou dans les propriétés ; visibles de tous par défaut ou réservées au MJ. Affichées dans l'éditeur, en séance et à l'export PNG, et prises en charge par l'export/import ZIP et les versions.
 
 ## [0.8.0] - 2026-11-11
 

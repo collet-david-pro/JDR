@@ -17,9 +17,12 @@ import type {
   WindowProps,
 } from '../contracts';
 import type { ImagePlacement } from '../contracts-images';
+import type { TextFont } from '../contracts-text';
 import type { PinIcon, SecretKind } from '../contracts-notes';
 import type { VisionCore } from '../../vision/index';
 import type { Rng } from '../util/rng';
+import type { ScatterOptions } from './scatter-math';
+import type { SymmetrySpec } from './symmetry';
 
 export type ToolId =
   | 'select'
@@ -39,6 +42,8 @@ export type ToolId =
   | 'secret'
   | 'token'
   | 'image'
+  | 'text'
+  | 'scatter'
   | 'fog'
   | 'pipette'
   | 'ruler';
@@ -97,6 +102,7 @@ export interface ToolNotice {
     | 'polygon_limit'
     | 'passage_length'
     | 'no_image'
+    | 'no_text'
     | 'invalid';
   readonly params?: Readonly<Record<string, number | string>>;
 }
@@ -114,6 +120,8 @@ export interface ToolResult {
   /** P5: selected objects / placed tokens. */
   readonly objectSelection?: ObjectSelection;
   readonly notice?: ToolNotice;
+  /** Lot l17: uid of a text object to edit (double click). */
+  readonly editText?: string;
 }
 
 export interface Tool {
@@ -203,6 +211,18 @@ export interface ToolSettings {
   readonly imageAssetId?: string | null;
   readonly imagePlacement?: ImagePlacement;
   readonly imageLayer?: ObjectLayerId;
+  /** Symmetry / repeat of the tile brush (absent = none). */
+  readonly symmetry?: SymmetrySpec;
+  /** Object brush: assets scattered (image uids of the library) and its options. */
+  readonly scatterAssetIds?: readonly string[];
+  readonly scatter?: ScatterOptions;
+  /** Lot l17 text tool: content, height (cells), colour, font, rotation (degrees) and layer of new texts. */
+  readonly textContent?: string;
+  readonly textSize?: number;
+  readonly textColor?: string;
+  readonly textFont?: TextFont;
+  readonly textRotation?: number;
+  readonly textLayer?: ObjectLayerId;
 }
 
 /** Defaults of the P5 tool settings. */

@@ -15,6 +15,7 @@ import type { CellRect, GridSpec } from '../editor/contracts';
 import { decodeFlags, variantFrame, variantFrameCount } from '../engine/cell-transform';
 import { fallbackColor } from '../engine/fallback-color';
 import { gridFade } from '../engine/grid-lines';
+import type { GridStyle } from '../engine/grid-lines';
 import type { GridThemeDef } from '../engine/grid-themes';
 import { cellEdge } from './dimensions';
 
@@ -125,6 +126,12 @@ export interface GridLinePlan {
   /** Left / top pixel of each line (image coordinates relative to the extent). */
   readonly xs: readonly number[];
   readonly ys: readonly number[];
+  /** Cell index of the first line of `xs` / `ys`. */
+  readonly xStart: number;
+  readonly yStart: number;
+  readonly style: GridStyle;
+  /** Every Nth line is strong (0 = none). */
+  readonly major: number;
 }
 
 /** Grid lines of the extent (null when invisible at this scale). */
@@ -142,6 +149,8 @@ export function gridLinePlan(
   const xs: number[] = [];
   const ys: number[] = [];
   // Inner lines of the map (1..width-1) that fall inside or on the edges of the extent.
+  const xStart = Math.max(1, extent.x);
+  const yStart = Math.max(1, extent.y);
   for (let i = Math.max(1, extent.x); i <= Math.min(grid.width - 1, extent.x + extent.w); i++) {
     xs.push(cellEdge(i - extent.x, ppc) - half);
   }
@@ -155,5 +164,9 @@ export function gridLinePlan(
     thickness,
     xs,
     ys,
+    xStart,
+    yStart,
+    style: theme.style ?? 'lines',
+    major: theme.major ?? 0,
   };
 }

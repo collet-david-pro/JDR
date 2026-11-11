@@ -30,7 +30,18 @@
       "$ref": "#/$defs/grid"
     },
     "theme": {
-      "enum": ["parchment", "slate", "blueprint", "dark", "light"]
+      "enum": [
+        "parchment",
+        "slate",
+        "blueprint",
+        "dark",
+        "light",
+        "dots",
+        "crosses",
+        "major5",
+        "ink",
+        "glow"
+      ]
     },
     "ambient": {
       "$ref": "#/$defs/ambient"

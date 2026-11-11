@@ -173,6 +173,8 @@ export function objectHandles(
       }
       return [{ kind: 'centre', at: [g.x, g.y] }];
     }
+    case 'text':
+      return [{ kind: 'centre', at: [obj.geometry.x, obj.geometry.y] }];
     case 'image':
       return [
         {

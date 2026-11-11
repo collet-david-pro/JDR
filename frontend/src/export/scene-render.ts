@@ -18,6 +18,9 @@
  *   are (no current vision in an export, so nothing is "explored but not visible").
  * Everything is a function of absolute image pixels, so bands and print pages join seamlessly.
  */
+import { TEXT_FONT_STACKS, type TextObject } from '../editor/contracts-text';
+import { TEXT_OUTLINE_RATIO, textOutlineColor } from '../editor/text-style';
+import { textCorners } from '../editor/text-geometry';
 import type {
   CellRect,
   ChunkKey,
@@ -111,7 +114,9 @@ function boxOf(obj: MapObject): Box {
             ? [obj.geometry.a, obj.geometry.b]
             : obj.type === 'image'
               ? imageCorners(obj.geometry)
-              : notePoints(obj);
+              : obj.type === 'text'
+                ? textCorners(obj)
+                : notePoints(obj);
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -294,6 +299,7 @@ export class ScenePainter {
       else if (obj.type === 'window') this.window(ctx, obj);
       else if (obj.type === 'stairs') this.stairs(ctx, obj);
       else if (obj.type === 'portal') this.portal(ctx, obj);
+      else if (obj.type === 'text') this.text(ctx, obj);
       else if (obj.type === 'secret' && 'a' in obj.geometry) {
         // Passage: a plain wall in the player view (never the dashed GM drawing).
         const { a, b } = obj.geometry;
@@ -333,6 +339,25 @@ export class ScenePainter {
     ctx.strokeStyle = cssColor(WALL_OUTLINE);
     ctx.lineWidth = this.width(0.05);
     ctx.stroke();
+  }
+
+  /** Text label: plain canvas text (no markup), outlined like the scene. */
+  private text(ctx: Ctx2D, o: TextObject): void {
+    const { size, font, color, rotation, text } = o.props;
+    ctx.save();
+    ctx.translate(o.geometry.x, o.geometry.y);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.font = `${size}px ${TEXT_FONT_STACKS[font]}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = size * TEXT_OUTLINE_RATIO;
+    ctx.strokeStyle = textOutlineColor(color);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 1;
+    ctx.strokeText(text, 0, 0);
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
   }
 
   private width(thickness: number): number {

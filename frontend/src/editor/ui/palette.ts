@@ -1,4 +1,5 @@
 /** Tile palette of the editor: assets picked in the library ⇒ palette entries (projet.md 15.2). */
+import { isSoftEdges } from '../../engine/soft-edges';
 import type { PaletteEntry } from '../contracts';
 import type { AssetInfo } from '../model/MapDocument';
 import { variantFrameCount } from '../../engine/cell-transform';
@@ -25,6 +26,8 @@ export interface PaletteItem {
   readonly frames: number;
   /** World-aligned texture block size in cells (P14), null for an ordinary tile. */
   readonly repeat: number | null;
+  /** Soft edges between neighbouring soft entries (l14). */
+  readonly soft: boolean;
 }
 
 interface Known {
@@ -84,6 +87,7 @@ export class PaletteCatalog {
         thumb: k !== undefined && k.thumb !== '' ? k.thumb : entry.url,
         frames: entry.repeat != null ? 1 : (k?.frames ?? 1),
         repeat: entry.repeat ?? null,
+        soft: isSoftEdges(entry.autotile),
       });
     });
     return out;

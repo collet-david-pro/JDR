@@ -5,8 +5,10 @@ import { createImageTool } from './image';
 import { createLightTool } from './light';
 import { createPaintTool } from './paint';
 import { createPinTool } from './pin';
+import { createScatterTool } from './scatter';
 import { createPortalTool } from './portal';
 import { createSecretTool } from './secret';
+import { createTextTool } from './text';
 import { createTrapTool } from './trap';
 import { createZoneTool } from './zone';
 import { createHandTool, createPipetteTool, createRulerTool } from './pick';
@@ -41,6 +43,8 @@ export function createTools(ctx: ToolContext): ToolSet {
     secret: createSecretTool(ctx),
     token: createTokenTool(ctx),
     image: createImageTool(ctx),
+    text: createTextTool(ctx),
+    scatter: createScatterTool(ctx),
     fog: createFogTool(ctx),
     pipette: createPipetteTool(ctx),
     ruler: createRulerTool(ctx),

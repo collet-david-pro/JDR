@@ -10,6 +10,8 @@
 import { CHUNK_SIZE, type CellRect, type ChunkKey } from '../editor/contracts';
 import { colorToCss } from '../engine/fallback-color';
 import { gridTheme } from '../engine/grid-themes';
+import { gridStrokes } from '../engine/grid-lines';
+import { edgeMask, edgeStrips, SIDE_E, SIDE_N, SIDE_S } from '../engine/soft-edges';
 import { cellDraw, gridLinePlan, type GridLinePlan } from './cell-render';
 import { outputSize } from './dimensions';
 import type { TileImages, TokenImages } from './images';
@@ -84,6 +86,7 @@ export interface Ctx2D {
     r1: number,
   ): CanvasGradient;
   fillText(text: string, x: number, y: number): void;
+  strokeText(text: string, x: number, y: number): void;
 }
 
 interface PreparedLayer {
@@ -172,6 +175,7 @@ export class ExportScene {
     const c1 = Math.min(extent.w - 1, Math.floor((x + w) / ppc) + 1);
     const r0 = Math.max(0, Math.floor(y / ppc) - 1);
     const r1 = Math.min(extent.h - 1, Math.floor((y + h) / ppc) + 1);
+    const softOf = this.images.soft?.bind(this.images);
     for (const layer of this.layers) {
       ctx.globalAlpha = layer.opacity;
       let lastKey = '';
@@ -190,6 +194,9 @@ export class ExportScene {
           const index = cells[i]!;
           if (index === 0) continue;
           this.drawCell(ctx, col, row, index, cells[i + 1]!, cells[i + 2]!, ox, oy, mx, my);
+          if (softOf !== undefined && softOf(index)) {
+            this.drawSoftEdges(ctx, layer, col, row, index, mx, my, ox, oy, softOf);
+          }
         }
       }
     }
@@ -213,20 +220,82 @@ export class ExportScene {
     if (lines !== null) {
       ctx.globalAlpha = lines.alpha;
       ctx.fillStyle = lines.color;
-      // One rectangle per line, like the engine (crossings are blended twice there too).
-      for (const lx of lines.xs) {
-        if (lx + lines.thickness > x && lx < x + w) {
-          ctx.fillRect(lx + ox, dy, lines.thickness, h);
-        }
-      }
-      for (const ly of lines.ys) {
-        if (ly + lines.thickness > y && ly < y + h) {
-          ctx.fillRect(dx, ly + oy, w, lines.thickness);
-        }
+      // Same rectangles as the engine (crossings are blended twice there too); image coordinates.
+      const strokes = gridStrokes({
+        style: lines.style,
+        xs: lines.xs,
+        ys: lines.ys,
+        xStart: lines.xStart,
+        yStart: lines.yStart,
+        th: lines.thickness,
+        clip: { x, y, w, h },
+        major: lines.major,
+      });
+      for (const r of strokes.base) ctx.fillRect(r.x + ox, r.y + oy, r.w, r.h);
+      if (strokes.strong.length > 0) {
+        ctx.globalAlpha = Math.min(1, (lines.alpha / 1) * 1.8);
+        for (const r of strokes.strong) ctx.fillRect(r.x + ox, r.y + oy, r.w, r.h);
       }
       ctx.globalAlpha = 1;
     }
     ctx.restore();
+  }
+
+  /** Soft edges (l14): strips of the neighbours' images with a decreasing opacity. */
+  private drawSoftEdges(
+    ctx: Ctx2D,
+    layer: PreparedLayer,
+    col: number,
+    row: number,
+    index: number,
+    mx: number,
+    my: number,
+    ox: number,
+    oy: number,
+    soft: (index: number) => boolean,
+  ): void {
+    const at = (x: number, y: number): number => {
+      if (x < 0 || y < 0) return 0;
+      const cells = layer.chunks.get(
+        `${Math.floor(x / CHUNK_SIZE)}:${Math.floor(y / CHUNK_SIZE)}` as ChunkKey,
+      );
+      return cells === undefined
+        ? 0
+        : (cells[((y % CHUNK_SIZE) * CHUNK_SIZE + (x % CHUNK_SIZE)) * 4] ?? 0);
+    };
+    const north = at(mx, my - 1);
+    const east = at(mx + 1, my);
+    const south = at(mx, my + 1);
+    const west = at(mx - 1, my);
+    const mask = edgeMask(index, north, east, south, west, soft);
+    if (mask === 0) return;
+    const ppc = this.ppc;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    for (const strip of edgeStrips(mask)) {
+      const n =
+        strip.side === SIDE_N
+          ? north
+          : strip.side === SIDE_E
+            ? east
+            : strip.side === SIDE_S
+              ? south
+              : west;
+      const tile = this.images.tile(n, 0, mx, my);
+      ctx.imageSmoothingEnabled = tile.smooth;
+      ctx.globalAlpha = layer.opacity * strip.alpha;
+      ctx.drawImage(
+        tile.image,
+        tile.sx + strip.x * tile.sw,
+        tile.sy + strip.y * tile.sh,
+        strip.w * tile.sw,
+        strip.h * tile.sh,
+        (col + strip.x) * ppc + ox,
+        (row + strip.y) * ppc + oy,
+        strip.w * ppc,
+        strip.h * ppc,
+      );
+    }
+    ctx.globalAlpha = layer.opacity;
   }
 
   private drawCell(

@@ -163,13 +163,13 @@ L'éditeur dessine à la grille, enregistre tout seul et sait tout annuler. Une 
 <details>
 <summary><b>Tout ce que fait l'éditeur</b></summary>
 
-- **Terrain** : calques Sol, Terrain et Décor, tuiles et textures continues, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
-- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case, ou l'image s'ajuste à la taille de map voulue en gardant ses proportions), fond recalé sur la grille à chaque étage (les battlemaps de plus de 4096 px sont découpées en morceaux à l'envoi), outil Image pour poser librement les objets de la bibliothèque, animés compris (déplacer, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ). La taille de la map se change à tout moment, avec un point d'ancrage, et le contenu suit.
+- **Terrain** : calques Sol, Terrain et Décor, tuiles et textures continues aux bords adoucis au besoin, pinceau et gomme en miroir ou en motif répété, remplissage, formes, sélection, pipette, règle, annuler et rétablir ; minimap pour se déplacer dans une grande map, dix thèmes de grille.
+- **Images et fonds de map** : nouvelle map depuis une image (la taille se calcule à partir de la taille d'une case, ou l'image s'ajuste à la taille de map voulue en gardant ses proportions), fond recalé sur la grille à chaque étage (les battlemaps de plus de 4096 px sont découpées en morceaux à l'envoi), outil Image pour poser librement les objets de la bibliothèque, animés compris, et pinceau d'objets pour en disperser (déplacer, aimanter, redimensionner, tourner, miroir, opacité, sous ou sur les tuiles, ou sur le calque MJ). La taille de la map se change à tout moment, avec un point d'ancrage, et le contenu suit.
 - **Murs, portes et fenêtres** : murs tracés point par point ou par pièce, avec aimantation réglable jusqu'au huitième de case ; portes ouvertes, fermées, verrouillées ou secrètes ; fenêtres vitrées, à barreaux ou simples ouvertures ; textures de murs et images de porte prises dans la bibliothèque. Les murs arrêtent la vue, la lumière et les déplacements.
 - **Lumières** : torche, lanterne, bougie, feu de camp, lumière magique ; couleur, intensité, vacillement, cône.
 - **Ambiance** : obscurité, teinte, cycle jour et nuit, ombres portées, météo animée (pluie, orage, neige, brume), et un aperçu « comme tous les joueurs » ou « comme ce personnage ».
-- **Étages** : jusqu'à 10 par map, l'étage du dessous visible en transparence ; escaliers, portails et portes qui mènent à un autre étage ou à une autre map.
-- **Notes et secrets** : notes en Markdown (réservées au MJ ou partagées), épingles, zones qui suggèrent un texte quand un personnage y entre, pièges et passages secrets.
+- **Étages** : jusqu'à 10 par map, l'étage du dessous visible en transparence ; escaliers, portails et portes qui mènent à un autre étage ou à une autre map, avec le point d'arrivée choisi à la souris.
+- **Notes et secrets** : notes en Markdown (réservées au MJ ou partagées), étiquettes de texte libres sur la map, épingles, zones qui suggèrent un texte quand un personnage y entre, pièges et passages secrets.
 - **Modèles** : enregistrer une map comme modèle, ou partir d'un des 4 modèles fournis (taverne, crypte, forêt, grotte).
 - **Versions** : un instantané toutes les 5 minutes d'édition, d'autres à la demande, restaurables à tout moment.
 - **Échanges** : export et import en JSON ou en ZIP avec les images, pour passer une map à un autre MJ ou à un autre site.

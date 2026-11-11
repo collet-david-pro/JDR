@@ -19,6 +19,8 @@ export interface TileImages {
   tile(index: number, variant: number, wx?: number, wy?: number): TileSource;
   /** True for a world-aligned texture entry: the cell's rotation and variant are ignored. */
   worldAligned?(index: number): boolean;
+  /** True for an entry with soft edges (l14). */
+  soft?(index: number): boolean;
   /** Palette entries that had a URL but could not be loaded. */
   readonly failed: readonly SnapshotPaletteEntry[];
   close(): void;
@@ -76,11 +78,13 @@ export async function loadTileImages(
   const frames = new Map<number, TileSource>();
   const repeats = new Map<number, number>();
   for (const p of palette) if (p.repeat != null && p.repeat >= 1) repeats.set(p.index, p.repeat);
+  const softs = new Set<number>(palette.filter((p) => p.soft === true).map((p) => p.index));
   let unknown: TileSource | null = null;
 
   return {
     failed,
     worldAligned: (index) => repeats.has(index),
+    soft: (index) => softs.has(index),
     tile(index, variant, wx = 0, wy = 0) {
       const bitmap = images.get(index);
       const repeat = repeats.get(index);

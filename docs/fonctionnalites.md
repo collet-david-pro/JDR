@@ -4,9 +4,10 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 
 ### Éditeur de maps
 
-- Grille carrée, calques, tuiles par blocs, pinceau, gomme, remplissage, formes, sélection, pipette, règle, annuler et rétablir.
+- Grille carrée (dix thèmes), calques, tuiles par blocs, pinceau et gomme avec symétrie et répétition, bords adoucis entre textures, remplissage, formes, sélection avec aimantation aux murs et aux objets, pipette, règle, annuler et rétablir.
+- Minimap repliable pour se déplacer dans une grande map ; étiquettes de texte libres ; pinceau d'objets pour disperser des images.
 - Taille de la map modifiable (1 à 400 cases) avec un point d'ancrage : tout le contenu des étages suit ; Ctrl+Z annule juste après.
-- Jusqu'à 10 étages par map, avec l'étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map.
+- Jusqu'à 10 étages par map, avec l'étage du dessous affiché en transparence ; escaliers, portails et portes menant à un autre étage ou à une autre map, point d'arrivée choisi à la souris.
 - Enregistrement automatique avec file d'attente hors ligne (IndexedDB) : une coupure réseau ou un onglet fermé brutalement ne fait pas perdre les modifications.
 - Notes en Markdown sûr, épingles, zones à lire, pièges et secrets ; modèles de map, dont 4 livrés (taverne, crypte, forêt, grotte).
 - Palette de commandes (Cmd/Ctrl+K), aussi dans la console du MJ.

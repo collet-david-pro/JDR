@@ -25,6 +25,7 @@ import type {
 import type { PinObject, SecretObject, TrapObject, ZoneObject } from '../contracts-notes';
 import { imageGeometry, imageProps } from './image-values';
 import { MapOpError } from './ops';
+import { textProps } from './text-values';
 
 /** Accepted pattern for object, token and note identifiers. */
 export const UID_PATTERN = /^[A-Za-z0-9_-]{1,21}$/;
@@ -49,6 +50,7 @@ const OBJECT_TYPES: readonly MapObject['type'][] = [
   'trap',
   'secret',
   'image',
+  'text',
 ];
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 
@@ -323,6 +325,11 @@ function geometry(type: MapObject['type'], g: MapObject['geometry'], b: Bounds) 
     }
     case 'image':
       return imageGeometry(g, b);
+    case 'text': {
+      const l = g as { x?: unknown; y?: unknown };
+      const [x, y] = point([l.x, l.y], b);
+      return { x, y };
+    }
   }
 }
 
@@ -351,6 +358,8 @@ function props(type: MapObject['type'], p: MapObject['props']): MapObject['props
       return secretProps(p as SecretObject['props']);
     case 'image':
       return imageProps(p);
+    case 'text':
+      return textProps(p);
   }
 }
 

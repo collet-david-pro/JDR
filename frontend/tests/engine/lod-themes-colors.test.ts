@@ -50,11 +50,16 @@ describe('chunk cache level', () => {
 });
 
 describe('grid themes', () => {
-  it('has the five themes of projet.md 15.2', () => {
+  it('has the five themes of projet.md 15.2 and the five added ones', () => {
     expect([...GRID_THEME_IDS].sort()).toEqual([
       'blueprint',
+      'crosses',
       'dark',
+      'dots',
+      'glow',
+      'ink',
       'light',
+      'major5',
       'parchment',
       'slate',
     ]);

@@ -5,7 +5,14 @@
 
 import type { CameraState, GridSpec, GridTheme } from '../editor/contracts';
 import type { Viewport } from './camera';
-import { GRID_BORDER_PX, GRID_LINE_PX, computeGridLines, mapScreenRect, snap } from './grid-lines';
+import {
+  GRID_BORDER_PX,
+  GRID_LINE_PX,
+  computeGridLines,
+  gridStrokes,
+  mapScreenRect,
+  snap,
+} from './grid-lines';
 import { DEFAULT_GRID_THEME, gridTheme, type GridThemeDef } from './grid-themes';
 import { Graphics } from './pixi';
 
@@ -53,9 +60,22 @@ export class GridRenderer {
       if (gl.clip !== null && gl.fade > 0 && (gl.xs.length > 0 || gl.ys.length > 0)) {
         const th = Math.max(1 / dpr, snap(GRID_LINE_PX, dpr));
         const half = snap(th / 2, dpr);
-        for (const x of gl.xs) this.lines.rect(x - half, gl.clip.y, th, gl.clip.h);
-        for (const y of gl.ys) this.lines.rect(gl.clip.x, y - half, gl.clip.w, th);
+        const strokes = gridStrokes({
+          style: t.style ?? 'lines',
+          xs: gl.xs.map((x) => x - half),
+          ys: gl.ys.map((y) => y - half),
+          xStart: gl.xStart ?? 1,
+          yStart: gl.yStart ?? 1,
+          th,
+          clip: gl.clip,
+          major: t.major ?? 0,
+        });
+        for (const r of strokes.base) this.lines.rect(r.x, r.y, r.w, r.h);
         this.lines.fill({ color: t.line, alpha: t.lineAlpha * gl.fade });
+        if (strokes.strong.length > 0) {
+          for (const r of strokes.strong) this.lines.rect(r.x, r.y, r.w, r.h);
+          this.lines.fill({ color: t.line, alpha: Math.min(1, t.lineAlpha * 1.8) * gl.fade });
+        }
       }
     }
 

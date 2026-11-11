@@ -1,4 +1,5 @@
 /** French labels of the editor (i18n keys written literally so the key check can find them). */
+import type { TextFont } from '../contracts-text';
 import type { GridTheme, LayerId } from '../contracts';
 import type { ShortcutAction } from '../shortcuts';
 import type { BrushShape, ShapeKind, ToolId, ToolNotice } from '../tools/types';
@@ -86,6 +87,10 @@ export function toolLabel(id: ToolId): string {
       return t('editor.tools.token');
     case 'image':
       return t('editor.tools.image');
+    case 'scatter':
+      return t('editor.tools.scatter');
+    case 'text':
+      return t('editor.tools.text');
     case 'fog':
       return t('editor.tools.fog');
   }
@@ -126,6 +131,30 @@ export function themeLabel(theme: GridTheme): string {
       return t('editor.grid.themes.dark');
     case 'light':
       return t('editor.grid.themes.light');
+    case 'dots':
+      return t('editor.grid.themes.dots');
+    case 'crosses':
+      return t('editor.grid.themes.crosses');
+    case 'major5':
+      return t('editor.grid.themes.major5');
+    case 'ink':
+      return t('editor.grid.themes.ink');
+    case 'glow':
+      return t('editor.grid.themes.glow');
+  }
+}
+
+/** Label of a text font. */
+export function textFontLabel(font: TextFont): string {
+  switch (font) {
+    case 'sans':
+      return t('editor.text.fonts.sans');
+    case 'serif':
+      return t('editor.text.fonts.serif');
+    case 'mono':
+      return t('editor.text.fonts.mono');
+    case 'hand':
+      return t('editor.text.fonts.hand');
   }
 }
 
@@ -263,6 +292,8 @@ export function noticeText(notice: ToolNotice): string {
       return t('editor.notices.passage_length');
     case 'no_image':
       return t('editor.notices.no_image');
+    case 'no_text':
+      return t('editor.notices.no_text');
     case 'invalid':
       return t('editor.notices.invalid');
   }

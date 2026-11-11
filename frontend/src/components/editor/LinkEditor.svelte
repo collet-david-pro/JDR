@@ -5,14 +5,17 @@
     LINK_TARGETS,
     linkBroken,
     type LinkFloorItem,
+    type LinkMapInfo,
     type LinkMapItem,
     type LinkTargets,
   } from '../../editor/ui/link-targets';
   import { t } from '../../lib/i18n';
+  import Button from '../Button.svelte';
+  import LinkPointPicker from './LinkPointPicker.svelte';
 
   /**
    * Edits the link of a door, stairs or portal (P9a2): map of the game, floor and position (numeric entry;
-   * picking the spot on the target map is not offered). A broken link is flagged and is redone by choosing
+   * a button also picks it with a click on the target map). A broken link is flagged and is redone by choosing
    * a destination again. `required`: no "no link" choice (portal).
    */
   interface Props {
@@ -65,6 +68,21 @@
       live = false;
     };
   });
+
+  let pickOpen = $state(false);
+  let pickInfo = $state.raw<LinkMapInfo | null>(null);
+  let pickFailed = $state(false);
+
+  function openPicker(): void {
+    if (targets === undefined || link === null || link.map_id === null) return;
+    pickInfo = null;
+    pickFailed = false;
+    pickOpen = true;
+    targets.info(link.map_id).then(
+      (info) => (pickInfo = info),
+      () => (pickFailed = true),
+    );
+  }
 
   const mapKnown = $derived(maps === null || mapId === '' || maps.some((m) => m.id === mapId));
   const floorKnown = $derived(
@@ -161,6 +179,18 @@
         />
       </label>
     </div>
+    {#if targets?.canPick}
+      <Button size="small" onclick={openPicker} data-testid={`${id}-pick`}>
+        {t('editor.link.pick')}
+      </Button>
+      <LinkPointPicker
+        bind:open={pickOpen}
+        info={pickInfo}
+        failed={pickFailed}
+        point={{ x: link.x, y: link.y }}
+        onpick={(x, y) => patch({ x, y })}
+      />
+    {/if}
     <p class="small muted">{t('editor.link.position_hint')}</p>
   {/if}
 </fieldset>

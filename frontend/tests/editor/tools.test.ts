@@ -313,6 +313,8 @@ describe('selection, pipette, ruler, hand', () => {
       'secret:',
       'token:K',
       'image:J',
+      'text:',
+      'scatter:',
       'fog:F',
       'pipette:I',
       'ruler:M',

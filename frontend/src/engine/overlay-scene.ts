@@ -4,6 +4,7 @@
  * `segment` (door / window tool, red when invalid), `light` (light tool), `snap`, `area`.
  */
 
+import { textCorners } from '../editor/text-geometry';
 import type { Overlay, Point, SceneView } from '../editor/contracts';
 import { normalizeRect } from './overlay-geometry';
 import { dashSegments } from './overlay-geometry';
@@ -223,6 +224,13 @@ function drawSelection(
         lightRings(g, toScreen, x, y, obj.props.radius, obj.props.dim_radius);
         break;
       }
+      case 'text':
+        outline(
+          g,
+          textCorners(obj).map(([x, y]) => toScreen(x, y)),
+          true,
+        );
+        break;
       case 'image':
         outline(
           g,

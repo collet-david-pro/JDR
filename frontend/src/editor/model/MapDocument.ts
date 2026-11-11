@@ -876,9 +876,21 @@ export class MapDocument implements MapView, SceneView {
     if (existing !== undefined && existing !== null) {
       if (existing.assetId === assetId) {
         // Same asset: a texture entry may change its block size (the only mutable field).
+        let entry: PaletteEntry = existing;
         if (repeat !== null && existing.repeat != null && existing.repeat !== repeat) {
+          entry = { ...entry, repeat };
+        }
+        // Soft edges (l14): a re-sent autotile value changes it, "none" clears it.
+        if (
+          autotile !== null &&
+          (existing.autotile ?? null) !== (autotile === 'none' ? null : autotile)
+        ) {
+          const { autotile: _old, ...rest } = entry;
+          entry = autotile === 'none' ? rest : { ...rest, autotile };
+        }
+        if (entry !== existing) {
           const next = [...this._palette];
-          next[index] = { ...existing, repeat };
+          next[index] = entry;
           this._palette = next;
           this.markMeta();
         }

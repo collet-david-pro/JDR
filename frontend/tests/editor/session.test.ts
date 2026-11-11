@@ -139,8 +139,9 @@ describe('palette catalog', () => {
         thumb: '/api/v1/files/a?t=thumb',
         frames: 1,
         repeat: null,
+        soft: false,
       },
-      { index: 3, assetId: 'x', name: 'X', thumb: 'ux', frames: 1, repeat: null },
+      { index: 3, assetId: 'x', name: 'X', thumb: 'ux', frames: 1, repeat: null, soft: false },
     ]);
   });
 });

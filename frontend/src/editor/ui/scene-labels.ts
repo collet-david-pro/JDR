@@ -129,6 +129,8 @@ export function objectTypeLabel(type: MapObjectType | 'token'): string {
       return t('editor.objects.types.token');
     case 'image':
       return t('editor.objects.types.image');
+    case 'text':
+      return t('editor.objects.types.text');
   }
 }
 

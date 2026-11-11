@@ -3,6 +3,7 @@
  * the scene engine. Plain TypeScript (the Svelte components only read `ui` and call methods),
  * testable with a fake engine.
  */
+import { isSoftEdges, SOFT_EDGES, SOFT_EDGES_OFF } from '../../engine/soft-edges';
 import type {
   FloorInfo,
   GridSpec,
@@ -359,6 +360,21 @@ export class EditorSession {
     if (next === entry.repeat) return;
     this.history.applyUntracked([
       { type: 'palette.add', index, asset_id: entry.assetId, repeat: next },
+    ]);
+    this.syncMeta();
+  }
+
+  /** Switches the soft edges of a palette entry (palette.add again, not undoable). */
+  setSoftEdges(index: number, on: boolean): void {
+    const entry = this.doc.palette[index];
+    if (entry == null || isSoftEdges(entry.autotile) === on) return;
+    this.history.applyUntracked([
+      {
+        type: 'palette.add',
+        index,
+        asset_id: entry.assetId,
+        autotile: on ? SOFT_EDGES : SOFT_EDGES_OFF,
+      },
     ]);
     this.syncMeta();
   }

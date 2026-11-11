@@ -25,6 +25,18 @@ final class MapTexturePaletteTest extends MapsP4cTestCase
         self::assertSame([(int) $s['a']['id'] => 1, (int) $tex['id'] => 1], $this->storedRefs($s['map']['id']));
     }
 
+    public function testSoftEdgesFlagCanBeSetAndClearedOnAnExistingEntry(): void
+    {
+        $s = $this->scene();
+        $id = $s['map']['id'];
+        $this->opsOk($s['gm'], $id, [['type' => 'palette.add', 'index' => 1, 'asset_id' => $s['a']['id'], 'autotile' => 'soft']]);
+        self::assertSame('soft', self::data($s['gm']->get('/maps/' . $id))['palette'][1]['autotile']);
+        $this->opsOk($s['gm'], $id, [['type' => 'palette.add', 'index' => 1, 'asset_id' => $s['a']['id'], 'autotile' => 'none']]);
+        self::assertNull(self::data($s['gm']->get('/maps/' . $id))['palette'][1]['autotile']);
+        $this->opsOk($s['gm'], $id, [['type' => 'palette.add', 'index' => 1, 'asset_id' => $s['a']['id'], 'autotile' => 'soft']]);
+        self::assertSame('soft', self::data($s['gm']->get('/maps/' . $id))['palette'][1]['autotile']);
+    }
+
     public function testRepeatCanChangeOnlyForTheSameAsset(): void
     {
         $s = $this->scene();

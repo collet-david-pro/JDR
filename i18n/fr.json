@@ -1581,7 +1581,12 @@
         "slate": "Ardoise",
         "blueprint": "Plan technique",
         "dark": "Sombre",
-        "light": "Clair"
+        "light": "Clair",
+        "dots": "Pointillés",
+        "crosses": "Croix aux intersections",
+        "major5": "Grille marquée (tous les 5)",
+        "ink": "Encre sur parchemin",
+        "glow": "Lueur"
       }
     },
     "tools": {
@@ -1612,7 +1617,9 @@
       "group_structure": "Structure",
       "group_place": "Placer",
       "group_story": "Notes et secrets",
-      "group_table": "Table"
+      "group_table": "Table",
+      "scatter": "Pinceau d'objets",
+      "text": "Texte"
     },
     "options": {
       "label": "Options de l'outil",
@@ -1768,7 +1775,9 @@
       "image": "poser une image",
       "image_edit": "modifier une image",
       "image_remove": "supprimer une image",
-      "background": "image de fond"
+      "background": "image de fond",
+      "scatter": "disperser des objets",
+      "text": "ajouter un texte"
     },
     "notices": {
       "layer_locked": "Ce calque est verrouillé : déverrouillez-le pour le modifier.",
@@ -1789,7 +1798,8 @@
       "link_required": "Choisissez la map de destination du portail dans les options de l'outil.",
       "polygon_limit": "Un polygone compte 200 points au plus : terminez-le (double-clic ou Entrée).",
       "passage_length": "Un passage secret mesure de 0,1 à 20 cases.",
-      "no_image": "Choisissez d'abord une image dans les options de l'outil Image."
+      "no_image": "Choisissez d'abord une image dans les options de l'outil Image.",
+      "no_text": "Saisissez d'abord le contenu du texte dans les options de l'outil Texte."
     },
     "help": {
       "title": "Raccourcis clavier",
@@ -1886,7 +1896,8 @@
         "zone": "Zone",
         "trap": "Piège",
         "secret": "Secret",
-        "image": "Image"
+        "image": "Image",
+        "text": "Texte"
       },
       "wall_kinds": {
         "stone": "Pierre",
@@ -2278,6 +2289,47 @@
       "loading": "Image en cours de chargement",
       "choose": "Choisir",
       "clear": "Retirer"
+    },
+    "symmetry": {
+      "title": "Symétrie et répétition",
+      "axes": {
+        "none": "Aucune symétrie",
+        "vertical": "Miroir gauche/droite",
+        "horizontal": "Miroir haut/bas",
+        "both": "Miroir dans les deux sens"
+      },
+      "custom": "Choisir l'axe",
+      "axis_x": "Axe vertical (case)",
+      "axis_y": "Axe horizontal (case)",
+      "center_hint": "Les axes passent par le centre de la map.",
+      "repeat_count": "Copies répétées",
+      "repeat_step_x": "Pas horizontal (cases)",
+      "repeat_step_y": "Pas vertical (cases)"
+    },
+    "scatter": {
+      "none": "Aucune image choisie.",
+      "add": "Ajouter une image",
+      "remove": "Retirer",
+      "density": "Densité",
+      "spacing": "Espacement minimal (cases)",
+      "radius": "Rayon du pinceau (cases)",
+      "random_rotation": "Rotation aléatoire",
+      "scale_variation": "Variation d'échelle",
+      "hint": "Glissez pour disperser les images choisies ; un trait = une annulation. Le calque est celui de l'outil Image."
+    },
+    "text": {
+      "content": "Texte",
+      "size": "Taille (cases)",
+      "color": "Couleur",
+      "font": "Police",
+      "rotation": "Rotation (°)",
+      "tool_hint": "Cliquez sur la map pour poser le texte. Double-clic sur un texte avec l'outil Sélection pour le modifier.",
+      "fonts": {
+        "sans": "Sans empattement",
+        "serif": "Avec empattement",
+        "mono": "Chasse fixe",
+        "hand": "Manuscrite"
+      }
     }
   },
   "maps": {
@@ -3211,5 +3263,13 @@
         "body": "Téléchargez une sauvegarde complète du site ou restaurez-en une."
       }
     }
-  }
+  },
+  "editor.minimap.show": "Minimap",
+  "editor.minimap.hide": "Masquer la minimap",
+  "editor.minimap.title": "Cliquer ou glisser pour recentrer la vue",
+  "editor.link.pick": "Choisir sur la map",
+  "editor.link.pick_title": "Choisir le point d'arrivée",
+  "editor.link.pick_hint": "Cliquez sur la map cible pour placer le point d'arrivée (demi-case). Échap annule. L'aperçu réunit tous les étages.",
+  "editor.palette.soft_edges": "Bords adoucis",
+  "editor.palette.soft_edges_hint": "Fond les bords avec les cases voisines qui ont aussi cette option."
 }

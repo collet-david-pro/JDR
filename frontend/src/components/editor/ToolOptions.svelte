@@ -1,5 +1,8 @@
 <script lang="ts">
   import ImageToolOptions from './ImageToolOptions.svelte';
+  import ScatterToolOptions from './ScatterToolOptions.svelte';
+  import SymmetryOptions from './SymmetryOptions.svelte';
+  import TextToolOptions from './TextToolOptions.svelte';
   import NoteToolOptions from './NoteToolOptions.svelte';
   import ObjectToolOptions from './ObjectToolOptions.svelte';
   import { BRUSH_MAX, BRUSH_MIN, type BrushShape, type ShapeKind } from '../../editor/tools/types';
@@ -55,6 +58,8 @@
       {/each}
     </fieldset>
   {/if}
+
+  {#if tool === 'brush' || tool === 'eraser'}<SymmetryOptions {session} />{/if}
 
   {#if tool === 'shape'}
     <fieldset>
@@ -115,6 +120,8 @@
   <ObjectToolOptions {session} />
   <NoteToolOptions {session} />
   {#if tool === 'image'}<ImageToolOptions {session} />{/if}
+  {#if tool === 'scatter'}<ScatterToolOptions {session} />{/if}
+  {#if tool === 'text'}<TextToolOptions {session} />{/if}
 </section>
 
 <style>

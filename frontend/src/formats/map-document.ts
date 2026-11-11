@@ -67,7 +67,18 @@ const COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 export const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'] as const;
 
 /** Accepted grid themes. */
-export const MAP_THEMES = ['parchment', 'slate', 'blueprint', 'dark', 'light'] as const;
+export const MAP_THEMES = [
+  'parchment',
+  'slate',
+  'blueprint',
+  'dark',
+  'light',
+  'dots',
+  'crosses',
+  'major5',
+  'ink',
+  'glow',
+] as const;
 /** Accepted weather types. */
 export const WEATHER_TYPES = ['none', 'rain', 'snow', 'fog', 'storm'] as const;
 /** Identifiers of object layers. */
@@ -133,6 +144,7 @@ export const SERVER_CHECKED_TYPES = [
   'trap',
   'secret',
   'image',
+  'text',
 ] as const;
 /** Accepted object visibilities. */
 export const OBJECT_VISIBILITIES = ['all', 'gm', 'hidden_until_revealed'] as const;

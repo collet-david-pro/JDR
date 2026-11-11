@@ -51,3 +51,13 @@ Dans l'onglet Maps, **Nouvelle map**, partie **Depuis une image** : choisissez o
 - Une image ne bloque ni la vue, ni la lumière, ni les déplacements : posez des murs par-dessus.
 - Une image du calque **MJ** n'est jamais montrée aux joueurs ni aux écrans. Le brouillard cache les images comme le reste.
 - Les images posées librement trop grandes pour les limites du site sont réduites à l'envoi (les fonds de map, eux, sont découpés). Si l'envoi est refusé, réduisez ou découpez l'image, ou demandez à l'administrateur de relever les limites.
+
+## Pinceau d'objets
+
+Le **Pinceau d'objets** (groupe _Placer_ de la barre d'outils) disperse des images de la bibliothèque au pinceau : arbres, rochers, herbes, débris. Ajoutez une ou plusieurs images dans le panneau d'options (une image est tirée au hasard pour chaque objet), puis réglez :
+
+- la **densité** (objets par case de pinceau) et le **rayon** du pinceau ;
+- l'**espacement minimal** entre deux objets du même trait ;
+- la **rotation aléatoire** et la **variation d'échelle**.
+
+Chaque objet posé est une image ordinaire (déplaçable, redimensionnable, supprimable) sur le calque choisi dans l'outil Image. Un trait entier s'annule d'un seul coup ; un trait pose au plus 500 objets, et la map ne dépasse jamais la limite de 20 000 objets.

@@ -94,11 +94,21 @@ trait LeakScenario
             'props' => ['asset_id' => $assetId, 'opacity' => 1, 'flip_h' => false, 'flip_v' => false, 'placement' => 'above'],
             'visibility' => 'all', 'locked' => false, 'sort_order' => 0,
         ], $over);
+        $text = static fn (string $uid, string $content, array $over): array => array_replace([
+            'uid' => $uid, 'floor' => $f, 'type' => 'text', 'layer' => 'labels',
+            'geometry' => ['x' => 3, 'y' => 9],
+            'props' => ['text' => $content, 'size' => 0.5, 'color' => '#112233', 'font' => 'sans', 'rotation' => 0],
+            'visibility' => 'all', 'locked' => false, 'sort_order' => 0,
+        ], $over);
         $w['visibleImage'] = (string) $this->uploadOk($gm, 'valid_jpeg_exif_orientation6.jpg', ['kind' => 'object'])['id'];
         // D10: editor ops on the played map.
         $this->opsOk($gm, $w['big'], [
             ['type' => 'object.add', 'object' => $image('img-gm', (string) $secret['id'], ['layer' => 'gm'])],
             ['type' => 'object.add', 'object' => $image('img-vis', $w['visibleImage'])],
+            // Lot l17: text labels, two GM only (gm layer, gm visibility), never sent to players nor screens.
+            ['type' => 'object.add', 'object' => $text('txt-gm', 'Etiquette secrete', ['layer' => 'gm'])],
+            ['type' => 'object.add', 'object' => $text('txt-gmvis', 'Note du MJ', ['visibility' => 'gm'])],
+            ['type' => 'object.add', 'object' => $text('txt-vis', 'Auberge', [])],
             ['type' => 'object.add', 'object' => self::wallObject('wall-new', $f, [[3, 12], [4, 12]])],
             ['type' => 'object.add', 'object' => self::wallObject('gm-new', $f, [[3, 13], [4, 13]], ['layer' => 'gm'])],
             self::tiles($f, 'ground', [[4, 4, 1], [150, 151, 2]]),
@@ -177,7 +187,7 @@ trait LeakScenario
         $all = ['bob', 'dan', 'table'];
         $ever = PHP_INT_MAX;
         $needles = [];
-        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre', 'up-wall', 'up-live', 't-up', 't-up-live', 'Etage secret', 'img-gm', 'Plan secret', $w['secretImage']] as $uid) {
+        foreach (['gm-layer', 'gm-vis', 'hidden-keep', 'gm-light', 'gm-new', 't-dragon', 't-shade', 't-lurk', 'Dragon', 'Ombre', 'up-wall', 'up-live', 't-up', 't-up-live', 'Etage secret', 'img-gm', 'Plan secret', $w['secretImage'], 'txt-gm', 'txt-gmvis', 'Etiquette secrete', 'Note du MJ'] as $uid) {
             $needles[] = [$all, $uid, $ever];
         }
         foreach (['hidden-vis', 't-ghost', 'Spectre'] as $uid) {

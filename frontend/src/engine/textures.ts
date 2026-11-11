@@ -8,6 +8,7 @@
 import type { PaletteEntry } from '../editor/contracts';
 import { variantFrame, variantFrameCount } from './cell-transform';
 import { fallbackColor } from './fallback-color';
+import { isSoftEdges, type EdgeStrip } from './soft-edges';
 import { repeatSlot, textureCellRect } from './texture-tiles';
 import { Assets, CanvasSource, Rectangle, Texture } from './pixi';
 
@@ -59,6 +60,9 @@ export class PaletteTextures {
   private entries: EntryState[] = [];
   /** Repeat of world-aligned (texture) entries, null for ordinary tiles. */
   private repeats: (number | null)[] = [];
+  /** Soft edges flag of each entry (l14). */
+  private softs: boolean[] = [];
+  private readonly strips = new WeakMap<Texture, Map<string, Texture>>();
   private readonly missing: Texture = createMissingTexture();
   private readonly loaded = new Set<string>();
   private readonly fallbackCache = new Map<number, ResolvedTile>();
@@ -76,8 +80,12 @@ export class PaletteTextures {
     const changed: number[] = [];
     const next: EntryState[] = [];
     const repeats: (number | null)[] = [];
+    const softs: boolean[] = [];
+    let softChanged = softs.length !== this.softs.length;
     for (let i = 0; i < palette.length; i++) {
       const entry = i === 0 ? null : (palette[i] ?? null);
+      softs.push(isSoftEdges(entry?.autotile));
+      if (softs[i] !== (this.softs[i] ?? false)) softChanged = true;
       const prev = this.entries[i];
       const repeat = entry?.repeat != null && entry.repeat >= 1 ? Math.trunc(entry.repeat) : null;
       repeats.push(repeat);
@@ -105,7 +113,51 @@ export class PaletteTextures {
     for (let i = palette.length; i < this.entries.length; i++) changed.push(i);
     this.entries = next;
     this.repeats = repeats;
+    this.softs = softs;
+    // A soft flag also changes the look of the neighbours of the cells: redraw everything.
+    if (softChanged && this.entries.length > 0) {
+      for (let i = 1; i < this.entries.length; i++) if (!changed.includes(i)) changed.push(i);
+    }
     if (changed.length > 0) this.onChange(changed);
+  }
+
+  /** True when the entry has soft edges (l14). */
+  isSoft(index: number): boolean {
+    return this.softs[index] === true;
+  }
+
+  /** True when at least one entry has soft edges. */
+  get anySoft(): boolean {
+    return this.softs.some(Boolean);
+  }
+
+  /**
+   * Part of `base` covered by a soft-edge strip (shares its source), null for the fallback
+   * checkerboard (no transition on a missing image).
+   */
+  stripTexture(base: Texture, strip: EdgeStrip): Texture | null {
+    if (base === this.missing) return null;
+    let byKey = this.strips.get(base);
+    if (byKey === undefined) {
+      byKey = new Map();
+      this.strips.set(base, byKey);
+    }
+    const key = `${strip.side}:${strip.x}:${strip.y}`;
+    let part = byKey.get(key);
+    if (part === undefined) {
+      const f = base.frame;
+      part = new Texture({
+        source: base.source,
+        frame: new Rectangle(
+          f.x + strip.x * f.width,
+          f.y + strip.y * f.height,
+          strip.w * f.width,
+          strip.h * f.height,
+        ),
+      });
+      byKey.set(key, part);
+    }
+    return part;
   }
 
   /** True for a world-aligned texture entry (cell rotation / variant are ignored). */

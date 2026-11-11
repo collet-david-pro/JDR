@@ -28,6 +28,8 @@ export interface EditorSettings extends ToolSettings {
   brushSize: number;
   selection: readonly CellRect[];
   objectSelection: ObjectSelection;
+  /** Lot l17: text object to edit in the properties panel. */
+  textEditUid?: string | null;
 }
 
 export interface EditorHost {
@@ -185,6 +187,7 @@ export class EditorController {
     if (r.picked !== undefined) this.settings.tile = r.picked;
     if (r.selection !== undefined) this.settings.selection = r.selection;
     if (r.objectSelection !== undefined) this.settings.objectSelection = r.objectSelection;
+    if (r.editText !== undefined) this.settings.textEditUid = r.editText;
     if (r.notice !== undefined) this.host.notify?.(r.notice);
   }
 }

@@ -284,7 +284,9 @@ export class SceneControls {
               ? o.geometry.a
               : o.type === 'image'
                 ? imageCenter(o.geometry)
-                : (notePoints(o)[0] ?? [0, 0]);
+                : o.type === 'text'
+                  ? [o.geometry.x, o.geometry.y]
+                  : (notePoints(o)[0] ?? [0, 0]);
       items.push({ uid: o.uid, kind: o.type, name: null, x, y });
     }
     ui.sceneItems = items;

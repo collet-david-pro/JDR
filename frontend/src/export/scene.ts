@@ -2,6 +2,7 @@
  * Map snapshot sent to the export worker (structured-clone friendly; chunk arrays are
  * transferred) and the export options. Built on the main thread from the editor's MapView.
  */
+import { isSoftEdges } from '../engine/soft-edges';
 import {
   CHUNK_SIZE,
   type CellRect,
@@ -29,6 +30,8 @@ export interface SnapshotPaletteEntry {
   readonly url: string | null;
   /** P14: block size of a world-aligned texture entry, absent for a tile. */
   readonly repeat?: number | null;
+  /** l14: soft edges between this entry and the other soft ones. */
+  readonly soft?: boolean;
 }
 
 export interface MapSnapshot {
@@ -176,6 +179,7 @@ export function buildSnapshot(
         name: entry?.name ?? `#${index}`,
         url: entry?.url ? absoluteUrl(entry.url, baseUrl) : null,
         ...(entry?.repeat != null ? { repeat: entry.repeat } : {}),
+        ...(isSoftEdges(entry?.autotile) ? { soft: true } : {}),
       };
     });
   let sceneSnapshot: SnapshotScene | null = null;

@@ -326,6 +326,10 @@ export class FakeContext implements Ctx2D {
     return new FakeGradient(x0, y0, r0, r1) as unknown as CanvasGradient;
   }
 
+  strokeText(text: string, x: number, y: number): void {
+    this.calls.push(`strokeText ${text} ${x},${y} ${this.font}`);
+  }
+
   fillText(text: string, x: number, y: number): void {
     this.calls.push(`fillText ${text} ${x},${y} ${this.font}`);
   }
