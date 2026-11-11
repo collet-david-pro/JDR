@@ -194,6 +194,18 @@ test('help screenshots', async ({ browser }) => {
   await page.keyboard.press('Escape');
   await shot(page, 'editeur');
 
+  // Guided tour of the editor (turned off for the run: on for this shot only).
+  await page.evaluate(() => localStorage.removeItem('jdr.tours.off'));
+  await page.reload();
+  await expect(page.getByTestId('tour')).toHaveAttribute('data-tour-id', 'editor', { timeout: 30_000 });
+  await page.getByTestId('tour-next').click();
+  await page.getByTestId('tour-next').click();
+  await expect(page.getByTestId('tour-progress')).toHaveText('Étape 3 sur 6');
+  await shot(page, 'visite-guidee');
+  await page.evaluate(() => localStorage.setItem('jdr.tours.off', '1'));
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('tour')).toBeHidden();
+
   // --- Tokens on the map, session ----------------------------------------------------------
   const cells = await groundCells(page, crypte.id);
   let start: [number, number] | null = null;

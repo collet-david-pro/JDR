@@ -6,6 +6,9 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+### Added
+- **Visites guidées** : la première fois qu'on ouvre le tableau de bord, une partie, l'éditeur, la console du MJ, la vue du joueur ou l'administration, une courte visite présente l'écran pas à pas, en mettant en lumière chaque zone. Une visite passée ou terminée ne revient plus (le choix suit le compte sur tous ses appareils) ; le profil permet de les revoir. Nouvelle page d'aide « Visites guidées ».
+
 ### Changed
 - **Nouvelle disposition de l'éditeur** : la barre du haut tient sur une ligne. Les réglages de vue (vue MJ ou joueur, éclairage, brouillard, ombres, exploration, étage du dessous, grille et son thème, mode performance, réinitialisation du brouillard) sont regroupés dans un menu **Affichage**. Les outils sont rangés par usage (Naviguer, Terrain, Structure, Placer, Notes et secrets, Table), ce qui laisse voir les options de l'outil. Les panneaux de droite passent en onglets (Propriétés, Palette, Calques, Tokens, Notes, Ambiance, plus Historique et Générer quand ils sont ouverts), qui suivent l'outil choisi et la sélection. Le zoom est dans la barre d'état. Aide et captures mises à jour.
 

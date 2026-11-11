@@ -250,6 +250,7 @@ L'administrateur a sa console, pensée pour quelqu'un qui n'est pas informaticie
 - **Thème** clair, sombre ou automatique, et trois **styles** : moderne, fantasy, science-fiction. Le choix suit le compte d'un appareil à l'autre.
 - **Accessibilité** : objectif WCAG 2.2 niveau AA hors carte, parcours entièrement au clavier, contrastes vérifiés, liste textuelle des objets de la carte. Détails et limites : [docs/accessibilite.md](docs/accessibilite.md).
 - **Aide intégrée** (`/aide`, accessible sans compte) pour le joueur, le MJ, l'écran de table et l'administrateur, avec recherche, raccourcis clavier et captures ; un lien « ? » dans chaque écran mène à la bonne section.
+- **Visites guidées** : à la première ouverture de chaque écran principal (tableau de bord, partie, éditeur, console du MJ, vue du joueur, administration), une courte visite le présente pas à pas ; le profil permet de les revoir.
 
 <table>
 <tr>

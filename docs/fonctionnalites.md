@@ -72,3 +72,5 @@ Le détail complet, phase par phase, est dans le [CHANGELOG](../CHANGELOG.md). L
 
 Une page d'aide publique (`/aide`, lien « Aide » dans l'en-tête et le pied de page) décrit toutes les fonctionnalités par public : joueur, MJ, écran IRL et administrateur. Elle a une recherche, les raccourcis clavier, des captures d'écran et des liens « ? » dans les écrans clés. Les textes sont des fichiers Markdown dans `frontend/src/help/`.
 
+**Visites guidées** : à la première ouverture du tableau de bord, d'une partie, de l'éditeur, de la console du MJ, de la vue du joueur et de l'administration, une courte visite présente l'écran pas à pas. Une visite passée ou terminée ne revient plus (préférence du compte) ; le profil permet de les revoir.
+
