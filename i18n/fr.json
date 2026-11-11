@@ -1458,7 +1458,9 @@
       "light_value": "Lumière : {radius} / {dim} cases",
       "ring": "Anneau",
       "ring_enabled": "Afficher un anneau de couleur",
-      "ring_color": "Couleur de l'anneau"
+      "ring_color": "Couleur de l'anneau",
+      "generate_image": "Générer une image",
+      "generate_title": "Générer l'image du token"
     },
     "encounters": {
       "title": "Rencontres préparées",

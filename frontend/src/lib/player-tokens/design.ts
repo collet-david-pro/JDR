@@ -188,3 +188,10 @@ export function sourceSize(w: number, h: number, max = 1024): { w: number; h: nu
   const k = Math.min(1, max / Math.max(w, h));
   return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
 }
+
+/** Image made by the generator in library mode (GM tokens). */
+export interface GeneratedToken {
+  readonly name: string;
+  /** TOKEN_PX square PNG. */
+  readonly png: Blob;
+}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { untrack, type Component } from 'svelte';
   import AssetPicker from '../AssetPicker.svelte';
   import Button from '../Button.svelte';
   import CheckboxField from '../CheckboxField.svelte';
@@ -21,6 +21,9 @@
   } from '../../lib/games/token-form';
   import { formatCellDistance } from '../../lib/games/units';
   import { t } from '../../lib/i18n';
+  import { assetsClient } from '../../lib/assets/service';
+  import type { GeneratedToken } from '../../lib/player-tokens/design';
+  import { toasts } from '../../stores/toasts.svelte';
   import {
     TOKEN_KINDS,
     type Asset,
@@ -46,6 +49,15 @@
   let kind = $state<string>('pc');
   let forced = $state(false);
   let pickerOpen = $state(false);
+
+  /** Token generator of the player collection, in library mode (loaded on demand). */
+  interface GeneratorProps {
+    open: boolean;
+    onsubmit: (result: GeneratedToken) => Promise<void>;
+    initialName?: string;
+  }
+  let Generator = $state.raw<Component<GeneratorProps> | null>(null);
+  let generatorOpen = $state(false);
   let formEl: HTMLFormElement | undefined = $state();
   const form = new FormState();
 
@@ -76,6 +88,27 @@
   function pick(asset: Asset): void {
     draft.asset_id = asset.id;
     draft.image_url = asset.urls.thumb;
+  }
+
+  async function openGenerator(): Promise<void> {
+    try {
+      Generator ??= (await import('../player-tokens/TokenGenerator.svelte'))
+        .default as Component<GeneratorProps>;
+      generatorOpen = true;
+    } catch (error) {
+      toasts.error(error);
+    }
+  }
+
+  /** Generated image: filed in the library as a token image, then used by this token. */
+  async function generated(result: GeneratedToken): Promise<void> {
+    const { asset } = await assetsClient().upload(result.png, 'token.png', {
+      kind: 'token',
+      name: result.name,
+      source: 'generated',
+    });
+    pick(asset);
+    if (draft.name.trim() === '') draft.name = result.name;
   }
 
   function clearImage(): void {
@@ -126,6 +159,12 @@
         <button type="button" class="button button-small" onclick={() => (pickerOpen = true)}>
           {draft.asset_id ? t('games.tokens.change_image') : t('games.tokens.choose_image')}
         </button>
+        <button
+          type="button"
+          class="button button-small"
+          data-testid="token-generate"
+          onclick={openGenerator}>{t('games.tokens.generate_image')}</button
+        >
         {#if draft.asset_id}
           <button type="button" class="button button-small button-ghost" onclick={clearImage}>
             {t('games.tokens.remove_image')}
@@ -289,6 +328,9 @@
 </Modal>
 
 <AssetPicker bind:open={pickerOpen} kind="token" onpick={pick} />
+{#if Generator}
+  <Generator bind:open={generatorOpen} onsubmit={generated} initialName={draft.name.trim()} />
+{/if}
 
 <style>
   .player-token {

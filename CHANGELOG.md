@@ -6,6 +6,9 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le pr
 
 ## [Non publié]
 
+### Added
+- **Générateur de tokens côté MJ** : la fiche d'un token de la partie propose « Générer une image ». Le générateur des tokens joueurs (forme, couleurs, anneau, emblème ou portrait) dessine l'image d'un PNJ ou d'un monstre, rangée dans la bibliothèque comme image de token.
+
 ## [0.8.0] - 2026-11-11
 
 ### Added

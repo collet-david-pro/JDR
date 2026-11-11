@@ -17,6 +17,7 @@
     zoomCrop,
     ZOOM_MAX,
     ZOOM_MIN,
+    type GeneratedToken,
     type TokenDesign,
   } from '../../lib/player-tokens/design';
   import { EMBLEM_IDS, EMBLEMS, SHAPE_PATHS } from '../../lib/player-tokens/emblems';
@@ -30,11 +31,19 @@
   interface Props {
     open: boolean;
     /** null: new token; else the token being edited again. */
-    token: PlayerToken | null;
-    onsaved: (token: PlayerToken) => void;
+    token?: PlayerToken | null;
+    /** Player collection: the saved token. */
+    onsaved?: (token: PlayerToken) => void;
+    /**
+     * Library mode (GM tokens: NPCs, monsters...): receives the image instead of the player
+     * collection; the dialog closes once it resolves.
+     */
+    onsubmit?: (result: GeneratedToken) => Promise<void>;
+    /** Name proposed for a new token. */
+    initialName?: string;
   }
 
-  let { open = $bindable(), token, onsaved }: Props = $props();
+  let { open = $bindable(), token = null, onsaved, onsubmit, initialName = '' }: Props = $props();
 
   const PREVIEW = 256;
   const STEP = 3;
@@ -60,7 +69,7 @@
     portraitBlob = null;
     portrait = null;
     if (token === null) {
-      name = '';
+      name = initialName;
       design = defaultDesign();
       return;
     }
@@ -215,6 +224,11 @@
       if (ctx === null) throw new Error('canvas');
       drawToken(ctx, design, TOKEN_PX, portrait);
       const png = await toBlob(out, 'image/png');
+      if (onsubmit !== undefined) {
+        await onsubmit({ name: name.trim(), png });
+        open = false;
+        return;
+      }
       const usePortrait = design.mode === 'portrait';
       const input = {
         name: name.trim(),
@@ -228,7 +242,7 @@
           ? await playerTokensClient().create(input)
           : await playerTokensClient().redesign(token.id, input);
       open = false;
-      onsaved(saved);
+      onsaved?.(saved);
     } catch (error) {
       failure = describeError(error, t);
     } finally {
@@ -252,7 +266,11 @@
 
 <Modal
   bind:open
-  title={token === null ? t('player_tokens.gen.create_title') : t('player_tokens.gen.edit_title')}
+  title={onsubmit !== undefined
+    ? t('games.tokens.generate_title')
+    : token === null
+      ? t('player_tokens.gen.create_title')
+      : t('player_tokens.gen.edit_title')}
 >
   <form class="gen stack" novalidate onsubmit={save} data-testid="token-generator">
     <div class="stage-row">

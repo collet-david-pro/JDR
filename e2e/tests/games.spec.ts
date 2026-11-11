@@ -42,11 +42,22 @@ test("GM creates a game and a token, adds a player; an outsider sees nothing", a
   await page.getByRole("tab", { name: "Tokens" }).click();
   await page.getByRole("button", { name: "Nouveau token" }).click();
   await page.getByRole("dialog").getByLabel(/^Nom/).fill("Garde");
+  // NPC image drawn with the token generator, filed in the library as a token image.
+  await page.getByTestId("token-generate").click();
+  const generator = page.getByTestId("token-generator");
+  await expect(generator.locator('input[name="name"]')).toHaveValue("Garde");
+  await page.getByTestId("token-save").click();
+  await expect(generator).toBeHidden();
+  await expect(page.getByRole("dialog").locator(".preview img")).toBeVisible();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Enregistrer" })
     .click();
   await expect(page.getByText("Token « Garde » enregistré.")).toBeVisible();
+  const library = await page.request.get("/api/v1/assets?kind=token");
+  expect(
+    ((await library.json()).data as { name: string }[]).some((a) => a.name === "Garde"),
+  ).toBeTruthy();
 
   // Player member.
   await page.getByRole("tab", { name: "Joueurs" }).click();
