@@ -6,6 +6,7 @@ namespace JDR\Maps\Document;
 
 defined('JDR_BOOT') || exit;
 
+use JDR\Domain\Games\Fields;
 use JDR\Maps\ObjectRulesImage;
 
 /**
@@ -42,11 +43,79 @@ final class MapDocumentImages
                     $object['props']['asset_id'] = null;
                 }
                 $object['asset'] = 'sha256:' . $sha;
+            } else {
+                $object = self::exportSkins($object, $hashes, $internal);
             }
             $out[] = $object;
         }
 
         return $out;
+    }
+
+    /**
+     * Wall texture / door images of an object: next to the props, "assets": {<prop>: "sha256:<hex>"}.
+     * Exported documents have the props null; an asset whose row no longer exists is dropped (prop null).
+     *
+     * @param array<string, mixed> $object
+     * @param array<int, string>   $hashes
+     * @return array<string, mixed>
+     */
+    private static function exportSkins(array $object, array $hashes, bool $internal): array
+    {
+        $assets = [];
+        foreach (ObjectRulesImage::skinKeys($object['type'] ?? null) as $key) {
+            $id = Fields::id($object['props'][$key] ?? null);
+            if ($id === null) {
+                continue;
+            }
+            $sha = $hashes[$id] ?? null;
+            if ($sha === null) {
+                $object['props'][$key] = null;
+            } else {
+                $assets[$key] = 'sha256:' . $sha;
+                if (!$internal) {
+                    $object['props'][$key] = null;
+                }
+            }
+        }
+        if ($assets !== []) {
+            $object['assets'] = $assets;
+        }
+
+        return $object;
+    }
+
+    /**
+     * Takes the "assets" key (wall / door skins) out of a document object (before ObjectRules::object):
+     * [item, {prop => sha256 hex} | null]. 422 <field>.assets = invalid on a bad shape.
+     *
+     * @param array<string, string> $errors
+     * @return array{0: mixed, 1: ?array<string, string>}
+     */
+    public static function takeSkins(mixed $item, string $field, array &$errors): array
+    {
+        if (!is_array($item) || !array_key_exists('assets', $item)) {
+            return [$item, null];
+        }
+        $value = $item['assets'];
+        unset($item['assets']);
+        $keys = ObjectRulesImage::skinKeys($item['type'] ?? null);
+        if (!is_array($value) || $keys === []) {
+            $errors[$field . '.assets'] = 'invalid';
+
+            return [$item, null];
+        }
+        $out = [];
+        foreach ($value as $key => $sha) {
+            if (!in_array($key, $keys, true) || !is_string($sha) || preg_match(self::ASSET_PATTERN, strtolower($sha), $m) !== 1) {
+                $errors[$field . '.assets'] = 'invalid';
+
+                return [$item, null];
+            }
+            $out[$key] = $m[1];
+        }
+
+        return [$item, $out === [] ? null : $out];
     }
 
     /**
@@ -93,6 +162,11 @@ final class MapDocumentImages
             if (ObjectRulesImage::handles($object['type'] ?? null) && is_string($object['asset'] ?? null)) {
                 $out[$object['asset']] = $object['asset'];
             }
+            foreach ($object['assets'] ?? [] as $sha) {
+                if (is_string($sha)) {
+                    $out[$sha] = $sha;
+                }
+            }
         }
 
         return array_values($out);
@@ -127,10 +201,40 @@ final class MapDocumentImages
                 }
                 $object['props']['asset_id'] = (string) $id;
             }
-            unset($object['asset']);
-            $out[] = $object;
+            $out[] = self::resolveSkins($object, $bySha, $existing, $missing);
         }
 
         return $out;
+    }
+
+    /**
+     * Wall texture / door images of a normalized document object: the recorded id when it is in
+     * $existing, else the asset found by hash, else null (a missing asset only loses the skin).
+     *
+     * @param array<string, mixed>                              $object
+     * @param array<string, int>                                $bySha
+     * @param array<int, true>                                  $existing
+     * @param array<string, array{ref: string, name: string}>   $missing
+     * @return array<string, mixed>
+     */
+    private static function resolveSkins(array $object, array $bySha, array $existing, array &$missing): array
+    {
+        $shas = is_array($object['assets'] ?? null) ? $object['assets'] : [];
+        unset($object['asset'], $object['assets']);
+        foreach (ObjectRulesImage::skinKeys($object['type'] ?? null) as $key) {
+            $id = Fields::id($object['props'][$key] ?? null);
+            if ($id === null || !isset($existing[$id])) {
+                $sha = is_string($shas[$key] ?? null) ? $shas[$key] : null;
+                $id = $sha === null ? null : ($bySha[$sha] ?? null);
+                if ($id === null && $sha !== null) {
+                    $missing['sha256:' . $sha] ??= ['ref' => 'sha256:' . $sha, 'name' => ''];
+                }
+            }
+            if (array_key_exists($key, $object['props'] ?? [])) {
+                $object['props'][$key] = $id === null ? null : (string) $id;
+            }
+        }
+
+        return $object;
     }
 }

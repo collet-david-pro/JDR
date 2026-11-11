@@ -62,6 +62,15 @@ describe('map document validation (format_version 1)', () => {
     }
   });
 
+  it('accepts the library nature and category of a palette image (export since 0.8)', () => {
+    const doc = variant('palette', [
+      null,
+      { asset: 'sha256:' + 'a'.repeat(64), kind: 'texture', category: 'Sols', repeat: 4 },
+      { asset: 'sha256:' + 'b'.repeat(64), kind: 'tile', category: null },
+    ]);
+    expect(issuesOf(doc)).toEqual([]);
+  });
+
   it('leaves later object types and notes to the server', () => {
     const doc = variant('objects', [
       { uid: 'o1', floor: 'f1', type: 'image', geometry: { x: 0, y: 0, w: 4, h: 4 }, props: {} },
@@ -130,6 +139,16 @@ describe('map document validation (format_version 1)', () => {
       'palette.1.autotile:pattern',
     ],
     ['palette', [null, 3], 'palette.1:type'],
+    [
+      'palette',
+      [null, { asset: 'sha256:' + 'a'.repeat(64), kind: 'object' }],
+      'palette.1.kind:enum',
+    ],
+    [
+      'palette',
+      [null, { asset: 'sha256:' + 'a'.repeat(64), category: 'x'.repeat(81) }],
+      'palette.1.category:too_long',
+    ],
     ['layers', [{ id: 'ground', kind: 'objects' }], 'layers.0.kind:enum'],
     ['layers', [{ id: 'sky', kind: 'tiles' }], 'layers.0.id:enum'],
     [

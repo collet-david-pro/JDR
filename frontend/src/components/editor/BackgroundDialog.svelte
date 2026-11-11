@@ -15,7 +15,15 @@
     type Calibration,
     type MapAxis,
   } from '../../editor/images/calibration';
-  import { backgroundsOf, imageAssetOf, uploadImage } from '../../editor/images/library';
+  import { backgroundsOf, imageAssetOf } from '../../editor/images/library';
+  import {
+    tileGeometry,
+    tileGroupOf,
+    tileObjects,
+    tiledOfGroup,
+    uploadBackground,
+    type TiledImage,
+  } from '../../editor/images/tiles';
   import type { EditorSession } from '../../editor/ui/session';
   import { newObjectUid } from '../../editor/util/uid';
   import { assetsClient } from '../../lib/assets/service';
@@ -43,6 +51,12 @@
 
   let asset = $state<ImageAssetView | null>(null);
   let target = $state<ImageObject | null>(null);
+  /** Big picture cut in pieces (null for a one-piece image); `asset` is then the whole picture. */
+  let tiled = $state<TiledImage | null>(null);
+  let sending = $state<string | null>(null);
+  let tileImages = $state<{ img: HTMLImageElement; rect: TiledImage['parts'][number]['rect'] }[]>(
+    [],
+  );
   let cal = $state<Calibration>({
     mode: 'cell_px',
     cellPx: DEFAULT_IMAGE_CELL_PX,
@@ -91,8 +105,19 @@
       backgroundsOf(objects)[0];
     const existing = found !== undefined && found.type === 'image' ? found : null;
     target = existing;
+    tiled = null;
     error = null;
     notice = null;
+    if (existing !== null && existing.props.tile !== undefined) {
+      const group = tiledOfGroup(tileGroupOf(objects, existing));
+      const first = group === null ? null : session.doc.imageAsset(group.tiled.parts[0]!.assetId);
+      if (group !== null && first !== null) {
+        tiled = group.tiled;
+        asset = { ...first, width: group.tiled.width, height: group.tiled.height };
+        cal = calibrationOf(group.geometry, asset);
+      }
+      return;
+    }
     if (existing !== null) {
       const view = session.doc.imageAsset(existing.props.asset_id);
       asset = view;
@@ -100,9 +125,22 @@
     }
   }
 
+  // Preview pieces of a big picture.
+  $effect(() => {
+    const parts = tiled?.parts ?? [];
+    tileImages = [];
+    for (const part of parts) {
+      const url = untrack(() => session.doc.imageAsset(part.assetId)?.url ?? null);
+      if (url === null) continue;
+      const img = new Image();
+      img.onload = () => (tileImages = [...tileImages, { img, rect: part.rect }]);
+      img.src = url;
+    }
+  });
+
   // Preview image.
   $effect(() => {
-    const url = asset?.url ?? null;
+    const url = tiled === null ? (asset?.url ?? null) : null;
     if (url === null) {
       image = null;
       return;
@@ -117,6 +155,8 @@
     const c = canvas;
     const g = geometry;
     const img = image;
+    const pieces = tileImages;
+    const whole = tiled;
     // null once the dialog is unmounted (bind:this).
     if (c === undefined || c === null) return;
     const ctx = c.getContext('2d');
@@ -133,6 +173,16 @@
     ctx.clip();
     if (g !== null && img !== null) {
       ctx.drawImage(img, g.x * scale, g.y * scale, g.w * scale, g.h * scale);
+    }
+    if (g !== null && whole !== null) {
+      for (const piece of pieces) {
+        const p = tileGeometry(g, {
+          ...piece.rect,
+          tw: whole.width,
+          th: whole.height,
+        });
+        ctx.drawImage(piece.img, p.x * scale, p.y * scale, p.w * scale, p.h * scale);
+      }
     }
     ctx.restore();
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
@@ -154,6 +204,7 @@
 
   function chosen(a: Asset): void {
     asset = imageAssetOf(a);
+    tiled = null;
     session.doc.setImageAssets([asset]);
     error = null;
   }
@@ -167,18 +218,34 @@
     error = null;
     notice = null;
     try {
-      const result = await uploadImage(assetsClient(), file, 'background', t);
-      chosen(result.asset);
-      if (result.reduced) {
-        notice = t('editor.images.reduced', {
-          width: result.asset.width,
-          height: result.asset.height,
+      const result = await uploadBackground(assetsClient(), file, t, {
+        onProgress: (done, count) =>
+          (sending =
+            done < count ? t('editor.images.tiles_sending', { done: done + 1, count }) : null),
+      });
+      if (result.kind === 'single') {
+        chosen(result.asset);
+        if (result.reduced) {
+          notice = t('editor.images.reduced', {
+            width: result.asset.width,
+            height: result.asset.height,
+          });
+        }
+      } else {
+        session.doc.setImageAssets(result.assets.map(imageAssetOf));
+        asset = result.view;
+        tiled = result.tiled;
+        notice = t('editor.images.tiled', {
+          width: result.tiled.width,
+          height: result.tiled.height,
+          count: result.tiled.parts.length,
         });
       }
     } catch (e) {
       error = e instanceof Error ? e.message : t('errors.unknown');
     } finally {
       busy = false;
+      sending = null;
     }
   }
 
@@ -187,19 +254,55 @@
     cal = fitToMap({ width: asset.width, height: asset.height }, grid);
   }
 
-  /** The op that places the background (update of the edited one, or a new image object). */
-  function backgroundOp(): MapOp | null {
+  /** The ops that place the background (update of the edited one, or new image objects). */
+  function backgroundOps(): MapOp[] {
     const g = geometry;
     const a = asset;
-    if (g === null || a === null) return null;
+    if (g === null || a === null) return [];
+    const objects = session.doc.objects();
+    const current = target === null ? undefined : session.doc.object(target.uid);
+    const old = current?.type === 'image' ? tileGroupOf(objects, current) : [];
+    const group = tiled;
+    if (group !== null) {
+      const sameGroup = old.length > 0 && old[0]!.props.tile?.group === group.group;
+      if (sameGroup) {
+        const ops: MapOp[] = [];
+        for (const member of old) {
+          const live = session.doc.object(member.uid);
+          const tile = member.props.tile;
+          if (live === undefined || live.type !== 'image' || tile === undefined) continue;
+          ops.push({
+            type: 'object.update',
+            uid: live.uid,
+            rev: live.rev,
+            patch: { geometry: tileGeometry(g, tile) },
+          });
+        }
+        return ops;
+      }
+      return [
+        ...removalOps(old),
+        ...tileObjects(session.doc.floor, g, group).map((object): MapOp => ({
+          type: 'object.add',
+          object,
+        })),
+      ];
+    }
     const live = target === null ? undefined : session.doc.object(target.uid);
-    if (live !== undefined && live.type === 'image') {
-      return {
-        type: 'object.update',
-        uid: live.uid,
-        rev: live.rev,
-        patch: { geometry: g, props: { ...live.props, asset_id: a.assetId } },
-      };
+    if (
+      live !== undefined &&
+      live.type === 'image' &&
+      old.length <= 1 &&
+      live.props.tile === undefined
+    ) {
+      return [
+        {
+          type: 'object.update',
+          uid: live.uid,
+          rev: live.rev,
+          patch: { geometry: g, props: { ...live.props, asset_id: a.assetId } },
+        },
+      ];
     }
     const object: ImageObject = {
       uid: newObjectUid(),
@@ -219,13 +322,18 @@
       sort_order: -1000,
       rev: 1,
     };
-    return { type: 'object.add', object };
+    return [...removalOps(old), { type: 'object.add', object }];
+  }
+
+  /** Removal of the background (or of all the pieces of a picture) that is replaced. */
+  function removalOps(members: readonly ImageObject[]): MapOp[] {
+    return members.map((m): MapOp => ({ type: 'object.remove', uid: m.uid }));
   }
 
   function apply(): void {
-    const op = backgroundOp();
-    if (op === null) return;
-    session.history.execute({ label: 'editor.command.background', ops: [op], inverseOps: [] });
+    const ops = backgroundOps();
+    if (ops.length === 0) return;
+    session.history.execute({ label: 'editor.command.background', ops, inverseOps: [] });
     close();
   }
 
@@ -244,11 +352,11 @@
 
   /** Mode map_cells with a new size: one batch, the resize first, so the server checks the background against it. */
   async function resizeWithBackground(width: number, height: number): Promise<void> {
-    const op = backgroundOp();
-    if (op === null || onresize === undefined) return;
+    const ops = backgroundOps();
+    if (ops.length === 0 || onresize === undefined) return;
     busy = true;
     try {
-      await onresize(width, height, [op]);
+      await onresize(width, height, ops);
     } catch (e) {
       error = e instanceof Error ? e.message : t('errors.unknown');
     } finally {
@@ -303,6 +411,7 @@
     </div>
     {#if error !== null}<p class="alert alert-error" role="alert">{error}</p>{/if}
     {#if notice !== null}<p class="small muted">{notice}</p>{/if}
+    {#if sending !== null}<p class="small muted" role="status">{sending}</p>{/if}
 
     <fieldset class="grid">
       <legend>{t('editor.images.calibration')}</legend>

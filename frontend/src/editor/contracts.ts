@@ -427,8 +427,8 @@ export interface WallProps {
   readonly blocks_vision: boolean;
   readonly blocks_light: boolean;
   readonly blocks_move: boolean;
-  /** Reserved (P9 textures): always null in P5. */
-  readonly texture_asset: null;
+  /** Asset id of the wall texture (library asset, repeated along the wall), null = plain colour. */
+  readonly texture_asset: string | null;
   /** Shadow height in cells (0–20), null = default 1. */
   readonly height: number | null;
 }
@@ -438,9 +438,9 @@ export interface DoorProps {
   readonly locked: boolean;
   /** Secret door: shown to players as a plain wall while hidden (12.4). */
   readonly secret: boolean;
-  /** Reserved (P9): always null in P5. */
-  readonly asset_open: null;
-  readonly asset_closed: null;
+  /** Asset ids of the door images (open / closed), null = drawn leaf. */
+  readonly asset_open: string | null;
+  readonly asset_closed: string | null;
   /** Hinge end of the open door: 'a' or 'b'; 'slide' = sliding / portcullis. */
   readonly swing: 'a' | 'b' | 'slide';
   /** P9a: a door may lead to another map. Absent = no link. */

@@ -10,6 +10,7 @@ import { failureFromError, failureText } from '../../lib/assets/upload-errors';
 import type { Translate } from '../../lib/translator';
 import type { Asset, AssetKind } from '../../lib/types';
 import type { MapObject, ObjectPatch, SceneChangedEvent } from '../contracts';
+import { skinAssetIds } from './skins';
 import type { ImageAssetView, ImageObject, ImageProps } from '../contracts-images';
 
 /** Library asset -> what the engine needs. */
@@ -81,14 +82,15 @@ export function watchImageAssets(host: ImageAssetHost, api: Pick<ApiClient, 'get
   return host.onSceneChanged((event) => {
     for (const uid of event.objects) {
       const o = host.object(uid);
-      if (o === undefined || o.type !== 'image') continue;
-      const id = o.props.asset_id;
-      if (asked.has(id) || host.imageAsset(id) !== null) continue;
-      asked.add(id);
-      void api
-        .get<Asset>(`/assets/${encodeURIComponent(id)}`)
-        .then((r) => host.setImageAssets([imageAssetOf(r.data)]))
-        .catch(() => undefined);
+      if (o === undefined) continue;
+      for (const id of skinAssetIds(o)) {
+        if (asked.has(id) || host.imageAsset(id) !== null) continue;
+        asked.add(id);
+        void api
+          .get<Asset>(`/assets/${encodeURIComponent(id)}`)
+          .then((r) => host.setImageAssets([imageAssetOf(r.data)]))
+          .catch(() => undefined);
+      }
     }
   });
 }

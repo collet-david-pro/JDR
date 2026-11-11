@@ -100,7 +100,7 @@ export function newWall(ctx: ToolContext, points: readonly Point[], closed: bool
       blocks_vision: true,
       blocks_light: true,
       blocks_move: true,
-      texture_asset: null,
+      texture_asset: s.wallTexture ?? null,
       height: null,
     },
     visibility: 'all',

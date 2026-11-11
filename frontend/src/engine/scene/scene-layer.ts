@@ -215,6 +215,7 @@ export class SceneLayer {
       this.objects.clear();
       this.images.clear();
       this.images.setAssets(null);
+      this.objects.setAssets(null);
       this.tokens.clear();
       this.lights = [];
       this.lighting.setLights([], new Map(), this.cellPx);
@@ -229,6 +230,10 @@ export class SceneLayer {
     for (const t of scene.tokens()) this.tokenCache.set(t.uid, t);
     this.objects.sync(objects);
     this.images.setAssets((id) => scene.imageAsset?.(id) ?? null);
+    this.objects.setAssets(
+      (id) => scene.imageAsset?.(id) ?? null,
+      () => this.hooks.requestRender(),
+    );
     this.images.sync(objects);
     this.tokens.sync(scene.tokens(), (id) => scene.tokenDef(id));
     this.ambient.set(scene.ambient, performance.now(), false);
@@ -441,7 +446,10 @@ export class SceneLayer {
       this.images.upsert(obj);
       this.objectCache.set(uid, obj);
     }
-    if (event.images === true) this.images.assetsChanged();
+    if (event.images === true) {
+      this.images.assetsChanged();
+      this.objects.assetsChanged();
+    }
     if (plan.redrawObjects.length + plan.removeObjects.length > 0) this.gizmosDirty = true;
     for (const uid of plan.removeTokens) {
       this.tokens.remove(uid);

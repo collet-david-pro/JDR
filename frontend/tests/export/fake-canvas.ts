@@ -122,6 +122,16 @@ export class FakeContext implements Ctx2D {
   setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
     this.m = [a, b, c, d, e, f];
   }
+  translate(x: number, y: number): void {
+    const [a, b, c, d, e, f] = this.m;
+    this.m = [a, b, c, d, a * x + c * y + e, b * x + d * y + f];
+  }
+  rotate(angle: number): void {
+    const [a, b, c, d, e, f] = this.m;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    this.m = [a * cos + c * sin, b * cos + d * sin, c * cos - a * sin, d * cos - b * sin, e, f];
+  }
   save(): void {
     this.stack.push({
       m: [...this.m],

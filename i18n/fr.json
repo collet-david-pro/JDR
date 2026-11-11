@@ -366,7 +366,8 @@
     "already_used": "Cet identifiant d'opération a déjà été utilisé.",
     "conflict": "Cet élément a été modifié entre-temps.",
     "limit": "Limite atteinte : cette map ne peut plus accueillir cet élément.",
-    "not_member": "Un des joueurs choisis ne fait pas partie de la partie."
+    "not_member": "Un des joueurs choisis ne fait pas partie de la partie.",
+    "not_paintable": "Seules les tuiles et les textures peuvent être ajoutées à la palette."
   },
   "mail": {
     "reset": {
@@ -2223,7 +2224,9 @@
       "map_cells": "Nombre de cases",
       "map_result": "Map de {width} × {height} cases : l'autre côté suit les proportions de l'image (arrondi à la case la plus proche), l'image couvre toute la map, centrée.",
       "map_shrinks": "La map sera réduite : les tuiles, objets et tokens hors de la nouvelle taille seront supprimés.",
-      "apply_resize": "Appliquer et redimensionner la map ({width} × {height} cases)"
+      "apply_resize": "Appliquer et redimensionner la map ({width} × {height} cases)",
+      "tiled": "Grande image de {width} × {height} px, découpée en {count} morceaux pour respecter les limites du site : ils sont assemblés sur la map.",
+      "tiles_sending": "Envoi du morceau {done} sur {count}…"
     },
     "columns": {
       "tools": "Largeur de la barre d'outils",
@@ -2264,7 +2267,16 @@
       "failed": "Le changement de taille a échoué. Rien n'a été modifié.",
       "undo_failed": "Annulation impossible : restaurez la version « Avant redimensionnement » depuis l'historique."
     },
-    "zoom_label": "Zoom"
+    "zoom_label": "Zoom",
+    "skin": {
+      "wall_texture": "Texture du mur",
+      "door_closed": "Image de la porte fermée",
+      "door_open": "Image de la porte ouverte",
+      "none": "Aucune image",
+      "loading": "Image en cours de chargement",
+      "choose": "Choisir",
+      "clear": "Retirer"
+    }
   },
   "maps": {
     "default_floor_name": "Rez-de-chaussée",

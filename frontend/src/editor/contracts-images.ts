@@ -35,6 +35,21 @@ export interface ImageGeometry {
   readonly rotation: number;
 }
 
+/**
+ * Piece of a big picture (battlemap over the image limits, cut in the browser): the picture is
+ * `tw` x `th` pixels, this object shows its rectangle (x, y, w, h) in pixels. All the pieces of a
+ * picture share `group`; the editor moves them together. Optional: a one-piece image has none.
+ */
+export interface ImageTile {
+  readonly group: string;
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+  readonly tw: number;
+  readonly th: number;
+}
+
 export interface ImageProps {
   /** Asset id (string in answers; ops also accept a number). */
   readonly asset_id: string;
@@ -42,6 +57,8 @@ export interface ImageProps {
   readonly flip_h: boolean;
   readonly flip_v: boolean;
   readonly placement: ImagePlacement;
+  /** Set when the object is one piece of a tiled picture. */
+  readonly tile?: ImageTile;
 }
 
 /** Image object. Default layer `props`. */

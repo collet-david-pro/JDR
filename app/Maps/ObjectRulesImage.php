@@ -17,6 +17,9 @@ use JDR\Domain\Games\Fields;
  * - props {asset_id, opacity 0-1, flip_h, flip_v, placement: background | above}: asset_id is an
  *   asset id (string in answers, ops also accept a number); a document may carry null (resolved on
  *   import from the object's "asset" hash, see MapDocumentImages).
+ * - optional props.tile {group, x, y, w, h, tw, th}: the object is one piece (pixel rectangle x, y, w, h)
+ *   of a picture of tw x th pixels cut in the browser because it exceeds the image limits; the pieces
+ *   of a picture share the group. Informational for the editor (the geometry is what is drawn).
  * Neither vision, light nor movement are blocked. "background" is drawn under the tiles, "above" on
  * the objects (under the tokens). The asset (exists, usable by the editor, kind in ASSET_KINDS) is
  * checked by SceneApplier.
@@ -26,7 +29,11 @@ final class ObjectRulesImage
     public const TYPE = 'image';
     public const TYPES = [self::TYPE];
     public const GEOMETRY_KEYS = ['x', 'y', 'w', 'h', 'rotation'];
-    public const PROPS_KEYS = ['asset_id', 'opacity', 'flip_h', 'flip_v', 'placement'];
+    public const PROPS_KEYS = ['asset_id', 'opacity', 'flip_h', 'flip_v', 'placement', 'tile'];
+    /** Props every image carries (tile is optional). */
+    private const REQUIRED_PROPS = ['asset_id', 'opacity', 'flip_h', 'flip_v', 'placement'];
+    private const TILE_KEYS = ['group', 'x', 'y', 'w', 'h', 'tw', 'th'];
+    private const TILE_MAX = 1000000;
     public const PLACEMENTS = ['background', 'above'];
     public const ASSET_KINDS = ['background', 'object', 'token', 'texture'];
     public const SIZE_MIN = 0.1;
@@ -73,7 +80,7 @@ final class ObjectRulesImage
      * Props; $lenient (document): asset_id may be null.
      *
      * @param array<string, string> $errors
-     * @return array{asset_id: ?string, opacity: int|float, flip_h: bool, flip_v: bool, placement: string}|null
+     * @return array{asset_id: ?string, opacity: int|float, flip_h: bool, flip_v: bool, placement: string, tile?: array<string, int|string>}|null
      */
     public static function props(mixed $value, string $field, array &$errors, bool $lenient): ?array
     {
@@ -84,7 +91,7 @@ final class ObjectRulesImage
             return null;
         }
         $before = count($errors);
-        foreach (self::PROPS_KEYS as $key) {
+        foreach (self::REQUIRED_PROPS as $key) {
             if (!array_key_exists($key, $p) && !($lenient && $key === 'asset_id')) {
                 $errors[$field . '.' . $key] = 'required';
             }
@@ -110,17 +117,65 @@ final class ObjectRulesImage
         if (!is_string($p['placement']) || !in_array($p['placement'], self::PLACEMENTS, true)) {
             $errors[$field . '.placement'] = 'invalid';
         }
+        $tile = null;
+        if (($p['tile'] ?? null) !== null) {
+            $tile = self::tile($p['tile'], $field . '.tile', $errors);
+        }
         if (count($errors) !== $before || $opacity === null) {
             return null;
         }
-
-        return [
+        $out = [
             'asset_id' => $assetId,
             'opacity' => $opacity,
             'flip_h' => $p['flip_h'],
             'flip_v' => $p['flip_v'],
             'placement' => $p['placement'],
         ];
+        if ($tile !== null) {
+            $out['tile'] = $tile;
+        }
+
+        return $out;
+    }
+
+    /**
+     * Piece of a tiled picture: group [A-Za-z0-9_-]{1,64}, integers x, y >= 0, w, h, tw, th >= 1
+     * (at most 1 000 000), the rectangle inside the picture.
+     *
+     * @param array<string, string> $errors
+     * @return array{group: string, x: int, y: int, w: int, h: int, tw: int, th: int}|null
+     */
+    public static function tile(mixed $value, string $field, array &$errors): ?array
+    {
+        $t = Fields::object($value, self::TILE_KEYS);
+        if ($t === null || count($t) !== count(self::TILE_KEYS)) {
+            $errors[$field] = 'invalid';
+
+            return null;
+        }
+        if (!is_string($t['group']) || preg_match('/^[A-Za-z0-9_-]{1,64}$/D', $t['group']) !== 1) {
+            $errors[$field . '.group'] = 'invalid';
+
+            return null;
+        }
+        $out = ['group' => $t['group']];
+        foreach (['x', 'y', 'w', 'h', 'tw', 'th'] as $key) {
+            $min = $key === 'x' || $key === 'y' ? 0 : 1;
+            $n = $t[$key];
+            if (!is_int($n) || $n < $min || $n > self::TILE_MAX) {
+                $errors[$field . '.' . $key] = 'invalid';
+
+                return null;
+            }
+            $out[$key] = $n;
+        }
+        if ($out['x'] + $out['w'] > $out['tw'] || $out['y'] + $out['h'] > $out['th']) {
+            $errors[$field] = 'invalid';
+
+            return null;
+        }
+
+        return $out;
     }
 
     /**
@@ -158,8 +213,48 @@ final class ObjectRulesImage
         return Fields::id($object['props']['asset_id'] ?? null);
     }
 
+    /** Props of walls / doors that reference an asset (wall texture, door images). */
+    public const SKIN_KEYS = [
+        'wall' => ['texture_asset'],
+        'door' => ['asset_open', 'asset_closed'],
+    ];
+
     /**
-     * Images per asset among $objects (map_asset_refs: one reference per image object).
+     * Prop names of an object type that reference an asset (empty for the other types).
+     *
+     * @return list<string>
+     */
+    public static function skinKeys(mixed $type): array
+    {
+        return is_string($type) ? (self::SKIN_KEYS[$type] ?? []) : [];
+    }
+
+    /**
+     * Every asset an object references, one entry per reference: the picture of an image object, the
+     * texture of a wall, the images of a door.
+     *
+     * @param array<string, mixed> $object
+     * @return list<int>
+     */
+    public static function refIds(array $object): array
+    {
+        $out = [];
+        $image = self::assetId($object);
+        if ($image !== null) {
+            $out[] = $image;
+        }
+        foreach (self::skinKeys($object['type'] ?? null) as $key) {
+            $id = Fields::id($object['props'][$key] ?? null);
+            if ($id !== null) {
+                $out[] = $id;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * References per asset among $objects (map_asset_refs: one per image object, wall texture, door image).
      *
      * @param iterable<array<string, mixed>> $objects
      * @return array<int, int>
@@ -168,8 +263,7 @@ final class ObjectRulesImage
     {
         $out = [];
         foreach ($objects as $object) {
-            $id = self::assetId($object);
-            if ($id !== null) {
+            foreach (self::refIds($object) as $id) {
                 $out[$id] = ($out[$id] ?? 0) + 1;
             }
         }

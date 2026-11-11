@@ -105,6 +105,7 @@ export class EditorUiState implements EditorSettings {
   // ---- P5 object tools (EditorSettings) ----
   wallKind = $state<WallKind>(D.wallKind);
   wallThickness = $state(D.wallThickness);
+  wallTexture = $state<string | null>(null);
   wallRoom = $state(D.wallRoom);
   openingKind = $state<OpeningKind>(D.openingKind);
   openingWidth = $state(D.openingWidth);

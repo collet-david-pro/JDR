@@ -111,7 +111,10 @@ const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per
 const AMBIENT_KEYS = ['darkness', 'tint', 'time_of_day', 'weather', 'snap_step'];
 const SNAP_STEPS = [1, 0.5, 0.25, 0.125];
 const WEATHER_KEYS = ['type', 'intensity'];
-const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat'];
+const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat', 'kind', 'category'];
+/** Library nature of a palette image, kept by an export so that an import files it alike. */
+const PALETTE_KINDS = ['tile', 'texture'];
+const PALETTE_CATEGORY_MAX = 80;
 const LAYER_KEYS = ['id', 'kind', 'visible', 'locked', 'opacity', 'gm_only'];
 const FLOOR_KEYS = ['uid', 'level', 'name'];
 const GENERATION_KEYS = ['generator', 'gen_version', 'seed', 'params'];
@@ -241,6 +244,10 @@ export interface MapDocumentPaletteEntry {
   readonly autotile?: string | null;
   /** P14: block size (cells) of a world-aligned texture, absent for a tile. */
   readonly repeat?: number | null;
+  /** Library nature of the image (absent in older documents: a tile). */
+  readonly kind?: 'tile' | 'texture';
+  /** Library category name of the image. */
+  readonly category?: string | null;
 }
 
 export interface MapDocumentLayer {
@@ -565,6 +572,21 @@ function checkPalette(c: Collector, v: unknown): number {
       },
       `${path}.repeat`,
     );
+    c.optional(
+      entry,
+      'kind',
+      (x, p) => {
+        if (typeof x !== 'string') c.add(p, 'type');
+        else if (!PALETTE_KINDS.includes(x)) c.add(p, 'enum');
+      },
+      `${path}.kind`,
+    );
+    c.optional(
+      entry,
+      'category',
+      (x, p) => x === null || c.string(x, p, PALETTE_CATEGORY_MAX),
+      `${path}.category`,
+    );
   }
   return v.length;
 }
@@ -838,8 +860,10 @@ function checkProps(
   }
   if (!members(c, v, PROPS_KEYS[type], PROPS_OPTIONAL, path)) return;
   const p = (key: string): string => `${path}.${key}`;
+  /** Wall texture / door image: null or an asset id (the server checks the asset). */
   const reserved = (key: string): void => {
-    if (Object.hasOwn(v, key) && v[key] !== null) c.add(p(key), 'const');
+    if (!Object.hasOwn(v, key) || v[key] === null) return;
+    if (typeof v[key] !== 'string' || !/^[0-9]{1,19}$/.test(v[key])) c.add(p(key), 'type');
   };
   switch (type) {
     case 'wall':

@@ -385,7 +385,38 @@ export class ScenePainter {
 
   private wall(ctx: Ctx2D, wall: WallObject): void {
     const segs = polylineSegments(wall.geometry.points, wall.geometry.closed);
-    this.solid(ctx, segs, this.width(wall.props.thickness), WALL_COLORS[wall.props.kind]);
+    const width = this.width(wall.props.thickness);
+    this.solid(ctx, segs, width, WALL_COLORS[wall.props.kind]);
+    const bitmap = this.skin(wall.props.texture_asset);
+    if (bitmap === null || wall.props.kind === 'invisible') return;
+    // Pattern repeated along each segment, as thick as the wall.
+    const tile = (width * bitmap.width) / bitmap.height;
+    for (const s of segs) {
+      const len = Math.hypot(s[2] - s[0], s[3] - s[1]);
+      if (len <= 0 || !(tile > 0) || len / tile > 5000) continue;
+      ctx.save();
+      ctx.translate(s[0], s[1]);
+      ctx.rotate(Math.atan2(s[3] - s[1], s[2] - s[0]));
+      ctx.beginPath();
+      ctx.rect(0, -width / 2, len, width);
+      ctx.clip();
+      ctx.globalAlpha = 1;
+      ctx.imageSmoothingEnabled = true;
+      for (let x = 0; x < len; x += tile) {
+        ctx.drawImage(bitmap.image, 0, 0, bitmap.width, bitmap.height, x, -width / 2, tile, width);
+      }
+      ctx.restore();
+    }
+  }
+
+  /** Decoded wall texture / door image of an asset id, null when none or not loaded. */
+  private skin(
+    assetId: string | null,
+  ): { image: CanvasImageSource; width: number; height: number } | null {
+    const index = assetId === null ? undefined : this.scene.skinImages?.[assetId];
+    if (index === undefined) return null;
+    const bitmap = this.tokenImages?.get(index) ?? null;
+    return bitmap !== null && bitmap.width > 0 && bitmap.height > 0 ? bitmap : null;
   }
 
   private door(ctx: Ctx2D, door: DoorObject): void {
@@ -400,7 +431,22 @@ export class ScenePainter {
     if (shape.gap !== null) {
       this.dashed(ctx, [shape.gap], Math.max(1.5 / this.ppc, width / 3), DOOR_COLOR, 0.6);
     }
-    this.solid(ctx, [shape.leaf], width, DOOR_COLOR);
+    const bitmap = this.skin(
+      door.props.state === 'open' ? door.props.asset_open : door.props.asset_closed,
+    );
+    const leaf = shape.leaf;
+    const len = Math.hypot(leaf[2] - leaf[0], leaf[3] - leaf[1]);
+    if (bitmap !== null && len > 0) {
+      // The image replaces the plain leaf (aspect kept, at least as thick as the leaf).
+      const thick = Math.min(1, Math.max(width, (len * bitmap.height) / bitmap.width));
+      ctx.save();
+      ctx.translate(leaf[0], leaf[1]);
+      ctx.rotate(Math.atan2(leaf[3] - leaf[1], leaf[2] - leaf[0]));
+      ctx.globalAlpha = 1;
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(bitmap.image, 0, 0, bitmap.width, bitmap.height, 0, -thick / 2, len, thick);
+      ctx.restore();
+    } else this.solid(ctx, [leaf], width, DOOR_COLOR);
     if (door.props.locked) {
       const [mx, my] = segmentMiddle(ab);
       const s = Math.max(0.2, 6 / this.ppc);

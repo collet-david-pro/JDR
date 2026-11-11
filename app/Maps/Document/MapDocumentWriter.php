@@ -194,7 +194,7 @@ final class MapDocumentWriter
             if (ObjectRulesImage::handles($object['type']) && ObjectRulesImage::assetId($object) === null) {
                 continue; // P14: an image whose asset was not resolved (MapDocumentImages::resolve)
             }
-            unset($object['asset']);
+            unset($object['asset'], $object['assets']);
             $object['floor'] = $floorIds[$object['floor']];
             $object['rev'] = 1;
             $this->scene->insertObject($mapId, $object, ObjectRules::bbox($object, $width, $height));

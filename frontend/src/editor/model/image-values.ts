@@ -9,6 +9,7 @@ import {
   type ImageGeometry,
   type ImageObject,
   type ImageProps,
+  type ImageTile,
 } from '../contracts-images';
 import { MapOpError } from './ops';
 
@@ -64,13 +65,40 @@ export function imageProps(p: unknown): ImageProps {
   ) {
     bad('Invalid image placement');
   }
-  return {
+  const props: ImageProps = {
     asset_id: id,
     opacity: r3(num(v.opacity, 0, 1, 'image opacity')),
     flip_h: v.flip_h,
     flip_v: v.flip_v,
     placement: placement as ImageProps['placement'],
   };
+  return v.tile === undefined || v.tile === null ? props : { ...props, tile: imageTile(v.tile) };
+}
+
+const TILE_GROUP = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Validated tile of a big picture (same rules as ObjectRulesImage::tile). */
+export function imageTile(t: unknown): ImageTile {
+  if (typeof t !== 'object' || t === null) bad('Invalid image tile');
+  const v = t as Record<string, unknown>;
+  if (typeof v.group !== 'string' || !TILE_GROUP.test(v.group)) bad('Invalid image tile group');
+  const int = (value: unknown, min: number, what: string): number => {
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > 1_000_000) {
+      bad(`Invalid image tile ${what}`);
+    }
+    return value;
+  };
+  const tile = {
+    group: v.group,
+    x: int(v.x, 0, 'x'),
+    y: int(v.y, 0, 'y'),
+    w: int(v.w, 1, 'w'),
+    h: int(v.h, 1, 'h'),
+    tw: int(v.tw, 1, 'tw'),
+    th: int(v.th, 1, 'th'),
+  };
+  if (tile.x + tile.w > tile.tw || tile.y + tile.h > tile.th) bad('Image tile out of its picture');
+  return tile;
 }
 
 /** Clamps a geometry into the accepted bounds of a map (sizes first, then the position). */

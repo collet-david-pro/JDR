@@ -14,6 +14,7 @@ use JDR\Domain\Maps\MapRepository;
 use JDR\Domain\Maps\MapSceneRepository;
 use JDR\Domain\Tokens\TokenRepository;
 use JDR\Domain\Users\User;
+use JDR\Maps\ObjectRulesImage;
 
 /**
  * GET /sessions/{id}/preload (projet.md 11.5, contract P6): signed URLs of the assets of the
@@ -52,11 +53,11 @@ final class PreloadService
             return self::none();
         }
         if ($ctx->isGm()) {
-            return $this->result($ctx, $map, $this->scene->tokens($map->id), FogScope::unrestricted(), $apiBase, $this->view->noteAssetIds($map->id, null));
+            return $this->result($ctx, $map, $this->scene->tokens($map->id), FogScope::unrestricted(), $apiBase, [...$this->view->noteAssetIds($map->id, null), ...$this->imageAssetIds($map, null, FogScope::unrestricted())]);
         }
         $scope = $this->scopes->forUser($ctx, $user->id, $map->id);
 
-        return $this->result($ctx, $map, $this->sight($ctx, $user->id, $this->assignments($ctx), $scope), $scope, $apiBase, $this->view->noteAssetIds($map->id, $user->id));
+        return $this->result($ctx, $map, $this->sight($ctx, $user->id, $this->assignments($ctx), $scope), $scope, $apiBase, [...$this->view->noteAssetIds($map->id, $user->id), ...$this->imageAssetIds($map, $user->id, $scope)]);
     }
 
     /**
@@ -74,7 +75,7 @@ final class PreloadService
         }
         $scope = $this->table->scope($ctx, $map->id);
 
-        return $this->result($ctx, $map, $this->sight($ctx, TableView::USER, $this->table->assignments($ctx), $scope), $scope, $apiBase, $this->view->noteAssetIds($map->id, TableView::USER));
+        return $this->result($ctx, $map, $this->sight($ctx, TableView::USER, $this->table->assignments($ctx), $scope), $scope, $apiBase, [...$this->view->noteAssetIds($map->id, TableView::USER), ...$this->imageAssetIds($map, TableView::USER, $scope)]);
     }
 
     /**
@@ -99,6 +100,30 @@ final class PreloadService
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * Asset ids of the image objects (and map background images, which are image objects) a reader
+     * sees: the very objects of his snapshot (PlayerView::objects: never a GM object, the GM layer,
+     * a hidden token's or an out-of-scope one). $viewer null = the GM (everything).
+     *
+     * @return list<int>
+     */
+    private function imageAssetIds(Map $map, ?int $viewer, FogScope $scope): array
+    {
+        $objects = $this->scene->objects($map->id);
+        if ($viewer !== null) {
+            $hidden = [];
+            foreach ($this->scene->tokens($map->id) as $t) {
+                if ($t['hidden'] === true) {
+                    $hidden[] = (string) $t['uid'];
+                }
+            }
+            $bboxes = $scope->isRestricted() ? $this->scene->bboxes($map->id) : [];
+            $objects = $this->view->objects($objects, $this->scene->revealedUids($map->id), $scope, $bboxes, $hidden, $this->view->noteVisibility($map->id)->uidsFor($viewer));
+        }
+
+        return array_map('intval', array_keys(ObjectRulesImage::counts($objects)));
     }
 
     /**

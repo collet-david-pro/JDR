@@ -34,6 +34,17 @@ export interface RasterSource {
   readonly width: number;
   readonly height: number;
   encode(width: number, height: number, mime: AssetMime, quality: number): Promise<Blob>;
+  /** Encodes the rectangle (x, y, width, height) of the decoded image at its own size (tiling). */
+  encodeRegion?(
+    region: {
+      readonly x: number;
+      readonly y: number;
+      readonly width: number;
+      readonly height: number;
+    },
+    mime: AssetMime,
+    quality: number,
+  ): Promise<Blob>;
   close(): void;
 }
 
@@ -169,6 +180,21 @@ export function defaultRasterizer(): Rasterizer {
           context.imageSmoothingEnabled = true;
           context.imageSmoothingQuality = 'high';
           context.drawImage(bitmap, 0, 0, width, height);
+          return toBlob(mime, quality);
+        },
+        async encodeRegion(region, mime, quality) {
+          const { context, toBlob } = makeCanvas(region.width, region.height);
+          context.drawImage(
+            bitmap,
+            region.x,
+            region.y,
+            region.width,
+            region.height,
+            0,
+            0,
+            region.width,
+            region.height,
+          );
           return toBlob(mime, quality);
         },
         close() {

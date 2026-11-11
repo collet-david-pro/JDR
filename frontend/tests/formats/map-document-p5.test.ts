@@ -96,7 +96,7 @@ describe('P5 content of the map document', () => {
     ['objects.0.props.kind', 'glass', 'objects.0.props.kind:enum'],
     ['objects.0.props.thickness', 0.01, 'objects.0.props.thickness:range'],
     ['objects.0.props.blocks_move', undefined, 'objects.0.props.blocks_move:required'],
-    ['objects.0.props.texture_asset', 'sha256:x', 'objects.0.props.texture_asset:const'],
+    ['objects.0.props.texture_asset', 'sha256:x', 'objects.0.props.texture_asset:type'],
     ['objects.0.props.height', 21, 'objects.0.props.height:range'],
     ['objects.0.props.extra', 1, 'objects.0.props.extra:unsupported'],
     // Door / window.
@@ -104,7 +104,7 @@ describe('P5 content of the map document', () => {
     ['objects.2.geometry.b', [26, 8], 'objects.2.geometry:range'],
     ['objects.2.props.state', 'ajar', 'objects.2.props.state:enum'],
     ['objects.2.props.swing', 'c', 'objects.2.props.swing:enum'],
-    ['objects.2.props.asset_open', 'x', 'objects.2.props.asset_open:const'],
+    ['objects.2.props.asset_open', 'x', 'objects.2.props.asset_open:type'],
     ['objects.4.props.kind', 'stone', 'objects.4.props.kind:enum'],
     // Light.
     ['objects.5.geometry.x', -1, 'objects.5.geometry.x:range'],

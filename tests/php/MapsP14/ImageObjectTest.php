@@ -91,6 +91,38 @@ final class ImageObjectTest extends MapsP4cTestCase
         self::assertSame([], $this->storedRefs($w['map']['id']), 'refused lots change nothing');
     }
 
+    public function testTilesOfABigPicture(): void
+    {
+        $w = $this->world();
+        $f = $w['floor'];
+        $id = (string) $w['bg']['id'];
+        $tile = ['group' => 'bigmap_1', 'x' => 4095, 'y' => 0, 'w' => 3000, 'h' => 4096, 'tw' => 7095, 'th' => 4096];
+        $bad = [
+            [['group' => 'a b'] + $tile, 'group'],
+            [['x' => -1] + $tile, 'x'],
+            [['w' => 3001] + $tile, ''],
+            [['h' => 1.5] + $tile, 'h'],
+            [['tw' => 0] + $tile, 'tw'],
+        ];
+        foreach ($bad as [$t, $key]) {
+            self::assertFieldErrors(
+                $this->sendOps($w['gm'], $w['map']['id'], self::add(self::image('t1', $f, $id, ['props' => ['tile' => $t]]))),
+                ['ops.0.object.props.tile' . ($key === '' ? '' : '.' . $key) => 'invalid'],
+            );
+        }
+        $partial = $tile;
+        unset($partial['th']);
+        self::assertFieldErrors(
+            $this->sendOps($w['gm'], $w['map']['id'], self::add(self::image('t1', $f, $id, ['props' => ['tile' => $partial]]))),
+            ['ops.0.object.props.tile' => 'invalid'],
+        );
+        $this->opsOk($w['gm'], $w['map']['id'], self::add(self::image('t1', $f, $id, ['props' => ['tile' => $tile]])));
+        $full = self::data($w['gm']->get('/maps/' . $w['map']['id']));
+        $objects = array_column($full['objects'], null, 'uid');
+        self::assertEquals($tile, $objects['t1']['props']['tile']);
+        self::assertArrayNotHasKey('tile', self::image('t2', $f, $id)['props'], 'a one-piece image has no tile');
+    }
+
     public function testRefsFollowTheImagesAndTheMapListsTheirUrls(): void
     {
         $w = $this->world();

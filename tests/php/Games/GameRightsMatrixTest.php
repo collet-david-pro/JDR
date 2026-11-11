@@ -80,6 +80,7 @@ final class GameRightsMatrixTest extends GamesTestCase
         $gm = $this->user('Alice');
         $game = $this->newGame($gm, 'Secret des Abysses', ['description' => 'Notes cachées']);
         $asset = $this->uploadOk($gm, 'valid_png_opaque.png', ['kind' => 'token']);
+        $tile = $this->uploadOk($gm, 'valid_png_transparent.png', ['kind' => 'tile']);
         $this->addMember($gm, $game['id'], 'Bob');
         $coGm = $this->addMember($gm, $game['id'], 'Carol', 'co_gm');
         $token = $this->newToken($gm, $game['id'], ['name' => 'Liche ancienne', 'asset_id' => $asset['id']]);
@@ -90,7 +91,7 @@ final class GameRightsMatrixTest extends GamesTestCase
         $map = self::data($gm->post('/games/' . $game['id'] . '/maps', ['name' => 'Crypte interdite', 'width' => 40, 'height' => 40]));
         $floor = $map['floors'][0]['id'];
         self::assertSame(200, $gm->post('/maps/' . $map['id'] . '/ops', ['base_revision' => 0, 'client_op_id' => 'matrix-1', 'ops' => [
-            ['type' => 'palette.add', 'index' => 1, 'asset_id' => $asset['id']],
+            ['type' => 'palette.add', 'index' => 1, 'asset_id' => $tile['id']],
             ['type' => 'tiles.set', 'floor' => $floor, 'layer' => 'ground', 'cells' => [[1, 1, 1, 0, 0]]],
         ]])->status());
         $version = self::data($gm->post('/maps/' . $map['id'] . '/versions', ['label' => 'Avant le piège']));

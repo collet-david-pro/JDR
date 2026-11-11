@@ -99,7 +99,7 @@ final class MapDocumentBuilder
     /**
      * Assets of the palette that still exist (export ZIP): id => {uuid, ext, sha256, deleted}.
      *
-     * @return array<int, array{uuid: string, ext: string, sha256: string, name: string, deleted: bool}>
+     * @return array<int, array{uuid: string, ext: string, sha256: string, name: string, deleted: bool, kind: string, category: ?string}>
      */
     public function paletteAssets(Map $map): array
     {
@@ -118,7 +118,8 @@ final class MapDocumentBuilder
         $out = [];
         foreach (array_chunk(array_values($ids), 500) as $batch) {
             $rows = $this->db->fetchAll(
-                'SELECT `id`, `uuid`, `ext`, `sha256`, `name`, `deleted_at` FROM ' . $this->db->t('assets') . ' WHERE `id` IN ('
+                'SELECT a.`id`, a.`uuid`, a.`ext`, a.`sha256`, a.`name`, a.`deleted_at`, a.`kind`, c.`name` AS `category` FROM ' . $this->db->t('assets')
+                . ' a LEFT JOIN ' . $this->db->t('asset_categories') . ' c ON c.`id` = a.`category_id` WHERE a.`id` IN ('
                 . implode(', ', array_fill(0, count($batch), '?')) . ')',
                 $batch,
             );
@@ -129,6 +130,8 @@ final class MapDocumentBuilder
                     'sha256' => strtolower((string) $r['sha256']),
                     'name' => (string) $r['name'],
                     'deleted' => $r['deleted_at'] !== null,
+                    'kind' => (string) $r['kind'],
+                    'category' => $r['category'] === null ? null : (string) $r['category'],
                 ];
             }
         }
@@ -162,6 +165,13 @@ final class MapDocumentBuilder
             $item = ['asset' => 'sha256:' . $asset['sha256'], 'name' => $asset['name'], 'autotile' => $entry['autotile'] ?? null];
             if (isset($entry['repeat'])) {
                 $item['repeat'] = $entry['repeat'];
+            }
+            // Nature and category travel with the palette so an import files the image like the source did.
+            if (in_array($asset['kind'], ['tile', 'texture'], true)) {
+                $item['kind'] = $asset['kind'];
+            }
+            if ($asset['category'] !== null) {
+                $item['category'] = $asset['category'];
             }
             if ($internal) {
                 $item['asset_id'] = $entry['asset_id'];
@@ -217,8 +227,7 @@ final class MapDocumentBuilder
                 $object['props']['link'] = ObjectRulesP9::canonicalLink($object['props']['link']);
             }
             $out[] = $object + (isset($revealed[$object['uid']]) ? ['revealed_at' => $revealed[$object['uid']]] : []);
-            $imageAsset = ObjectRulesImage::assetId($object);
-            if ($imageAsset !== null) {
+            foreach (ObjectRulesImage::refIds($object) as $imageAsset) {
                 $images[$imageAsset] = $imageAsset;
             }
         }

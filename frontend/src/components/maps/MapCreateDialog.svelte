@@ -25,7 +25,7 @@
     mapFromImageSize,
     type MapAxis,
   } from '../../editor/images/calibration';
-  import { uploadImage } from '../../editor/images/library';
+  import { uploadBackground, type TiledImage } from '../../editor/images/tiles';
   import { assetsClient } from '../../lib/assets/service';
 
   /** New map: name, folder, size in cells, cell size and units (from the game settings). */
@@ -38,7 +38,12 @@
     oncreate: (input: MapInput) => Promise<MapDetail>;
     oncreated: (map: MapDetail) => void;
     /** P14: adds the background image to the map just created (map read again). */
-    onimage?: (map: MapDetail, assetId: string, geometry: ImageGeometry) => Promise<MapDetail>;
+    onimage?: (
+      map: MapDetail,
+      assetId: string,
+      geometry: ImageGeometry,
+      tiled?: TiledImage,
+    ) => Promise<MapDetail>;
   }
 
   let {
@@ -53,6 +58,8 @@
 
   // ---- P14: map from an image ----
   let image = $state<Asset | null>(null);
+  /** Big image cut in pieces: `image` is then the whole picture (size of the whole). */
+  let tiled = $state<TiledImage | null>(null);
   let imageCellPx = $state(String(DEFAULT_IMAGE_CELL_PX));
   /** Size from the cell of the image, or from the size of the map wanted (cells). */
   let imageMode = $state<'cell_px' | 'map'>('cell_px');
@@ -73,8 +80,9 @@
         : mapFromImage({ width: image.width, height: image.height }, Number(imageCellPx)),
   );
 
-  function useImage(asset: Asset): void {
+  function useImage(asset: Asset, whole: TiledImage | null = null): void {
     image = asset;
+    tiled = whole;
     imageError = null;
   }
 
@@ -99,7 +107,15 @@
     uploading = true;
     imageError = null;
     try {
-      useImage((await uploadImage(assetsClient(), file, 'background', t)).asset);
+      const result = await uploadBackground(assetsClient(), file, t);
+      if (result.kind === 'single') useImage(result.asset);
+      else {
+        const first = result.assets[0]!;
+        useImage(
+          { ...first, width: result.tiled.width, height: result.tiled.height },
+          result.tiled,
+        );
+      }
     } catch (e) {
       imageError = e instanceof Error ? e.message : t('errors.unknown');
     } finally {
@@ -119,6 +135,7 @@
       draft = newMapDraft(settings, folder);
       form.reset();
       image = null;
+      tiled = null;
       imageError = null;
       imageMode = 'cell_px';
     }
@@ -133,7 +150,12 @@
         if (checked.ok) result.map = await oncreate(checked.input);
         const plan = fromImage;
         if (result.map !== null && image !== null && plan !== null && onimage !== undefined) {
-          result.map = await onimage(result.map, String(image.id), plan.geometry);
+          result.map = await onimage(
+            result.map,
+            String(image.id),
+            plan.geometry,
+            tiled ?? undefined,
+          );
         }
       },
       { form: formEl, validate: () => (checked.ok ? {} : checked.errors) },

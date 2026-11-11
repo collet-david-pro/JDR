@@ -362,6 +362,20 @@
               "maximum": 64
             }
           ]
+        },
+        "kind": {
+          "enum": ["tile", "texture"]
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "maxLength": 80
+            }
+          ]
         }
       }
     },
@@ -527,7 +541,8 @@
               "type": "boolean"
             },
             "texture_asset": {
-              "type": "null"
+              "type": ["string", "null"],
+              "pattern": "^[0-9]{1,19}$"
             },
             "height": {
               "anyOf": [
@@ -601,10 +616,12 @@
               "type": "boolean"
             },
             "asset_open": {
-              "type": "null"
+              "type": ["string", "null"],
+              "pattern": "^[0-9]{1,19}$"
             },
             "asset_closed": {
-              "type": "null"
+              "type": ["string", "null"],
+              "pattern": "^[0-9]{1,19}$"
             },
             "swing": {
               "enum": ["a", "b", "slide"]

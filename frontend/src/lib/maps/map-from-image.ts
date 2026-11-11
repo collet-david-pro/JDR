@@ -4,6 +4,7 @@
  * floor (locked, placement background) and the map is read again.
  */
 import type { ImageGeometry, ImageObject } from '../../editor/contracts-images';
+import { tileObjects, type TiledImage } from '../../editor/images/tiles';
 import { newClientOpId } from '../../editor/sync/OpsQueue';
 import { newObjectUid } from '../../editor/util/uid';
 import type { MapDetail } from '../types';
@@ -29,19 +30,27 @@ export function backgroundObject(
   };
 }
 
-/** Adds the background image to a map just created; returns the map read again. */
+/**
+ * Adds the background image to a map just created; returns the map read again. A big picture cut
+ * in pieces (`tiled`) adds one background object per piece.
+ */
 export async function addBackground(
   client: Pick<MapsClient, 'sendOps' | 'get'>,
   map: MapDetail,
   assetId: string,
   geometry: ImageGeometry,
+  tiled?: TiledImage,
 ): Promise<MapDetail> {
   const floor = map.floors[0]?.id;
   if (floor === undefined) return map;
+  const objects =
+    tiled === undefined
+      ? [backgroundObject(floor, assetId, geometry)]
+      : tileObjects(floor, geometry, tiled);
   await client.sendOps(map.id, {
     base_revision: map.revision,
     client_op_id: newClientOpId(),
-    ops: [{ type: 'object.add', object: backgroundObject(floor, assetId, geometry) }],
+    ops: objects.map((object) => ({ type: 'object.add' as const, object })),
   });
   return client.get(map.id);
 }

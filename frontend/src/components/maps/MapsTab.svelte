@@ -258,7 +258,8 @@
   {folders}
   oncreate={(input) => model.create(input)}
   oncreated={created}
-  onimage={(map, assetId, geometry) => addBackground(mapsClient(), map, assetId, geometry)}
+  onimage={(map, assetId, geometry, tiled) =>
+    addBackground(mapsClient(), map, assetId, geometry, tiled)}
 />
 <MapEditDialog bind:open={editOpen} map={editing} {folders} onsave={save} />
 <TemplatePickerDialog

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SkinPicker from './SkinPicker.svelte';
   import ImageProperties from './ImageProperties.svelte';
   import NoteObjectProperties from './NoteObjectProperties.svelte';
   import PassageProperties from './PassageProperties.svelte';
@@ -182,6 +183,13 @@
           onchange={(e) => setWall({ thickness: num(e) })}
         />
       </label>
+      <SkinPicker
+        {session}
+        label={t('editor.skin.wall_texture')}
+        value={wallProp('texture_asset')}
+        testid="wall-texture"
+        onchange={(id) => setWall({ texture_asset: id })}
+      />
       {#each ['blocks_vision', 'blocks_light', 'blocks_move'] as const as key (key)}
         <label class="check">
           <input
@@ -238,6 +246,20 @@
             >{/each}
         </select>
       </label>
+      <SkinPicker
+        {session}
+        label={t('editor.skin.door_closed')}
+        value={doorProp('asset_closed')}
+        testid="door-image-closed"
+        onchange={(id) => setDoor({ asset_closed: id })}
+      />
+      <SkinPicker
+        {session}
+        label={t('editor.skin.door_open')}
+        value={doorProp('asset_open')}
+        testid="door-image-open"
+        onchange={(id) => setDoor({ asset_open: id })}
+      />
     </fieldset>
   {/if}
 

@@ -59,6 +59,26 @@ final class MapOpsService
     }
 
     /**
+     * Only a tile or a texture goes into the palette (the client filters too, this is the rule).
+     * An unknown or unusable asset is left to OpsApplier (not_found).
+     *
+     * @param list<array<string, mixed>> $ops
+     * @throws ValidationException ops.N.asset_id = not_paintable
+     */
+    private function requirePaintable(array $ops): void
+    {
+        foreach ($ops as $i => $op) {
+            if ($op['type'] !== 'palette.add') {
+                continue;
+            }
+            $asset = $this->assets->find($op['asset_id']);
+            if ($asset !== null && !in_array($asset->kind, ['tile', 'texture'], true)) {
+                throw new ValidationException('', ['ops.' . $i . '.asset_id' => 'not_paintable']);
+            }
+        }
+    }
+
+    /**
      * @param array<array-key, mixed> $body {base_revision, client_op_id, ops}
      * @return array{revision: int, applied: int, conflicts: list<mixed>}
      */
@@ -72,6 +92,7 @@ final class MapOpsService
             return $replay;
         }
         $ops = MapOpsInput::ops($envelope['ops']);
+        $this->requirePaintable($ops);
 
         $allowed = [];
         $canUse = function (int $assetId) use ($user, $game, &$allowed): bool {

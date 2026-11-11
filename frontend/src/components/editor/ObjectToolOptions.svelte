@@ -1,5 +1,6 @@
 <script lang="ts">
   import LinkEditor from './LinkEditor.svelte';
+  import SkinPicker from './SkinPicker.svelte';
   import SnapStepSelect from './SnapStepSelect.svelte';
   import { PORTAL_ICONS } from '../../editor/model/scene-values';
   import { LIGHT_PRESET_IDS } from '../../editor/tools/object-common';
@@ -54,6 +55,13 @@
     <input type="checkbox" bind:checked={ui.wallRoom} data-testid="wall-room" />
     {t('editor.options.wall_room')}
   </label>
+  <SkinPicker
+    {session}
+    label={t('editor.skin.wall_texture')}
+    value={ui.wallTexture}
+    testid="wall-tool-texture"
+    onchange={(id) => (ui.wallTexture = id)}
+  />
   <SnapStepSelect {session} testid="snap-step-wall" />
   <p class="small muted">
     {ui.wallRoom ? t('editor.options.wall_room_hint') : t('editor.options.wall_hint')}

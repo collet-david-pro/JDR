@@ -127,6 +127,10 @@ final class LeakTest extends ActionsTestCase
             }
             $preload = self::data($this->ok($client->get($as('/sessions/' . $w['session'] . '/preload'))));
             $this->inspect($rules, $who, $when . ' preload', $preload, $at);
+            if ($when === 'end' && $who !== 'dan') {
+                // Lot 7: the lobby preloads the seen image objects (never the gm-layer ones: needles above).
+                self::assertContains($w['visibleImage'], array_map('strval', array_column($preload['assets'], 'id')), $when . ' preload ' . $who . ': visible image');
+            }
             foreach ($rules['assets'][$who] ?? [] as $assetId) {
                 self::assertNotContains($assetId, array_column($preload['assets'], 'id'), $when . ' preload ' . $who);
             }

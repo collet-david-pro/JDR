@@ -7,6 +7,7 @@ namespace JDR\Maps\Document;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\ValidationException;
+use JDR\Domain\Assets\TagService;
 use JDR\Domain\Games\Fields;
 use JDR\Domain\Maps\Map;
 use JDR\Domain\Maps\MapInput;
@@ -74,7 +75,7 @@ final class MapDocumentValidator
     ];
     private const REQUIRED_KEYS = ['format', 'format_version', 'name', 'grid', 'palette', 'layers', 'floors', 'chunks'];
     private const GRID_KEYS = ['type', 'cell_px', 'width', 'height', 'unit_label', 'unit_per_cell'];
-    private const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat'];
+    private const PALETTE_KEYS = ['asset', 'name', 'autotile', 'repeat', 'kind', 'category'];
     private const FLOOR_KEYS = ['uid', 'level', 'name'];
     private const TOKEN_KEYS = ['uid', 'token', 'floor', 'x', 'y', 'rotation', 'scale', 'hidden', 'light_override'];
 
@@ -260,7 +261,7 @@ final class MapDocumentValidator
 
     /**
      * @param array<string, string> $errors
-     * @return list<array{sha256: string, name: string, autotile: ?string, asset_id?: int}|null>|null
+     * @return list<array{sha256: string, name: string, autotile: ?string, asset_id?: int, kind?: string, category?: string}|null>|null
      */
     private function palette(mixed $value, bool $internal, array &$errors): ?array
     {
@@ -300,7 +301,13 @@ final class MapDocumentValidator
                 $autotile = MapInput::autotile($item['autotile'] ?? null);
                 $repeat = MapInput::repeat($item['repeat'] ?? null);
                 $assetId = array_key_exists('asset_id', $item) ? Fields::id($item['asset_id']) : null;
-                if ($name === null || mb_strlen($name, 'UTF-8') > MapInput::NAME_MAX) {
+                $kind = $item['kind'] ?? null;
+                $category = ($item['category'] ?? null) === null ? null : TagService::normalize($item['category'], 80);
+                if ($kind !== null && !in_array($kind, ['tile', 'texture'], true)) {
+                    $errors[$field . '.kind'] = 'invalid';
+                } elseif (($item['category'] ?? null) !== null && $category === null) {
+                    $errors[$field . '.category'] = 'invalid';
+                } elseif ($name === null || mb_strlen($name, 'UTF-8') > MapInput::NAME_MAX) {
                     $errors[$field . '.name'] = $name === null ? 'invalid' : 'too_long';
                 } elseif ($autotile === false) {
                     $errors[$field . '.autotile'] = 'invalid';
@@ -315,6 +322,12 @@ final class MapDocumentValidator
                     }
                     if ($assetId !== null) {
                         $entryOut['asset_id'] = $assetId;
+                    }
+                    if ($kind !== null) {
+                        $entryOut['kind'] = $kind;
+                    }
+                    if ($category !== null) {
+                        $entryOut['category'] = $category;
                     }
                     $out[] = $entryOut;
                     continue;
@@ -508,6 +521,7 @@ final class MapDocumentValidator
             $field = 'objects.' . $i;
             [$item, $revealedAt] = MapDocumentNotes::takeRevealed($item, $field, $errors);
             [$item, $imageAsset] = MapDocumentImages::take($item, $field, $errors);
+            [$item, $skinAssets] = MapDocumentImages::takeSkins($item, $field, $errors);
             $object = ObjectRules::object($item, $field, $errors, (float) $grid['width'], (float) $grid['height'], $floorUid, false, true);
             if ($object !== null) {
                 if (!isset($known[$object['floor']])) {
@@ -518,7 +532,7 @@ final class MapDocumentValidator
                     $errors[$field . '.uid'] = 'duplicate';
                 } else {
                     $uids[strtolower($object['uid'])] = true;
-                    $out[] = $object + ($revealedAt === null ? [] : ['revealed_at' => $revealedAt]) + ($imageAsset === null ? [] : ['asset' => $imageAsset]);
+                    $out[] = $object + ($revealedAt === null ? [] : ['revealed_at' => $revealedAt]) + ($imageAsset === null ? [] : ['asset' => $imageAsset]) + ($skinAssets === null ? [] : ['assets' => $skinAssets]);
                 }
             }
             if (count($errors) - $before >= self::MAX_ERRORS) {

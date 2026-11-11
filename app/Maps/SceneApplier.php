@@ -7,6 +7,7 @@ namespace JDR\Maps;
 defined('JDR_BOOT') || exit;
 
 use JDR\Core\Errors\ValidationException;
+use JDR\Domain\Games\Fields;
 
 /**
  * Applies the P5 ops of a lot (objects, placed tokens, fog; etapes/P05 "Contrat d'API P5") to a
@@ -425,10 +426,8 @@ final class SceneApplier
         $merged = ObjectRules::canonical($merged);
         if (array_key_exists('props', $op['patch'])) {
             $this->links->check($merged, $field . '.patch');
-            if (ObjectRulesImage::assetId($merged) !== ObjectRulesImage::assetId($current)) {
-                // Only a new asset is checked: moving an image whose asset went to the trash stays possible.
-                $this->requireImageAsset($merged, $field . '.patch');
-            }
+            // Only a new asset is checked: moving an image whose asset went to the trash stays possible.
+            $this->requireImageAsset($merged, $field . '.patch', $current);
         }
         $this->store->updateObject($stored['id'], $merged, ObjectRules::bbox($merged, $this->state->width, $this->state->height));
         if (array_key_exists('props', $op['patch'])) {
@@ -583,21 +582,29 @@ final class SceneApplier
     // ---- Helpers ---------------------------------------------------------------------------
 
     /**
-     * The asset of an image object: live, usable by the editor in this game, of an image kind
-     * (ObjectRulesImage::ASSET_KINDS); 422 <field>.props.asset_id = not_found otherwise.
+     * The assets of an object (image picture, wall texture, door images): live, usable by the editor in
+     * this game, of an image kind (ObjectRulesImage::ASSET_KINDS); 422 <field>.props.<key> = not_found
+     * otherwise. With $before, only the assets that changed are checked.
      *
-     * @param array<string, mixed> $object
+     * @param array<string, mixed>      $object
+     * @param array<string, mixed>|null $before
      */
-    private function requireImageAsset(array $object, string $field): void
+    private function requireImageAsset(array $object, string $field, ?array $before = null): void
     {
-        if (!ObjectRulesImage::handles($object['type'])) {
-            return;
-        }
-        $assetId = ObjectRulesImage::assetId($object);
-        $kind = $assetId === null ? null : $this->store->assetKind($assetId);
-        if ($assetId === null || $kind === null || !in_array($kind, ObjectRulesImage::ASSET_KINDS, true)
-            || $this->canUseAsset === null || !($this->canUseAsset)($assetId)) {
-            throw new ValidationException('', [$field . '.props.asset_id' => 'not_found']);
+        $keys = ObjectRulesImage::handles($object['type']) ? ['asset_id'] : ObjectRulesImage::skinKeys($object['type']);
+        foreach ($keys as $key) {
+            $assetId = Fields::id($object['props'][$key] ?? null);
+            if ($assetId === null && !ObjectRulesImage::handles($object['type'])) {
+                continue; // an empty wall texture / door image is allowed
+            }
+            if ($before !== null && $assetId === Fields::id($before['props'][$key] ?? null)) {
+                continue;
+            }
+            $kind = $assetId === null ? null : $this->store->assetKind($assetId);
+            if ($assetId === null || $kind === null || !in_array($kind, ObjectRulesImage::ASSET_KINDS, true)
+                || $this->canUseAsset === null || !($this->canUseAsset)($assetId)) {
+                throw new ValidationException('', [$field . '.props.' . $key => 'not_found']);
+            }
         }
     }
 
@@ -606,8 +613,7 @@ final class SceneApplier
      */
     private function countImage(array $object, int $sign): void
     {
-        $assetId = ObjectRulesImage::assetId($object);
-        if ($assetId !== null) {
+        foreach (ObjectRulesImage::refIds($object) as $assetId) {
             $this->refs[$assetId] = ($this->refs[$assetId] ?? 0) + $sign;
         }
     }

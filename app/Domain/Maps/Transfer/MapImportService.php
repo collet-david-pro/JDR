@@ -16,6 +16,7 @@ use JDR\Domain\Assets\Asset;
 use JDR\Domain\Assets\AssetImporter;
 use JDR\Domain\Assets\AssetLimits;
 use JDR\Domain\Assets\AssetStorage;
+use JDR\Domain\Assets\CategoryService;
 use JDR\Domain\Assets\ImportRequest;
 use JDR\Domain\Games\Game;
 use JDR\Domain\Maps\Map;
@@ -63,6 +64,7 @@ final class MapImportService
         private AssetStorage $storage,
         private AssetLimits $limits,
         private Logger $logger,
+        private CategoryService $categories,
     ) {
     }
 
@@ -166,16 +168,26 @@ final class MapImportService
                     }
                 }
                 $kinds = [];
+                $categoryNames = [];
+                foreach ($doc['palette'] as $entry) {
+                    if ($entry !== null) {
+                        // Texture or tile as exported (documents without it: tile, the historical default).
+                        $kinds[$entry['sha256']] ??= $entry['kind'] ?? 'tile';
+                        if (isset($entry['category'])) {
+                            $categoryNames[$entry['sha256']] ??= $entry['category'];
+                        }
+                    }
+                }
                 foreach (MapDocumentImages::hashes($doc['objects'] ?? []) as $sha) {
                     $names[$sha] ??= '';
-                    $kinds[$sha] = 'object'; // P14: an image object needs an image kind (not tile)
+                    $kinds[$sha] ??= 'object'; // P14: an image object needs an image kind (not tile)
                 }
                 $bySha = $this->resolver->resolve($user->id, array_keys($names));
                 foreach ($names as $sha => $name) {
                     if (isset($bySha[$sha]) || !isset($files[$sha]) || $reader === null) {
                         continue;
                     }
-                    $asset = $this->importAsset($user, $reader, $files[$sha], $name, $created, $kinds[$sha] ?? 'tile');
+                    $asset = $this->importAsset($user, $reader, $files[$sha], $name, $created, $kinds[$sha] ?? 'tile', isset($categoryNames[$sha]) ? $this->categories->findOrCreate($user->id, $categoryNames[$sha]) : null);
                     if ($asset !== null) {
                         $bySha[$sha] = $asset->id;
                     }
@@ -237,7 +249,7 @@ final class MapImportService
      * @param list<Asset> $created assets created by this import (cleanup on failure)
      * @throws PayloadTooLargeException quota_exceeded
      */
-    private function importAsset(User $user, ZipReader $reader, ZipEntry $entry, string $name, array &$created, string $kind = 'tile'): ?Asset
+    private function importAsset(User $user, ZipReader $reader, ZipEntry $entry, string $name, array &$created, string $kind = 'tile', ?int $categoryId = null): ?Asset
     {
         $tmp = $this->storage->newTmpPath();
         try {
@@ -252,6 +264,7 @@ final class MapImportService
                 $user->id,
                 $name !== '' ? $name : 'image',
                 $kind,
+                $categoryId,
             ));
         } catch (HttpException $e) {
             if ($e->errorCode() === 'quota_exceeded') {

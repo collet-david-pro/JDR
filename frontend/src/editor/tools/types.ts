@@ -160,6 +160,8 @@ export interface ToolSettings {
   readonly wallKind: WallKind;
   /** Cells, 0.05–2. */
   readonly wallThickness: number;
+  /** Asset id of the texture of new walls (null / absent = plain colour). */
+  readonly wallTexture?: string | null;
   /** Wall tool draws a closed rectangle of walls ("room"). */
   readonly wallRoom: boolean;
   readonly openingKind: OpeningKind;

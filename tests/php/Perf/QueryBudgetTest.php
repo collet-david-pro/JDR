@@ -26,7 +26,9 @@ final class QueryBudgetTest extends ActionsTestCase
      * - snapshot / preload rebuild a whole scene once per client load: user, event cursor, session,
      *   players, assignments, map, floors, objects, notes, tokens, token definitions, fog, revealed
      *   uids (+ the player filter: explored fog, vision, note visibility, object boxes, chunks of
-     *   the scope); preload also reads the revision in its own transaction (consistent chunks);
+     *   the scope); preload also reads the revision in its own transaction (consistent chunks), and
+     *   the objects the player sees (hidden tokens, revealed uids, object boxes, note visibility)
+     *   to list the placed images to download;
      * - ops / actions are a locked write (map / session FOR UPDATE) that fans the change out to
      *   every audience: rate limit (3), idempotency check before and after the lock (a retry must
      *   get the stored answer without taking the lock), players, assignments, hidden tokens,
@@ -37,7 +39,7 @@ final class QueryBudgetTest extends ActionsTestCase
     private const CEILINGS = [
         'GET /sessions/{id}/snapshot (GM)' => 15,
         'GET /sessions/{id}/snapshot (player)' => 20,
-        'GET /sessions/{id}/preload (player)' => 12,
+        'GET /sessions/{id}/preload (player)' => 17,
         'POST /maps/{id}/ops (edit)' => 28,
         'POST actions token.move (GM)' => 28,
         'POST actions token.move (player)' => 29,

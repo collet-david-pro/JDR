@@ -70,4 +70,59 @@ final class MapTexturePaletteTest extends MapsP4cTestCase
         $doc['palette'][3]['repeat'] = 99;
         self::assertSame(422, $s['gm']->upload('/games/' . $s['game']['id'] . '/maps/import', self::scratchFile((string) json_encode($doc)), [], 'map.json')->status());
     }
+
+    public function testZipRoundTripKeepsTextureKindAndCategory(): void
+    {
+        $s = $this->scene();
+        $tex = $this->uploadOk($s['gm'], 'valid_webp_lossless.webp', ['kind' => 'texture']);
+        $t = $this->db->t('asset_categories');
+        $this->db->execute('INSERT INTO ' . $t . ' (`owner_user_id`, `parent_id`, `name`, `sort_order`) VALUES (?, NULL, ?, 0)', [$this->userId('Alice'), 'Sols de pierre']);
+        $cat = (int) $this->db->lastInsertId();
+        $this->db->execute('UPDATE ' . $this->db->t('assets') . ' SET `category_id` = ? WHERE `id` = ?', [$cat, (int) $tex['id']]);
+        $this->opsOk($s['gm'], $s['map']['id'], [
+            ['type' => 'palette.add', 'index' => 3, 'asset_id' => $tex['id'], 'repeat' => 4],
+            self::tiles($s['floor'], 'ground', [[2, 2, 3]]),
+        ]);
+        $doc = $this->exportDoc($s['gm'], $s['map']['id']);
+        self::assertSame('texture', $doc['palette'][3]['kind']);
+        self::assertSame('Sols de pierre', $doc['palette'][3]['category']);
+        self::assertSame('tile', $doc['palette'][1]['kind']);
+        self::assertArrayNotHasKey('category', $doc['palette'][1]);
+
+        $zip = self::scratchFile($s['gm']->get('/maps/' . $s['map']['id'] . '/export?assets=1')->contents(), '.zip');
+        $bob = $this->user('Bob');
+        $game = $this->newGame($bob, 'Autre table');
+        $result = $this->importOk($bob, $game['id'], $zip);
+        $row = $this->db->fetchOne(
+            'SELECT a.`kind`, c.`name` AS `category` FROM ' . $this->db->t('assets') . ' a LEFT JOIN ' . $t . ' c ON c.`id` = a.`category_id` WHERE a.`id` = ?',
+            [(int) $result['map']['palette'][3]['asset_id']],
+        );
+        self::assertSame('texture', $row['kind']);
+        self::assertSame('Sols de pierre', $row['category']);
+        self::assertSame(4, $result['map']['palette'][3]['repeat']);
+        $tile = $this->db->fetchValue('SELECT `kind` FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [(int) $result['map']['palette'][1]['asset_id']]);
+        self::assertSame('tile', $tile);
+    }
+
+    public function testDocumentWithAnInvalidPaletteKindIsRefused(): void
+    {
+        $s = $this->scene();
+        $doc = $this->exportDoc($s['gm'], $s['map']['id']);
+        $doc['palette'][1]['kind'] = 'object';
+        self::assertSame(422, $s['gm']->upload('/games/' . $s['game']['id'] . '/maps/import', self::scratchFile((string) json_encode($doc)), [], 'map.json')->status());
+    }
+
+    public function testPaletteRefusesAnImageThatIsNeitherTileNorTexture(): void
+    {
+        $s = $this->scene();
+        foreach (['object', 'token', 'background'] as $i => $kind) {
+            $asset = $this->uploadOk($s['gm'], 'valid_webp_lossless.webp', ['kind' => $kind, 'name' => 'x' . $i]);
+            self::assertFieldErrors(
+                $this->sendOps($s['gm'], $s['map']['id'], [['type' => 'palette.add', 'index' => 3, 'asset_id' => $asset['id']]]),
+                ['ops.0.asset_id' => 'not_paintable'],
+            );
+            $this->db->execute('DELETE FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [(int) $asset['id']]);
+        }
+        self::assertCount(3, self::data($s['gm']->get('/maps/' . $s['map']['id']))['palette']);
+    }
 }

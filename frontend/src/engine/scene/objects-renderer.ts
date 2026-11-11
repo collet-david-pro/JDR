@@ -7,6 +7,7 @@
  * only) are drawn in screen space above the lighting.
  */
 
+import type { ImageAssetView } from '../../editor/contracts-images';
 import type {
   CameraState,
   DoorObject,
@@ -33,7 +34,8 @@ import {
 } from '../../scene/style';
 import { worldToScreen, type Viewport } from '../camera';
 import { dashSegments } from '../overlay-geometry';
-import { Container, Graphics } from '../pixi';
+import { Assets, Container, Graphics, Sprite, TilingSprite } from '../pixi';
+import type { Texture } from '../pixi';
 import {
   doorShape,
   lightPosition,
@@ -62,7 +64,12 @@ interface Entry {
   obj: MapObject;
   readonly gfx: Graphics;
   layer: ObjectLayerId;
+  /** Textured wall strips / door images drawn over the plain shape (rebuilt by draw). */
+  skins: (Sprite | TilingSprite)[];
 }
+
+type SkinState =
+  { status: 'loading' } | { status: 'error' } | { status: 'ready'; texture: Texture };
 
 /** Renders walls, doors, windows and other scene objects. */
 export class ObjectsRenderer {
@@ -77,6 +84,10 @@ export class ObjectsRenderer {
   private mode: ViewMode = 'gm';
   private cellPx = 70;
   private bucket = 1;
+  private lookup: (assetId: string) => ImageAssetView | null = () => null;
+  private changed: () => void = () => undefined;
+  private readonly skinTextures = new Map<string, SkinState>();
+  private destroyed = false;
 
   constructor() {
     for (const id of OBJECT_LAYER_IDS) {
@@ -89,6 +100,24 @@ export class ObjectsRenderer {
 
   get count(): number {
     return this.entries.size;
+  }
+
+  /**
+   * Where the assets of wall textures and door images come from (SceneView.imageAsset) and what to
+   * call when a texture finished loading (a redraw is needed).
+   */
+  setAssets(
+    lookup: ((assetId: string) => ImageAssetView | null) | null,
+    changed?: () => void,
+  ): void {
+    this.lookup = lookup ?? (() => null);
+    if (changed !== undefined) this.changed = changed;
+    this.assetsChanged();
+  }
+
+  /** The known assets changed: redraw the walls and doors that carry one. */
+  assetsChanged(): void {
+    for (const [uid, e] of this.entries) if (hasSkin(e.obj)) this.dirty.add(uid);
   }
 
   setCellPx(cellPx: number): void {
@@ -131,7 +160,7 @@ export class ObjectsRenderer {
     if (entry === undefined) {
       const gfx = new Graphics();
       gfx.label = obj.uid;
-      this.entries.set(obj.uid, { obj, gfx, layer: obj.layer });
+      this.entries.set(obj.uid, { obj, gfx, layer: obj.layer, skins: [] });
       this.layerRoots.get(obj.layer)?.addChild(gfx);
       this.dirty.add(obj.uid);
       return;
@@ -148,6 +177,7 @@ export class ObjectsRenderer {
   remove(uid: string): void {
     const entry = this.entries.get(uid);
     if (entry === undefined) return;
+    this.dropSkins(entry);
     entry.gfx.destroy();
     this.entries.delete(uid);
     this.dirty.delete(uid);
@@ -205,6 +235,7 @@ export class ObjectsRenderer {
   }
 
   destroy(): void {
+    this.destroyed = true;
     this.clear();
     this.gizmos.destroy();
     this.root.destroy({ children: true });
@@ -213,16 +244,17 @@ export class ObjectsRenderer {
   private draw(entry: Entry): void {
     const { obj, gfx } = entry;
     gfx.clear();
+    this.dropSkins(entry);
     gfx.zIndex = obj.sort_order;
     gfx.visible = objectShown(obj, this.mode);
     gfx.alpha = objectAlpha(obj, this.mode);
     if (!gfx.visible) return;
     switch (obj.type) {
       case 'wall':
-        this.drawWall(gfx, obj);
+        this.drawWall(entry, obj);
         break;
       case 'door':
-        this.drawDoor(gfx, obj);
+        this.drawDoor(entry, obj);
         break;
       case 'window':
         this.drawWindow(gfx, obj);
@@ -298,7 +330,46 @@ export class ObjectsRenderer {
     if (any) g.stroke({ width, color, alpha, cap: 'butt' });
   }
 
-  private drawWall(g: Graphics, wall: WallObject): void {
+  private dropSkins(entry: Entry): void {
+    for (const s of entry.skins) s.destroy();
+    entry.skins = [];
+  }
+
+  /** Texture of an asset, or null while loading / unknown / failed (the plain shape is drawn). */
+  private skinTexture(assetId: string | null): Texture | null {
+    if (assetId === null || assetId === '') return null;
+    const url = this.lookup(assetId)?.url ?? null;
+    if (url === null) return null;
+    const state = this.skinTextures.get(url);
+    if (state === undefined) {
+      this.skinTextures.set(url, { status: 'loading' });
+      void this.loadSkin(url);
+      return null;
+    }
+    return state.status === 'ready' ? state.texture : null;
+  }
+
+  private async loadSkin(url: string): Promise<void> {
+    let next: SkinState;
+    try {
+      const texture = await Assets.load<Texture>({
+        src: url,
+        // Signed asset URLs have no file extension: force the image parser.
+        parser: 'texture',
+        data: { autoGenerateMipmaps: true, scaleMode: 'linear' },
+      });
+      next = { status: 'ready', texture };
+    } catch {
+      next = { status: 'error' };
+    }
+    if (this.destroyed) return;
+    this.skinTextures.set(url, next);
+    this.assetsChanged();
+    this.changed();
+  }
+
+  private drawWall(entry: Entry, wall: WallObject): void {
+    const g = entry.gfx;
     const segs = polylineSegments(wall.geometry.points, wall.geometry.closed).map((s) =>
       this.px(s),
     );
@@ -308,9 +379,25 @@ export class ObjectsRenderer {
       return;
     }
     this.solid(g, segs, width, WALL_COLORS[wall.props.kind]);
+    const texture = this.skinTexture(wall.props.texture_asset);
+    if (texture === null || texture.height <= 0) return;
+    // Pattern repeated along each segment, as thick as the wall.
+    const k = width / texture.height;
+    for (const s of segs) {
+      const len = Math.hypot(s[2] - s[0], s[3] - s[1]);
+      if (len <= 0) continue;
+      const strip = new TilingSprite({ texture, width: len, height: width });
+      strip.anchor.set(0, 0.5);
+      strip.tileScale.set(k, k);
+      strip.position.set(s[0], s[1]);
+      strip.rotation = Math.atan2(s[3] - s[1], s[2] - s[0]);
+      g.addChild(strip);
+      entry.skins.push(strip);
+    }
   }
 
-  private drawDoor(g: Graphics, door: DoorObject): void {
+  private drawDoor(entry: Entry, door: DoorObject): void {
+    const g = entry.gfx;
     const { a, b } = door.geometry;
     if (doorDrawnAsWall(door, this.mode)) {
       const seg = this.px([a[0], a[1], b[0], b[1]]);
@@ -326,7 +413,12 @@ export class ObjectsRenderer {
     if (door.props.secret) {
       this.dashed(g, [leaf], width + 6 / this.bucket, SECRET_DOOR_OUTLINE, 0.95);
     }
-    this.solid(g, [leaf], width, DOOR_COLOR);
+    const image = this.skinTexture(
+      door.props.state === 'open' ? door.props.asset_open : door.props.asset_closed,
+    );
+    // The image replaces the plain leaf.
+    const drawn = image !== null && image.width > 0 && this.doorImage(entry, image, leaf, width);
+    if (!drawn) this.solid(g, [leaf], width, DOOR_COLOR);
     if (door.props.locked) {
       const [mx, my] = segmentMiddle(this.px([a[0], a[1], b[0], b[1]]));
       const s = Math.max(0.2 * this.cellPx, 6 / this.bucket);
@@ -334,6 +426,22 @@ export class ObjectsRenderer {
         .fill({ color: DOOR_LOCKED_MARK })
         .stroke({ width: 1 / this.bucket, color: WALL_OUTLINE });
     }
+  }
+
+  /** Door image stretched along the leaf (aspect kept, at least as thick as the leaf). */
+  private doorImage(entry: Entry, texture: Texture, leaf: Seg, width: number): boolean {
+    const len = Math.hypot(leaf[2] - leaf[0], leaf[3] - leaf[1]);
+    if (len <= 0) return false;
+    const thick = Math.min(this.cellPx, Math.max(width, (len * texture.height) / texture.width));
+    const sprite = new Sprite(texture);
+    sprite.anchor.set(0, 0.5);
+    sprite.width = len;
+    sprite.height = thick;
+    sprite.position.set(leaf[0], leaf[1]);
+    sprite.rotation = Math.atan2(leaf[3] - leaf[1], leaf[2] - leaf[0]);
+    entry.gfx.addChild(sprite);
+    entry.skins.push(sprite);
+    return true;
   }
 
   private drawWindow(g: Graphics, win: WindowObject): void {
@@ -360,4 +468,11 @@ export class ObjectsRenderer {
       g.stroke({ width: Math.max(1 / this.bucket, width / 2), color: WALL_OUTLINE, alpha: 0.9 });
     }
   }
+}
+
+/** A wall with a texture or a door with an image. */
+function hasSkin(obj: MapObject): boolean {
+  if (obj.type === 'wall') return obj.props.texture_asset !== null;
+  if (obj.type === 'door') return obj.props.asset_open !== null || obj.props.asset_closed !== null;
+  return false;
 }

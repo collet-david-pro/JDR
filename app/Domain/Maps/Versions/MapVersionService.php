@@ -253,8 +253,7 @@ final class MapVersionService
     {
         $ids = [];
         foreach ($objects as $object) {
-            $id = ObjectRulesImage::assetId($object);
-            if ($id !== null) {
+            foreach (ObjectRulesImage::refIds($object) as $id) {
                 $ids[] = $id;
             }
         }

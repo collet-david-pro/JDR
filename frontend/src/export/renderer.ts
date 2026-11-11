@@ -56,6 +56,8 @@ export interface Ctx2D {
   ): void;
   save(): void;
   restore(): void;
+  translate(x: number, y: number): void;
+  rotate(angle: number): void;
   beginPath(): void;
   rect(x: number, y: number, w: number, h: number): void;
   moveTo(x: number, y: number): void;

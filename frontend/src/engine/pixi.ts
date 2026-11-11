@@ -37,6 +37,7 @@ export {
   Sprite,
   Text,
   Texture,
+  TilingSprite,
   Ticker,
   CanvasSource,
 } from 'pixi.js';

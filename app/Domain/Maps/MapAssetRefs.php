@@ -57,15 +57,15 @@ final class MapAssetRefs
     }
 
     /**
-     * Image objects of a map per asset (P14: one reference per image object).
+     * Assets referenced by the objects of a map (P14 image objects, wall textures and door images): one reference each.
      *
      * @return array<int, int> asset id => images
      */
     public function imageCounts(int $mapId): array
     {
         $rows = $this->db->fetchAll(
-            'SELECT `type`, `props` FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ? AND `type` = ?',
-            [$mapId, ObjectRulesImage::TYPE],
+            'SELECT `type`, `props` FROM ' . $this->db->t('map_objects') . ' WHERE `map_id` = ? AND `type` IN (?, ?, ?)',
+            [$mapId, ObjectRulesImage::TYPE, 'wall', 'door'],
         );
 
         return ObjectRulesImage::counts(array_map(static function (array $r): array {

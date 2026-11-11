@@ -17,7 +17,7 @@ use JDR\Domain\Maps\MapInput;
  * Types: wall {points [[x, y]] 2-1 000, closed}, door / window {a, b} (length 0.1-20),
  * light {x, y}. Every geometry / props key is required (the document accepts a few defaults,
  * see $lenient); unknown keys are refused. P9: pin, zone, trap, secret (ObjectRulesNotes).
- * texture_asset / asset_open / asset_closed are reserved (null) until P9. P14: image (ObjectRulesImage).
+ * texture_asset (wall) / asset_open / asset_closed (door) are null or an asset id (ObjectRulesImage::refIds). P14: image (ObjectRulesImage).
  *
  * Errors are added to $errors as "<field>.<key>[.<sub>]" => required | invalid | too_small |
  * too_large | too_many | below_radius. Normalized values keep the canonical key order (MySQL
@@ -393,7 +393,7 @@ final class ObjectRules
                 'kind' => self::enum($v, $type === 'wall' ? self::WALL_KINDS : self::WINDOW_KINDS, $f, $errors),
                 'thickness' => self::number($v, self::THICKNESS_MIN, self::THICKNESS_MAX, $f, $errors),
                 'blocks_vision', 'blocks_light', 'blocks_move', 'locked', 'secret', 'enabled' => self::bool($v, $f, $errors),
-                'texture_asset', 'asset_open', 'asset_closed' => self::reserved($v, $f, $errors),
+                'texture_asset', 'asset_open', 'asset_closed' => self::assetRef($v, $f, $errors),
                 'height' => $v === null ? null : self::number($v, 0, self::HEIGHT_MAX, $f, $errors),
                 'state' => self::enum($v, self::DOOR_STATES, $f, $errors),
                 'swing' => self::enum($v, self::DOOR_SWINGS, $f, $errors),
@@ -670,17 +670,24 @@ final class ObjectRules
     }
 
     /**
-     * Reserved member (P9): null only.
+     * Asset reference of a wall texture / door image: null or an asset id (string in answers, ops
+     * also accept a number). Existence and usability are checked by SceneApplier.
      *
      * @param array<string, string> $errors
      */
-    private static function reserved(mixed $value, string $field, array &$errors): mixed
+    private static function assetRef(mixed $value, string $field, array &$errors): ?string
     {
-        if ($value !== null) {
+        if ($value === null) {
+            return null;
+        }
+        $id = Fields::id($value);
+        if ($id === null) {
             $errors[$field] = 'invalid';
+
+            return null;
         }
 
-        return null;
+        return (string) $id;
     }
 
     /**

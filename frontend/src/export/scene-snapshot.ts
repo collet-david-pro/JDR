@@ -7,6 +7,7 @@
  * invisible walls, light gizmos and hidden tokens are not drawn; a secret door is drawn as a
  * plain wall. Occluders (lighting) are the walls / doors / windows players receive.
  */
+import { skinAssetIds } from '../editor/images/skins';
 import {
   CHUNK_SIZE,
   type Ambient,
@@ -106,6 +107,8 @@ export interface SnapshotScene {
   readonly tokenImages: readonly SnapshotTokenImage[];
   /** P14: image objects (not in `objects`). */
   readonly images?: readonly SnapshotImage[];
+  /** Wall textures / door images: asset id => index in `tokenImages`. */
+  readonly skinImages?: Readonly<Record<string, number>>;
   readonly ambient: Ambient;
   /** Fog chunks intersecting the extent (copies); absent chunk = unexplored. */
   readonly fog: readonly (readonly [ChunkKey, Uint8Array])[];
@@ -299,6 +302,22 @@ export function buildSceneSnapshot(
       fog.push([key, copy]);
     }
   }
+  const skinImages: Record<string, number> = {};
+  for (const o of all) {
+    for (const id of skinAssetIds(o)) {
+      if (o.type === 'image' || id in skinImages) continue;
+      const asset = scene.imageAsset?.(id) ?? null;
+      if (!asset?.url) continue;
+      const url = absoluteUrl(asset.url, baseUrl);
+      let image = byUrl.get(url);
+      if (image === undefined) {
+        image = tokenImages.length;
+        byUrl.set(url, image);
+        tokenImages.push({ index: image, name: asset.name, url });
+      }
+      skinImages[id] = image;
+    }
+  }
   return {
     scene: {
       floor: scene.floor,
@@ -310,6 +329,7 @@ export function buildSceneSnapshot(
       tokens,
       tokenImages,
       images,
+      skinImages,
       ambient: scene.ambient,
       fog,
     },

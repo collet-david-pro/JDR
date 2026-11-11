@@ -58,7 +58,7 @@ final class MapTransferTest extends MapsP4cTestCase
         self::assertSame('rain', $doc['ambient']['weather']['type']);
         self::assertNull($doc['palette'][0]);
         $sha = (string) $this->db->fetchValue('SELECT `sha256` FROM ' . $this->db->t('assets') . ' WHERE `id` = ?', [(int) $s['a']['id']]);
-        self::assertSame(['asset' => 'sha256:' . $sha, 'name' => $s['a']['name'], 'autotile' => null], $doc['palette'][1]);
+        self::assertSame(['asset' => 'sha256:' . $sha, 'name' => $s['a']['name'], 'autotile' => null, 'kind' => 'tile'], $doc['palette'][1]);
         self::assertSame('wall-a', $doc['palette'][3]['autotile']);
         self::assertArrayNotHasKey('asset_id', $doc['palette'][1]);
         self::assertSame([['uid' => 'f1', 'level' => 0, 'name' => 'Rez-de-chaussée']], $doc['floors']);

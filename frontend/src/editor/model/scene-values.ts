@@ -155,6 +155,12 @@ function secretProps(p: SecretObject['props']): SecretObject['props'] {
   return p.revealed === true ? { ...base, revealed: true } : base;
 }
 
+/** Asset id of a wall texture / door image: a numeric string, anything else is an empty slot. */
+function assetRef(v: unknown): string | null {
+  if (typeof v === 'number' && Number.isInteger(v) && v > 0) return String(v);
+  return typeof v === 'string' && /^[0-9]{1,19}$/.test(v) ? v : null;
+}
+
 function wallProps(p: WallProps): WallProps {
   return {
     kind: oneOf(p.kind, WALL_KINDS as WallProps['kind'][], 'wall kind'),
@@ -162,7 +168,7 @@ function wallProps(p: WallProps): WallProps {
     blocks_vision: bool(p.blocks_vision, 'blocks_vision'),
     blocks_light: bool(p.blocks_light, 'blocks_light'),
     blocks_move: bool(p.blocks_move, 'blocks_move'),
-    texture_asset: null,
+    texture_asset: assetRef(p.texture_asset),
     height: p.height === null ? null : round3(num(p.height, 0, 20, 'height')),
   };
 }
@@ -225,8 +231,8 @@ function doorProps(p: DoorProps): DoorProps {
     state: oneOf(p.state, ['open', 'closed'], 'door state'),
     locked: bool(p.locked, 'locked'),
     secret: bool(p.secret, 'secret'),
-    asset_open: null,
-    asset_closed: null,
+    asset_open: assetRef(p.asset_open),
+    asset_closed: assetRef(p.asset_closed),
     swing: oneOf(p.swing, ['a', 'b', 'slide'], 'swing'),
     ...(p.link !== undefined && p.link !== null ? { link: linkProps(p.link) } : {}),
   };
